@@ -200,8 +200,7 @@ Compute modes configure everything from one switch:
 | Quality gates | 6 | 9 | 8 |
 
 Phases M9–M208 in `agent/docs/` are explicitly `designed_only` — designed, not
-implemented. See [agent/INTEGRATION.md](agent/INTEGRATION.md) for the endpoint
-list and the honest status.
+implemented. **[How to use it →](agent/USAGE.md)** · [What was merged →](agent/INTEGRATION.md) · [Full guide →](docs/en/agent/01-agent-kernel.md)
 
 ## Quick start
 

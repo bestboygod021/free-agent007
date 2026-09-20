@@ -4,6 +4,10 @@ This workspace is the `code-agent` (ForgePilot) blueprint merged into the
 FreeLLMAPI monorepo. Nothing from the original router was removed; this package
 is additive.
 
+> **Looking for how to actually use it?** See [USAGE.md](./USAGE.md) — a
+> practical walkthrough with worked examples. This file covers what was merged
+> and how it is wired together.
+
 ## What was merged
 
 | From the blueprint | Where it lives now |
