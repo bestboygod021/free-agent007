@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/security-finding.schema.json",
+  "title": "SecurityFinding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["severity", "category", "location", "description", "impact", "remediation", "verification"],
+  "properties": {
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "category": {
+      "type": "string",
+      "description": "e.g. authz, injection, secrets, ssrf, supply-chain, prompt-injection, tenant-isolation"
+    },
+    "location": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "impact": { "type": "string", "minLength": 1 },
+    "evidence": { "type": "string" },
+    "remediation": { "type": "string", "minLength": 1 },
+    "verification": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The exact command or test that proves the fix works."
+    },
+    "status": { "type": "string", "enum": ["open", "fixed", "accepted-risk", "false-positive"] },
+    "cwe": { "type": "string" },
+    "acceptedBy": { "type": "string" },
+    "acceptedAt": { "type": "string", "format": "date-time" }
+  }
+}

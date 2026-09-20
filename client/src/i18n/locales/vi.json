@@ -16,7 +16,8 @@
     "modelsMenu": "Duyệt các loại mô hình",
     "agents": "Tác nhân",
     "logs": "Nhật ký",
-    "analyticsMenu": "Trang phân tích"
+    "analyticsMenu": "Trang phân tích",
+    "forgepilot": "ForgePilot"
   },
   "auth": {
     "createYourAccount": "Tạo tài khoản của bạn",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "Tạo chuỗi không có mô hình nào và không tự thêm mô hình mới từ danh mục. Bỏ chọn thì chuỗi bắt đầu như bản sao của chuỗi mặc định.",
     "curated": "Tự chọn",
     "curatedHint": "Mô hình mới trong danh mục không được thêm tự động vào chuỗi này."
+  },
+  "forgepilot": {
+    "title": "ForgePilot agent kernel",
+    "description": "The deterministic core: the model proposes, the code decides. Compute modes, provider policy, run states and the versioned prompt library.",
+    "providerPolicy": "Provider policy",
+    "providerPolicyHint": "Which providers this mode may physically use.",
+    "allowLocal": "Local models",
+    "allowFreeCloud": "Free cloud tiers",
+    "allowPaidCloud": "Paid cloud",
+    "allowTraining": "May train on input",
+    "cloudPrivacyCeiling": "Cloud privacy ceiling",
+    "budget": "Budget",
+    "budgetHint": "Token and cost limits enforced before a run starts.",
+    "perRun": "Per run",
+    "perDay": "Per day / user",
+    "hardStop": "Hard stop",
+    "maxCost": "Max cost / run",
+    "execution": "Execution",
+    "executionHint": "Concurrency, repair limits and the quality gates that must pass.",
+    "parallelTasks": "Parallel tasks",
+    "repairAttempts": "Repair attempts",
+    "sandboxTimeout": "Sandbox timeout",
+    "qualityGates": "Quality gates",
+    "disabledCapabilities": "Disabled capabilities",
+    "disabledHint": "Switched off by this compute mode; the policy engine denies them.",
+    "runStates": "Run states",
+    "runStatesHint": "Every state the run state machine can occupy. Terminal states are filled.",
+    "promptLibrary": "Prompt library",
+    "promptLibraryHint": "{count} versioned agent prompts, each bound to an output contract.",
+    "mode": {
+      "free": "Free",
+      "paid": "Paid",
+      "local": "Local"
+    }
   }
 }

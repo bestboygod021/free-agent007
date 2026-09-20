@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/orchestrator-output.schema.json",
+  "title": "OrchestratorOutput",
+  "description": "The single output contract of the orchestrator agent, used at every state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "summary",
+    "confirmedRequirements",
+    "assumptions",
+    "clarificationQuestions",
+    "plan",
+    "requiredPermissions",
+    "securityRisks",
+    "tasks",
+    "tests",
+    "artifacts",
+    "nextAction"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "needs_clarification",
+        "plan_ready",
+        "approval_required",
+        "running",
+        "blocked",
+        "completed",
+        "failed"
+      ]
+    },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "confirmedRequirements": { "type": "array", "items": { "type": "string" } },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["assumption", "impactIfWrong"],
+        "properties": {
+          "assumption": { "type": "string" },
+          "impactIfWrong": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["low", "medium", "high"] }
+        }
+      }
+    },
+    "clarificationQuestions": {
+      "type": "array",
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question", "whyItMatters"],
+        "properties": {
+          "question": { "type": "string", "minLength": 5 },
+          "whyItMatters": { "type": "string" },
+          "priority": { "type": "string", "enum": ["blocking", "high", "nice-to-have"] },
+          "options": { "type": "array", "items": { "type": "string" } },
+          "defaultIfUnanswered": { "type": "string" }
+        }
+      }
+    },
+    "plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["milestone", "steps"],
+        "properties": {
+          "milestone": { "type": "string" },
+          "steps": { "type": "array", "items": { "type": "string" } },
+          "exitCriteria": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "requiredPermissions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["connector", "scope", "purpose", "riskLevel"],
+        "properties": {
+          "connector": { "type": "string" },
+          "scope": { "type": "string" },
+          "purpose": { "type": "string" },
+          "riskLevel": { "$ref": "common.defs.json#/$defs/riskLevel" },
+          "expiresAfter": { "type": "string" }
+        }
+      }
+    },
+    "securityRisks": {
+      "type": "array",
+      "items": { "$ref": "security-finding.schema.json" }
+    },
+    "tasks": { "type": "array", "items": { "$ref": "task.schema.json" } },
+    "tests": { "type": "array", "items": { "type": "string" } },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "ref"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "diff",
+              "pr",
+              "log",
+              "screenshot",
+              "report",
+              "preview_url",
+              "build_artifact",
+              "migration"
+            ]
+          },
+          "ref": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "nextAction": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Exactly one next action, phrased for the human or the next agent."
+    },
+    "proposedEvent": {
+      "type": "string",
+      "description": "The state-machine event the orchestrator wants to emit. The engine may reject it.",
+      "enum": [
+        "needs_clarification",
+        "clarification_answered",
+        "spec_ready",
+        "plan_ready",
+        "plan_approved",
+        "plan_rejected",
+        "recon_complete",
+        "implementation_batch_done",
+        "tests_passed",
+        "tests_failed",
+        "repair_succeeded",
+        "repair_exhausted",
+        "security_clear",
+        "security_blocked",
+        "security_findings_accepted",
+        "preview_ready",
+        "deploy_requested",
+        "deploy_approved",
+        "deploy_rejected",
+        "deploy_verified",
+        "deploy_failed",
+        "finalized",
+        "fail",
+        "cancel",
+        "block",
+        "unblock"
+      ]
+    },
+    "modelRouting": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "taskType": { "type": "string" },
+        "provider": { "type": "string" },
+        "model": { "type": "string" },
+        "locality": { "type": "string", "enum": ["local", "cloud"] }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "estimatedTokens": { "type": "integer", "minimum": 0 },
+        "estimatedSeconds": { "type": "integer", "minimum": 0 },
+        "estimatedCost": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

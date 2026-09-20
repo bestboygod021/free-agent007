@@ -16,7 +16,8 @@
     "modelsMenu": "瀏覽模型類型",
     "agents": "代理程式",
     "logs": "日誌",
-    "analyticsMenu": "分析頁面"
+    "analyticsMenu": "分析頁面",
+    "forgepilot": "ForgePilot"
   },
   "auth": {
     "createYourAccount": "建立您的帳號",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "建立時不放入任何模型，之後新增的目錄模型也不會自動加入。不勾選則複製預設鏈。",
     "curated": "手動維護",
     "curatedHint": "新的目錄模型不會自動加入這條鏈。"
+  },
+  "forgepilot": {
+    "title": "ForgePilot agent kernel",
+    "description": "The deterministic core: the model proposes, the code decides. Compute modes, provider policy, run states and the versioned prompt library.",
+    "providerPolicy": "Provider policy",
+    "providerPolicyHint": "Which providers this mode may physically use.",
+    "allowLocal": "Local models",
+    "allowFreeCloud": "Free cloud tiers",
+    "allowPaidCloud": "Paid cloud",
+    "allowTraining": "May train on input",
+    "cloudPrivacyCeiling": "Cloud privacy ceiling",
+    "budget": "Budget",
+    "budgetHint": "Token and cost limits enforced before a run starts.",
+    "perRun": "Per run",
+    "perDay": "Per day / user",
+    "hardStop": "Hard stop",
+    "maxCost": "Max cost / run",
+    "execution": "Execution",
+    "executionHint": "Concurrency, repair limits and the quality gates that must pass.",
+    "parallelTasks": "Parallel tasks",
+    "repairAttempts": "Repair attempts",
+    "sandboxTimeout": "Sandbox timeout",
+    "qualityGates": "Quality gates",
+    "disabledCapabilities": "Disabled capabilities",
+    "disabledHint": "Switched off by this compute mode; the policy engine denies them.",
+    "runStates": "Run states",
+    "runStatesHint": "Every state the run state machine can occupy. Terminal states are filled.",
+    "promptLibrary": "Prompt library",
+    "promptLibraryHint": "{count} versioned agent prompts, each bound to an output contract.",
+    "mode": {
+      "free": "Free",
+      "paid": "Paid",
+      "local": "Local"
+    }
   }
 }

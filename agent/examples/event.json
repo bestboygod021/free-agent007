@@ -1,0 +1,19 @@
+{
+  "eventId": "evt_01j8zx4k2m9q",
+  "schemaVersion": 1,
+  "tenantId": "org_7f3a",
+  "runId": "run_8f2c",
+  "type": "tool.call.proposed",
+  "timestamp": "2026-09-08T10:00:00.000Z",
+  "actorType": "agent",
+  "actorId": "agent:backend-engineer",
+  "parentEventId": "evt_01j8zx4j8p1r",
+  "payload": {
+    "tool": "github.pull_request.create",
+    "sideEffect": "external_write",
+    "riskLevel": "medium",
+    "approvalRequired": true,
+    "reasons": ["\"github.pull_request.create\" always requires explicit approval (risk class D)"]
+  },
+  "redacted": true
+}

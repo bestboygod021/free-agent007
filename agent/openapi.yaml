@@ -1,0 +1,251 @@
+openapi: 3.1.0
+info:
+  title: ForgePilot Control Plane Reference API
+  version: 0.1.0
+  description: |
+    Reference in-memory control-plane slice. Authentication and persistence are
+    injected adapters; this file documents the implemented endpoints only.
+servers:
+  - url: /
+security:
+  - sessionCookie: []
+  - bearerAuth: []
+tags:
+  - name: health
+  - name: runs
+paths:
+  /healthz:
+    get:
+      security: []
+      tags: [health]
+      operationId: health
+      responses:
+        '200':
+          description: API process is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /projects/{projectId}/runs:
+    post:
+      tags: [runs]
+      operationId: createRun
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRunRequest'
+      responses:
+        '201':
+          description: Run created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+  /runs/{runId}:
+    get:
+      tags: [runs]
+      operationId: getRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Run state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+  /runs/{runId}/events:
+    get:
+      tags: [runs]
+      operationId: replayRunEvents
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/RequestId'
+        - name: Last-Event-ID
+          in: header
+          schema:
+            type: string
+          description: Resume after a previously received event ID.
+      responses:
+        '200':
+          description: Replayable Server-Sent Events snapshot
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+  /runs/{runId}/cancel:
+    post:
+      tags: [runs]
+      operationId: cancelRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Run cancellation decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: forgepilot_session
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ForgePilotSession
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+    RequestId:
+      name: X-Request-ID
+      in: header
+      required: false
+      schema:
+        type: string
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status:
+          const: ok
+        requestId:
+          type: string
+    CreateRunRequest:
+      type: object
+      additionalProperties: false
+      required: [request, computeMode]
+      properties:
+        request:
+          type: string
+          minLength: 3
+          maxLength: 20000
+        computeMode:
+          type: string
+          enum: [free, paid, local]
+        privacyLevel:
+          type: string
+          enum: [public, internal, private, confidential]
+        autonomyLevel:
+          type: string
+          enum: [readonly, supervised, autonomous-branch, full]
+        budget:
+          type: object
+          additionalProperties: false
+          properties:
+            maxCostPerRun:
+              type: number
+              minimum: 0
+    RunResponse:
+      type: object
+      required: [run]
+      properties:
+        run:
+          $ref: '#/components/schemas/Run'
+        event:
+          $ref: '#/components/schemas/RunEvent'
+        requestId:
+          type: string
+    Run:
+      type: object
+      required: [runId, organizationId, projectId, createdBy, request, computeMode, privacyLevel, autonomyLevel, state, createdAt, updatedAt]
+      properties:
+        runId: { type: string }
+        organizationId: { type: string }
+        projectId: { type: string }
+        createdBy: { type: string }
+        request: { type: string }
+        computeMode: { type: string, enum: [free, paid, local] }
+        privacyLevel: { type: string, enum: [public, internal, private, confidential] }
+        autonomyLevel: { type: string, enum: [readonly, supervised, autonomous-branch, full] }
+        state: { type: string, enum: [INTAKE, CANCELLED, DONE, FAILED] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    RunEvent:
+      type: object
+      required: [id, sequence, type, runId, organizationId, actorType, actorId, timestamp, payload]
+      properties:
+        id: { type: string }
+        sequence: { type: integer, minimum: 0 }
+        type: { type: string }
+        runId: { type: string }
+        organizationId: { type: string }
+        actorType: { type: string, enum: [user, system] }
+        actorId: { type: string }
+        timestamp: { type: string, format: date-time }
+        payload: { type: object, additionalProperties: true }
+    Problem:
+      type: object
+      required: [type, title, status, detail, code]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string }
+        requestId: { type: string }
+  responses:
+    Problem:
+      description: RFC 7807-compatible problem response
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'

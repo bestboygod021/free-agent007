@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/completion-report.schema.json",
+  "title": "CompletionReport",
+  "description": "What a specialist agent must return after working a task. Success is only accepted when evidence is attached.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "taskId",
+    "taskStatus",
+    "summary",
+    "acceptanceCriteria",
+    "filesChanged",
+    "commandsExecuted",
+    "tests"
+  ],
+  "properties": {
+    "taskId": { "type": "string", "pattern": "^task_[a-z0-9_]{1,64}$" },
+    "taskStatus": { "type": "string", "enum": ["completed", "blocked", "failed"] },
+    "summary": { "type": "string", "minLength": 1 },
+    "acceptanceCriteria": { "type": "array", "items": { "type": "string" } },
+    "filesInspected": { "type": "array", "items": { "type": "string" } },
+    "filesChanged": { "type": "array", "items": { "type": "string" } },
+    "dependenciesAdded": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "version", "license", "reason"],
+        "properties": {
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "license": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "commandsExecuted": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exitCode"],
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "exitCode": { "type": "integer" },
+          "durationMs": { "type": "integer", "minimum": 0 },
+          "logsRef": { "type": "string" }
+        }
+      }
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "passed"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "passed": { "type": "boolean" },
+          "skipped": { "type": "boolean" },
+          "flaky": { "type": "boolean" }
+        }
+      }
+    },
+    "securityReview": {
+      "type": "array",
+      "items": { "$ref": "security-finding.schema.json" }
+    },
+    "knownLimitations": { "type": "array", "items": { "type": "string" } },
+    "failureReason": { "type": "string" },
+    "nextAction": { "type": "string" },
+    "diffRef": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "taskStatus": { "const": "blocked" } },
+        "required": ["taskStatus"]
+      },
+      "then": { "required": ["failureReason", "nextAction"] }
+    },
+    {
+      "if": {
+        "properties": { "taskStatus": { "const": "failed" } },
+        "required": ["taskStatus"]
+      },
+      "then": { "required": ["failureReason", "nextAction"] }
+    }
+  ]
+}

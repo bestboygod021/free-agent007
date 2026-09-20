@@ -16,7 +16,8 @@
     "modelsMenu": "Explorar tipos de modelo",
     "agents": "Agentes",
     "logs": "Logs",
-    "analyticsMenu": "Páginas de análises"
+    "analyticsMenu": "Páginas de análises",
+    "forgepilot": "ForgePilot"
   },
   "auth": {
     "createYourAccount": "Crie sua conta",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "Cria a cadeia sem modelos e mantém de fora os novos modelos do catálogo. Sem marcar, ela começa como cópia da cadeia padrão.",
     "curated": "Curada",
     "curatedHint": "Novos modelos do catálogo não são adicionados a esta cadeia automaticamente."
+  },
+  "forgepilot": {
+    "title": "Núcleo de agentes ForgePilot",
+    "description": "O núcleo determinístico: o modelo propõe, o código decide. Modos de computação, política de provedores, estados de execução e biblioteca de prompts versionada.",
+    "providerPolicy": "Política de provedores",
+    "providerPolicyHint": "Quais provedores este modo pode realmente usar.",
+    "allowLocal": "Modelos locais",
+    "allowFreeCloud": "Camadas gratuitas na nuvem",
+    "allowPaidCloud": "Nuvem paga",
+    "allowTraining": "Pode treinar com a entrada",
+    "cloudPrivacyCeiling": "Teto de privacidade na nuvem",
+    "budget": "Orçamento",
+    "budgetHint": "Limites de tokens e custo aplicados antes de uma execução começar.",
+    "perRun": "Por execução",
+    "perDay": "Por dia / usuário",
+    "hardStop": "Parada rígida",
+    "maxCost": "Custo máx. por execução",
+    "execution": "Execução",
+    "executionHint": "Concorrência, limites de reparo e os portões de qualidade obrigatórios.",
+    "parallelTasks": "Tarefas paralelas",
+    "repairAttempts": "Tentativas de reparo",
+    "sandboxTimeout": "Tempo limite do sandbox",
+    "qualityGates": "Portões de qualidade",
+    "disabledCapabilities": "Capacidades desativadas",
+    "disabledHint": "Desligadas por este modo de computação; o motor de políticas as nega.",
+    "runStates": "Estados de execução",
+    "runStatesHint": "Todos os estados que a máquina de estados pode ocupar. Os terminais são preenchidos.",
+    "promptLibrary": "Biblioteca de prompts",
+    "promptLibraryHint": "{count} prompts de agente versionados, cada um ligado a um contrato de saída.",
+    "mode": {
+      "free": "Gratuito",
+      "paid": "Pago",
+      "local": "Local"
+    }
   }
 }

@@ -171,8 +171,37 @@ Based on public documentation, July 2026 — corrections welcome.
 - **MCP server & interactive docs** — agents can introspect usable models, provider health, and routing strategy over `/mcp`; a dependency-free OpenAPI viewer lives at `/v1/docs`. [Coding agents →](docs/en/clients/01-agent-clients.md)
 - **Ops niceties** — opt-in response cache, encrypted DB backups, periodic key health checks, bulk key import/export, declarative startup config. [Install & deploy →](docs/en/install/01-install.md)
 - **Runs anywhere Node 20+ runs** — Windows, macOS, Linux servers, or a small ARM SBC (Raspberry Pi included). ~40 MB RSS at idle behind PM2 / systemd / whatever supervisor you prefer.
+- **ForgePilot agent kernel** — a deterministic decision core for agent-driven delivery: compute modes (free/paid/local), tool-call and egress policy, a run state machine, task-DAG wave planning, secret redaction, evidence auditing, JSON Schema output contracts and a versioned prompt library. Served at `/api/agent`, with a dashboard at `/forgepilot`. [Details →](agent/INTEGRATION.md)
 
 The scope is deliberately narrow — see [what's not supported yet](docs/en/architecture/00-high-level-index.md#not-yet-supported).
+
+## ForgePilot agent kernel
+
+The `agent/` workspace holds a deterministic kernel for agent-driven software
+delivery, built on one rule: **the model proposes, the code decides.** Run state
+transitions, tool-call permission, provider choice, secret scrubbing, task
+ordering and whether a "task complete" claim is believed are all decided by
+tested code rather than by a language model.
+
+```bash
+npm run agent:test        # 611 kernel tests
+npm run agent:typecheck   # strict tsc
+npm run agent:prompt:list # the 13-agent prompt library
+```
+
+Compute modes configure everything from one switch:
+
+| | Free | Paid | Local |
+|---|---|---|---|
+| Paid cloud | ❌ | ✅ | ❌ |
+| Cost per run | 0 | up to your ceiling | 0 |
+| Data leaves the machine | with consent | with consent | **never** |
+| Repair attempts / parallel tasks | 2 / 2 | 3 / 4 | 3 / 1 |
+| Quality gates | 6 | 9 | 8 |
+
+Phases M9–M208 in `agent/docs/` are explicitly `designed_only` — designed, not
+implemented. See [agent/INTEGRATION.md](agent/INTEGRATION.md) for the endpoint
+list and the honest status.
 
 ## Quick start
 

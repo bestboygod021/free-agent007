@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/tool-call-decision.schema.json",
+  "title": "ToolCallDecision",
+  "description": "Pre-flight classification the orchestrator must produce before invoking any tool.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tool",
+    "action",
+    "sideEffect",
+    "riskLevel",
+    "reversible",
+    "reason",
+    "requiredScopes"
+  ],
+  "properties": {
+    "tool": { "type": "string", "pattern": "^[a-z0-9_.*]+$" },
+    "action": { "type": "string", "minLength": 1 },
+    "sideEffect": { "$ref": "common.defs.json#/$defs/sideEffectClass" },
+    "riskLevel": { "$ref": "common.defs.json#/$defs/riskLevel" },
+    "reversible": { "type": "boolean" },
+    "reason": { "type": "string", "minLength": 10 },
+    "requiredScopes": { "type": "array", "items": { "type": "string" } },
+    "targetRef": { "type": "string" },
+    "approvalId": { "type": ["string", "null"] },
+    "estimatedCost": { "type": "number", "minimum": 0 }
+  }
+}
