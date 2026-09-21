@@ -13,6 +13,7 @@ This is the user entry point — start here to install the gateway, call the Ope
 - **[Proxy transports](proxy/OVERVIEW.md)** — outbound proxy transports — forward vs Fetch Relay, system auto-detect, `TRUST_PROXY` for inbound; see [Fetch Relay transport](proxy/01-fetch-relay.md) for the relay protocol and Cloudflare Worker reference.
 - **[Architecture & internals](architecture/00-high-level-index.md)** — how the router works, routing and operational details, what's not supported, honest limitations, and the provider Terms-of-Service review.
 - **[ForgePilot agent kernel](agent/01-agent-kernel.md)** — the deterministic decision core: compute modes (free/paid/local), tool-call and egress policy, the run state machine, task-DAG planning, secret redaction, evidence auditing, output contracts and the versioned prompt library.
+- **[Capability audit](agent/02-capability-audit.md)** — an evidence-based review of a 500-feature wishlist against what this repo actually does, what is only decision logic with nothing wired to it, and a build order sequenced by what unblocks the most.
 
 ## More
 
