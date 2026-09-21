@@ -72,7 +72,7 @@ import {
 import { gatewayCompletion } from '../services/agent-completion.js';
 import { invokeTool, listTools, listToolCalls, ToolError } from '../services/agent-tools.js';
 import { agentWorkspaceRoot } from '../services/agent-tools-builtin.js';
-import { buildPolicyContext } from '../services/agent-policy-context.js';
+import { buildPolicyContext, resolveScopes } from '../services/agent-policy-context.js';
 
 /**
  * ForgePilot agent kernel surface (merged from the `code-agent` blueprint).
@@ -1322,7 +1322,10 @@ agentRouter.post('/tools/invoke', (req: Request, res: Response) => {
     ...(typeof body.runId === 'string' ? { runId: body.runId } : {}),
     workspaceRoot,
     policy,
-    ...(Array.isArray(body.grantedScopes) ? { grantedScopes: body.grantedScopes as string[] } : {}),
+    // Granted by configuration, not by the request. A caller may narrow the
+    // set for a single call, but asserting a scope the deployment does not
+    // hold gets it nothing.
+    grantedScopes: resolveScopes(body.grantedScopes),
     ...(typeof body.approvedBy === 'string' ? { approvedBy: body.approvedBy } : {}),
     ...(typeof timeoutMs === 'number' ? { timeoutMs } : {}),
   }).then(

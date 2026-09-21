@@ -873,10 +873,14 @@ describe('/api/agent tool invoke cannot be talked out of its guards', () => {
     execFileSync('git', ['add', '.'], { cwd: repo, env });
     execFileSync('git', ['commit', '-m', 'init'], { cwd: repo, env });
     process.env.AGENT_WORKSPACE_ROOT = repo;
+    // The deployment grants these; the tests below prove a request cannot add
+    // to the set, only spend what is already granted.
+    process.env.AGENT_GRANTED_SCOPES = 'repository:write, deploy:write';
   });
 
   afterAll(async () => {
     delete process.env.AGENT_WORKSPACE_ROOT;
+    delete process.env.AGENT_GRANTED_SCOPES;
     await fs.rm(repo, { recursive: true, force: true });
   });
 
@@ -956,5 +960,50 @@ describe('/api/agent tool invoke cannot be talked out of its guards', () => {
 
     expect(res.body.outcome).toBe('denied');
     expect(res.body.reason).toContain('requires human approval');
+  });
+
+  it('will not let a caller grant itself a scope the deployment lacks', async () => {
+    // `secret:write` is not in AGENT_GRANTED_SCOPES. Asserting it used to be
+    // enough, because the route read the list straight off the request body.
+    registerTool({
+      name: 'vault.secret.write',
+      description: 'write a secret',
+      schema: { type: 'object', properties: {}, additionalProperties: false },
+      handler: async () => 'written',
+      policy: {
+        category: 'secret_write',
+        riskLevel: 'critical',
+        sideEffect: 'external_write',
+        requiredScopes: ['secret:write'],
+        approval: 'never',
+      },
+    });
+
+    const res = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'vault.secret.write',
+      args: {},
+      grantedScopes: ['secret:write'],
+    });
+
+    expect(res.body.outcome).toBe('denied');
+    expect(res.body.reason).toContain('missing required scopes: secret:write');
+  });
+
+  it('lets a request narrow its own scopes but not widen them', async () => {
+    const narrowed = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'git.branch.create',
+      args: { branch: 'agent/narrowed' },
+      grantedScopes: [],
+    });
+
+    expect(narrowed.body.outcome).toBe('denied');
+    expect(narrowed.body.reason).toContain('missing required scopes');
+
+    const granted = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'git.branch.create',
+      args: { branch: 'agent/granted' },
+    });
+
+    expect(granted.body.ok).toBe(true);
   });
 });

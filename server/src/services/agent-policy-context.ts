@@ -92,3 +92,41 @@ export function buildPolicyContext(params: BuildContextParams): PolicyContext {
       : {}),
   } as PolicyContext;
 }
+
+/**
+ * Scopes this deployment actually holds.
+ *
+ * `grantedScopes` is described by the kernel as "scopes the connector
+ * currently holds", but the invoke route took the list from the request — so a
+ * caller could assert `repository:write` and have it believed. That is the
+ * same shape of bug as a request naming its own approver: the subject of the
+ * control supplying the control's input.
+ *
+ * Scopes are therefore granted by configuration. `AGENT_GRANTED_SCOPES` is an
+ * operator statement about what this install is allowed to do; a request may
+ * narrow it to less, which is useful for running a single step with reduced
+ * privilege, but can never add to it.
+ *
+ * The default is empty: a fresh install can read, and must be deliberately
+ * configured before it can write anything.
+ */
+export function configuredScopes(): string[] {
+  const configured = process.env.AGENT_GRANTED_SCOPES?.trim();
+  if (!configured) return [];
+  return configured
+    .split(',')
+    .map((scope) => scope.trim())
+    .filter((scope) => scope !== '');
+}
+
+/**
+ * The scopes a call may use: what the server grants, optionally narrowed by
+ * what the request asked for. Intersection, never union.
+ */
+export function resolveScopes(requested: unknown): string[] {
+  const available = configuredScopes();
+  if (!Array.isArray(requested)) return available;
+
+  const asked = new Set(requested.filter((s): s is string => typeof s === 'string'));
+  return available.filter((scope) => asked.has(scope));
+}

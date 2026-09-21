@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-289 test files, 3,561 tests. It talks to 20 provider families, fails over
+289 test files, 3,569 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -159,7 +159,7 @@ Disproportionately strong, because the gateway had to solve these for itself.
 | # | Feature | Status | Evidence |
 |---|---|---|---|
 | 246–247 | Prompt injection | **Partial** | `lib/guardrails.ts` — pattern-based, not a classifier |
-| 249 | Tool-call policy engine | **Built** | `policy-engine.ts`, enforced on every call by `agent-tools.ts`; authority fields (protected branches, approver) are server- and session-owned via `agent-policy-context.ts`, so a request cannot widen its own verdict |
+| 249 | Tool-call policy engine | **Built** | `policy-engine.ts`, enforced on every call by `agent-tools.ts`; authority fields (protected branches, approver, granted scopes) are server- and session-owned via `agent-policy-context.ts`, so a request cannot widen its own verdict — it may only narrow it |
 | 250–252 | URL allow/blocklist, SSRF | **Built** | `lib/url-guard.ts` |
 | 254–257 | PII and secret handling | **Built** | `redaction.ts`, `log-redaction.ts`, `error-redaction.ts` |
 | 260 | Output schema checks | **Built** | `structured-output.ts`, `output-contract.ts` |

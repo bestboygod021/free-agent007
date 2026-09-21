@@ -616,6 +616,7 @@ deciding *whether* a call is allowed never come from the request:
 | `approverUserId` | the authenticated session | Otherwise a caller names itself approver and satisfies the gate with no human. |
 | `autonomy` | `AGENT_AUTONOMY` (default `supervised`) | A request may *lower* it, never raise it. |
 | `workspaceRoot` | `AGENT_WORKSPACE_ROOT` | A caller choosing the root defeats confinement. |
+| `grantedScopes` | `AGENT_GRANTED_SCOPES` (default *empty*) | These are the permissions the deployment *holds*; a caller asserting `repository:write` was previously believed. A request may narrow the set, never extend it. |
 
 Descriptive fields (`privacyLevel`, `disabledCapabilities`) are taken from the
 request, because getting those wrong makes a verdict stricter, not looser.
@@ -630,6 +631,23 @@ request, because getting those wrong makes a verdict stricter, not looser.
 ```
 denied  direct write to protected ref "main" is forbidden
 ```
+
+Scopes work the same way. A write tool is refused until an operator says the
+install may write:
+
+```bash
+# Nothing is granted by default, so this is refused however it is asked:
+-d '{"tool":"git.commit.create","args":{"message":"…"},
+     "grantedScopes":["repository:write"]}'
+#   denied  connector is missing required scopes: repository:write
+
+# Granting is an operator action, made once, outside the request:
+AGENT_GRANTED_SCOPES=repository:write
+```
+
+A request that sends `grantedScopes` gets the *intersection* with the grant,
+which is a real convenience — a single step can run with less privilege than
+the install allows by asking for less, or none at all by sending `[]`.
 
 Approval works the same way: `approvedBy` must match the email on the session
 token, so the only way to approve a call is to be logged in as that person.

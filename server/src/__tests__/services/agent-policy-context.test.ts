@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { buildPolicyContext, protectedBranches } from '../../services/agent-policy-context.js';
+import {
+  buildPolicyContext,
+  protectedBranches,
+  configuredScopes,
+  resolveScopes,
+} from '../../services/agent-policy-context.js';
 
 /**
  * Regression tests for a real vulnerability.
@@ -19,6 +24,7 @@ describe('policy context construction', () => {
     delete process.env.AGENT_PROTECTED_BRANCHES;
     delete process.env.AGENT_WORKING_BRANCH;
     delete process.env.AGENT_AUTONOMY;
+    delete process.env.AGENT_GRANTED_SCOPES;
   });
 
   afterEach(() => {
@@ -118,5 +124,53 @@ describe('policy context construction', () => {
   it('uses the run privacy level when the request does not say', () => {
     const ctx = buildPolicyContext({ sessionEmail: 'a@b.c', privacyLevel: 'internal' });
     expect(ctx.privacyLevel).toBe('internal');
+  });
+});
+
+describe('scope granting', () => {
+  const saved = { ...process.env };
+
+  beforeEach(() => {
+    delete process.env.AGENT_GRANTED_SCOPES;
+  });
+
+  afterEach(() => {
+    process.env = { ...saved };
+  });
+
+  it('grants nothing by default', () => {
+    // A fresh install can read. Writing is a deliberate act of configuration.
+    expect(configuredScopes()).toEqual([]);
+    expect(resolveScopes(['repository:write'])).toEqual([]);
+  });
+
+  it('ignores a scope the deployment does not hold', () => {
+    process.env.AGENT_GRANTED_SCOPES = 'repository:write';
+    // The old behaviour believed this outright.
+    expect(resolveScopes(['deploy:write'])).toEqual([]);
+  });
+
+  it('keeps only the overlap when a request asks for more', () => {
+    process.env.AGENT_GRANTED_SCOPES = 'repository:write';
+    expect(resolveScopes(['repository:write', 'deploy:write', 'secret:read'])).toEqual([
+      'repository:write',
+    ]);
+  });
+
+  it('gives the full grant when the request says nothing', () => {
+    process.env.AGENT_GRANTED_SCOPES = 'repository:write, pull_request:write';
+    expect(resolveScopes(undefined)).toEqual(['repository:write', 'pull_request:write']);
+  });
+
+  it('lets a request narrow its own privilege', () => {
+    process.env.AGENT_GRANTED_SCOPES = 'repository:write, deploy:write';
+    // Useful for running one step with less power than the install allows.
+    expect(resolveScopes(['repository:write'])).toEqual(['repository:write']);
+    expect(resolveScopes([])).toEqual([]);
+  });
+
+  it('ignores non-string entries rather than trusting them', () => {
+    process.env.AGENT_GRANTED_SCOPES = 'repository:write';
+    expect(resolveScopes([{ toString: () => 'repository:write' }, 42])).toEqual([]);
   });
 });

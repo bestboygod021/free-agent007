@@ -270,6 +270,14 @@ who they answer to:
 - **`autonomy` is clamped, not taken.** A request may lower it below the
   configured ceiling but never raise it, because higher autonomy waives
   approvals.
+- **Scopes are granted, not claimed.** The kernel documents `grantedScopes` as
+  "scopes the connector currently holds", but the route read them from the
+  request body, so a caller could assert `repository:write` and be believed —
+  confirmed live, a scope-gated write succeeded on a self-issued claim.
+  `resolveScopes()` now intersects the request with `AGENT_GRANTED_SCOPES`,
+  which defaults to empty: a fresh install reads, and must be deliberately
+  configured before it writes. Narrowing still works, so a single call can run
+  with reduced privilege.
 - **Descriptive fields may come from the request.** `privacyLevel` and
   `disabledCapabilities` only ever make a verdict stricter.
 
