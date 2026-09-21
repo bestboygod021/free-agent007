@@ -41,6 +41,7 @@ const RESPONSE_CACHE_FILENAME = '20260903_000002_response_cache.ts';
 const KEY_MONTHLY_BUDGET_FILENAME = '20260904_000001_key_monthly_budget.ts';
 const KEY_MONTHLY_USAGE_FILENAME = '20260914_000001_key_monthly_usage.ts';
 const QUOTA_SNAPSHOT_FRESHNESS_FILENAME = '20260915_000001_quota_snapshot_freshness.ts';
+const AGENT_MEMORY_AND_JOBS_FILENAME = '20260921_000001_agent_memory_and_jobs.ts';
 
 interface SchemaRow {
   type: string;
@@ -128,6 +129,7 @@ describe('migration round trip', () => {
         KEY_MONTHLY_BUDGET_FILENAME,
         KEY_MONTHLY_USAGE_FILENAME,
         QUOTA_SNAPSHOT_FRESHNESS_FILENAME,
+        AGENT_MEMORY_AND_JOBS_FILENAME,
       ]);
     } finally {
       db.close();

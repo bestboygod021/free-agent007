@@ -392,3 +392,171 @@ describe('/api/agent input validation (regressions)', () => {
     expect(res.body.hasSecrets).toBe(true);
   });
 });
+
+/**
+ * Memory and job endpoints — the durable half of the kernel.
+ *
+ * The service-level tests cover the semantics; these check the HTTP contract:
+ * the tenant scope is mandatory, bad input is refused with a useful message,
+ * and the kernel's own rules still apply through the route.
+ */
+describe('/api/agent memory and jobs', () => {
+  let app: Express;
+  let token: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+    token = mintDashboardToken('agent-durable@example.com');
+  });
+
+  const fact = {
+    organizationId: 'acme',
+    projectId: 'web',
+    kind: 'project_fact',
+    content: 'The dashboard is built with Vite and React',
+    trust: 'verified',
+    source: { sourceType: 'tool', sourceId: 'read:vite.config.ts', evidenceHash: 'h1' },
+  };
+
+  it('requires auth for memory like every other /api surface', async () => {
+    const res = await call(app, 'POST', '/api/agent/memory', undefined, fact);
+    expect(res.status).toBe(401);
+  });
+
+  it('stores a fact and recalls it through the API', async () => {
+    const stored = await call(app, 'POST', '/api/agent/memory', token, fact);
+    expect(stored.status).toBe(201);
+    expect(stored.body.created).toBe(true);
+
+    const found = await call(app, 'POST', '/api/agent/memory/query', token, {
+      organizationId: 'acme',
+      projectId: 'web',
+      query: 'what builds the dashboard',
+    });
+    expect(found.status).toBe(200);
+    expect(found.body.count).toBeGreaterThan(0);
+    expect(found.body.hits[0].content).toContain('Vite');
+  });
+
+  it('returns 200 rather than a duplicate when the same fact is stored twice', async () => {
+    const again = await call(app, 'POST', '/api/agent/memory', token, fact);
+    expect(again.status).toBe(200);
+    expect(again.body.created).toBe(false);
+  });
+
+  it('refuses a memory write with no tenant scope', async () => {
+    const res = await call(app, 'POST', '/api/agent/memory', token, { ...fact, organizationId: '' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('organizationId');
+  });
+
+  it('refuses secret-like content at the route boundary', async () => {
+    const res = await call(app, 'POST', '/api/agent/memory', token, {
+      ...fact,
+      content: `api_key= ${'x'.repeat(20)}`,
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('secret-like');
+  });
+
+  it('caps memory content so one write cannot bloat the store', async () => {
+    const res = await call(app, 'POST', '/api/agent/memory', token, {
+      ...fact,
+      content: 'x'.repeat(9000),
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('content');
+  });
+
+  it('does not recall another tenant\'s memory', async () => {
+    const res = await call(app, 'POST', '/api/agent/memory/query', token, {
+      organizationId: 'evilcorp',
+      projectId: 'web',
+      query: 'what builds the dashboard',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(0);
+  });
+
+  it('enqueues, claims and completes a job over HTTP', async () => {
+    const created = await call(app, 'POST', '/api/agent/jobs', token, {
+      queue: 'run',
+      organizationId: 'acme',
+      idempotencyKey: 'http-job-1',
+      payload: { task: 'build' },
+      priority: 5,
+    });
+    expect(created.status).toBe(201);
+
+    const claimed = await call(app, 'POST', '/api/agent/jobs/claim', token, {
+      queue: 'run',
+      workerId: 'worker-http',
+      limit: 1,
+    });
+    expect(claimed.status).toBe(200);
+    expect(claimed.body.count).toBe(1);
+    const jobId = claimed.body.jobs[0].jobId;
+
+    const done = await call(app, 'POST', `/api/agent/jobs/${jobId}/complete`, token, {
+      workerId: 'worker-http',
+    });
+    expect(done.status).toBe(200);
+    expect(done.body.job.status).toBe('completed');
+  });
+
+  it('rejects a completion from a worker that does not hold the lease', async () => {
+    await call(app, 'POST', '/api/agent/jobs', token, {
+      queue: 'tool',
+      organizationId: 'acme',
+      idempotencyKey: 'http-job-2',
+      payload: { task: 'lint' },
+    });
+    const claimed = await call(app, 'POST', '/api/agent/jobs/claim', token, {
+      queue: 'tool',
+      workerId: 'owner',
+    });
+    const jobId = claimed.body.jobs[0].jobId;
+
+    const stolen = await call(app, 'POST', `/api/agent/jobs/${jobId}/complete`, token, {
+      workerId: 'impostor',
+    });
+    expect(stolen.status).toBe(400);
+    expect(stolen.body.error.message).toContain('not currently leased');
+  });
+
+  it('rejects an unknown queue name', async () => {
+    const res = await call(app, 'POST', '/api/agent/jobs', token, {
+      queue: 'quantum',
+      organizationId: 'acme',
+      idempotencyKey: 'x',
+      payload: {},
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('queue');
+  });
+
+  it('rejects an oversized job payload', async () => {
+    const res = await call(app, 'POST', '/api/agent/jobs', token, {
+      queue: 'run',
+      organizationId: 'acme',
+      idempotencyKey: 'big',
+      payload: { blob: 'x'.repeat(200 * 1024) },
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('payload');
+  });
+
+  it('reports queue depth alongside the kernel policies', async () => {
+    const res = await call(app, 'GET', '/api/agent/jobs/stats', token);
+    expect(res.status).toBe(200);
+    expect(res.body.queues.map((q: any) => q.queue)).toEqual(['run', 'model', 'tool', 'benchmark']);
+    expect(res.body.policies.run.concurrency).toBe(2);
+  });
+
+  it('404s an unknown job rather than inventing one', async () => {
+    const res = await call(app, 'GET', '/api/agent/jobs/job_does_not_exist', token);
+    expect(res.status).toBe(404);
+  });
+});

@@ -32,6 +32,25 @@ import {
   parseFrontMatter,
   composePrompt,
 } from '@freellmapi/agent/core/prompt-library.js';
+import type {
+  MemoryKind,
+  MemorySource,
+  MemoryTrust,
+} from '@freellmapi/agent/core/memory-retrieval.js';
+
+import { remember, recall, forget, memoryStats } from '../services/agent-memory.js';
+import {
+  enqueue,
+  claim as claimJobs,
+  complete as completeJob,
+  fail as failJob,
+  cancel as cancelJob,
+  getJob,
+  queueStats,
+  isQueueName,
+  QUEUE_NAMES,
+  DEFAULT_QUEUE_POLICIES,
+} from '../services/agent-jobs.js';
 
 /**
  * ForgePilot agent kernel surface (merged from the `code-agent` blueprint).
@@ -521,4 +540,383 @@ agentRouter.post('/prompts/:file/compose', (req: Request, res: Response) => {
   } catch (err) {
     badRequest(res, err instanceof Error ? err.message : 'prompt composition failed');
   }
+});
+
+/* ------------------------------------------------------------------ *
+ * Memory — durable, tenant-scoped recall
+ *
+ * The kernel's memory module ranks records but stores none. These endpoints
+ * add the storage half (server/src/services/agent-memory.ts) so facts learned
+ * in one run are still there for the next one. Validation stays with the
+ * kernel: secret-like content and missing provenance are refused there.
+ * ------------------------------------------------------------------ */
+
+const MEMORY_KINDS = ['project_fact', 'run_summary', 'user_preference', 'decision'] as const;
+const MEMORY_TRUST = ['untrusted', 'observed', 'verified'] as const;
+const MEMORY_SOURCE_TYPES = ['user', 'tool', 'model', 'test'] as const;
+/** Long enough for a design decision, short enough that one write cannot bloat
+ *  the row store or make the JS-side scorer walk a megabyte per candidate. */
+const MAX_MEMORY_CHARS = 8 * 1024;
+const MAX_MEMORY_TAGS = 32;
+
+/** Both identifiers scope every read and write, so an empty one would silently
+ *  merge tenants into a shared bucket. Require them explicitly. */
+function readScope(body: Record<string, unknown>): { organizationId: string; projectId: string } | string {
+  const organizationId = body.organizationId;
+  const projectId = body.projectId;
+  if (typeof organizationId !== 'string' || organizationId.trim() === '') {
+    return '"organizationId" must be a non-empty string.';
+  }
+  if (typeof projectId !== 'string' || projectId.trim() === '') {
+    return '"projectId" must be a non-empty string.';
+  }
+  return { organizationId, projectId };
+}
+
+/** Express types route params as `string | string[]`. Every id below is a
+ *  single path segment, so anything else is a malformed request. */
+function pathParam(value: string | string[] | undefined): string | null {
+  return typeof value === 'string' && value.trim() !== '' ? value : null;
+}
+
+/** POST /api/agent/memory — store one fact. */
+agentRouter.post('/memory', (req: Request, res: Response) => {
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+  const scope = readScope(body);
+  if (typeof scope === 'string') {
+    badRequest(res, scope);
+    return;
+  }
+
+  const { kind, content, trust, source, tags, ttlMs } = body;
+  if (typeof kind !== 'string' || !(MEMORY_KINDS as readonly string[]).includes(kind)) {
+    badRequest(res, `"kind" must be one of: ${MEMORY_KINDS.join(', ')}.`);
+    return;
+  }
+  if (typeof content !== 'string' || content.trim() === '') {
+    badRequest(res, '"content" must be a non-empty string.');
+    return;
+  }
+  if (content.length > MAX_MEMORY_CHARS) {
+    badRequest(res, `"content" must be at most ${MAX_MEMORY_CHARS} characters.`);
+    return;
+  }
+  if (typeof trust !== 'string' || !(MEMORY_TRUST as readonly string[]).includes(trust)) {
+    badRequest(res, `"trust" must be one of: ${MEMORY_TRUST.join(', ')}.`);
+    return;
+  }
+  if (!isPlainObject(source)) {
+    badRequest(res, '"source" must be an object with sourceType, sourceId and evidenceHash.');
+    return;
+  }
+  if (
+    typeof source.sourceType !== 'string' ||
+    !(MEMORY_SOURCE_TYPES as readonly string[]).includes(source.sourceType)
+  ) {
+    badRequest(res, `"source.sourceType" must be one of: ${MEMORY_SOURCE_TYPES.join(', ')}.`);
+    return;
+  }
+  if (typeof source.sourceId !== 'string' || source.sourceId.trim() === '') {
+    badRequest(res, '"source.sourceId" must be a non-empty string.');
+    return;
+  }
+  if (typeof source.evidenceHash !== 'string' || source.evidenceHash.trim() === '') {
+    badRequest(res, '"source.evidenceHash" must be a non-empty string.');
+    return;
+  }
+  if (tags !== undefined) {
+    if (!Array.isArray(tags) || tags.some((t) => typeof t !== 'string')) {
+      badRequest(res, '"tags" must be an array of strings.');
+      return;
+    }
+    if (tags.length > MAX_MEMORY_TAGS) {
+      badRequest(res, `"tags" must contain at most ${MAX_MEMORY_TAGS} entries.`);
+      return;
+    }
+  }
+  if (ttlMs !== undefined && (typeof ttlMs !== 'number' || !Number.isInteger(ttlMs) || ttlMs <= 0)) {
+    badRequest(res, '"ttlMs" must be a positive integer.');
+    return;
+  }
+
+  try {
+    const result = remember({
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      kind: kind as MemoryKind,
+      content,
+      trust: trust as MemoryTrust,
+      source: {
+        sourceType: source.sourceType as MemorySource['sourceType'],
+        sourceId: source.sourceId,
+        evidenceHash: source.evidenceHash,
+      },
+      ...(tags === undefined ? {} : { tags: tags as string[] }),
+      ...(ttlMs === undefined ? {} : { ttlMs }),
+    });
+    res.status(result.created ? 201 : 200).json(result);
+  } catch (err) {
+    // createMemoryRecord throws on secret-like content and bad provenance —
+    // that is a caller error, not a server fault.
+    badRequest(res, err instanceof Error ? err.message : 'memory could not be stored');
+  }
+});
+
+/** POST /api/agent/memory/query — recall ranked facts for a query. */
+agentRouter.post('/memory/query', (req: Request, res: Response) => {
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+  const scope = readScope(body);
+  if (typeof scope === 'string') {
+    badRequest(res, scope);
+    return;
+  }
+
+  const { query, maxResults, allowedTrust } = body;
+  if (typeof query !== 'string' || query.trim() === '') {
+    badRequest(res, '"query" must be a non-empty string.');
+    return;
+  }
+  if (
+    maxResults !== undefined &&
+    (typeof maxResults !== 'number' || !Number.isInteger(maxResults) || maxResults < 1 || maxResults > 100)
+  ) {
+    badRequest(res, '"maxResults" must be an integer between 1 and 100.');
+    return;
+  }
+  if (allowedTrust !== undefined) {
+    if (
+      !Array.isArray(allowedTrust) ||
+      allowedTrust.length === 0 ||
+      allowedTrust.some((t) => typeof t !== 'string' || !(MEMORY_TRUST as readonly string[]).includes(t))
+    ) {
+      badRequest(res, `"allowedTrust" must be a non-empty array of: ${MEMORY_TRUST.join(', ')}.`);
+      return;
+    }
+  }
+
+  try {
+    const hits = recall({
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      query,
+      ...(maxResults === undefined ? {} : { maxResults }),
+      ...(allowedTrust === undefined ? {} : { allowedTrust: allowedTrust as MemoryTrust[] }),
+    });
+    res.json({ hits, count: hits.length });
+  } catch (err) {
+    badRequest(res, err instanceof Error ? err.message : 'memory query failed');
+  }
+});
+
+/** GET /api/agent/memory/stats?organizationId=&projectId= */
+agentRouter.get('/memory/stats', (req: Request, res: Response) => {
+  const scope = readScope(req.query as Record<string, unknown>);
+  if (typeof scope === 'string') {
+    badRequest(res, scope);
+    return;
+  }
+  res.json(memoryStats(scope.organizationId, scope.projectId));
+});
+
+/** DELETE /api/agent/memory/:memoryId?organizationId=&projectId= */
+agentRouter.delete('/memory/:memoryId', (req: Request, res: Response) => {
+  const scope = readScope(req.query as Record<string, unknown>);
+  if (typeof scope === 'string') {
+    badRequest(res, scope);
+    return;
+  }
+  const memoryId = pathParam(req.params.memoryId);
+  if (memoryId === null) {
+    badRequest(res, 'memory id must be a single path segment.');
+    return;
+  }
+  // Scoped delete: a memoryId from another tenant simply does not match.
+  const deleted = forget(scope.organizationId, scope.projectId, memoryId);
+  if (!deleted) {
+    res.status(404).json({ error: { message: `no such memory: ${memoryId}`, type: 'not_found' } });
+    return;
+  }
+  res.json({ deleted: true, memoryId });
+});
+
+/* ------------------------------------------------------------------ *
+ * Scale — durable job queue
+ *
+ * The kernel's InMemoryJobQueue has the right semantics but loses in-flight
+ * work on restart. These endpoints expose the SQLite-backed queue
+ * (server/src/services/agent-jobs.ts), which keeps the kernel's policies and
+ * adds persistence, multi-worker claims and lease recovery.
+ * ------------------------------------------------------------------ */
+
+const MAX_JOB_PAYLOAD_CHARS = 128 * 1024;
+
+/** POST /api/agent/jobs — enqueue work. */
+agentRouter.post('/jobs', (req: Request, res: Response) => {
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+
+  const { queue, organizationId, idempotencyKey, payload, runId, priority, maxAttempts, delayMs } = body;
+  if (!isQueueName(queue)) {
+    badRequest(res, `"queue" must be one of: ${QUEUE_NAMES.join(', ')}.`);
+    return;
+  }
+  if (typeof organizationId !== 'string' || organizationId.trim() === '') {
+    badRequest(res, '"organizationId" must be a non-empty string.');
+    return;
+  }
+  if (typeof idempotencyKey !== 'string' || idempotencyKey.trim() === '') {
+    badRequest(res, '"idempotencyKey" must be a non-empty string.');
+    return;
+  }
+  if (payload === undefined) {
+    badRequest(res, '"payload" is required.');
+    return;
+  }
+  // Serialised size is what actually lands in the row.
+  if (JSON.stringify(payload ?? null).length > MAX_JOB_PAYLOAD_CHARS) {
+    badRequest(res, `"payload" must serialise to at most ${MAX_JOB_PAYLOAD_CHARS} characters.`);
+    return;
+  }
+  if (runId !== undefined && (typeof runId !== 'string' || runId.trim() === '')) {
+    badRequest(res, '"runId" must be a non-empty string when provided.');
+    return;
+  }
+  if (delayMs !== undefined && (typeof delayMs !== 'number' || !Number.isInteger(delayMs) || delayMs < 0)) {
+    badRequest(res, '"delayMs" must be a non-negative integer.');
+    return;
+  }
+
+  try {
+    const now = Date.now();
+    const result = enqueue({
+      queue,
+      organizationId,
+      idempotencyKey,
+      payload,
+      ...(runId === undefined ? {} : { runId }),
+      ...(priority === undefined ? {} : { priority: priority as number }),
+      ...(maxAttempts === undefined ? {} : { maxAttempts: maxAttempts as number }),
+      ...(delayMs === undefined ? {} : { availableAt: now + delayMs }),
+      now,
+    });
+    res.status(result.created ? 201 : 200).json(result);
+  } catch (err) {
+    badRequest(res, err instanceof Error ? err.message : 'job could not be enqueued');
+  }
+});
+
+/** POST /api/agent/jobs/claim — lease jobs for a worker. */
+agentRouter.post('/jobs/claim', (req: Request, res: Response) => {
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+  const { queue, workerId, limit } = body;
+  if (!isQueueName(queue)) {
+    badRequest(res, `"queue" must be one of: ${QUEUE_NAMES.join(', ')}.`);
+    return;
+  }
+  if (typeof workerId !== 'string' || workerId.trim() === '') {
+    badRequest(res, '"workerId" must be a non-empty string.');
+    return;
+  }
+  if (limit !== undefined && (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1 || limit > 100)) {
+    badRequest(res, '"limit" must be an integer between 1 and 100.');
+    return;
+  }
+
+  try {
+    const jobs = claimJobs(queue, workerId, limit === undefined ? {} : { limit });
+    res.json({ jobs, count: jobs.length });
+  } catch (err) {
+    badRequest(res, err instanceof Error ? err.message : 'claim failed');
+  }
+});
+
+/** POST /api/agent/jobs/:jobId/complete — report success. */
+agentRouter.post('/jobs/:jobId/complete', (req: Request, res: Response) => {
+  const body = req.body;
+  if (!isPlainObject(body) || typeof body.workerId !== 'string' || body.workerId.trim() === '') {
+    badRequest(res, '"workerId" must be a non-empty string.');
+    return;
+  }
+  const jobId = pathParam(req.params.jobId);
+  if (jobId === null) {
+    badRequest(res, 'job id must be a single path segment.');
+    return;
+  }
+  try {
+    res.json({ job: completeJob(jobId, body.workerId) });
+  } catch (err) {
+    badRequest(res, err instanceof Error ? err.message : 'complete failed');
+  }
+});
+
+/** POST /api/agent/jobs/:jobId/fail — report failure; retries or dead-letters. */
+agentRouter.post('/jobs/:jobId/fail', (req: Request, res: Response) => {
+  const body = req.body;
+  if (!isPlainObject(body) || typeof body.workerId !== 'string' || body.workerId.trim() === '') {
+    badRequest(res, '"workerId" must be a non-empty string.');
+    return;
+  }
+  if (typeof body.error !== 'string' || body.error.trim() === '') {
+    badRequest(res, '"error" must be a non-empty string describing the failure.');
+    return;
+  }
+  const jobId = pathParam(req.params.jobId);
+  if (jobId === null) {
+    badRequest(res, 'job id must be a single path segment.');
+    return;
+  }
+  try {
+    res.json({ job: failJob(jobId, body.workerId, body.error) });
+  } catch (err) {
+    badRequest(res, err instanceof Error ? err.message : 'fail failed');
+  }
+});
+
+/** POST /api/agent/jobs/:jobId/cancel — stop a job that has not finished. */
+agentRouter.post('/jobs/:jobId/cancel', (req: Request, res: Response) => {
+  const jobId = pathParam(req.params.jobId);
+  if (jobId === null) {
+    badRequest(res, 'job id must be a single path segment.');
+    return;
+  }
+  try {
+    res.json({ job: cancelJob(jobId) });
+  } catch (err) {
+    badRequest(res, err instanceof Error ? err.message : 'cancel failed');
+  }
+});
+
+/** GET /api/agent/jobs/stats — queue depths plus the configured policies. */
+agentRouter.get('/jobs/stats', (_req: Request, res: Response) => {
+  res.json({ queues: queueStats(), policies: DEFAULT_QUEUE_POLICIES });
+});
+
+/** GET /api/agent/jobs/:jobId — inspect one job. */
+agentRouter.get('/jobs/:jobId', (req: Request, res: Response) => {
+  const jobId = pathParam(req.params.jobId);
+  if (jobId === null) {
+    badRequest(res, 'job id must be a single path segment.');
+    return;
+  }
+  const job = getJob(jobId);
+  if (!job) {
+    res.status(404).json({ error: { message: `no such job: ${jobId}`, type: 'not_found' } });
+    return;
+  }
+  res.json({ job });
 });

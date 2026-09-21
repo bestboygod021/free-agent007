@@ -7,6 +7,8 @@ A practical guide. Every command and response below was run against this repo.
 - [2. The prompt library (CLI)](#2-the-prompt-library-cli)
 - [3. The decision API](#3-the-decision-api)
 - [4. Using it from your own code](#4-using-it-from-your-own-code)
+- [5. Memory: what it remembers](#5-memory-what-it-remembers)
+- [6. Jobs: how it scales](#6-jobs-how-it-scales)
 - [What it does not do](#what-it-does-not-do)
 
 ## Start it
@@ -248,6 +250,106 @@ const { text, hasSecrets } = redactSecrets(logLine)
 
 Run `npm run build -w agent` first so `dist/` exists.
 
+## 5. Memory: what it remembers
+
+An agent that forgets your project between runs will keep asking the same
+questions. Facts are scoped to a project, must say where they came from, and
+survive a restart.
+
+Store something worth keeping:
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/memory \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{
+    "organizationId": "acme",
+    "projectId": "web",
+    "kind": "decision",
+    "content": "Chose SQLite over Postgres to keep deployment single-file",
+    "trust": "verified",
+    "source": {"sourceType":"user","sourceId":"adr:002","evidenceHash":"ghi789"}
+  }'
+```
+
+Ask for it back in the words you would actually use:
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/memory/query \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"organizationId":"acme","projectId":"web","query":"SQLite deployment"}'
+```
+
+```
+0.53 [verified] Chose SQLite over Postgres to keep deployment single-file
+0.20 [verified] The build uses Vite 5 and outputs to dist/
+```
+
+Worth knowing:
+
+- `kind` is one of `project_fact`, `run_summary`, `user_preference`, `decision`.
+- `trust` is `untrusted`, `observed` or `verified`; recall defaults to the last
+  two, and more-trusted facts score higher.
+- **Provenance is mandatory.** A fact with no `sourceId`/`evidenceHash` is
+  refused, so you can always ask *why* the agent believes something.
+- **Credentials are refused.** Content matching a secret pattern is rejected
+  rather than quietly stored.
+- Storing the same content twice returns the original instead of duplicating.
+- Pass `ttlMs` for something temporary ("deploy freeze until Friday").
+- Queries are filtered by tenant in SQL — another project cannot read yours.
+
+## 6. Jobs: how it scales
+
+Work that takes minutes should not live inside a request. The queue spreads it
+across workers, caps how much runs at once, and — the point of persisting it —
+does not lose jobs when a worker dies.
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/jobs \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"queue":"run","organizationId":"acme","idempotencyKey":"build-42",
+       "payload":{"task":"build"},"priority":9}'
+```
+
+A worker leases jobs, does the work, and reports back:
+
+```bash
+# claim -> returns at most `concurrency` jobs, highest priority first
+curl -s -X POST http://localhost:3001/api/agent/jobs/claim \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"queue":"run","workerId":"worker-1","limit":5}'
+
+# then one of:
+curl -s -X POST http://localhost:3001/api/agent/jobs/$JOB_ID/complete \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"workerId":"worker-1"}'
+
+curl -s -X POST http://localhost:3001/api/agent/jobs/$JOB_ID/fail \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"workerId":"worker-1","error":"upstream 502"}'
+```
+
+`GET /api/agent/jobs/stats` shows where everything stands:
+
+```
+queue      conc  queued  running  retry  done  DLQ
+run           2       0        2      0     1    1
+model         4       0        0      0     0    0
+tool          2       0        0      0     0    0
+benchmark     1       0        0      0     0    0
+```
+
+The behaviour that matters:
+
+- **Backpressure is real.** Ask for 10 jobs on a queue with concurrency 2 and
+  you get 2. The cap is a property of the queue, not a suggestion.
+- **A crashed worker loses nothing.** Claiming takes a lease; if the worker
+  never reports back the lease expires and another worker picks the job up.
+- **Two workers never get the same job**, even racing on the same row.
+- **Retries are bounded.** Failures back off exponentially, then the job moves
+  to `dead_letter` instead of retrying forever.
+- **Enqueueing is idempotent.** The same `idempotencyKey` returns the existing
+  job; reusing it for a *different* payload is an error, not a silent overwrite.
+
 ## What it does not do
 
 Be clear about this before you build on it.
@@ -262,10 +364,16 @@ FreeLLMAPI catalog in the database. Connecting those two is the obvious next
 step and it is not done.
 
 **Most of the documentation describes plans.** Phases M9–M208 in `agent/docs/`
-are marked `designed_only`: persistence, billing, sandbox runtime, marketplace
-and the rest are specified but not implemented. The 611 tests cover the kernel
-modules listed in this guide — nothing more.
+are marked `designed_only`: billing, sandbox runtime, marketplace and the rest
+are specified but not implemented. The 611 kernel tests cover the modules
+listed in this guide — nothing more.
 
-So today this is useful as: a prompt library you can paste into any model, and
-a policy/routing/evidence engine you can call before letting an agent do
-something irreversible.
+Two things that used to be on this list no longer are. **Memory** and the
+**job queue** are now persisted in SQLite, so facts and in-flight work survive
+a restart; see [memory](#5-memory-what-it-remembers) and
+[jobs](#6-jobs-how-it-scales) above.
+
+So today this is useful as: a prompt library you can paste into any model, a
+policy/routing/evidence engine you can call before letting an agent do
+something irreversible, and a durable memory and work queue to build a real
+agent loop on top of.

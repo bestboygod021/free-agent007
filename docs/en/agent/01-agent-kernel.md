@@ -55,10 +55,14 @@ the user has explicitly consented to it.
 ## API reference
 
 All endpoints are mounted at `/api/agent` behind the dashboard session
-(`requireAuth`), exactly like the other admin surfaces. Handlers are pure —
-they take JSON, run a decision kernel, and return the verdict together with the
-reason for it. They never call an upstream model and never touch the database,
-so they are safe to poll and safe to script against.
+(`requireAuth`), exactly like the other admin surfaces. No handler here ever
+calls an upstream model.
+
+Most are pure decision endpoints: they take JSON, run a kernel, and return the
+verdict together with the reason for it, touching no state at all. The two
+exceptions are the durable surfaces — **memory** and **jobs** — which read and
+write SQLite by design, because remembering and queueing are precisely the
+things that must outlive the process.
 
 | Method | Path | Answers |
 |---|---|---|
@@ -77,6 +81,51 @@ so they are safe to poll and safe to script against.
 | `POST` | `/api/agent/schemas/validate` | Validate data against a contract |
 | `GET` | `/api/agent/prompts` | The versioned prompt library |
 | `POST` | `/api/agent/prompts/:file/compose` | Render one prompt with variables resolved |
+
+### Memory — what the agent remembers between runs
+
+Facts are scoped to an `(organizationId, projectId)` pair, carry mandatory
+provenance, and are ranked lexically with a bonus for how much they are
+trusted. Storage is deduplicated by content hash and honours a TTL.
+
+| Method | Path | Answers |
+|---|---|---|
+| `POST` | `/api/agent/memory` | Store one fact (201 new, 200 if already known) |
+| `POST` | `/api/agent/memory/query` | "What do we know that bears on this?" |
+| `GET` | `/api/agent/memory/stats` | How much is held, by kind and trust |
+| `DELETE` | `/api/agent/memory/:memoryId` | Forget one fact |
+
+Two rules are enforced by the kernel and cannot be bypassed through the route:
+a fact with no provenance is refused, and so is content that looks like a
+credential. Every query is filtered by tenant **in SQL**, so no result set —
+however large — can reach across projects.
+
+### Jobs — how work is spread out and survives failure
+
+| Method | Path | Answers |
+|---|---|---|
+| `POST` | `/api/agent/jobs` | Enqueue work (idempotent per key) |
+| `POST` | `/api/agent/jobs/claim` | Lease jobs for a worker |
+| `POST` | `/api/agent/jobs/:jobId/complete` | Report success |
+| `POST` | `/api/agent/jobs/:jobId/fail` | Report failure — retries, then dead-letters |
+| `POST` | `/api/agent/jobs/:jobId/cancel` | Stop a job that has not finished |
+| `GET` | `/api/agent/jobs/stats` | Queue depth plus the configured policies |
+| `GET` | `/api/agent/jobs/:jobId` | Inspect one job |
+
+Four queues — `run`, `model`, `tool`, `benchmark` — each with its own
+concurrency cap, attempt budget, backoff curve and lease length, taken from the
+kernel's `DEFAULT_QUEUE_POLICIES` rather than redefined.
+
+Three properties matter more than the endpoint list:
+
+- **A claim is a lease, not a handover.** Claiming sets an expiry. If the
+  worker dies without reporting back, the lease lapses and another worker picks
+  the job up — work is never silently stranded.
+- **Claims are exclusive.** The claim runs as a conditional `UPDATE` inside a
+  transaction, so two workers racing for the same row cannot both win.
+- **Retries are bounded.** A job that keeps failing backs off exponentially and
+  then moves to `dead_letter`, the same fail-closed reasoning the run state
+  machine applies to its repair budget.
 
 ### Why a request was refused
 
@@ -185,7 +234,12 @@ enough to read as finished product.
 **Implemented and tested:** the deterministic kernel — state machine, policy
 engine, model router, compute modes, redaction, task DAG, evidence audit,
 output contracts, prompt library, free-provider pool, usage ledger, checkpoint
-store, job queue and session auth. 611 tests cover them.
+store and session auth. 611 tests cover them.
+
+**Now durable:** memory and the job queue existed in the kernel as in-process
+modules that lost everything on restart. Both are now backed by SQLite
+(`agent_memories`, `agent_jobs`), so recalled facts and in-flight jobs survive
+a crash, and several workers can share one queue.
 
 **Designed, not implemented:** phases M9–M208 in `agent/docs/` are explicitly
 marked `designed_only`. Persistence, UI, billing providers, evaluator runners,
