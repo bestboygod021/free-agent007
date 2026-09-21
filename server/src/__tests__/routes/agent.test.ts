@@ -10,6 +10,12 @@ import path from 'node:path';
 import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { registerTool } from '../../services/agent-tools.js';
+import { createUser, createSession } from '../../services/auth.js';
+import {
+  createOrganization,
+  createProject,
+  addMember,
+} from '../../services/agent-tenancy.js';
 import { registerGitTools } from '../../services/agent-tools-git.js';
 
 /**
@@ -51,6 +57,19 @@ async function call(
     /* non-JSON body stays null */
   }
   return { status: res.status, body: json };
+}
+
+
+/**
+ * A dashboard token whose user owns the `acme`/`web` scope the suites below
+ * use. Scope used to be a free-form string that every caller was granted by
+ * default; it is now membership, so a test user needs a real organisation.
+ */
+function mintScopedToken(email: string): string {
+  const user = createUser(email, 'password123');
+  createOrganization({ organizationId: 'acme', name: 'Acme', ownerUserId: user.userId });
+  createProject({ organizationId: 'acme', projectId: 'web', name: 'Web' });
+  return createSession(user.userId);
 }
 
 describe('/api/agent kernel surface', () => {
@@ -416,7 +435,7 @@ describe('/api/agent memory and jobs', () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
     initDb(':memory:');
     app = createApp();
-    token = mintDashboardToken('agent-durable@example.com');
+    token = mintScopedToken('agent-durable@example.com');
   });
 
   const fact = {
@@ -484,8 +503,11 @@ describe('/api/agent memory and jobs', () => {
       projectId: 'web',
       query: 'what builds the dashboard',
     });
-    expect(res.status).toBe(200);
-    expect(res.body.count).toBe(0);
+    // This used to return an empty result set: the scope was accepted and
+    // simply matched nothing. Membership now refuses the scope outright, which
+    // is the stronger guarantee — an empty answer still confirms the tenant
+    // exists and is reachable.
+    expect(res.status).toBe(404);
   });
 
   it('enqueues, claims and completes a job over HTTP', async () => {
@@ -584,7 +606,7 @@ describe('/api/agent runs', () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
     initDb(':memory:');
     app = createApp();
-    token = mintDashboardToken('agent-runs@example.com');
+    token = mintScopedToken('agent-runs@example.com');
   });
 
   const newRun = { organizationId: 'acme', projectId: 'web', goal: 'Ship rate limiting', mode: 'paid' };
@@ -709,7 +731,7 @@ describe('/api/agent driver endpoint', () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
     initDb(':memory:');
     app = createApp();
-    token = mintDashboardToken('agent-driver@example.com');
+    token = mintScopedToken('agent-driver@example.com');
   });
 
   async function create() {
@@ -778,7 +800,7 @@ describe('/api/agent tool endpoints', () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
     initDb(':memory:');
     app = createApp();
-    token = mintDashboardToken('agent-tools@example.com');
+    token = mintScopedToken('agent-tools@example.com');
     clearTools();
     registerBuiltinTools();
   });
@@ -855,7 +877,7 @@ describe('/api/agent tool invoke cannot be talked out of its guards', () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
     initDb(':memory:');
     app = createApp();
-    token = mintDashboardToken('approver@example.com');
+    token = mintScopedToken('approver@example.com');
     clearTools();
     registerBuiltinTools();
     registerGitTools();
@@ -1005,5 +1027,120 @@ describe('/api/agent tool invoke cannot be talked out of its guards', () => {
     });
 
     expect(granted.body.ok).toBe(true);
+  });
+});
+
+
+describe('/api/agent tenancy is resolved from membership, not the body', () => {
+  let app: Express;
+  let aliceToken: string;
+  let malloryToken: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+
+    const alice = createUser('alice@example.com', 'password123');
+    aliceToken = createSession(alice.userId);
+    const mallory = createUser('mallory@example.com', 'password123');
+    malloryToken = createSession(mallory.userId);
+
+    createOrganization({ organizationId: 'acme', name: 'Acme', ownerUserId: alice.userId });
+    createProject({ organizationId: 'acme', projectId: 'web', name: 'Web' });
+    // Mallory is a real, authenticated user — with an organisation of her own.
+    createOrganization({ organizationId: 'zeta', name: 'Zeta', ownerUserId: mallory.userId });
+    createProject({ organizationId: 'zeta', projectId: 'web', name: 'Web' });
+  });
+
+  const memory = (organizationId: string, projectId: string, content: string) => ({
+    organizationId,
+    projectId,
+    kind: 'project_fact',
+    content,
+    trust: 'observed',
+    source: { sourceType: 'user', sourceId: 'test', evidenceHash: 'h' },
+  });
+
+  it('writes into a scope the caller belongs to', async () => {
+    const res = await call(app, 'POST', '/api/agent/memory', aliceToken,
+      memory('acme', 'web', 'acme fact'));
+    expect(res.status).toBe(201);
+  });
+
+  it('refuses a write into an organisation the caller is not in', async () => {
+    const res = await call(app, 'POST', '/api/agent/memory', malloryToken,
+      memory('acme', 'web', 'stolen'));
+
+    expect(res.status).toBe(404);
+    // Not 403: telling her it exists would let any account enumerate tenants.
+    expect(res.body.error.message).toContain('was not found');
+  });
+
+  it('does not leak another tenant\'s data through a read', async () => {
+    const mine = await call(app, 'GET',
+      '/api/agent/memory/stats?organizationId=zeta&projectId=web', malloryToken);
+    expect(mine.status).toBe(200);
+    expect(mine.body.total).toBe(0);
+
+    const theirs = await call(app, 'GET',
+      '/api/agent/memory/stats?organizationId=acme&projectId=web', malloryToken);
+    expect(theirs.status).toBe(404);
+  });
+
+  it('keeps identically-named projects in different organisations apart', async () => {
+    await call(app, 'POST', '/api/agent/memory', malloryToken,
+      memory('zeta', 'web', 'zeta fact'));
+
+    const acme = await call(app, 'GET',
+      '/api/agent/memory/stats?organizationId=acme&projectId=web', aliceToken);
+    const zeta = await call(app, 'GET',
+      '/api/agent/memory/stats?organizationId=zeta&projectId=web', malloryToken);
+
+    // Both are called "web"; neither sees the other's rows.
+    expect(acme.body.total).toBe(1);
+    expect(zeta.body.total).toBe(1);
+  });
+
+  it('lists only the organisations the caller can act in', async () => {
+    const res = await call(app, 'GET', '/api/agent/organizations', malloryToken);
+    expect(res.status).toBe(200);
+    expect(res.body.organizations.map((o: { organizationId: string }) => o.organizationId))
+      .toEqual(['zeta']);
+  });
+
+  it('refuses a viewer a write but allows the read', async () => {
+    const viewer = createUser('viewer@example.com', 'password123');
+    const viewerToken = createSession(viewer.userId);
+    addMember({ organizationId: 'acme', userId: viewer.userId, role: 'viewer' });
+
+    const read = await call(app, 'GET',
+      '/api/agent/memory/stats?organizationId=acme&projectId=web', viewerToken);
+    expect(read.status).toBe(200);
+
+    const write = await call(app, 'POST', '/api/agent/memory', viewerToken,
+      memory('acme', 'web', 'viewer should not write'));
+    expect(write.status).toBe(403);
+    expect(write.body.error.message).toContain('may not write');
+  });
+
+  it('will not let a non-admin create a project', async () => {
+    const dev = createUser('dev@example.com', 'password123');
+    const devToken = createSession(dev.userId);
+    addMember({ organizationId: 'acme', userId: dev.userId, role: 'developer' });
+
+    const res = await call(app, 'POST', '/api/agent/organizations/acme/projects', devToken,
+      { projectId: 'sneaky' });
+    expect(res.status).toBe(403);
+  });
+
+  it('lets an owner create a project, and it is immediately usable', async () => {
+    const created = await call(app, 'POST', '/api/agent/organizations/acme/projects', aliceToken,
+      { projectId: 'billing', name: 'Billing' });
+    expect(created.status).toBe(201);
+
+    const used = await call(app, 'POST', '/api/agent/memory', aliceToken,
+      memory('acme', 'billing', 'billing fact'));
+    expect(used.status).toBe(201);
   });
 });

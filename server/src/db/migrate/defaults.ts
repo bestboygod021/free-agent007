@@ -39,6 +39,7 @@ import * as quotaSnapshotFreshness from '../migrations/20260915_000001_quota_sna
 import * as agentMemoryAndJobs from '../migrations/20260921_000001_agent_memory_and_jobs.js';
 import * as agentRuns from '../migrations/20260921_000002_agent_runs.js';
 import * as agentToolCalls from '../migrations/20260921_000003_agent_tool_calls.js';
+import * as organizations from '../migrations/20260921_000004_organizations_and_membership.js';
 
 export interface MigrationModule {
   up(db: Db): void;
@@ -90,6 +91,7 @@ export const QUOTA_SNAPSHOT_FRESHNESS_FILENAME = '20260915_000001_quota_snapshot
 export const AGENT_MEMORY_AND_JOBS_FILENAME = '20260921_000001_agent_memory_and_jobs.ts';
 export const AGENT_RUNS_FILENAME = '20260921_000002_agent_runs.ts';
 export const AGENT_TOOL_CALLS_FILENAME = '20260921_000003_agent_tool_calls.ts';
+export const ORGANIZATIONS_FILENAME = '20260921_000004_organizations_and_membership.ts';
 
 export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: LEGACY_BASELINE_FILENAME, module: legacyBaseline },
@@ -132,4 +134,5 @@ export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: AGENT_MEMORY_AND_JOBS_FILENAME, module: agentMemoryAndJobs },
   { filename: AGENT_RUNS_FILENAME, module: agentRuns },
   { filename: AGENT_TOOL_CALLS_FILENAME, module: agentToolCalls },
+  { filename: ORGANIZATIONS_FILENAME, module: organizations },
 ];

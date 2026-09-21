@@ -286,6 +286,34 @@ edit is not a control. Anything that decides *whether* an action is permitted
 belongs to configuration or the session, never to the body of the request
 asking for it.
 
+### Tenancy: the fourth instance
+
+The same audit found it once more, in `organization_id` and `project_id`.
+Every agent table is scoped by that pair, and the route took both from the
+request body — so the fields deciding *whose data this is* were supplied by
+the caller. On a single-user install nothing could be stolen, but the columns
+are load-bearing for everything above them.
+
+`services/agent-tenancy.ts` resolves scope from `organization_members`
+instead. The body may still name a scope, because a user can belong to
+several; it is simply no longer believed. A caller naming an organisation it
+is not in receives `404 was not found` — the same answer as for an
+organisation that does not exist, so the endpoint cannot be used to enumerate
+tenants.
+
+Roles reuse the kernel's own six from `identity-access-contract.ts` rather
+than the four in `tenant-context.ts`. Two role vocabularies in one system is
+how authorisation bugs start, and the six-role set is the one the invite and
+role-change rules are already written against. `agent` is a role a member can
+hold: it may write, but may not administer, so an autonomous run cannot change
+who is allowed in.
+
+`tenant-context.ts` targets PostgreSQL row-level security, which this SQLite
+deployment does not have. Enforcement is therefore in the query layer, and
+that is a weaker guarantee: it holds only because every scoped route calls
+`resolveScope` first. A new route that forgets to is a new hole, which is why
+the route tests assert the refusal rather than trusting the convention.
+
 ### Memory — what the agent remembers between runs
 
 Facts are scoped to an `(organizationId, projectId)` pair, carry mandatory

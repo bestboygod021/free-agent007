@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-289 test files, 3,569 tests. It talks to 20 provider families, fails over
+290 test files, 3,597 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -164,7 +164,7 @@ Disproportionately strong, because the gateway had to solve these for itself.
 | 254–257 | PII and secret handling | **Built** | `redaction.ts`, `log-redaction.ts`, `error-redaction.ts` |
 | 260 | Output schema checks | **Built** | `structured-output.ts`, `output-contract.ts` |
 | 261 | Egress control | **Rules only** | `egress-policy-runtime.ts` |
-| 262 | Tenant isolation | **Partial** | enforced in agent memory/jobs; no platform-wide tenancy |
+| 262 | Tenant isolation | **Built** (agent surface) | `services/agent-tenancy.ts` — every scoped read and write resolves membership from the database; a body naming another tenant gets 404, not its data. Still agent-only: the gateway's own tables have no tenancy |
 | 263 | Global kill switch | **Partial** | `maintenance` setting |
 | 267 | Security decision log | **Built** | `server_logs`, `attempt-trace.ts` |
 | 248, 253, 258–259, 264–266, 268–270 | | **Absent** | |
@@ -179,20 +179,35 @@ runtime specifically so GitHub's scanner will not block commits.
 
 The weakest area relative to its importance.
 
-The `users` table is: `id`, `email`, `password_hash`, `created_at`. That is the
-whole identity model. **There is no role column, no teams, no organisations,
-no projects.** Sessions are bearer tokens in a `sessions` table.
+The `users` table is still `id`, `email`, `password_hash`, `created_at` — no
+role column lives there. Sessions are bearer tokens in a `sessions` table.
 
-So: 271–280 (SSO, OIDC, MFA, passkeys, RBAC, ABAC, teams, orgs, projects,
-service accounts) are all **absent**, and they block each other — RBAC without
-orgs is meaningless.
+What changed: `organizations`, `projects` and `organization_members` now exist
+(migration `20260921_000004`), and the agent surface enforces them. Roles are
+the kernel's own six (`owner`, `admin`, `developer`, `reviewer`, `viewer`,
+`agent`), deliberately reusing the vocabulary that
+`agent/src/core/identity-access-contract.ts` already decides invites and role
+changes against.
+
+| Item | Status | Evidence |
+|---|---|---|
+| 277 Teams/groups | **Partial** | `organization_members` — membership and roles, no nested groups |
+| 278 Organisations | **Built** | `organizations`, owner assigned transactionally |
+| 279 Projects | **Built** | `projects`, ids unique per organisation |
+| 275–276 RBAC/ABAC | **Partial** | role ranking gates read/write/administer on the agent surface only |
+| 271–274, 280 | **Absent** | SSO, OIDC, MFA, passkeys, service accounts |
+
+**Scope of the enforcement, stated plainly:** it covers `/api/agent/*`. The
+gateway's keys, models and logs remain single-tenant, and the invite and
+role-change rules in the kernel are still unreachable — nothing calls
+`decideMembershipInvite` yet, because there is no invite endpoint. The tables
+those rules need now exist, which is the part that was missing.
 
 **Built:** 281 (scoped API keys, `key_model_scope`), 282–283 partially
 (`key_monthly_usage`, `key-budget.ts`), 291 (admin dashboard), 292 partially
 (`server_logs` — appended, not tamper-evident).
 
-**Verdict:** ~4 of 25. Recommend treating orgs/RBAC as one foundational
-project, because §2 item 19, §11 item 262 and most of §16 all wait on it.
+**Verdict:** ~8 of 25, up from ~4.
 
 ---
 
@@ -245,11 +260,11 @@ already exist.
 | 2. Providers | 17 | 20 |
 | 3–7. Agent, tools, memory, RAG, workflow | ~38 | 130 |
 | 8–10. Coding, browser, data | ~4 | 80 |
-| 11. Security | 15 | 25 |
-| 12. Identity | ~4 | 25 |
+| 11. Security | 16 | 25 |
+| 12. Identity | ~8 | 25 |
 | 13–14. Observability, cost | ~19 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~152** | **500** |
+| **Total** | **~157** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
@@ -263,9 +278,13 @@ Sequenced by *what unblocks the most*, not by list order. Item 2 is done; the
 rest stand.
 
 **1. Organisations, projects and RBAC** (items 275–279, unblocks 19, 262, §16)
-Nothing else in governance or collaboration can start until `users` has more
-than four columns. This is the single highest-leverage change in the list, and
-it gets harder every month.
+— **partly done**
+The tables exist and the agent surface enforces them
+(`services/agent-tenancy.ts`): membership decides scope, so a request naming
+another tenant is refused rather than believed. What remains under this
+heading is an invite flow (the kernel's `decideMembershipInvite` is written and
+still unreachable), a user-management UI, and extending tenancy to the
+gateway's own tables — that last one is the larger half.
 
 **2. An agent execution loop** (items 39–44, 52–53) — **done**
 Delivered in `services/agent-runtime.ts`, with autonomy in

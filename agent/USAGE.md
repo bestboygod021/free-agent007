@@ -616,6 +616,7 @@ deciding *whether* a call is allowed never come from the request:
 | `approverUserId` | the authenticated session | Otherwise a caller names itself approver and satisfies the gate with no human. |
 | `autonomy` | `AGENT_AUTONOMY` (default `supervised`) | A request may *lower* it, never raise it. |
 | `workspaceRoot` | `AGENT_WORKSPACE_ROOT` | A caller choosing the root defeats confinement. |
+| `organizationId` / `projectId` | checked against `organization_members` | The body may *name* a scope; membership decides whether the caller gets it. |
 | `grantedScopes` | `AGENT_GRANTED_SCOPES` (default *empty*) | These are the permissions the deployment *holds*; a caller asserting `repository:write` was previously believed. A request may narrow the set, never extend it. |
 
 Descriptive fields (`privacyLevel`, `disabledCapabilities`) are taken from the
@@ -648,6 +649,41 @@ AGENT_GRANTED_SCOPES=repository:write
 A request that sends `grantedScopes` gets the *intersection* with the grant,
 which is a real convenience — a single step can run with less privilege than
 the install allows by asking for less, or none at all by sending `[]`.
+
+#### Organisations and projects
+
+Every memory, run and tool call is scoped to an organisation and a project.
+Ask what you may act in before acting:
+
+```bash
+curl -s localhost:3001/api/agent/organizations -H "Authorization: Bearer $TOKEN"
+```
+
+```json
+{"organizations":[{"organizationId":"default","name":"Default","role":"owner",
+  "projects":[{"projectId":"default","name":"Default project"}]}]}
+```
+
+The first account created at setup owns a `default` organisation with a
+`default` project, so an existing install keeps working unchanged. An `admin`
+or `owner` can add more:
+
+```bash
+curl -s -X POST localhost:3001/api/agent/organizations/default/projects \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"projectId":"billing","name":"Billing"}'
+```
+
+Naming a scope you are not a member of returns `404`, deliberately identical
+to a scope that does not exist:
+
+```
+{"error":{"message":"organization \"acme-corp\" was not found."}}
+```
+
+Roles rank `viewer < agent < reviewer < developer < admin < owner`. A `viewer`
+reads but cannot write. An `agent` writes but cannot create projects or change
+membership — an autonomous run should not be able to widen its own access.
 
 Approval works the same way: `approvedBy` must match the email on the session
 token, so the only way to approve a call is to be logged in as that person.

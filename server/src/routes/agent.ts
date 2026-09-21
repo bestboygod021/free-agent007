@@ -73,6 +73,21 @@ import { gatewayCompletion } from '../services/agent-completion.js';
 import { invokeTool, listTools, listToolCalls, ToolError } from '../services/agent-tools.js';
 import { agentWorkspaceRoot } from '../services/agent-tools-builtin.js';
 import { buildPolicyContext, resolveScopes } from '../services/agent-policy-context.js';
+import {
+  resolveScope,
+  isScopeFailure,
+  canWrite,
+  canAdminister,
+  membershipRole,
+  projectExists,
+  createProject,
+  listOrganizations,
+  listProjects,
+  ensureDefaultOrganization,
+  isValidIdentifier,
+  type Scope,
+  type ScopeFailure,
+} from '../services/agent-tenancy.js';
 
 /**
  * ForgePilot agent kernel surface (merged from the `code-agent` blueprint).
@@ -96,6 +111,10 @@ const MAX_REDACT_CHARS = 256 * 1024;
 
 function badRequest(res: Response, message: string): void {
   res.status(400).json({ error: { message, type: 'invalid_request_error' } });
+}
+
+function forbidden(res: Response, message: string): void {
+  res.status(403).json({ error: { message, type: 'permission_error' } });
 }
 
 /** A JSON object — not null, not an array. Array bodies reaching a kernel that
@@ -581,18 +600,34 @@ const MEMORY_SOURCE_TYPES = ['user', 'tool', 'model', 'test'] as const;
 const MAX_MEMORY_CHARS = 8 * 1024;
 const MAX_MEMORY_TAGS = 32;
 
-/** Both identifiers scope every read and write, so an empty one would silently
- *  merge tenants into a shared bucket. Require them explicitly. */
-function readScope(body: Record<string, unknown>): { organizationId: string; projectId: string } | string {
-  const organizationId = body.organizationId;
-  const projectId = body.projectId;
-  if (typeof organizationId !== 'string' || organizationId.trim() === '') {
-    return '"organizationId" must be a non-empty string.';
+/**
+ * Both identifiers scope every read and write, so an empty one would silently
+ * merge tenants into a shared bucket — and a *believed* one lets a caller read
+ * another tenant's data. The body may name the scope, because a user can
+ * belong to several; membership decides whether they get it.
+ *
+ * Returns the resolved scope (including the caller's role) or a failure with
+ * the status to send. Callers must pass the authenticated user, never an id
+ * from the request.
+ */
+function readScope(
+  req: Request,
+  body: Record<string, unknown>,
+): Scope | ScopeFailure {
+  const userId = (req as Request & { user?: { userId?: number } }).user?.userId;
+  if (typeof userId !== 'number') {
+    // requireAuth is mounted in front of this router, so this is a wiring
+    // error rather than a reachable request. Fail closed regardless.
+    return { status: 403, message: 'authentication is required.' };
   }
-  if (typeof projectId !== 'string' || projectId.trim() === '') {
-    return '"projectId" must be a non-empty string.';
-  }
-  return { organizationId, projectId };
+  return resolveScope(userId, body);
+}
+
+/** Send whichever refusal `readScope` produced. */
+function sendScopeFailure(res: Response, failure: ScopeFailure): void {
+  res
+    .status(failure.status)
+    .json({ error: { message: failure.message, type: 'invalid_request_error' } });
 }
 
 /** Express types route params as `string | string[]`. Every id below is a
@@ -601,6 +636,90 @@ function pathParam(value: string | string[] | undefined): string | null {
   return typeof value === 'string' && value.trim() !== '' ? value : null;
 }
 
+/** The authenticated user id, or null if the auth middleware is not mounted. */
+function callerId(req: Request): number | null {
+  const userId = (req as Request & { user?: { userId?: number } }).user?.userId;
+  return typeof userId === 'number' ? userId : null;
+}
+
+/**
+ * GET /api/agent/organizations — the scopes this caller may act in.
+ *
+ * A client needs this before it can send a scoped request at all, and it
+ * doubles as the honest answer to "what am I allowed to see": the list is
+ * built from membership, so it never mentions an organisation the caller is
+ * not in.
+ *
+ * A first-run install has no organisation yet, so the first call creates the
+ * default one rather than returning an empty list the UI cannot act on.
+ */
+agentRouter.get('/organizations', (req: Request, res: Response) => {
+  const userId = callerId(req);
+  if (userId === null) {
+    forbidden(res, 'authentication is required.');
+    return;
+  }
+  if (listOrganizations(userId).length === 0) {
+    ensureDefaultOrganization(userId);
+  }
+  const organizations = listOrganizations(userId).map((org) => ({
+    ...org,
+    projects: listProjects(org.organizationId),
+  }));
+  res.json({ organizations });
+});
+
+/** POST /api/agent/organizations/:organizationId/projects — add a project. */
+agentRouter.post('/organizations/:organizationId/projects', (req: Request, res: Response) => {
+  const userId = callerId(req);
+  if (userId === null) {
+    forbidden(res, 'authentication is required.');
+    return;
+  }
+  const organizationId = pathParam(req.params.organizationId);
+  if (organizationId === null) {
+    badRequest(res, 'organizationId is required.');
+    return;
+  }
+  const role = membershipRole(userId, organizationId);
+  if (role === null) {
+    // Same wording as a missing organisation, so this cannot be used to probe
+    // which organisations exist.
+    res
+      .status(404)
+      .json({ error: { message: `organization "${organizationId}" was not found.`, type: 'invalid_request_error' } });
+    return;
+  }
+  if (!canAdminister(role)) {
+    forbidden(res, `role "${role}" may not create projects.`);
+    return;
+  }
+
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+  const projectId = body.projectId;
+  if (!isValidIdentifier(projectId)) {
+    badRequest(
+      res,
+      '"projectId" must be lowercase letters, digits, hyphen or underscore (max 63 characters).',
+    );
+    return;
+  }
+  if (projectExists(organizationId, projectId)) {
+    res
+      .status(409)
+      .json({ error: { message: `project "${projectId}" already exists.`, type: 'invalid_request_error' } });
+    return;
+  }
+  const name = typeof body.name === 'string' && body.name.trim() !== '' ? body.name.trim() : projectId;
+
+  createProject({ organizationId, projectId, name });
+  res.status(201).json({ organizationId, projectId, name });
+});
+
 /** POST /api/agent/memory — store one fact. */
 agentRouter.post('/memory', (req: Request, res: Response) => {
   const body = req.body;
@@ -608,9 +727,13 @@ agentRouter.post('/memory', (req: Request, res: Response) => {
     badRequest(res, 'request body must be a JSON object.');
     return;
   }
-  const scope = readScope(body);
-  if (typeof scope === 'string') {
-    badRequest(res, scope);
+  const scope = readScope(req, body);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
+    return;
+  }
+  if (!canWrite(scope.role)) {
+    forbidden(res, `role "${scope.role}" may not write in this project.`);
     return;
   }
 
@@ -695,9 +818,13 @@ agentRouter.post('/memory/query', (req: Request, res: Response) => {
     badRequest(res, 'request body must be a JSON object.');
     return;
   }
-  const scope = readScope(body);
-  if (typeof scope === 'string') {
-    badRequest(res, scope);
+  const scope = readScope(req, body);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
+    return;
+  }
+  if (!canWrite(scope.role)) {
+    forbidden(res, `role "${scope.role}" may not write in this project.`);
     return;
   }
 
@@ -740,9 +867,9 @@ agentRouter.post('/memory/query', (req: Request, res: Response) => {
 
 /** GET /api/agent/memory/stats?organizationId=&projectId= */
 agentRouter.get('/memory/stats', (req: Request, res: Response) => {
-  const scope = readScope(req.query as Record<string, unknown>);
-  if (typeof scope === 'string') {
-    badRequest(res, scope);
+  const scope = readScope(req, req.query as Record<string, unknown>);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
     return;
   }
   res.json(memoryStats(scope.organizationId, scope.projectId));
@@ -750,9 +877,13 @@ agentRouter.get('/memory/stats', (req: Request, res: Response) => {
 
 /** DELETE /api/agent/memory/:memoryId?organizationId=&projectId= */
 agentRouter.delete('/memory/:memoryId', (req: Request, res: Response) => {
-  const scope = readScope(req.query as Record<string, unknown>);
-  if (typeof scope === 'string') {
-    badRequest(res, scope);
+  const scope = readScope(req, req.query as Record<string, unknown>);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
+    return;
+  }
+  if (!canWrite(scope.role)) {
+    forbidden(res, `role "${scope.role}" may not write in this project.`);
     return;
   }
   const memoryId = pathParam(req.params.memoryId);
@@ -958,9 +1089,13 @@ agentRouter.post('/runs', (req: Request, res: Response) => {
     badRequest(res, 'request body must be a JSON object.');
     return;
   }
-  const scope = readScope(body);
-  if (typeof scope === 'string') {
-    badRequest(res, scope);
+  const scope = readScope(req, body);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
+    return;
+  }
+  if (!canWrite(scope.role)) {
+    forbidden(res, `role "${scope.role}" may not write in this project.`);
     return;
   }
   const { goal, mode } = body;
@@ -1002,9 +1137,9 @@ function runError(res: Response, err: unknown, fallback: string): void {
 
 /** GET /api/agent/runs?organizationId=&projectId= — list runs. */
 agentRouter.get('/runs', (req: Request, res: Response) => {
-  const scope = readScope(req.query as Record<string, unknown>);
-  if (typeof scope === 'string') {
-    badRequest(res, scope);
+  const scope = readScope(req, req.query as Record<string, unknown>);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
     return;
   }
   const rawState = req.query.state;

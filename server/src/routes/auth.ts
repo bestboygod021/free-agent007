@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { ensureDefaultOrganization } from '../services/agent-tenancy.js';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import {
@@ -124,6 +125,9 @@ authRouter.post('/setup', (req: Request, res: Response) => {
     return;
   }
   const user = createUser(parsed.data.email, parsed.data.password);
+  // Agent data is scoped to an organisation and project, so the first account
+  // needs one or every agent call fails on a scope it has no way to create.
+  ensureDefaultOrganization(user.userId);
   clearSetupCode(); // one-time: the dashboard is now claimed
   const token = createSession(user.userId);
   res.status(201).json({ token, email: user.email });
