@@ -49,9 +49,73 @@ import {
 export const agentRouter = Router();
 
 const MAX_BODY_ITEMS = 500;
+/** Redaction runs a dozen regexes over the whole string; 1 MB of text is ~0.2s
+ *  of CPU on this box. Cap it so one request cannot monopolise the event loop. */
+const MAX_REDACT_CHARS = 256 * 1024;
 
 function badRequest(res: Response, message: string): void {
   res.status(400).json({ error: { message, type: 'invalid_request_error' } });
+}
+
+/** A JSON object — not null, not an array. Array bodies reaching a kernel that
+ *  expects a record surface as `Cannot read properties of undefined`, which
+ *  tells the caller nothing about what to fix. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Every element of `value` must be a plain object.
+ *
+ * The kernels iterate these arrays and read fields off each entry, so a `null`
+ * or a bare string inside an otherwise well-formed array throws a TypeError
+ * deep inside the kernel. We still answer 400 in that case (the handlers catch
+ * it), but the message leaks an internal property name — "Cannot read
+ * properties of null (reading 'taskId')" — instead of naming the bad index.
+ */
+function badElementIndex(value: readonly unknown[]): number {
+  return value.findIndex((entry) => !isPlainObject(entry));
+}
+
+/**
+ * The run context carries the repair budget the state machine enforces
+ * (invariant I4: `repairAttempts >= maxRepairAttempts` stops the run). A
+ * caller-supplied context was previously merged in unchecked, so
+ * `{"repairAttempts": "not-a-number"}` produced a NaN comparison that is
+ * always false — silently disabling the budget guard. Validate the shape
+ * before it can reach the kernel.
+ */
+const RUN_CONTEXT_NUMBERS = ['repairAttempts', 'maxRepairAttempts'] as const;
+const RUN_CONTEXT_BOOLEANS = [
+  'planApproved',
+  'deployApproved',
+  'securityGatePassed',
+  'verifyPassed',
+] as const;
+
+function validateRunContext(raw: Record<string, unknown>): string | null {
+  for (const field of RUN_CONTEXT_NUMBERS) {
+    const v = raw[field];
+    if (v === undefined) continue;
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < 0) {
+      return `"context.${field}" must be a non-negative integer.`;
+    }
+  }
+  for (const field of RUN_CONTEXT_BOOLEANS) {
+    const v = raw[field];
+    if (v !== undefined && typeof v !== 'boolean') {
+      return `"context.${field}" must be a boolean.`;
+    }
+  }
+  if (raw.blockReason !== undefined && typeof raw.blockReason !== 'string') {
+    return '"context.blockReason" must be a string.';
+  }
+  const attempts = raw.repairAttempts;
+  const max = raw.maxRepairAttempts;
+  if (typeof attempts === 'number' && typeof max === 'number' && attempts > max) {
+    return '"context.repairAttempts" cannot exceed "context.maxRepairAttempts".';
+  }
+  return null;
 }
 
 /** GET /api/agent/modes — the three compute modes and their full profiles. */
@@ -115,7 +179,7 @@ agentRouter.post('/route', (req: Request, res: Response) => {
   const request = body.request;
   const providers = body.providers;
 
-  if (typeof request !== 'object' || request === null) {
+  if (!isPlainObject(request)) {
     badRequest(res, '"request" must be a ModelRouteRequest object.');
     return;
   }
@@ -127,8 +191,23 @@ agentRouter.post('/route', (req: Request, res: Response) => {
     badRequest(res, `"providers" may not exceed ${MAX_BODY_ITEMS} entries.`);
     return;
   }
+  const badProvider = badElementIndex(providers);
+  if (badProvider !== -1) {
+    badRequest(res, `"providers[${badProvider}]" must be a ModelProviderCapability object.`);
+    return;
+  }
   if (body.mode !== undefined && !isComputeMode(body.mode)) {
     badRequest(res, `"mode" must be one of: ${COMPUTE_MODES.join(', ')}.`);
+    return;
+  }
+  if (
+    body.maxFallbacks !== undefined &&
+    (typeof body.maxFallbacks !== 'number' ||
+      !Number.isInteger(body.maxFallbacks) ||
+      body.maxFallbacks < 0 ||
+      body.maxFallbacks > MAX_BODY_ITEMS)
+  ) {
+    badRequest(res, `"maxFallbacks" must be an integer between 0 and ${MAX_BODY_ITEMS}.`);
     return;
   }
 
@@ -153,16 +232,27 @@ agentRouter.post('/policy/tool-call', (req: Request, res: Response) => {
   const call = body.call;
   const rawContext = body.context;
 
-  if (typeof call !== 'object' || call === null) {
+  if (!isPlainObject(call)) {
     badRequest(res, '"call" must be a ToolCallRequest object.');
     return;
   }
-  if (typeof (call as Record<string, unknown>).tool !== 'string') {
+  if (typeof call.tool !== 'string') {
     badRequest(res, '"call.tool" must be a string, e.g. "git.push".');
     return;
   }
-  if (typeof rawContext !== 'object' || rawContext === null) {
+  if (call.grantedScopes !== undefined && !Array.isArray(call.grantedScopes)) {
+    badRequest(res, '"call.grantedScopes" must be an array of strings.');
+    return;
+  }
+  if (!isPlainObject(rawContext)) {
     badRequest(res, '"context" must be a PolicyContext object.');
+    return;
+  }
+  if (
+    rawContext.protectedBranches !== undefined &&
+    !Array.isArray(rawContext.protectedBranches)
+  ) {
+    badRequest(res, '"context.protectedBranches" must be an array of branch names.');
     return;
   }
 
@@ -254,10 +344,19 @@ agentRouter.post('/states/transition', (req: Request, res: Response) => {
     return;
   }
 
-  const context =
-    typeof body.context === 'object' && body.context !== null
-      ? { ...initialContext(), ...(body.context as Record<string, unknown>) }
-      : initialContext();
+  if (body.context !== undefined && !isPlainObject(body.context)) {
+    badRequest(res, '"context" must be a RunContext object.');
+    return;
+  }
+  const contextProblem = isPlainObject(body.context) ? validateRunContext(body.context) : null;
+  if (contextProblem) {
+    badRequest(res, contextProblem);
+    return;
+  }
+
+  const context = isPlainObject(body.context)
+    ? { ...initialContext(), ...body.context }
+    : initialContext();
 
   try {
     res.json(transition(state as never, event as never, context as never));
@@ -279,6 +378,11 @@ agentRouter.post('/dag/validate', (req: Request, res: Response) => {
   }
   if (tasks.length > MAX_BODY_ITEMS) {
     badRequest(res, `"tasks" may not exceed ${MAX_BODY_ITEMS} entries.`);
+    return;
+  }
+  const badTask = badElementIndex(tasks);
+  if (badTask !== -1) {
+    badRequest(res, `"tasks[${badTask}]" must be an AgentTask object.`);
     return;
   }
 
@@ -306,6 +410,13 @@ agentRouter.post('/dag/validate', (req: Request, res: Response) => {
 agentRouter.post('/redact', (req: Request, res: Response) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   if (typeof body.text === 'string') {
+    if (body.text.length > MAX_REDACT_CHARS) {
+      badRequest(
+        res,
+        `"text" may not exceed ${MAX_REDACT_CHARS} characters; split it before redacting.`,
+      );
+      return;
+    }
     res.json(redactSecrets(body.text));
     return;
   }
@@ -323,9 +434,22 @@ agentRouter.post('/redact', (req: Request, res: Response) => {
 agentRouter.post('/evidence/audit', (req: Request, res: Response) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const claim = body.claim ?? body;
-  if (typeof claim !== 'object' || claim === null) {
+  if (!isPlainObject(claim)) {
     badRequest(res, '"claim" must be a CompletionClaim object.');
     return;
+  }
+  if (typeof claim.taskStatus !== 'string') {
+    badRequest(
+      res,
+      '"claim.taskStatus" is required (completed, blocked or failed).',
+    );
+    return;
+  }
+  for (const field of ['acceptanceCriteria', 'filesChanged', 'commandsExecuted', 'tests'] as const) {
+    if (claim[field] !== undefined && !Array.isArray(claim[field])) {
+      badRequest(res, `"claim.${field}" must be an array.`);
+      return;
+    }
   }
   try {
     res.json(auditCompletionClaim(claim as never));

@@ -15,7 +15,7 @@ import { mintDashboardToken } from '../helpers/auth.js';
 
 async function call(
   app: Express,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'DELETE',
   path: string,
   token?: string,
   body?: unknown,
@@ -272,5 +272,123 @@ describe('/api/agent kernel surface', () => {
       vars: {},
     });
     expect(res.status).toBe(404);
+  });
+});
+
+/**
+ * Regression tests for the six input-validation bugs found by fuzzing the
+ * kernel surface. Each one previously either crashed a kernel with an internal
+ * TypeError, accepted nonsense silently, or — in the first case — disabled a
+ * safety invariant outright. They are grouped here so the reason each input is
+ * rejected stays documented next to the assertion.
+ */
+describe('/api/agent input validation (regressions)', () => {
+  let app: Express;
+  let token: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+    token = mintDashboardToken('agent-validation@example.com');
+  });
+
+  /**
+   * The worst of the six. The state machine enforces the repair budget with
+   * `repairAttempts >= maxRepairAttempts`. A caller-supplied context was merged
+   * in unchecked, so a *string* made that comparison NaN — which is always
+   * false — and the run could repair forever. Invariant I4 was effectively off.
+   */
+  it('rejects a non-numeric repair budget instead of disabling the guard', async () => {
+    const res = await call(app, 'POST', '/api/agent/states/transition', token, {
+      state: 'VERIFY',
+      event: 'tests_failed',
+      context: { repairAttempts: 'not-a-number', maxRepairAttempts: 3 },
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('context.repairAttempts');
+  });
+
+  it('still enforces the repair budget for a well-formed context', async () => {
+    const res = await call(app, 'POST', '/api/agent/states/transition', token, {
+      state: 'VERIFY',
+      event: 'tests_failed',
+      context: { repairAttempts: 3, maxRepairAttempts: 3 },
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.reason).toContain('repair budget exhausted');
+  });
+
+  it('rejects a repair count above its own ceiling', async () => {
+    const res = await call(app, 'POST', '/api/agent/states/transition', token, {
+      state: 'VERIFY',
+      event: 'tests_failed',
+      context: { repairAttempts: 9, maxRepairAttempts: 3 },
+    });
+    expect(res.status).toBe(400);
+  });
+
+  // The next three used to surface as "Cannot read properties of null
+  // (reading 'taskId')" — an internal field name that tells the caller nothing.
+  it('names the bad index for a null task rather than leaking a TypeError', async () => {
+    const res = await call(app, 'POST', '/api/agent/dag/validate', token, {
+      tasks: [null, { taskId: 't1', dependsOn: [], writes: [], reads: [] }],
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('tasks[0]');
+    expect(res.body.error.message).not.toContain('Cannot read properties');
+  });
+
+  it('names the bad index for a null provider', async () => {
+    const res = await call(app, 'POST', '/api/agent/route', token, {
+      request: { taskType: 'code_generation', requiresToolCalling: false, contextTokens: 1000 },
+      providers: [null],
+      mode: 'free',
+      privacyLevel: 'internal',
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('providers[0]');
+  });
+
+  it('rejects an array where a completion claim object is required', async () => {
+    const res = await call(app, 'POST', '/api/agent/evidence/audit', token, { claim: [] });
+    expect(res.status).toBe(400);
+    // Must be rejected for its *shape*, not stumble into a per-field message
+    // further down (which is what happened before the isPlainObject guard).
+    expect(res.body.error.message).toBe('"claim" must be a CompletionClaim object.');
+    expect(res.body.error.message).not.toContain('Cannot read properties');
+  });
+
+  it('rejects a negative fallback count that silently produced a null route', async () => {
+    const res = await call(app, 'POST', '/api/agent/route', token, {
+      request: { taskType: 'code_generation', requiresToolCalling: false, contextTokens: 1000 },
+      providers: [],
+      mode: 'free',
+      privacyLevel: 'internal',
+      maxFallbacks: -1,
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('maxFallbacks');
+  });
+
+  /**
+   * Redaction runs a dozen regexes over the whole string, so a megabyte of text
+   * was ~0.2s of event-loop time per request — a cheap denial of service.
+   */
+  it('caps redaction input so one request cannot monopolise the event loop', async () => {
+    const res = await call(app, 'POST', '/api/agent/redact', token, {
+      text: 'x'.repeat(300 * 1024),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('still redacts a normal secret', async () => {
+    const res = await call(app, 'POST', '/api/agent/redact', token, {
+      text: `token = ${'sk-'}${'a'.repeat(24)}`,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.text).toContain('[REDACTED');
+    expect(res.body.hasSecrets).toBe(true);
   });
 });
