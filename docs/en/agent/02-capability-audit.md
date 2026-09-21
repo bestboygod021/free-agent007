@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-293 test files, 3,669 tests. It talks to 20 provider families, fails over
+295 test files, 3,701 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -238,7 +238,7 @@ kernel itself. Two things about that are worth stating plainly:
 | 305–307 | Alerts | **Absent** | metrics exist; no alerting |
 | 308 | OpenTelemetry | **Absent** | — |
 | 309–320 | Replay, golden sets, judges, evals | **Rules only** | `evaluation*.ts`, `benchmark-runner.ts` unreachable |
-| 321 | Semantic cache | **Partial** | `services/cache.ts` is **exact-match** (canonical hash), not semantic |
+| 321 | Semantic cache | **Built** (opt-in) | `services/semantic-cache.ts` — a reworded prompt hits an existing entry. Off by default; similarity is only compared within an identical `variantKey`, so settings can never vary |
 | 322–325 | Prefix cache, compression | **Partial** | `services/compression/` exists |
 | 329–332 | Batch, concurrency, priority, backpressure | **Built** | delivered last turn in `agent-jobs.ts` |
 | 333 | Autoscaling | **Absent** | queue supports multiple workers; no scaler |
@@ -246,12 +246,20 @@ kernel itself. Two things about that are worth stating plainly:
 | 338–344 | Cost forecasting and budgets | **Built** | `quota-forecast.ts`, `quota-outlook.ts`, `key-budget.ts` |
 | 345 | ROI per agent | **Absent** | — |
 
-Item 321 is worth flagging: the cache is real and useful, but "semantic cache"
-means *similar* prompts hit. This one matches only byte-identical canonicalised
-requests. Upgrading it is a genuine improvement with a clear path — embeddings
-already exist.
+Item 321 now does what the name says, but the interesting part is what it
+refuses. The request is split into prompt text (where rewording is meaningful)
+and a `variantKey` covering everything else — model, temperature, tools,
+`response_format`, seed. Similarity is only ever compared inside one variant,
+so a JSON-mode request cannot be served a plain-text answer however close the
+wording. A match resolves to an existing exact key and is read back through the
+normal path, so TTL, LRU and hit counting are unchanged.
 
-**Verdict:** ~18 of 50.
+It is **off by default**: an exact cache can only return the answer to the
+question asked, an approximate one can return the answer to a *similar*
+question, and that is a different correctness guarantee for an operator to
+accept knowingly.
+
+**Verdict:** ~19 of 50.
 
 ---
 
@@ -278,9 +286,9 @@ already exist.
 | 8–10. Coding, browser, data | ~4 | 80 |
 | 11. Security | 16 | 25 |
 | 12. Identity | ~10 | 25 |
-| 13–14. Observability, cost | ~19 | 50 |
+| 13–14. Observability, cost | ~20 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~165** | **500** |
+| **Total** | **~166** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
@@ -325,9 +333,12 @@ sqlite-vss in the lockfile — fine at these corpus sizes, not at millions of
 chunks), and there is no reranker or keyword/hybrid stage, so recall depends
 entirely on the embedding model.
 
-**4. Semantic cache upgrade** (item 321)
-Small, self-contained, immediate cost saving. Embeddings exist; the cache
-exists; connect them with a similarity threshold.
+**4. Semantic cache upgrade** (item 321) — **done, opt-in**
+`services/semantic-cache.ts`. The threshold defaults to 0.95 and a match must
+also beat the runner-up by a margin, because two prompts that are both ~0.9
+similar to a query are usually sibling questions rather than rewordings —
+which is exactly when a wrong cached answer looks plausible. Enable with
+`SEMANTIC_CACHE=true`.
 
 **5. Tool registry and SDK** (items 61–67) — **done**
 Delivered in `services/agent-tools.ts`, joined to the driver by

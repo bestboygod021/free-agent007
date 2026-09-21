@@ -810,6 +810,52 @@ disagree — in which case believe the document, not the chunk.
 ranked well but did not fit is counted in `omitted`. `minScore` (default 0.2)
 discards weak matches rather than padding the answer with noise.
 
+### 5c. Semantic cache: paying once for a reworded question
+
+The response cache hashes the messages, so `"how do I reset my password?"` and
+`"how can I reset my password"` are two provider calls for one answer. The
+semantic layer lets the second one hit.
+
+```bash
+RESPONSE_CACHE=on
+SEMANTIC_CACHE=true
+```
+
+Both are needed — the semantic layer finds an entry, the response cache owns
+it. A hit is labelled so you can tell it apart from an exact one:
+
+```
+X-FreeLLM-Cache: HIT-SEMANTIC
+X-FreeLLM-Cache-Score: 0.9812
+```
+
+**What it refuses is the interesting part.** The request is split in two: the
+prompt text, where rewording is meaningful, and everything else — model,
+temperature, tools, `response_format`, seed — which becomes a variant key that
+must match *exactly*. So:
+
+| Situation | Result |
+|---|---|
+| Same question, different words | hit |
+| Same words, `temperature` changed | miss — different variant |
+| Same words, `response_format: json_object` | miss — a JSON request never gets a plain-text answer |
+| Different question about the same topic | miss — below the threshold |
+| Two stored prompts equally similar | miss — ambiguous, so no guess |
+| Streaming request | skipped entirely |
+| Message contains an image | skipped — text similarity cannot judge it |
+
+The threshold is `0.95` by default and a winner must beat the runner-up by
+`0.02`. Both are deliberately strict: embedding models put genuinely different
+questions about one topic at 0.85–0.93, and a wrong cached answer is worse
+than a missed saving. Loosen with `SEMANTIC_CACHE_THRESHOLD` if your traffic is
+narrow and repetitive.
+
+**It is off by default on purpose.** An exact cache can only ever return the
+answer to the question that was asked. This one can return the answer to a
+*similar* question, which is a different promise to your users — so enabling it
+is a decision, not a default. If the embedding provider is unavailable, lookups
+quietly return a miss: a broken optimisation must never break the request.
+
 Approval works the same way: `approvedBy` must match the email on the session
 token, so the only way to approve a call is to be logged in as that person.
 

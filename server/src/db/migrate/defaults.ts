@@ -42,6 +42,7 @@ import * as agentToolCalls from '../migrations/20260921_000003_agent_tool_calls.
 import * as organizations from '../migrations/20260921_000004_organizations_and_membership.js';
 import * as membershipInvites from '../migrations/20260921_000005_membership_invites.js';
 import * as ragDocuments from '../migrations/20260921_000006_rag_documents.js';
+import * as semanticCache from '../migrations/20260921_000007_semantic_cache.js';
 
 export interface MigrationModule {
   up(db: Db): void;
@@ -96,6 +97,7 @@ export const AGENT_TOOL_CALLS_FILENAME = '20260921_000003_agent_tool_calls.ts';
 export const ORGANIZATIONS_FILENAME = '20260921_000004_organizations_and_membership.ts';
 export const MEMBERSHIP_INVITES_FILENAME = '20260921_000005_membership_invites.ts';
 export const RAG_DOCUMENTS_FILENAME = '20260921_000006_rag_documents.ts';
+export const SEMANTIC_CACHE_FILENAME = '20260921_000007_semantic_cache.ts';
 
 export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: LEGACY_BASELINE_FILENAME, module: legacyBaseline },
@@ -141,4 +143,5 @@ export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: ORGANIZATIONS_FILENAME, module: organizations },
   { filename: MEMBERSHIP_INVITES_FILENAME, module: membershipInvites },
   { filename: RAG_DOCUMENTS_FILENAME, module: ragDocuments },
+  { filename: SEMANTIC_CACHE_FILENAME, module: semanticCache },
 ];
