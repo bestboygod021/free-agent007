@@ -51,6 +51,18 @@ import {
   QUEUE_NAMES,
   DEFAULT_QUEUE_POLICIES,
 } from '../services/agent-jobs.js';
+import {
+  AgentRunError,
+  createRun,
+  step,
+  decide,
+  cancelRun,
+  getRun,
+  listRuns,
+  getCheckpoints,
+  verifyChain,
+  resumableRuns,
+} from '../services/agent-runtime.js';
 
 /**
  * ForgePilot agent kernel surface (merged from the `code-agent` blueprint).
@@ -919,4 +931,205 @@ agentRouter.get('/jobs/:jobId', (req: Request, res: Response) => {
     return;
   }
   res.json({ job });
+});
+
+/* ------------------------------------------------------------------ *
+ * Runs — the agent execution loop
+ *
+ * The kernel decides; this drives. A run is a durable object with a state, a
+ * budget and a hash-chained history, so it can be inspected, approved,
+ * cancelled and resumed after a crash. See services/agent-runtime.ts.
+ * ------------------------------------------------------------------ */
+
+/** POST /api/agent/runs — start a run. */
+agentRouter.post('/runs', (req: Request, res: Response) => {
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+  const scope = readScope(body);
+  if (typeof scope === 'string') {
+    badRequest(res, scope);
+    return;
+  }
+  const { goal, mode } = body;
+  if (typeof goal !== 'string' || goal.trim() === '') {
+    badRequest(res, '"goal" must be a non-empty string.');
+    return;
+  }
+  if (!isComputeMode(mode)) {
+    badRequest(res, `"mode" must be one of: ${COMPUTE_MODES.join(', ')}.`);
+    return;
+  }
+
+  try {
+    const run = createRun({
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      goal,
+      mode,
+      ...(typeof body.privacyLevel === 'string' ? { privacyLevel: body.privacyLevel } : {}),
+      ...(body.maxSteps === undefined ? {} : { maxSteps: body.maxSteps as number }),
+      ...(body.maxTokens === undefined ? {} : { maxTokens: body.maxTokens as number }),
+      ...(body.maxCost === undefined ? {} : { maxCost: body.maxCost as number }),
+      ...(body.timeoutMs === undefined ? {} : { timeoutMs: body.timeoutMs as number }),
+    });
+    res.status(201).json({ run });
+  } catch (err) {
+    runError(res, err, 'run could not be created');
+  }
+});
+
+/** Map an AgentRunError's own status (404 for unknown run) onto the response. */
+function runError(res: Response, err: unknown, fallback: string): void {
+  const status = err instanceof AgentRunError ? err.status : 400;
+  const message = err instanceof Error ? err.message : fallback;
+  res
+    .status(status)
+    .json({ error: { message, type: status === 404 ? 'not_found' : 'invalid_request_error' } });
+}
+
+/** GET /api/agent/runs?organizationId=&projectId= — list runs. */
+agentRouter.get('/runs', (req: Request, res: Response) => {
+  const scope = readScope(req.query as Record<string, unknown>);
+  if (typeof scope === 'string') {
+    badRequest(res, scope);
+    return;
+  }
+  const rawState = req.query.state;
+  if (rawState !== undefined && (typeof rawState !== 'string' || !RUN_STATES.includes(rawState as never))) {
+    badRequest(res, `"state" must be one of: ${RUN_STATES.join(', ')}.`);
+    return;
+  }
+  const runs = listRuns(scope.organizationId, scope.projectId, {
+    ...(rawState === undefined ? {} : { state: rawState as never }),
+  });
+  res.json({ runs, count: runs.length });
+});
+
+/** GET /api/agent/runs/resumable — runs that were in flight when we last stopped. */
+agentRouter.get('/runs/resumable', (_req: Request, res: Response) => {
+  const runs = resumableRuns();
+  res.json({ runs, count: runs.length });
+});
+
+/** GET /api/agent/runs/:runId — one run. */
+agentRouter.get('/runs/:runId', (req: Request, res: Response) => {
+  const runId = pathParam(req.params.runId);
+  if (runId === null) {
+    badRequest(res, 'run id must be a single path segment.');
+    return;
+  }
+  const run = getRun(runId);
+  if (!run) {
+    res.status(404).json({ error: { message: `no such run: ${runId}`, type: 'not_found' } });
+    return;
+  }
+  res.json({ run });
+});
+
+/**
+ * POST /api/agent/runs/:runId/step — advance the run by one event.
+ *
+ * A refused step is a 200 with `ok:false` and the kernel's reason, not a 4xx:
+ * "that event is illegal here" is a legitimate answer about a healthy run, and
+ * callers need the run state back alongside it.
+ */
+agentRouter.post('/runs/:runId/step', (req: Request, res: Response) => {
+  const runId = pathParam(req.params.runId);
+  if (runId === null) {
+    badRequest(res, 'run id must be a single path segment.');
+    return;
+  }
+  const body = req.body;
+  if (!isPlainObject(body) || typeof body.event !== 'string') {
+    badRequest(res, '"event" must be a RunEvent string.');
+    return;
+  }
+  for (const field of ['tokensUsed', 'costUsed'] as const) {
+    const v = body[field];
+    if (v !== undefined && (typeof v !== 'number' || !Number.isFinite(v) || v < 0)) {
+      badRequest(res, `"${field}" must be a non-negative number.`);
+      return;
+    }
+  }
+
+  try {
+    res.json(
+      step({
+        runId,
+        event: body.event as never,
+        ...(body.payload === undefined ? {} : { payload: body.payload }),
+        ...(body.tokensUsed === undefined ? {} : { tokensUsed: body.tokensUsed as number }),
+        ...(body.costUsed === undefined ? {} : { costUsed: body.costUsed as number }),
+      }),
+    );
+  } catch (err) {
+    runError(res, err, 'step failed');
+  }
+});
+
+/** POST /api/agent/runs/:runId/decision — approve or reject what it waits on. */
+agentRouter.post('/runs/:runId/decision', (req: Request, res: Response) => {
+  const runId = pathParam(req.params.runId);
+  if (runId === null) {
+    badRequest(res, 'run id must be a single path segment.');
+    return;
+  }
+  const body = req.body;
+  if (!isPlainObject(body) || typeof body.approved !== 'boolean') {
+    badRequest(res, '"approved" must be a boolean.');
+    return;
+  }
+  try {
+    res.json(decide(runId, body.approved));
+  } catch (err) {
+    runError(res, err, 'decision failed');
+  }
+});
+
+/** POST /api/agent/runs/:runId/cancel — stop a run that has not finished. */
+agentRouter.post('/runs/:runId/cancel', (req: Request, res: Response) => {
+  const runId = pathParam(req.params.runId);
+  if (runId === null) {
+    badRequest(res, 'run id must be a single path segment.');
+    return;
+  }
+  const body = isPlainObject(req.body) ? req.body : {};
+  try {
+    const reason = typeof body.reason === 'string' && body.reason.trim() !== '' ? body.reason : undefined;
+    res.json({ run: cancelRun(runId, reason) });
+  } catch (err) {
+    runError(res, err, 'cancel failed');
+  }
+});
+
+/** GET /api/agent/runs/:runId/checkpoints — the run's full history. */
+agentRouter.get('/runs/:runId/checkpoints', (req: Request, res: Response) => {
+  const runId = pathParam(req.params.runId);
+  if (runId === null) {
+    badRequest(res, 'run id must be a single path segment.');
+    return;
+  }
+  if (!getRun(runId)) {
+    res.status(404).json({ error: { message: `no such run: ${runId}`, type: 'not_found' } });
+    return;
+  }
+  const checkpoints = getCheckpoints(runId);
+  res.json({ checkpoints, count: checkpoints.length });
+});
+
+/** GET /api/agent/runs/:runId/verify — re-derive the hash chain. */
+agentRouter.get('/runs/:runId/verify', (req: Request, res: Response) => {
+  const runId = pathParam(req.params.runId);
+  if (runId === null) {
+    badRequest(res, 'run id must be a single path segment.');
+    return;
+  }
+  if (!getRun(runId)) {
+    res.status(404).json({ error: { message: `no such run: ${runId}`, type: 'not_found' } });
+    return;
+  }
+  res.json(verifyChain(runId));
 });

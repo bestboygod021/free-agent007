@@ -82,6 +82,46 @@ things that must outlive the process.
 | `GET` | `/api/agent/prompts` | The versioned prompt library |
 | `POST` | `/api/agent/prompts/:file/compose` | Render one prompt with variables resolved |
 
+### Runs — the execution loop
+
+A run is a durable object: a state, a budget, and an append-only history. The
+kernel decides every transition; this layer drives it, persists it, and stops
+it when a ceiling is hit.
+
+| Method | Path | Answers |
+|---|---|---|
+| `POST` | `/api/agent/runs` | Start a run |
+| `GET` | `/api/agent/runs` | List runs for a project |
+| `GET` | `/api/agent/runs/resumable` | What was in flight when we last stopped |
+| `GET` | `/api/agent/runs/:runId` | One run: state, budget, what it awaits |
+| `POST` | `/api/agent/runs/:runId/step` | Advance by one event |
+| `POST` | `/api/agent/runs/:runId/decision` | Approve or reject the current gate |
+| `POST` | `/api/agent/runs/:runId/cancel` | Stop a run |
+| `GET` | `/api/agent/runs/:runId/checkpoints` | The full history |
+| `GET` | `/api/agent/runs/:runId/verify` | Re-derive the hash chain |
+
+Four properties are worth stating plainly:
+
+- **The loop never overrules the kernel.** A step asks `transition()` and
+  records whatever it says. An illegal event is answered `200 {ok:false}` with
+  the kernel's own reason — a refusal is a fact about a healthy run, not an
+  error — and nothing is written.
+- **Budgets are enforced before work counts.** Steps, tokens, cost and
+  wall-clock are checked on entry; exhausting one moves the run to `FAILED`
+  with the reason, rather than letting it drift past the ceiling. Ceilings are
+  copied from the compute mode at creation, so editing a mode profile later
+  cannot widen a run already in flight.
+- **State and history commit together.** The row update and the checkpoint are
+  one transaction, so a crash can never leave a state with no history. A run
+  killed mid-flight reappears in `/runs/resumable` and continues.
+- **The history is hash-chained.** Each checkpoint carries the digest of the
+  previous one, so a row edited or deleted in the database breaks verification
+  at a known sequence number.
+
+What it deliberately does not do is call a model. Something else reports the
+outcome of a step; the loop decides what that outcome means. An autonomous
+driver can sit on top without changing any of this.
+
 ### Memory — what the agent remembers between runs
 
 Facts are scoped to an `(organizationId, projectId)` pair, carry mandatory
@@ -240,6 +280,11 @@ store and session auth. 611 tests cover them.
 modules that lost everything on restart. Both are now backed by SQLite
 (`agent_memories`, `agent_jobs`), so recalled facts and in-flight jobs survive
 a crash, and several workers can share one queue.
+
+**Now driven:** the state machine, repair budget and approval gates used to be
+callable only by hand — there was no such thing as "a run". `agent_runs` and
+`agent_checkpoints` add one, with budget enforcement, human gates, cancellation
+and crash-resumable execution over a verifiable history.
 
 **Designed, not implemented:** phases M9–M208 in `agent/docs/` are explicitly
 marked `designed_only`. Persistence, UI, billing providers, evaluator runners,

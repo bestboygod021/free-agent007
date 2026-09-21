@@ -37,6 +37,7 @@ import * as keyMonthlyBudget from '../migrations/20260904_000001_key_monthly_bud
 import * as keyMonthlyUsage from '../migrations/20260914_000001_key_monthly_usage.js';
 import * as quotaSnapshotFreshness from '../migrations/20260915_000001_quota_snapshot_freshness.js';
 import * as agentMemoryAndJobs from '../migrations/20260921_000001_agent_memory_and_jobs.js';
+import * as agentRuns from '../migrations/20260921_000002_agent_runs.js';
 
 export interface MigrationModule {
   up(db: Db): void;
@@ -86,6 +87,7 @@ export const KEY_MONTHLY_BUDGET_FILENAME = '20260904_000001_key_monthly_budget.t
 export const KEY_MONTHLY_USAGE_FILENAME = '20260914_000001_key_monthly_usage.ts';
 export const QUOTA_SNAPSHOT_FRESHNESS_FILENAME = '20260915_000001_quota_snapshot_freshness.ts';
 export const AGENT_MEMORY_AND_JOBS_FILENAME = '20260921_000001_agent_memory_and_jobs.ts';
+export const AGENT_RUNS_FILENAME = '20260921_000002_agent_runs.ts';
 
 export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: LEGACY_BASELINE_FILENAME, module: legacyBaseline },
@@ -126,4 +128,5 @@ export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: KEY_MONTHLY_USAGE_FILENAME, module: keyMonthlyUsage },
   { filename: QUOTA_SNAPSHOT_FRESHNESS_FILENAME, module: quotaSnapshotFreshness },
   { filename: AGENT_MEMORY_AND_JOBS_FILENAME, module: agentMemoryAndJobs },
+  { filename: AGENT_RUNS_FILENAME, module: agentRuns },
 ];

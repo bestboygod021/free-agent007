@@ -560,3 +560,130 @@ describe('/api/agent memory and jobs', () => {
     expect(res.status).toBe(404);
   });
 });
+
+/**
+ * Run endpoints — the execution loop over HTTP.
+ *
+ * The service tests cover the loop's semantics; these check the HTTP contract,
+ * in particular that a *refused* step is a 200 with ok:false (a legitimate
+ * answer about a healthy run) while an unknown run is a 404.
+ */
+describe('/api/agent runs', () => {
+  let app: Express;
+  let token: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+    token = mintDashboardToken('agent-runs@example.com');
+  });
+
+  const newRun = { organizationId: 'acme', projectId: 'web', goal: 'Ship rate limiting', mode: 'paid' };
+
+  async function create() {
+    const res = await call(app, 'POST', '/api/agent/runs', token, newRun);
+    return res.body.run.runId as string;
+  }
+
+  it('requires auth', async () => {
+    const res = await call(app, 'POST', '/api/agent/runs', undefined, newRun);
+    expect(res.status).toBe(401);
+  });
+
+  it('creates a run in INTAKE', async () => {
+    const res = await call(app, 'POST', '/api/agent/runs', token, newRun);
+    expect(res.status).toBe(201);
+    expect(res.body.run.state).toBe('INTAKE');
+    expect(res.body.run.budget.maxSteps).toBeGreaterThan(0);
+  });
+
+  it('rejects an unknown compute mode', async () => {
+    const res = await call(app, 'POST', '/api/agent/runs', token, { ...newRun, mode: 'quantum' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('mode');
+  });
+
+  it('advances a run and returns its checkpoint', async () => {
+    const runId = await create();
+    const res = await call(app, 'POST', `/api/agent/runs/${runId}/step`, token, {
+      event: 'spec_ready',
+      payload: { note: 'spec drafted' },
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.run.state).toBe('PLAN');
+    expect(res.body.checkpoint.sequence).toBe(1);
+  });
+
+  it('answers 200 with ok:false for an illegal event', async () => {
+    const runId = await create();
+    const res = await call(app, 'POST', `/api/agent/runs/${runId}/step`, token, {
+      event: 'deploy_approved',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.reason).toBeTruthy();
+    expect(res.body.run.state).toBe('INTAKE');
+  });
+
+  it('drives an approval gate through the decision endpoint', async () => {
+    const runId = await create();
+    await call(app, 'POST', `/api/agent/runs/${runId}/step`, token, { event: 'spec_ready' });
+    const gated = await call(app, 'POST', `/api/agent/runs/${runId}/step`, token, { event: 'plan_ready' });
+    expect(gated.body.run.awaiting).toBe('plan');
+
+    const approved = await call(app, 'POST', `/api/agent/runs/${runId}/decision`, token, {
+      approved: true,
+    });
+    expect(approved.body.run.state).toBe('RECON');
+  });
+
+  it('exposes the checkpoint history and verifies its chain', async () => {
+    const runId = await create();
+    await call(app, 'POST', `/api/agent/runs/${runId}/step`, token, { event: 'spec_ready' });
+
+    const history = await call(app, 'GET', `/api/agent/runs/${runId}/checkpoints`, token);
+    expect(history.status).toBe(200);
+    expect(history.body.count).toBe(2);
+
+    const verified = await call(app, 'GET', `/api/agent/runs/${runId}/verify`, token);
+    expect(verified.body.valid).toBe(true);
+  });
+
+  it('cancels a run', async () => {
+    const runId = await create();
+    const res = await call(app, 'POST', `/api/agent/runs/${runId}/cancel`, token, {
+      reason: 'no longer needed',
+    });
+    expect(res.body.run.state).toBe('CANCELLED');
+    expect(res.body.run.stopReason).toBe('no longer needed');
+  });
+
+  it('lists runs for a project and finds resumable ones', async () => {
+    const runId = await create();
+
+    const listed = await call(
+      app,
+      'GET',
+      '/api/agent/runs?organizationId=acme&projectId=web',
+      token,
+    );
+    expect(listed.status).toBe(200);
+    expect(listed.body.runs.some((r: any) => r.runId === runId)).toBe(true);
+
+    const resumable = await call(app, 'GET', '/api/agent/runs/resumable', token);
+    expect(resumable.status).toBe(200);
+    expect(resumable.body.runs.some((r: any) => r.runId === runId)).toBe(true);
+  });
+
+  it('404s an unknown run rather than inventing one', async () => {
+    const res = await call(app, 'GET', '/api/agent/runs/run_nope', token);
+    expect(res.status).toBe(404);
+
+    const stepped = await call(app, 'POST', '/api/agent/runs/run_nope/step', token, {
+      event: 'spec_ready',
+    });
+    expect(stepped.status).toBe(404);
+  });
+});

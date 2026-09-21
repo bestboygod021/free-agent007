@@ -129,14 +129,14 @@ This is where the two-systems problem dominates. Summary rather than 130 rows:
 
 | Area | Status | Reality |
 |---|---|---|
-| Agent runtime (36–60) | **Rules only** | `state-machine.ts` (19 states, 6 invariants) and `compute-mode.ts` enforce step/token/cost/time ceilings — but nothing executes a loop. There is no planner, no executor, no ReAct. The referee exists; there is no player. |
+| Agent runtime (36–60) | **Partial — ~12 of 25** | An execution loop now exists (`services/agent-runtime.ts`, `agent_runs`): durable runs with state-machine execution (42), step/token/cost/time ceilings (46–49), manual stop and safe cancel (50–51), resume after crash (52), per-step checkpoints (53), human-approval gates (56), deterministic replay of history (54) and structured stop reasons (59). Still missing: an autonomous planner/executor pair (39–40), ReAct (41), graph execution (43) and parallel sub-agents (44–45) — the loop advances on reported outcomes, it does not yet call models itself. |
 | Tools (61–85) | **Rules only** | `policy-engine.ts` decides whether a call is allowed and whether it needs approval; `tool-validate.ts` and `tool-args.ts` validate schemas in the gateway. No registry, no SDK, no marketplace, no scheduling. |
 | Memory (86–110) | **Partial — 8 of 25** | Delivered last turn: project memory, provenance (96), expiry (94), user deletion (95), tags (106), PII/secret refusal (109), retention (110), tenant isolation. Missing: semantic search (101 — search is lexical), conversation summarisation (92), contradiction detection (97–98), encryption at rest (105), episodic/semantic split (88–89). |
 | RAG (111–140) | **Absent, with one foundation** | `services/embeddings.ts` and an `embedding_models` table exist and work. There is no vector store, no chunker, no document parser, no connector, no reranker, no citations. Item 130 (citations) is the one that matters most and is entirely missing. |
 | Workflows (141–165) | **Rules only** | `task-dag.ts` validates graphs and plans parallel waves (142, 146, 147 as *logic*). `workflow-automation.ts` explicitly executes nothing. No builder, no triggers, no versioning. |
 
-**Verdict:** roughly 10 of 130 usable. This is the bulk of the list and the
-bulk of the work.
+**Verdict:** roughly 22 of 130 usable, up from 10 — the execution loop landed.
+This is still the bulk of the list and the bulk of the work.
 
 ---
 
@@ -243,13 +243,13 @@ already exist.
 |---|---|---|
 | 1. Gateway/API | 14 | 15 |
 | 2. Providers | 17 | 20 |
-| 3–7. Agent, tools, memory, RAG, workflow | ~10 | 130 |
+| 3–7. Agent, tools, memory, RAG, workflow | ~22 | 130 |
 | 8–10. Coding, browser, data | ~1 | 80 |
 | 11. Security | 14 | 25 |
 | 12. Identity | ~4 | 25 |
 | 13–14. Observability, cost | ~18 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~119** | **500** |
+| **Total** | **~131** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
@@ -259,19 +259,20 @@ redaction, durability. Those are the parts that are painful to retrofit.
 
 ## What to build, in order
 
-Sequenced by *what unblocks the most*, not by list order.
+Sequenced by *what unblocks the most*, not by list order. Item 2 is done; the
+rest stand.
 
 **1. Organisations, projects and RBAC** (items 275–279, unblocks 19, 262, §16)
 Nothing else in governance or collaboration can start until `users` has more
 than four columns. This is the single highest-leverage change in the list, and
 it gets harder every month.
 
-**2. An agent execution loop** (items 39–44, 52–53)
-The kernel has a 19-state machine with six enforced invariants, a repair
-budget, a policy engine and a DAG planner — and no loop that uses them. This is
-the largest gap between *designed* and *usable* in the repo. It also converts
-§3, §4 and §7 from "rules only" to "partially working" in one move, because
-those rules are already written and tested.
+**2. An agent execution loop** (items 39–44, 52–53) — **done**
+Delivered in `services/agent-runtime.ts`. Runs are durable, budgeted,
+human-gated, cancellable and crash-resumable over a hash-chained history. What
+remains of this item is autonomy: a planner/executor pair that calls models and
+feeds outcomes back into the loop. The loop was built to accept exactly that
+without changing its contract.
 
 **3. RAG with citations** (items 127–130, 111, 119, 123)
 Vector store + chunker + PDF parser + citations. `embeddings.ts` and the

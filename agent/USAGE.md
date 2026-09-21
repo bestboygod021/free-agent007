@@ -7,8 +7,9 @@ A practical guide. Every command and response below was run against this repo.
 - [2. The prompt library (CLI)](#2-the-prompt-library-cli)
 - [3. The decision API](#3-the-decision-api)
 - [4. Using it from your own code](#4-using-it-from-your-own-code)
-- [5. Memory: what it remembers](#5-memory-what-it-remembers)
-- [6. Jobs: how it scales](#6-jobs-how-it-scales)
+- [5. Runs: driving an agent end to end](#5-runs-driving-an-agent-end-to-end)
+- [6. Memory: what it remembers](#6-memory-what-it-remembers)
+- [7. Jobs: how it scales](#7-jobs-how-it-scales)
 - [What it does not do](#what-it-does-not-do)
 
 ## Start it
@@ -250,7 +251,107 @@ const { text, hasSecrets } = redactSecrets(logLine)
 
 Run `npm run build -w agent` first so `dist/` exists.
 
-## 5. Memory: what it remembers
+## 5. Runs: driving an agent end to end
+
+A run is the thing that was missing. It has a state, a budget, and a history
+you can verify — and it survives the process dying.
+
+```bash
+RUN=$(curl -s -X POST http://localhost:3001/api/agent/runs \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"organizationId":"acme","projectId":"web",
+       "goal":"Add rate limiting to the public API","mode":"paid","maxSteps":50}' \
+  | python3 -c 'import sys,json;print(json.load(sys.stdin)["run"]["runId"])')
+```
+
+Advance it one event at a time. Whatever did the work reports the outcome:
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/runs/$RUN/step \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"event":"spec_ready","payload":{"note":"spec drafted"},"tokensUsed":1200}'
+```
+
+At a gate the run parks and tells you what it wants:
+
+```
+state: AWAITING_PLAN_APPROVAL | awaiting: plan
+```
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/runs/$RUN/decision \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"approved":true}'          # -> RECON
+```
+
+### The four things worth trying
+
+**An agent cannot skip a human.** Ask to deploy while the plan is still
+unapproved:
+
+```
+ok: False
+refused: deploy approval is only valid while AWAITING_DEPLOY_APPROVAL (invariant I2)
+still in: AWAITING_PLAN_APPROVAL
+```
+
+**A runaway run stops itself.** With `maxSteps: 3`, the fourth step does not
+quietly continue:
+
+```
+ok=True  state=PLAN
+ok=True  state=AWAITING_PLAN_APPROVAL
+ok=True  state=RECON
+ok=False state=FAILED     step budget exhausted (3/3)
+```
+
+The same applies to `maxTokens`, `maxCost` and `timeoutMs`.
+
+**A crash loses nothing.** `kill -9` the server mid-run, start it again:
+
+```bash
+curl -s http://localhost:3001/api/agent/runs/resumable -H "Authorization: Bearer $TOKEN"
+#   run_mub9vv4b_dt5jjmrf in TEST (5 steps, 4200 tokens)
+```
+
+Then just keep stepping it. It finishes normally.
+
+**The history cannot be rewritten quietly.** Every checkpoint carries the hash
+of the one before it:
+
+```bash
+curl -s http://localhost:3001/api/agent/runs/$RUN/checkpoints -H "Authorization: Bearer $TOKEN"
+```
+
+```
+ 0  created                      -> INTAKE
+ 1  spec_ready                   -> PLAN
+ 2  plan_ready                   -> AWAITING_PLAN_APPROVAL
+ 3  plan_approved                -> RECON
+ 4  recon_complete               -> IMPLEMENT
+ 5  implementation_batch_done    -> TEST
+ ...
+11  finalized                    -> DONE
+```
+
+Edit one row directly in SQLite and `/verify` names the break:
+
+```
+valid: False | brokenAt: 1 | checkpoint contents do not match its hash
+```
+
+Budgets also come from the mode, so you do not have to know the numbers:
+
+| mode | maxRepairAttempts | maxCost |
+|---|---|---|
+| `free` | 2 | 0 |
+| `paid` | 3 | 1000 |
+
+One limit to be aware of: **the loop does not call models.** It advances when
+something tells it what happened. That keeps every decision in the tested
+kernel and leaves execution to you — or to an autonomous driver built on top.
+
+## 6. Memory: what it remembers
 
 An agent that forgets your project between runs will keep asking the same
 questions. Facts are scoped to a project, must say where they came from, and
@@ -297,7 +398,7 @@ Worth knowing:
 - Pass `ttlMs` for something temporary ("deploy freeze until Friday").
 - Queries are filtered by tenant in SQL — another project cannot read yours.
 
-## 6. Jobs: how it scales
+## 7. Jobs: how it scales
 
 Work that takes minutes should not live inside a request. The queue spreads it
 across workers, caps how much runs at once, and — the point of persisting it —
@@ -354,9 +455,11 @@ The behaviour that matters:
 
 Be clear about this before you build on it.
 
-**It does not run an agent.** There is no loop that reads your repo, calls a
-model, writes files and opens a PR. The kernel is the set of rules such a loop
-would consult — the referee, not the player.
+**It does not drive itself.** There *is* now a run loop — durable, budgeted,
+human-gated, crash-resumable (see [runs](#5-runs-driving-an-agent-end-to-end)) —
+but it advances on outcomes you report. Nothing here reads your repo, calls a
+model, writes files and opens a PR on its own. The referee is on the field; the
+player is still you.
 
 **It is not wired to your 635 models yet.** `POST /api/agent/route` makes you
 pass the candidate providers in the request body. It does not read the
@@ -370,8 +473,8 @@ listed in this guide — nothing more.
 
 Two things that used to be on this list no longer are. **Memory** and the
 **job queue** are now persisted in SQLite, so facts and in-flight work survive
-a restart; see [memory](#5-memory-what-it-remembers) and
-[jobs](#6-jobs-how-it-scales) above.
+a restart; see [memory](#6-memory-what-it-remembers) and
+[jobs](#7-jobs-how-it-scales) above.
 
 So today this is useful as: a prompt library you can paste into any model, a
 policy/routing/evidence engine you can call before letting an agent do
