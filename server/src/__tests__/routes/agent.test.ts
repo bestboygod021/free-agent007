@@ -1,7 +1,33 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import type { Express } from 'express';
 import { createApp } from '../../app.js';
 import { initDb } from '../../db/index.js';
+
+/**
+ * The document routes reach an embedding provider, which a test must not do.
+ * This replaces the provider call with a deterministic bag-of-words vector, so
+ * ingestion works offline and relevance ordering is reproducible rather than
+ * luck. `resolveFamily` is left real except that it always names one family.
+ */
+const RAG_VOCAB = ['timeout', 'seconds', 'request', 'default', 'gardening', 'rainfall', 'drainage', 'heavy'];
+vi.mock('../../services/embeddings.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/embeddings.js')>();
+  return {
+    ...actual,
+    resolveFamily: () => 'test-family',
+    runEmbeddings: async (_model: string | undefined, inputs: string[]) => ({
+      family: 'test-family',
+      platform: 'test',
+      modelId: 'test-embed',
+      dimensions: RAG_VOCAB.length,
+      vectors: inputs.map((text) => {
+        const words = text.toLowerCase().match(/[a-z]+/g) ?? [];
+        return RAG_VOCAB.map((term) => words.filter((w) => w === term).length);
+      }),
+      inputTokens: inputs.join(' ').length,
+    }),
+  };
+});
 import { mintDashboardToken } from '../helpers/auth.js';
 import { clearTools } from '../../services/agent-tools.js';
 import { registerBuiltinTools } from '../../services/agent-tools-builtin.js';
@@ -67,6 +93,8 @@ async function call(
  * use. Scope used to be a free-form string that every caller was granted by
  * default; it is now membership, so a test user needs a real organisation.
  */
+
+
 function mintScopedToken(email: string): string {
   const user = createUser(email, 'password123');
   createOrganization({ organizationId: 'acme', name: 'Acme', ownerUserId: user.userId });
@@ -1308,5 +1336,119 @@ describe('/api/agent membership invites', () => {
     const res = await call(app, 'DELETE', '/api/agent/organizations/acme/members/1', adminToken);
     expect(res.status).toBe(409);
     expect(res.body.error.message).toContain('at least one owner');
+  });
+});
+
+
+describe('/api/agent documents and citations', () => {
+  let app: Express;
+  let ownerToken: string;
+  let viewerToken: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+
+    const owner = createUser('rag-owner@example.com', 'password123');
+    ownerToken = createSession(owner.userId);
+    createOrganization({ organizationId: 'acme', name: 'Acme', ownerUserId: owner.userId });
+    createProject({ organizationId: 'acme', projectId: 'web', name: 'Web' });
+
+    const viewer = createUser('rag-viewer@example.com', 'password123');
+    viewerToken = createSession(viewer.userId);
+    addMember({ organizationId: 'acme', userId: viewer.userId, role: 'viewer' });
+
+  });
+
+  const doc = {
+    organizationId: 'acme',
+    projectId: 'web',
+    title: 'Ops notes',
+    sourceUri: 'notes/ops.md',
+    content: 'The request timeout is 30 seconds by default.\n\nGardening in heavy rainfall needs drainage.',
+  };
+
+  it('ingests a document and searches it with a checkable citation', async () => {
+    const ingested = await call(app, 'POST', '/api/agent/documents', ownerToken, doc);
+    expect(ingested.status).toBe(201);
+    expect(ingested.body.chunks).toBeGreaterThan(0);
+
+    const found = await call(app, 'POST', '/api/agent/documents/search', ownerToken, {
+      organizationId: 'acme', projectId: 'web', query: 'what is the timeout in seconds',
+    });
+    expect(found.status).toBe(200);
+    const citation = found.body.citations[0];
+    expect(citation.text).toContain('timeout is 30 seconds');
+    expect(citation.sourceUri).toBe('notes/ops.md');
+
+    // The citation is verifiable: re-reading the source at its offsets
+    // reproduces the quote.
+    const resolved = await call(app, 'GET',
+      `/api/agent/documents/citations/${citation.chunkId}?organizationId=acme&projectId=web`,
+      ownerToken);
+    expect(resolved.status).toBe(200);
+    expect(resolved.body.text).toBe(citation.text);
+    expect(resolved.body.matchesStoredChunk).toBe(true);
+  });
+
+  it('answers 200 rather than duplicating when the same content is re-sent', async () => {
+    const again = await call(app, 'POST', '/api/agent/documents', ownerToken, doc);
+    expect(again.status).toBe(200);
+    expect(again.body.deduplicated).toBe(true);
+  });
+
+  it('lets a viewer search but not ingest or delete', async () => {
+    const searched = await call(app, 'POST', '/api/agent/documents/search', viewerToken, {
+      organizationId: 'acme', projectId: 'web', query: 'timeout',
+    });
+    expect(searched.status).toBe(200);
+
+    const ingested = await call(app, 'POST', '/api/agent/documents', viewerToken,
+      { ...doc, content: 'Something else entirely.' });
+    expect(ingested.status).toBe(403);
+
+    const listed = await call(app, 'GET',
+      '/api/agent/documents?organizationId=acme&projectId=web', ownerToken);
+    const removed = await call(app, 'DELETE',
+      `/api/agent/documents/${listed.body.documents[0].documentId}?organizationId=acme&projectId=web`,
+      viewerToken);
+    expect(removed.status).toBe(403);
+  });
+
+  it('refuses a scope the caller is not a member of', async () => {
+    for (const [method, path, body] of [
+      ['POST', '/api/agent/documents', { ...doc, organizationId: 'ghost' }],
+      ['POST', '/api/agent/documents/search', { organizationId: 'ghost', projectId: 'web', query: 'x' }],
+      ['GET', '/api/agent/documents?organizationId=ghost&projectId=web', undefined],
+    ] as const) {
+      const res = await call(app, method, path, ownerToken, body);
+      expect(res.status).toBe(404);
+    }
+  });
+
+  it('rejects a malformed ingest with the service\'s own status', async () => {
+    const empty = await call(app, 'POST', '/api/agent/documents', ownerToken,
+      { organizationId: 'acme', projectId: 'web', title: 'T', content: '   ' });
+    expect(empty.status).toBe(400);
+
+    const huge = await call(app, 'POST', '/api/agent/documents', ownerToken,
+      { organizationId: 'acme', projectId: 'web', title: 'T', content: 'x'.repeat(2_000_001) });
+    expect(huge.status).toBe(413);
+  });
+
+  it('deletes a document and stops citing it', async () => {
+    const listed = await call(app, 'GET',
+      '/api/agent/documents?organizationId=acme&projectId=web', ownerToken);
+    const documentId = listed.body.documents[0].documentId;
+
+    const removed = await call(app, 'DELETE',
+      `/api/agent/documents/${documentId}?organizationId=acme&projectId=web`, ownerToken);
+    expect(removed.status).toBe(200);
+
+    const after = await call(app, 'POST', '/api/agent/documents/search', ownerToken, {
+      organizationId: 'acme', projectId: 'web', query: 'timeout seconds',
+    });
+    expect(after.body.citations).toEqual([]);
   });
 });

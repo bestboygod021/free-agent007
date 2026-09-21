@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-291 test files, 3,631 tests. It talks to 20 provider families, fails over
+293 test files, 3,669 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -132,7 +132,7 @@ This is where the two-systems problem dominates. Summary rather than 130 rows:
 | Agent runtime (36–60) | **Partial — ~16 of 25** | A full loop plus an autonomous driver. `services/agent-runtime.ts` (`agent_runs`) gives durable state-machine execution (42), step/token/cost/time ceilings (46–49), manual stop and safe cancel (50–51), crash resume (52), per-step checkpoints (53), human-approval gates (56), deterministic replay (54) and structured stop reasons (59). `services/agent-driver.ts` adds the planner/executor pair (39–40): it picks the phase, asks a model through this gateway's own pool (`agent-completion.ts`), and maps the reply to one legal event — a constrained observe/decide/act cycle with real tool use (41) via `agent-evidence.ts`, and outcomes fed back into project memory (58). Still missing: graph execution (43) and parallel sub-agents (44–45). |
 | Tools (61–85) | **Partial — ~8 of 25** | `services/agent-tools.ts` is a real registry: registration with JSON-Schema validation (61–62), invocation with policy enforcement and human approval (63, 69), per-call timeouts (66), a redacted audit trail of every attempt (67, 70) and a catalogue shaped for tool-calling models (64). Built-ins cover filesystem read/list/search/write, a no-shell test runner and git status/diff/branch/patch/commit (68), confined to a workspace root that callers cannot choose; writes resolve their own target ref so the protected-branch guard cannot be evaded by omission. Still missing: a third-party tool SDK and marketplace (71–75), MCP-style dynamic discovery (76–78), parallel/scheduled tool execution (79–81) and retries with compensation (82–85). |
 | Memory (86–110) | **Partial — 8 of 25** | Delivered last turn: project memory, provenance (96), expiry (94), user deletion (95), tags (106), PII/secret refusal (109), retention (110), tenant isolation. Missing: semantic search (101 — search is lexical), conversation summarisation (92), contradiction detection (97–98), encryption at rest (105), episodic/semantic split (88–89). |
-| RAG (111–140) | **Absent, with one foundation** | `services/embeddings.ts` and an `embedding_models` table exist and work. There is no vector store, no chunker, no document parser, no connector, no reranker, no citations. Item 130 (citations) is the one that matters most and is entirely missing. |
+| RAG (111–140) | **Partial** | `services/rag-store.ts` + `rag-chunker.ts` + migration `…_000006`. Ingest → boundary-aware chunking → embed → store → cosine search → **citations with character offsets** (130), re-checkable via `GET /documents/citations/:chunkId`. Still absent: document parsers (PDF, DOCX), connectors, reranking, hybrid keyword search, and an ANN index — retrieval is an exact brute-force scan. |
 | Workflows (141–165) | **Rules only** | `task-dag.ts` validates graphs and plans parallel waves (142, 146, 147 as *logic*). `workflow-automation.ts` explicitly executes nothing. No builder, no triggers, no versioning. |
 
 **Verdict:** roughly 22 of 130 usable, up from 10 — the execution loop landed.
@@ -274,13 +274,13 @@ already exist.
 |---|---|---|
 | 1. Gateway/API | 14 | 15 |
 | 2. Providers | 17 | 20 |
-| 3–7. Agent, tools, memory, RAG, workflow | ~38 | 130 |
+| 3–7. Agent, tools, memory, RAG, workflow | ~44 | 130 |
 | 8–10. Coding, browser, data | ~4 | 80 |
 | 11. Security | 16 | 25 |
 | 12. Identity | ~10 | 25 |
 | 13–14. Observability, cost | ~19 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~159** | **500** |
+| **Total** | **~165** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
@@ -310,11 +310,20 @@ name a state or choose an event. What remains under this heading is not the
 loop but its *hands*: phases decide, they do not yet read a repo, run tests or
 write a patch. That is now the same problem as (5).
 
-**3. RAG with citations** (items 127–130, 111, 119, 123)
-Vector store + chunker + PDF parser + citations. `embeddings.ts` and the
-`embedding_models` table are already there, so this starts from a foundation
-rather than zero. Item 130 (accurate citations) is what makes the rest
-trustworthy.
+**3. RAG with citations** (items 127–130, 111, 119, 123) — **done for text**
+`services/rag-store.ts` stores what `runEmbeddings()` could always produce but
+nothing kept. A document is chunked at paragraph and sentence boundaries,
+embedded, and searched by cosine similarity; every hit carries the document,
+the character offsets, and the quoted text, so a citation can be re-read from
+source rather than trusted. The kernel's `packContext` does the budget fitting,
+which also means `secret_like` items are dropped without reimplementing that
+rule.
+
+Three limits worth stating: input must already be text (no PDF or DOCX
+parser), search is an exact brute-force scan rather than an ANN index (no
+sqlite-vss in the lockfile — fine at these corpus sizes, not at millions of
+chunks), and there is no reranker or keyword/hybrid stage, so recall depends
+entirely on the embedding model.
 
 **4. Semantic cache upgrade** (item 321)
 Small, self-contained, immediate cost saving. Embeddings exist; the cache

@@ -99,6 +99,15 @@ import {
   isInviteFailure,
 } from '../services/agent-invites.js';
 import { verifyCredentials } from '../services/auth.js';
+import {
+  ingestDocument,
+  searchDocuments,
+  listDocuments,
+  deleteDocument,
+  resolveCitation,
+  RagError,
+} from '../services/rag-store.js';
+import { EmbeddingsError } from '../services/embeddings.js';
 
 /**
  * ForgePilot agent kernel surface (merged from the `code-agent` blueprint).
@@ -126,6 +135,16 @@ function badRequest(res: Response, message: string): void {
 
 function forbidden(res: Response, message: string): void {
   res.status(403).json({ error: { message, type: 'permission_error' } });
+}
+
+/** Ingestion and search reach a provider, so they fail in more ways than a
+ *  validation error. Surface the status the service chose. */
+function sendRagError(res: Response, error: unknown): void {
+  const status = error instanceof RagError ? error.status
+    : error instanceof EmbeddingsError ? error.status
+    : 500;
+  const message = error instanceof Error ? error.message : 'document request failed.';
+  res.status(status).json({ error: { message, type: 'invalid_request_error' } });
 }
 
 /** A JSON object — not null, not an array. Array bodies reaching a kernel that
@@ -901,6 +920,141 @@ agentRouter.post('/organizations/:organizationId/projects', (req: Request, res: 
 
   createProject({ organizationId, projectId, name });
   res.status(201).json({ organizationId, projectId, name });
+});
+
+/**
+ * POST /api/agent/documents — ingest a document and make it searchable.
+ *
+ * Embedding happens before any row is written, so a provider outage leaves no
+ * half-ingested document behind.
+ */
+agentRouter.post('/documents', async (req: Request, res: Response) => {
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+  const scope = readScope(req, body);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
+    return;
+  }
+  if (!canWrite(scope.role)) {
+    forbidden(res, `role "${scope.role}" may not write in this project.`);
+    return;
+  }
+
+  try {
+    const result = await ingestDocument({
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      title: typeof body.title === 'string' ? body.title : '',
+      content: typeof body.content === 'string' ? body.content : '',
+      ...(typeof body.sourceUri === 'string' ? { sourceUri: body.sourceUri } : {}),
+      ...(typeof body.model === 'string' ? { model: body.model } : {}),
+      ...(isPlainObject(body.chunking) ? { chunking: body.chunking as Record<string, number> } : {}),
+    });
+    res.status(result.deduplicated ? 200 : 201).json(result);
+  } catch (error) {
+    sendRagError(res, error);
+  }
+});
+
+/** GET /api/agent/documents?organizationId=&projectId= */
+agentRouter.get('/documents', (req: Request, res: Response) => {
+  const scope = readScope(req, req.query as Record<string, unknown>);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
+    return;
+  }
+  res.json({ documents: listDocuments(scope.organizationId, scope.projectId) });
+});
+
+/** DELETE /api/agent/documents/:documentId?organizationId=&projectId= */
+agentRouter.delete('/documents/:documentId', (req: Request, res: Response) => {
+  const scope = readScope(req, req.query as Record<string, unknown>);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
+    return;
+  }
+  if (!canWrite(scope.role)) {
+    forbidden(res, `role "${scope.role}" may not write in this project.`);
+    return;
+  }
+  const documentId = pathParam(req.params.documentId);
+  if (documentId === null) {
+    badRequest(res, 'documentId is required.');
+    return;
+  }
+  if (!deleteDocument({ organizationId: scope.organizationId, projectId: scope.projectId, documentId })) {
+    res.status(404).json({ error: { message: 'no such document.', type: 'invalid_request_error' } });
+    return;
+  }
+  res.json({ deleted: true });
+});
+
+/**
+ * POST /api/agent/documents/search — retrieve passages, with citations.
+ *
+ * Every hit carries the document it came from and the character offsets within
+ * it, so the quote can be checked against the source rather than trusted.
+ */
+agentRouter.post('/documents/search', async (req: Request, res: Response) => {
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+  const scope = readScope(req, body);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
+    return;
+  }
+
+  try {
+    const result = await searchDocuments({
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      query: typeof body.query === 'string' ? body.query : '',
+      ...(typeof body.limit === 'number' ? { limit: body.limit } : {}),
+      ...(typeof body.tokenBudget === 'number' ? { tokenBudget: body.tokenBudget } : {}),
+      ...(typeof body.minScore === 'number' ? { minScore: body.minScore } : {}),
+      ...(typeof body.model === 'string' ? { model: body.model } : {}),
+    });
+    res.json(result);
+  } catch (error) {
+    sendRagError(res, error);
+  }
+});
+
+/**
+ * GET /api/agent/documents/citations/:chunkId — re-read a citation from source.
+ *
+ * This is what makes a citation checkable: it slices the stored document at
+ * the offsets the citation claims, and reports whether that still matches the
+ * chunk text.
+ */
+agentRouter.get('/documents/citations/:chunkId', (req: Request, res: Response) => {
+  const scope = readScope(req, req.query as Record<string, unknown>);
+  if (isScopeFailure(scope)) {
+    sendScopeFailure(res, scope);
+    return;
+  }
+  const chunkId = pathParam(req.params.chunkId);
+  if (chunkId === null) {
+    badRequest(res, 'chunkId is required.');
+    return;
+  }
+  const resolved = resolveCitation({
+    organizationId: scope.organizationId,
+    projectId: scope.projectId,
+    chunkId,
+  });
+  if (resolved === null) {
+    res.status(404).json({ error: { message: 'no such citation.', type: 'invalid_request_error' } });
+    return;
+  }
+  res.json(resolved);
 });
 
 /** POST /api/agent/memory — store one fact. */

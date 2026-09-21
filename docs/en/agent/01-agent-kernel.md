@@ -338,6 +338,26 @@ things:
   flag or pretend to satisfy it, those grants require re-entering the
   password. The gap is recorded rather than papered over.
 
+### Retrieval: reusing the packer instead of writing one
+
+`services/rag-store.ts` needed to fit retrieved passages into a token budget.
+That is exactly what `knowledge-fabric.ts` `packContext` does — rank by
+relevance, take what fits, report what was omitted — and it was unreachable
+like the rest of that file.
+
+Calling it rather than writing a local `slice()` bought two things beyond the
+saved code. It drops any item tainted `secret_like`, so retrieval inherits that
+rule instead of needing its own copy. And it returns a `manifestHash` over the
+selected items, which means the exact set of passages behind an answer can be
+identified later.
+
+One adaptation was needed: `packContext` sorts on `relevance`, and cosine
+similarity is legitimately negative for opposed vectors. Passing a negative
+straight through would have sorted a weak match below items it should outrank,
+so relevance is clamped at zero while the true score is still what the caller
+sees in the citation. The kernel's contract stays satisfied; the honest number
+stays visible.
+
 ### Memory — what the agent remembers between runs
 
 Facts are scoped to an `(organizationId, projectId)` pair, carry mandatory

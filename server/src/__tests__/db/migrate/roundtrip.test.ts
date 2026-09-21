@@ -46,6 +46,7 @@ const AGENT_RUNS_FILENAME = '20260921_000002_agent_runs.ts';
 const AGENT_TOOL_CALLS_FILENAME = '20260921_000003_agent_tool_calls.ts';
 const ORGANIZATIONS_FILENAME = '20260921_000004_organizations_and_membership.ts';
 const MEMBERSHIP_INVITES_FILENAME = '20260921_000005_membership_invites.ts';
+const RAG_DOCUMENTS_FILENAME = '20260921_000006_rag_documents.ts';
 
 interface SchemaRow {
   type: string;
@@ -138,6 +139,7 @@ describe('migration round trip', () => {
         AGENT_TOOL_CALLS_FILENAME,
         ORGANIZATIONS_FILENAME,
         MEMBERSHIP_INVITES_FILENAME,
+        RAG_DOCUMENTS_FILENAME,
       ]);
     } finally {
       db.close();

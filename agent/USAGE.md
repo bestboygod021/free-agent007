@@ -743,6 +743,73 @@ address does have an account, redeeming requires its password.
 | `DELETE /organizations/:org/members/:userId` | admin, owner — never the last owner |
 | `POST /api/auth/accept-invite` | anyone holding a valid token |
 
+### 5b. Documents: retrieval you can check
+
+`runEmbeddings()` could always turn text into vectors. Nothing stored them, so
+nothing could be found again. Documents close that loop.
+
+```bash
+curl -s -X POST localhost:3001/api/agent/documents \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"organizationId":"default","projectId":"default",
+       "title":"Ops notes","sourceUri":"notes/ops.md",
+       "content":"The request timeout is 30 seconds by default."}'
+```
+
+```json
+{"documentId":"doc_…","chunks":1,"family":"gemini-embedding-001","deduplicated":false}
+```
+
+Re-sending identical content returns `200` with `"deduplicated": true` instead
+of storing it twice, so syncing a folder repeatedly does not multiply every
+search result.
+
+Ask a question and get passages back:
+
+```bash
+curl -s -X POST localhost:3001/api/agent/documents/search \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"organizationId":"default","projectId":"default",
+       "query":"what is the request timeout"}'
+```
+
+```json
+{"citations":[{"documentId":"doc_…","title":"Ops notes","sourceUri":"notes/ops.md",
+  "chunkId":"chk_…","ordinal":0,"startOffset":0,"endOffset":44,
+  "text":"The request timeout is 30 seconds by default.","score":0.86}],
+ "omitted":0,"tokenEstimate":11}
+```
+
+**The offsets are the point.** A retrieval system that returns plausible text
+with no checkable source launders a model's guesses into apparent evidence. So
+a citation can be re-read from the stored document:
+
+```bash
+curl -s "localhost:3001/api/agent/documents/citations/chk_…?organizationId=default&projectId=default" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+```json
+{"text":"The request timeout is 30 seconds by default.","documentId":"doc_…",
+ "title":"Ops notes","matchesStoredChunk":true}
+```
+
+`matchesStoredChunk` is false if the chunk text and the source span ever
+disagree — in which case believe the document, not the chunk.
+
+**Known limits, so you can judge whether this fits:**
+
+| | |
+|---|---|
+| Input | Plain text only. No PDF, DOCX or HTML parser. |
+| Search | Exact brute-force cosine scan, bounded per project. No ANN index, so expect this to slow down somewhere in the tens of thousands of chunks. |
+| Ranking | Embeddings only — no reranker, no keyword or hybrid stage. Recall is whatever your embedding model gives you. |
+| Models | Vectors from different families are not comparable, so search filters by family. Changing embedding model means re-ingesting. |
+
+`tokenBudget` (default 2000) caps how much text comes back; anything that
+ranked well but did not fit is counted in `omitted`. `minScore` (default 0.2)
+discards weak matches rather than padding the answer with noise.
+
 Approval works the same way: `approvedBy` must match the email on the session
 token, so the only way to approve a call is to be logged in as that person.
 
