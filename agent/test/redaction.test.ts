@@ -116,3 +116,19 @@ describe("secret redaction", () => {
     expect(isSensitivePath("apps/web/app/page.tsx")).toBe(false);
   });
 });
+
+describe("overlapping patterns", () => {
+  it("does not nest one placeholder inside another", () => {
+    // `token=sk-...` matches both LLM_API_KEY and the key/value rule. The
+    // value is replaced once; re-wrapping it used to strand a `]`.
+    const out = redactSecrets(`token=sk-${"a".repeat(32)}`).text;
+    expect(out).toBe("token=[REDACTED:LLM_API_KEY]");
+    expect(out).not.toContain("]]");
+  });
+
+  it("still redacts a plain key/value secret", () => {
+    expect(redactSecrets("password = hunter2secret").text).toBe(
+      "password = [REDACTED:KV_SECRET]",
+    );
+  });
+});

@@ -3,6 +3,8 @@ import type { Express } from 'express';
 import { createApp } from '../../app.js';
 import { initDb } from '../../db/index.js';
 import { mintDashboardToken } from '../helpers/auth.js';
+import { clearTools } from '../../services/agent-tools.js';
+import { registerBuiltinTools } from '../../services/agent-tools-builtin.js';
 
 /**
  * /api/agent — the ForgePilot deterministic kernel surface.
@@ -744,5 +746,81 @@ describe('/api/agent driver endpoint', () => {
     expect(res.status).toBe(200);
     expect(res.body.stored).toBe(false);
     expect(res.body.reason).toContain('only DONE runs');
+  });
+});
+
+/**
+ * Tool endpoints. The registry is covered in services/agent-tools.test; here
+ * we check the HTTP surface and, above all, that the workspace root is not
+ * something a caller can choose.
+ */
+describe('/api/agent tool endpoints', () => {
+  let app: Express;
+  let token: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+    token = mintDashboardToken('agent-tools@example.com');
+    clearTools();
+    registerBuiltinTools();
+  });
+
+  it('requires auth', async () => {
+    const res = await call(app, 'GET', '/api/agent/tools', undefined);
+    expect(res.status).toBe(401);
+  });
+
+  it('lists the catalogue without leaking handlers', async () => {
+    const res = await call(app, 'GET', '/api/agent/tools', token);
+    expect(res.status).toBe(200);
+    expect(res.body.tools.map((t: { name: string }) => t.name)).toContain('fs.read_file');
+    expect(JSON.stringify(res.body)).not.toContain('handler');
+  });
+
+  it('rejects a missing tool name', async () => {
+    const res = await call(app, 'POST', '/api/agent/tools/invoke', token, { args: {} });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('tool');
+  });
+
+  it('rejects non-object args', async () => {
+    const res = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'fs.read_file',
+      args: 'hello',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('ignores a caller-supplied workspace root', async () => {
+    // The request tries to point the agent at the filesystem root. The route
+    // must use its own configured root regardless, so this cannot succeed.
+    const res = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'fs.read_file',
+      args: { path: 'passwd' },
+      workspaceRoot: '/etc',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(false);
+  });
+
+  it('refuses an unregistered tool with an audit row', async () => {
+    const res = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'fs.destroy_everything',
+      args: {},
+      organizationId: 'acme',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.outcome).toBe('denied');
+
+    const audit = await call(app, 'GET', '/api/agent/tools/calls?organizationId=acme', token);
+    expect(audit.body.calls[0].tool).toBe('fs.destroy_everything');
+    expect(audit.body.calls[0].outcome).toBe('denied');
+  });
+
+  it('rejects a bad limit on the audit trail', async () => {
+    const res = await call(app, 'GET', '/api/agent/tools/calls?limit=0', token);
+    expect(res.status).toBe(400);
   });
 });

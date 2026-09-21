@@ -70,6 +70,8 @@ import {
   AgentDriverError,
 } from '../services/agent-driver.js';
 import { gatewayCompletion } from '../services/agent-completion.js';
+import { invokeTool, listTools, listToolCalls, ToolError } from '../services/agent-tools.js';
+import { agentWorkspaceRoot } from '../services/agent-tools-builtin.js';
 
 /**
  * ForgePilot agent kernel surface (merged from the `code-agent` blueprint).
@@ -1227,4 +1229,94 @@ agentRouter.post('/runs/:runId/remember', (req: Request, res: Response) => {
       },
     });
   }
+});
+
+/* ------------------------------------------------------------------ *
+ * Tools — how a run affects anything
+ *
+ * A phase can now decide *and* act. Every call passes the same gates:
+ * registered name, schema, kernel policy, approval, timeout, audit row.
+ * ------------------------------------------------------------------ */
+
+/** GET /api/agent/tools — the catalogue, shaped for a tool-calling model. */
+agentRouter.get('/tools', (_req: Request, res: Response) => {
+  res.json({ tools: listTools() });
+});
+
+/** POST /api/agent/tools/invoke — run one tool call. */
+agentRouter.post('/tools/invoke', (req: Request, res: Response) => {
+  const body = isPlainObject(req.body) ? req.body : {};
+
+  if (typeof body.tool !== 'string' || body.tool.trim() === '') {
+    badRequest(res, '"tool" must be a non-empty string, e.g. "fs.read_file".');
+    return;
+  }
+  if (body.args !== undefined && !isPlainObject(body.args)) {
+    badRequest(res, '"args" must be an object.');
+    return;
+  }
+  if (body.grantedScopes !== undefined && !Array.isArray(body.grantedScopes)) {
+    badRequest(res, '"grantedScopes" must be an array of strings.');
+    return;
+  }
+  if (body.policy !== undefined && !isPlainObject(body.policy)) {
+    badRequest(res, '"policy" must be a PolicyContext object.');
+    return;
+  }
+  const timeoutMs = body.timeoutMs;
+  if (
+    timeoutMs !== undefined &&
+    (typeof timeoutMs !== 'number' || !Number.isInteger(timeoutMs) || timeoutMs < 1)
+  ) {
+    badRequest(res, '"timeoutMs" must be a positive integer.');
+    return;
+  }
+
+  // The workspace root is server-side configuration, never a request field:
+  // letting a caller name the root would make every confinement check moot.
+  const workspaceRoot = agentWorkspaceRoot();
+
+  invokeTool({
+    tool: body.tool,
+    args: (body.args as Record<string, unknown>) ?? {},
+    organizationId: typeof body.organizationId === 'string' ? body.organizationId : 'default',
+    projectId: typeof body.projectId === 'string' ? body.projectId : 'default',
+    ...(typeof body.runId === 'string' ? { runId: body.runId } : {}),
+    workspaceRoot,
+    ...(isPlainObject(body.policy) ? { policy: body.policy as never } : {}),
+    ...(Array.isArray(body.grantedScopes) ? { grantedScopes: body.grantedScopes as string[] } : {}),
+    ...(typeof body.approvedBy === 'string' ? { approvedBy: body.approvedBy } : {}),
+    ...(typeof timeoutMs === 'number' ? { timeoutMs } : {}),
+  }).then(
+    (result) => res.json(result),
+    (err: unknown) => {
+      const status = err instanceof ToolError ? err.status : 500;
+      res.status(status).json({
+        error: {
+          message: err instanceof Error ? err.message : 'tool invocation failed',
+          type: status >= 500 ? 'server_error' : 'invalid_request_error',
+        },
+      });
+    },
+  );
+});
+
+/** GET /api/agent/tools/calls — the audit trail. */
+agentRouter.get('/tools/calls', (req: Request, res: Response) => {
+  const limit = req.query.limit === undefined ? undefined : Number(req.query.limit);
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) {
+    badRequest(res, '"limit" must be a positive integer.');
+    return;
+  }
+  res.json({
+    calls: listToolCalls({
+      ...(typeof req.query.organizationId === 'string'
+        ? { organizationId: req.query.organizationId }
+        : {}),
+      ...(typeof req.query.projectId === 'string' ? { projectId: req.query.projectId } : {}),
+      ...(typeof req.query.runId === 'string' ? { runId: req.query.runId } : {}),
+      ...(typeof req.query.outcome === 'string' ? { outcome: req.query.outcome } : {}),
+      ...(limit === undefined ? {} : { limit }),
+    }),
+  });
 });

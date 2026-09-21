@@ -1,6 +1,7 @@
 import './env.js';
 import { createApp } from './app.js';
 import { initDb, getDb } from './db/index.js';
+import { registerBuiltinTools, ensureWorkspaceRoot } from './services/agent-tools-builtin.js';
 import { startHealthChecker, checkAllKeys } from './services/health.js';
 import { restoreProxySettings, flushProxyCache } from './lib/proxy.js';
 import { startWakeDetect } from './lib/wake-detect.js';
@@ -44,6 +45,15 @@ async function main() {
   }
   initDb(config.dbPath ?? undefined);
   applyDeclarativeConfigFromEnv();
+
+  // Tools an agent may call. Registration is explicit and happens once, so the
+  // catalogue a model is shown is exactly what the server is prepared to run.
+  registerBuiltinTools();
+  void ensureWorkspaceRoot().catch((err: unknown) => {
+    console.warn(
+      `[agent] could not create the tool workspace: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  });
   // After initDb: the unknown-model half of this check reads the catalog.
   warnOnRoutingOverrideDrift();
 

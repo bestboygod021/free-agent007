@@ -148,6 +148,45 @@ decisions from human ones.
 A test asserts that every outcome in the driver's phase table is a legal
 transition in the state it belongs to, so the two cannot drift apart.
 
+### Tools — how a run affects anything
+
+The state machine and the driver decide; tools are where a decision becomes a
+change, which makes this the most security-sensitive code in the agent. One
+function (`services/agent-tools.ts`) puts six gates in a fixed order:
+
+1. **Registration.** A model cannot conjure a capability by naming it; unknown
+   tool names are refused before anything else happens.
+2. **Schema.** Arguments are validated with Ajv — the same validator the proxy
+   uses for provider tool calls. Unlike the proxy path, a missing or
+   uncompilable schema fails *closed* here.
+3. **Policy.** `evaluateToolCall` from the kernel policy engine, so a tool call
+   made by the driver obeys exactly the rules that `/policy/tool-call`
+   reports. Hard denies (`host.exec`, `*.credential.read_raw`) are unreachable.
+4. **Approval.** When the verdict demands one, the approval must name the
+   configured approver. An agent approving itself is refused.
+5. **Execution** under a timeout, so a hung tool cannot hold a run.
+6. **Audit.** Every attempt is written to `agent_tool_calls` — denials and
+   failures included — with arguments and result previews redacted.
+
+| Method | Path | Answers |
+|---|---|---|
+| `GET` | `/api/agent/tools` | The catalogue, shaped for a tool-calling model |
+| `POST` | `/api/agent/tools/invoke` | Run one call through the gates |
+| `GET` | `/api/agent/tools/calls` | The audit trail |
+
+The built-in set is deliberately small: `fs.read_file`, `fs.list`, `fs.search`,
+`fs.file.write` and `sandbox.test`. All of them are confined to a workspace
+root taken from `AGENT_WORKSPACE_ROOT` — **server configuration, never a
+request field**, because a caller who can choose the root defeats confinement
+entirely. The check resolves symlinks and compares against `root + separator`,
+so `../`, absolute paths, links pointing outward and prefix-sharing siblings
+are all refused by the same test.
+
+`sandbox.test` spawns with `shell: false` and an environment reduced to `PATH`,
+`HOME`, `NODE_ENV` and `CI`. Shell metacharacters are therefore inert
+arguments, and the provider API keys in the server's environment are not
+inherited by anything a run executes.
+
 ### Memory — what the agent remembers between runs
 
 Facts are scoped to an `(organizationId, projectId)` pair, carry mandatory

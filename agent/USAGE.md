@@ -416,6 +416,86 @@ decisions were machine-made and which were human:
 When a run reaches `DONE`, `POST /runs/$RUN/remember` files what it achieved
 into project memory, so the next run on that project starts informed.
 
+### Tools: how a run changes anything
+
+Deciding is not doing. Tools are the layer where an agent stops being advisory,
+so every call passes six gates in order: the tool must be registered, the
+arguments must match its JSON Schema, the kernel policy engine must allow it,
+any required approval must exist, the handler runs under a timeout, and the
+attempt is recorded either way.
+
+```bash
+curl -s http://localhost:3001/api/agent/tools -H "Authorization: Bearer $TOKEN"
+```
+
+```
+fs.file.write   fs.list   fs.read_file   fs.search   sandbox.test
+```
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/tools/invoke \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"tool":"fs.search","args":{"query":"port","extensions":[".ts"]}}'
+```
+
+```json
+{"outcome":"ok","result":{"hits":[{"path":"src/app.ts","line":1,
+ "text":"export const port = 3001;"}]}}
+```
+
+#### What it refuses
+
+Tools are confined to a workspace root that is **server configuration**
+(`AGENT_WORKSPACE_ROOT`), never a request field — a caller who could name the
+root would make every check below meaningless.
+
+```
+error   fs.read_file   path "../outside-secret.txt" escapes the workspace.
+error   fs.read_file   path "/etc/passwd" escapes the workspace.
+denied  host.exec      no tool named "host.exec" is registered.
+denied  fs.file.write  connector is missing required scopes: repository:write
+```
+
+The confinement check resolves symlinks, so a link inside the workspace
+pointing out of it is refused too, and a sibling directory that merely shares a
+name prefix (`/work-secrets` next to `/work`) is not a child.
+
+`sandbox.test` spawns without a shell and with a scrubbed environment, so shell
+metacharacters are inert and provider keys are not inherited:
+
+```bash
+-d '{"tool":"sandbox.test","args":{"command":"echo hi; touch /tmp/PWNED"}}'
+```
+
+```json
+{"exitCode":0,"stdout":"hi; touch /tmp/PWNED\n"}   # no file was created
+```
+
+A write needs the `repository:write` scope; a critical tool additionally needs
+an approval, and **the agent cannot supply its own** — an `approvedBy` that is
+not the configured approver is refused.
+
+#### The audit trail
+
+Every attempt is a row, refusals included, because "the agent tried to read
+/etc/passwd and was stopped" is the event worth seeing:
+
+```bash
+curl -s "http://localhost:3001/api/agent/tools/calls?organizationId=acme" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+```
+ok      fs.search       risk=read
+error   fs.read_file    risk=read     path "/etc/passwd" escapes the workspace.
+denied  fs.file.write   risk=medium   connector is missing required scopes
+ok      fs.file.write   risk=medium
+```
+
+Arguments and result previews are redacted before storage, so a secret passed
+by mistake does not become a permanent row — while the caller still receives
+the real value.
+
 ## 6. Memory: what it remembers
 
 An agent that forgets your project between runs will keep asking the same
@@ -520,10 +600,10 @@ The behaviour that matters:
 
 Be clear about this before you build on it.
 
-**It does not touch your repo.** The driver decides *what phase comes next* by
-asking a model, but no phase reads your files, writes code or opens a PR. A
-run's history is a trail of decisions, not a diff. Wiring phases to real tools
-— a checkout, a test command, a patch — is the next step and it is not done.
+**Phases do not call tools yet.** Both halves now exist — the driver decides,
+and [tools](#tools-how-a-run-changes-anything) act — but they are still
+invoked separately. Nothing yet hands a phase the catalogue and lets it choose;
+that wiring, plus git operations and a real sandbox, is the remaining work.
 
 **Its judgement is only as good as the model's.** The kernel guarantees the
 *shape* of a run: legal transitions, budgets, human gates, a verifiable trail.

@@ -161,7 +161,14 @@ const PATTERNS: readonly Pattern[] = [
       quoteB: string,
       _val: string,
       quoteC: string,
-    ) => (isSecretKey(key) ? `${key}${quoteA}${sep}${quoteB}[REDACTED:KV_SECRET]${quoteC}` : full),
+    ) =>
+      // An earlier pattern may already have replaced the value (e.g. an
+      // `sk-...` token caught by LLM_API_KEY). Re-wrapping it would nest one
+      // placeholder inside another and strand the closing bracket, so leave
+      // an already-redacted value alone.
+      isSecretKey(key) && !_val.startsWith("[REDACTED:")
+        ? `${key}${quoteA}${sep}${quoteB}[REDACTED:KV_SECRET]${quoteC}`
+        : full,
   },
   {
     type: "STRIPE_KEY",
