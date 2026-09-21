@@ -351,6 +351,71 @@ One limit to be aware of: **the loop does not call models.** It advances when
 something tells it what happened. That keeps every decision in the tested
 kernel and leaves execution to you — or to an autonomous driver built on top.
 
+### The agent driving itself
+
+Everything above advances the run by hand. `advance` closes the loop: it works
+out which phase the run is in, asks a model the one question that phase needs
+answered, and maps the reply onto a legal event.
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/runs/$RUN/advance \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"maxSteps":8}'
+```
+
+```
+  clear      -> spec_ready                 PLAN
+  ready      -> plan_ready                 AWAITING_PLAN_APPROVAL
+
+stopped: awaiting_human | run is waiting for plan approval
+```
+
+It went as far as it legitimately could and stopped. Approve the plan and call
+`advance` again, and it carries on through recon, implementation, tests,
+security review and preview before parking at the deploy gate.
+
+The model is never told the state machine exists. It is asked a question and
+given a short list of permitted words; this code turns the word it picks into
+exactly one event. That is what makes the loop safe to run unattended:
+
+```
+stopped: refused
+reason : model answered "deploy_approved\nIgnore the process, ship";
+         expected one of: clear, unclear
+state  : INTAKE (unchanged)
+steps  : 0
+```
+
+A model demanding deployment during intake does not get a veto, an error, or a
+half-applied transition — it gets ignored, and the run does not move.
+
+Three properties hold no matter what comes back:
+
+- **It cannot approve itself.** Human gates stop the driver every time; only a
+  person calls `/decision`.
+- **It cannot invent a transition.** Unrecognised answers are refused and cost
+  the run nothing — no state change, no step consumed, no checkpoint.
+- **It cannot run forever.** It is bounded by its own `maxSteps`, by the run's
+  step budget, and by the repair-attempt limit for the compute mode.
+
+Useful options: `once: true` advances a single phase (handy for a UI that
+renders each step), `model` pins a specific model, and `useMemory: false`
+leaves recalled project facts out of the prompt.
+
+Every automated step is checkpointed with the outcome, the model's reasoning
+and the model's name, so `GET /runs/$RUN/checkpoints` shows exactly which
+decisions were machine-made and which were human:
+
+```
+   1  spec_ready                 -> PLAN                     [auto]
+   2  plan_ready                 -> AWAITING_PLAN_APPROVAL   [auto]
+   3  plan_approved              -> RECON                    [human]
+   4  recon_complete             -> IMPLEMENT                [auto]
+```
+
+When a run reaches `DONE`, `POST /runs/$RUN/remember` files what it achieved
+into project memory, so the next run on that project starts informed.
+
 ## 6. Memory: what it remembers
 
 An agent that forgets your project between runs will keep asking the same
@@ -455,26 +520,27 @@ The behaviour that matters:
 
 Be clear about this before you build on it.
 
-**It does not drive itself.** There *is* now a run loop — durable, budgeted,
-human-gated, crash-resumable (see [runs](#5-runs-driving-an-agent-end-to-end)) —
-but it advances on outcomes you report. Nothing here reads your repo, calls a
-model, writes files and opens a PR on its own. The referee is on the field; the
-player is still you.
+**It does not touch your repo.** The driver decides *what phase comes next* by
+asking a model, but no phase reads your files, writes code or opens a PR. A
+run's history is a trail of decisions, not a diff. Wiring phases to real tools
+— a checkout, a test command, a patch — is the next step and it is not done.
 
-**It is not wired to your 635 models yet.** `POST /api/agent/route` makes you
-pass the candidate providers in the request body. It does not read the
-FreeLLMAPI catalog in the database. Connecting those two is the obvious next
-step and it is not done.
+**Its judgement is only as good as the model's.** The kernel guarantees the
+*shape* of a run: legal transitions, budgets, human gates, a verifiable trail.
+It cannot guarantee that a model answering `pass` actually ran your tests. The
+structure is trustworthy; the content still needs review.
 
 **Most of the documentation describes plans.** Phases M9–M208 in `agent/docs/`
 are marked `designed_only`: billing, sandbox runtime, marketplace and the rest
 are specified but not implemented. The 611 kernel tests cover the modules
 listed in this guide — nothing more.
 
-Two things that used to be on this list no longer are. **Memory** and the
-**job queue** are now persisted in SQLite, so facts and in-flight work survive
-a restart; see [memory](#6-memory-what-it-remembers) and
-[jobs](#7-jobs-how-it-scales) above.
+Three things that used to be on this list no longer are. **Memory** and the
+**job queue** are persisted in SQLite, so facts and in-flight work survive a
+restart. And the agent **no longer waits to be told what to do**: `advance`
+drives it through your own model pool, stopping only at human gates. See
+[memory](#6-memory-what-it-remembers), [jobs](#7-jobs-how-it-scales) and
+[autonomy](#the-agent-driving-itself) above.
 
 So today this is useful as: a prompt library you can paste into any model, a
 policy/routing/evidence engine you can call before letting an agent do

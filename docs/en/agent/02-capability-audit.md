@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-283 test files, 3,396 tests. It talks to 20 provider families, fails over
+285 test files, 3,464 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -129,7 +129,7 @@ This is where the two-systems problem dominates. Summary rather than 130 rows:
 
 | Area | Status | Reality |
 |---|---|---|
-| Agent runtime (36–60) | **Partial — ~12 of 25** | An execution loop now exists (`services/agent-runtime.ts`, `agent_runs`): durable runs with state-machine execution (42), step/token/cost/time ceilings (46–49), manual stop and safe cancel (50–51), resume after crash (52), per-step checkpoints (53), human-approval gates (56), deterministic replay of history (54) and structured stop reasons (59). Still missing: an autonomous planner/executor pair (39–40), ReAct (41), graph execution (43) and parallel sub-agents (44–45) — the loop advances on reported outcomes, it does not yet call models itself. |
+| Agent runtime (36–60) | **Partial — ~16 of 25** | A full loop plus an autonomous driver. `services/agent-runtime.ts` (`agent_runs`) gives durable state-machine execution (42), step/token/cost/time ceilings (46–49), manual stop and safe cancel (50–51), crash resume (52), per-step checkpoints (53), human-approval gates (56), deterministic replay (54) and structured stop reasons (59). `services/agent-driver.ts` adds the planner/executor pair (39–40): it picks the phase, asks a model through this gateway's own pool (`agent-completion.ts`), and maps the reply to one legal event — a constrained observe/decide/act cycle (41, partial), with outcomes fed back into project memory (58). Still missing: free-form ReAct with tool use (41 in full), graph execution (43) and parallel sub-agents (44–45). |
 | Tools (61–85) | **Rules only** | `policy-engine.ts` decides whether a call is allowed and whether it needs approval; `tool-validate.ts` and `tool-args.ts` validate schemas in the gateway. No registry, no SDK, no marketplace, no scheduling. |
 | Memory (86–110) | **Partial — 8 of 25** | Delivered last turn: project memory, provenance (96), expiry (94), user deletion (95), tags (106), PII/secret refusal (109), retention (110), tenant isolation. Missing: semantic search (101 — search is lexical), conversation summarisation (92), contradiction detection (97–98), encryption at rest (105), episodic/semantic split (88–89). |
 | RAG (111–140) | **Absent, with one foundation** | `services/embeddings.ts` and an `embedding_models` table exist and work. There is no vector store, no chunker, no document parser, no connector, no reranker, no citations. Item 130 (citations) is the one that matters most and is entirely missing. |
@@ -243,13 +243,13 @@ already exist.
 |---|---|---|
 | 1. Gateway/API | 14 | 15 |
 | 2. Providers | 17 | 20 |
-| 3–7. Agent, tools, memory, RAG, workflow | ~22 | 130 |
+| 3–7. Agent, tools, memory, RAG, workflow | ~26 | 130 |
 | 8–10. Coding, browser, data | ~1 | 80 |
 | 11. Security | 14 | 25 |
 | 12. Identity | ~4 | 25 |
 | 13–14. Observability, cost | ~18 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~131** | **500** |
+| **Total** | **~135** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
@@ -268,11 +268,13 @@ than four columns. This is the single highest-leverage change in the list, and
 it gets harder every month.
 
 **2. An agent execution loop** (items 39–44, 52–53) — **done**
-Delivered in `services/agent-runtime.ts`. Runs are durable, budgeted,
-human-gated, cancellable and crash-resumable over a hash-chained history. What
-remains of this item is autonomy: a planner/executor pair that calls models and
-feeds outcomes back into the loop. The loop was built to accept exactly that
-without changing its contract.
+Delivered in `services/agent-runtime.ts`, with autonomy in
+`services/agent-driver.ts`. Runs are durable, budgeted, human-gated,
+cancellable and crash-resumable over a hash-chained history, and `advance`
+drives them through the gateway's own model pool without ever letting a model
+name a state or choose an event. What remains under this heading is not the
+loop but its *hands*: phases decide, they do not yet read a repo, run tests or
+write a patch. That is now the same problem as (5).
 
 **3. RAG with citations** (items 127–130, 111, 119, 123)
 Vector store + chunker + PDF parser + citations. `embeddings.ts` and the
@@ -285,7 +287,9 @@ Small, self-contained, immediate cost saving. Embeddings exist; the cache
 exists; connect them with a similarity threshold.
 
 **5. Tool registry and SDK** (items 61–67)
-Depends on (2). Without an execution loop a tool registry has no caller.
+Now the critical path. (2) supplies the caller — a driver that reaches each
+phase and decides what should happen — but every phase is still advisory until
+tools exist for it to act through. This is what turns decisions into changes.
 
 Deliberately deferred: browser automation (§9) and business connectors (§10)
 are large from-scratch subsystems with no foundation here, and they do not

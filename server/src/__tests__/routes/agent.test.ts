@@ -687,3 +687,62 @@ describe('/api/agent runs', () => {
     expect(stepped.status).toBe(404);
   });
 });
+
+/**
+ * Driver endpoint. The driver itself is covered in services/agent-driver.test
+ * with an injected model; here we check the HTTP surface and the validation
+ * that stops a malformed request before it reaches a provider.
+ */
+describe('/api/agent driver endpoint', () => {
+  let app: Express;
+  let token: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+    token = mintDashboardToken('agent-driver@example.com');
+  });
+
+  async function create() {
+    const res = await call(app, 'POST', '/api/agent/runs', token, {
+      organizationId: 'acme',
+      projectId: 'web',
+      goal: 'Ship rate limiting',
+      mode: 'paid',
+    });
+    return res.body.run.runId as string;
+  }
+
+  it('requires auth', async () => {
+    const res = await call(app, 'POST', '/api/agent/runs/run_x/advance', undefined, {});
+    expect(res.status).toBe(401);
+  });
+
+  it('404s an unknown run', async () => {
+    const res = await call(app, 'POST', '/api/agent/runs/run_nope/advance', token, { once: true });
+    expect(res.status).toBe(404);
+  });
+
+  it('rejects an out-of-range step cap before calling any provider', async () => {
+    const runId = await create();
+    const res = await call(app, 'POST', `/api/agent/runs/${runId}/advance`, token, { maxSteps: 500 });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('maxSteps');
+  });
+
+  it('rejects an empty model override', async () => {
+    const runId = await create();
+    const res = await call(app, 'POST', `/api/agent/runs/${runId}/advance`, token, { model: '  ' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('model');
+  });
+
+  it('refuses to remember a run that has not finished', async () => {
+    const runId = await create();
+    const res = await call(app, 'POST', `/api/agent/runs/${runId}/remember`, token, {});
+    expect(res.status).toBe(200);
+    expect(res.body.stored).toBe(false);
+    expect(res.body.reason).toContain('only DONE runs');
+  });
+});

@@ -99,6 +99,8 @@ it when a ceiling is hit.
 | `POST` | `/api/agent/runs/:runId/cancel` | Stop a run |
 | `GET` | `/api/agent/runs/:runId/checkpoints` | The full history |
 | `GET` | `/api/agent/runs/:runId/verify` | Re-derive the hash chain |
+| `POST` | `/api/agent/runs/:runId/advance` | Let a model drive the next phase(s) |
+| `POST` | `/api/agent/runs/:runId/remember` | File a finished run into project memory |
 
 Four properties are worth stating plainly:
 
@@ -118,9 +120,33 @@ Four properties are worth stating plainly:
   previous one, so a row edited or deleted in the database breaks verification
   at a known sequence number.
 
-What it deliberately does not do is call a model. Something else reports the
-outcome of a step; the loop decides what that outcome means. An autonomous
-driver can sit on top without changing any of this.
+#### The driver
+
+`advance` is the autonomous layer, and it changes none of the above — it is
+just another caller of `step()`, subject to every guarantee listed here.
+
+For each state it knows one question, the task type to route it as, and the
+handful of words that are acceptable answers. It composes a prompt from the
+run's goal and recalled project memory, sends it through this gateway's own
+`/v1/chat/completions` (so the agent inherits the full provider pool, failover
+and cost accounting), and maps the reply onto exactly one event.
+
+The safety of the arrangement rests on what the model is *not* given. It never
+sees the state machine, never names a state, and never chooses an event. It
+picks a word from a list; a lookup table in code turns that word into a
+transition. An answer outside the list is refused and the run does not move —
+no state change, no step consumed, no checkpoint written. A model insisting on
+`deploy_approved` during intake is simply ignored.
+
+Three limits bound the driver regardless of what any model returns: it stops at
+every human gate (only a person calls `/decision`), it is capped by both its
+own `maxSteps` and the run's step budget, and repair loops end at the compute
+mode's attempt limit. Each automated checkpoint records the outcome, the
+model's reasoning and the model's name, so the history distinguishes machine
+decisions from human ones.
+
+A test asserts that every outcome in the driver's phase table is a legal
+transition in the state it belongs to, so the two cannot drift apart.
 
 ### Memory — what the agent remembers between runs
 

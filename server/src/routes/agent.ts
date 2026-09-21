@@ -63,6 +63,13 @@ import {
   verifyChain,
   resumableRuns,
 } from '../services/agent-runtime.js';
+import {
+  advance,
+  advanceUntil,
+  rememberOutcome,
+  AgentDriverError,
+} from '../services/agent-driver.js';
+import { gatewayCompletion } from '../services/agent-completion.js';
 
 /**
  * ForgePilot agent kernel surface (merged from the `code-agent` blueprint).
@@ -1132,4 +1139,92 @@ agentRouter.get('/runs/:runId/verify', (req: Request, res: Response) => {
     return;
   }
   res.json(verifyChain(runId));
+});
+
+/* ------------------------------------------------------------------ *
+ * Driver — autonomous advancement
+ *
+ * The run loop advances on reported outcomes; the driver obtains those
+ * outcomes from a model through this gateway's own pool. The kernel still
+ * decides every transition — a model only answers a bounded question and the
+ * driver maps that answer onto one legal event.
+ * ------------------------------------------------------------------ */
+
+/** POST /api/agent/runs/:runId/advance — drive the run automatically. */
+agentRouter.post('/runs/:runId/advance', (req: Request, res: Response) => {
+  const runId = pathParam(req.params.runId);
+  if (runId === null) {
+    badRequest(res, 'run id must be a single path segment.');
+    return;
+  }
+  const body = isPlainObject(req.body) ? req.body : {};
+
+  const maxSteps = body.maxSteps;
+  if (
+    maxSteps !== undefined &&
+    (typeof maxSteps !== 'number' || !Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 100)
+  ) {
+    badRequest(res, '"maxSteps" must be an integer between 1 and 100.');
+    return;
+  }
+  if (body.model !== undefined && (typeof body.model !== 'string' || body.model.trim() === '')) {
+    badRequest(res, '"model" must be a non-empty string when provided.');
+    return;
+  }
+
+  const complete = gatewayCompletion({
+    ...(typeof body.model === 'string' ? { model: body.model } : {}),
+  });
+
+  // `once: true` runs a single phase, which is the useful default for a UI
+  // that wants to show each step; otherwise drive until a human is needed.
+  const driving =
+    body.once === true
+      ? advance({ runId, complete, ...(body.useMemory === false ? { useMemory: false } : {}) }).then(
+          (result) => ({
+            run: result.run,
+            steps: [result],
+            stopped: result.ok ? undefined : result.stopped,
+            reason: result.reason,
+          }),
+        )
+      : advanceUntil({
+          runId,
+          complete,
+          ...(maxSteps === undefined ? {} : { maxSteps }),
+          ...(body.useMemory === false ? { useMemory: false } : {}),
+        });
+
+  driving.then(
+    (result) => res.json(result),
+    (err: unknown) => {
+      const status = err instanceof AgentDriverError ? err.status : 500;
+      res.status(status).json({
+        error: {
+          message: err instanceof Error ? err.message : 'driver failed',
+          type: status === 404 ? 'not_found' : 'server_error',
+        },
+      });
+    },
+  );
+});
+
+/** POST /api/agent/runs/:runId/remember — store what a finished run concluded. */
+agentRouter.post('/runs/:runId/remember', (req: Request, res: Response) => {
+  const runId = pathParam(req.params.runId);
+  if (runId === null) {
+    badRequest(res, 'run id must be a single path segment.');
+    return;
+  }
+  try {
+    res.json(rememberOutcome(runId));
+  } catch (err) {
+    const status = err instanceof AgentDriverError ? err.status : 400;
+    res.status(status).json({
+      error: {
+        message: err instanceof Error ? err.message : 'could not store the outcome',
+        type: status === 404 ? 'not_found' : 'invalid_request_error',
+      },
+    });
+  }
 });
