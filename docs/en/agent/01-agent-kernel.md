@@ -250,6 +250,34 @@ Three smaller decisions:
 - `--no-verify` is deliberately not passed, and `git apply --check` runs before
   `git apply`, so hooks still apply and a bad patch leaves the tree untouched.
 
+### Who owns the policy context
+
+A guard is only as strong as the input it judges. The invoke route originally
+merged the caller's `policy` object straight into the `PolicyContext`, which
+made two guarantees decorative: `protectedBranches: []` disabled the
+protected-branch guard, and a caller could set `approverUserId` to match its
+own `approvedBy` and satisfy the human-approval gate with no human. Both were
+confirmed against a running server — a commit landed on `main`, and a critical
+tool ran on a self-issued approval.
+
+`services/agent-policy-context.ts` now builds the context, splitting fields by
+who they answer to:
+
+- **Authority fields come from the server.** `protectedBranches` from
+  `AGENT_PROTECTED_BRANCHES`, `workingBranch` from `AGENT_WORKING_BRANCH`, and
+  `approverUserId` from the authenticated session — so approving a call
+  requires being logged in as that person.
+- **`autonomy` is clamped, not taken.** A request may lower it below the
+  configured ceiling but never raise it, because higher autonomy waives
+  approvals.
+- **Descriptive fields may come from the request.** `privacyLevel` and
+  `disabledCapabilities` only ever make a verdict stricter.
+
+The principle worth carrying forward: a control the subject of the control can
+edit is not a control. Anything that decides *whether* an action is permitted
+belongs to configuration or the session, never to the body of the request
+asking for it.
+
 ### Memory — what the agent remembers between runs
 
 Facts are scoped to an `(organizationId, projectId)` pair, carry mandatory

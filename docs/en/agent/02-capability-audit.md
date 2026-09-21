@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-288 test files, 3,544 tests. It talks to 20 provider families, fails over
+289 test files, 3,561 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -159,7 +159,7 @@ Disproportionately strong, because the gateway had to solve these for itself.
 | # | Feature | Status | Evidence |
 |---|---|---|---|
 | 246–247 | Prompt injection | **Partial** | `lib/guardrails.ts` — pattern-based, not a classifier |
-| 249 | Tool-call policy engine | **Rules only** | `policy-engine.ts` — tested, unreachable |
+| 249 | Tool-call policy engine | **Built** | `policy-engine.ts`, enforced on every call by `agent-tools.ts`; authority fields (protected branches, approver) are server- and session-owned via `agent-policy-context.ts`, so a request cannot widen its own verdict |
 | 250–252 | URL allow/blocklist, SSRF | **Built** | `lib/url-guard.ts` |
 | 254–257 | PII and secret handling | **Built** | `redaction.ts`, `log-redaction.ts`, `error-redaction.ts` |
 | 260 | Output schema checks | **Built** | `structured-output.ts`, `output-contract.ts` |
@@ -169,7 +169,7 @@ Disproportionately strong, because the gateway had to solve these for itself.
 | 267 | Security decision log | **Built** | `server_logs`, `attempt-trace.ts` |
 | 248, 253, 258–259, 264–266, 268–270 | | **Absent** | |
 
-**Verdict:** 8 built, 6 partial/rules, 11 absent. Redaction (254–257) is
+**Verdict:** 9 built, 5 partial/rules, 11 absent. Redaction (254–257) is
 genuinely production-grade and defended by tests that build secret fixtures at
 runtime specifically so GitHub's scanner will not block commits.
 
@@ -201,7 +201,7 @@ project, because §2 item 19, §11 item 262 and most of §16 all wait on it.
 | # | Feature | Status | Evidence |
 |---|---|---|---|
 | 296–300 | Traces, timeline, tokens, latency | **Built** | `attempt-trace.ts`, `request_attempts`, percentile indexes |
-| 302 | Tool traces | **Absent** | no tools to trace |
+| 302 | Tool traces | **Built** | `agent_tool_calls` — every attempt, refusals included, linked to its run |
 | 303 | Cost dashboard | **Built** | `AnalyticsPage.tsx` |
 | 304 | Error classification | **Built** | `lib/error-classify.ts` |
 | 305–307 | Alerts | **Absent** | metrics exist; no alerting |
@@ -245,11 +245,11 @@ already exist.
 | 2. Providers | 17 | 20 |
 | 3–7. Agent, tools, memory, RAG, workflow | ~38 | 130 |
 | 8–10. Coding, browser, data | ~4 | 80 |
-| 11. Security | 14 | 25 |
+| 11. Security | 15 | 25 |
 | 12. Identity | ~4 | 25 |
-| 13–14. Observability, cost | ~18 | 50 |
+| 13–14. Observability, cost | ~19 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~150** | **500** |
+| **Total** | **~152** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,

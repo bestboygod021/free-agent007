@@ -72,6 +72,7 @@ import {
 import { gatewayCompletion } from '../services/agent-completion.js';
 import { invokeTool, listTools, listToolCalls, ToolError } from '../services/agent-tools.js';
 import { agentWorkspaceRoot } from '../services/agent-tools-builtin.js';
+import { buildPolicyContext } from '../services/agent-policy-context.js';
 
 /**
  * ForgePilot agent kernel surface (merged from the `code-agent` blueprint).
@@ -1304,6 +1305,15 @@ agentRouter.post('/tools/invoke', (req: Request, res: Response) => {
   // letting a caller name the root would make every confinement check moot.
   const workspaceRoot = agentWorkspaceRoot();
 
+  // Likewise the authority half of the policy context. `protectedBranches` and
+  // `approverUserId` are decided by configuration and the session, so a
+  // request can neither un-protect a branch nor nominate itself as approver.
+  const sessionEmail = (req as Request & { user?: { email?: string } }).user?.email;
+  const policy = buildPolicyContext({
+    sessionEmail,
+    ...(isPlainObject(body.policy) ? { requested: body.policy } : {}),
+  });
+
   invokeTool({
     tool: body.tool,
     args: (body.args as Record<string, unknown>) ?? {},
@@ -1311,7 +1321,7 @@ agentRouter.post('/tools/invoke', (req: Request, res: Response) => {
     projectId: typeof body.projectId === 'string' ? body.projectId : 'default',
     ...(typeof body.runId === 'string' ? { runId: body.runId } : {}),
     workspaceRoot,
-    ...(isPlainObject(body.policy) ? { policy: body.policy as never } : {}),
+    policy,
     ...(Array.isArray(body.grantedScopes) ? { grantedScopes: body.grantedScopes as string[] } : {}),
     ...(typeof body.approvedBy === 'string' ? { approvedBy: body.approvedBy } : {}),
     ...(typeof timeoutMs === 'number' ? { timeoutMs } : {}),

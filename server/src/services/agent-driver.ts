@@ -4,6 +4,7 @@ import { recall, remember } from './agent-memory.js';
 import { resolveMode } from '@freellmapi/agent/core/compute-mode.js';
 import { redactSecrets } from '@freellmapi/agent/core/redaction.js';
 import { gatherEvidence, type EvidenceEntry } from './agent-evidence.js';
+import { buildPolicyContext } from './agent-policy-context.js';
 import type { RunEvent } from '@freellmapi/agent/core/state-machine.js';
 import type { ModelTaskType, RunState } from '@freellmapi/agent/core/types.js';
 
@@ -353,7 +354,14 @@ export async function advance(options: AdvanceOptions): Promise<AdvanceResult> {
       allowedTools: phase.tools,
       basePrompt,
       ...(options.maxToolCalls === undefined ? { maxCalls: 3 } : { maxCalls: options.maxToolCalls }),
-      policy: { privacyLevel: run.privacyLevel as never },
+      // Built, not hand-rolled: the authority fields (protected branches, who
+      // may approve) must come from configuration, not from this call site.
+      // An unattended phase has no session, so it can never satisfy an
+      // approval gate -- which is the intended outcome.
+      policy: buildPolicyContext({
+        sessionEmail: undefined,
+        privacyLevel: run.privacyLevel,
+      }) as never,
       ask: async (prompt: string) => {
         last = await askModel(prompt);
         // The tool protocol lives in the model's prose, so evidence gathering

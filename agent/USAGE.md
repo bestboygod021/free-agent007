@@ -558,6 +558,103 @@ outcome is still parsed against the phase's permitted words, so a model that
 reads three files and then demands `deploy_approved` is refused exactly as
 before.
 
+### Git: the supervised write path
+
+Reading is safe to do unattended; changing a repository is not. The git tools
+are only reachable through an explicit, scoped call — an autonomous phase is
+never offered them at all.
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/tools/invoke \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"tool":"git.commit.create","args":{"message":"Add rate limiting"},
+       "grantedScopes":["repository:write"]}'
+```
+
+#### It cannot commit to main by keeping quiet
+
+The kernel refuses writes to a protected ref, but only when the caller says
+which ref is being written — and a model that wants to commit to `main` would
+simply not mention `main`. So these tools never take the branch from the
+request: `git.commit.create` resolves `HEAD` from the repository and hands the
+*real* branch to the policy layer.
+
+```
+denied  git.commit.create  direct write to protected ref "main" is forbidden;
+                           open a pull request instead
+```
+
+Nobody declared a branch there. The repository was on `main`, and that was
+enough.
+
+#### The workflow that is allowed
+
+```
+ok  git.branch.create     {"branch":"agent/rate-limiting","created":true}
+ok  git.patch.file.write  {"applied":true,"summary":"src/server.ts | 3 ++-"}
+ok  git.diff.read         {"diff":"…"}
+ok  git.commit.create     {"committed":true,"branch":"agent/rate-limiting",
+                           "sha":"11be31b","files":["src/server.ts"]}
+```
+
+```
+11be31b FreeLLMAPI Agent: Add rate limiting to the public API
+467bd83 Human: initial commit
+```
+
+Agent commits carry their own identity, so `git log` separates them from a
+human's forever after. `main` is untouched.
+
+#### Who decides the rules
+
+A control that its own subject can edit is not a control, so the fields
+deciding *whether* a call is allowed never come from the request:
+
+| Field | Comes from | Why |
+|---|---|---|
+| `protectedBranches` | `AGENT_PROTECTED_BRANCHES` (default `main,master`) | A request could otherwise send `[]` and commit to `main`. |
+| `approverUserId` | the authenticated session | Otherwise a caller names itself approver and satisfies the gate with no human. |
+| `autonomy` | `AGENT_AUTONOMY` (default `supervised`) | A request may *lower* it, never raise it. |
+| `workspaceRoot` | `AGENT_WORKSPACE_ROOT` | A caller choosing the root defeats confinement. |
+
+Descriptive fields (`privacyLevel`, `disabledCapabilities`) are taken from the
+request, because getting those wrong makes a verdict stricter, not looser.
+
+```bash
+# Asking nicely does not work:
+-d '{"tool":"git.commit.create","args":{"message":"…"},
+     "grantedScopes":["repository:write"],
+     "policy":{"protectedBranches":[]}}'
+```
+
+```
+denied  direct write to protected ref "main" is forbidden
+```
+
+Approval works the same way: `approvedBy` must match the email on the session
+token, so the only way to approve a call is to be logged in as that person.
+
+#### Details that matter
+
+- **Names are load-bearing.** `git.status.read` and `git.diff.read` end in
+  `.read` so the kernel classifies them as reads; `git.patch.file.write` ends
+  in `.file.write` so it requires `repository:write`. An unrecognised name
+  falls to the catch-all — high risk, always approve — which is safe but would
+  make routine reads need a human.
+- **No credentials.** git runs with prompting disabled and no credential
+  helper, so an agent cannot authenticate as the human who installed the
+  gateway.
+- **No option injection.** Branch names and paths are rejected if they could be
+  read as flags, and file lists are passed after `--`.
+- **Hooks still run.** `--no-verify` is deliberately not passed: an agent's
+  commit faces the same checks a human's would.
+- **Patches are checked first.** A patch that does not apply cleanly leaves the
+  tree exactly as it was.
+
+Because `git.status.read` and `git.diff.read` are classified as reads, phases
+*can* use them as evidence — an agent may look at what has changed before
+deciding, while still being unable to change anything itself.
+
 ## 6. Memory: what it remembers
 
 An agent that forgets your project between runs will keep asking the same

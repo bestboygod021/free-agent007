@@ -5,6 +5,12 @@ import { initDb } from '../../db/index.js';
 import { mintDashboardToken } from '../helpers/auth.js';
 import { clearTools } from '../../services/agent-tools.js';
 import { registerBuiltinTools } from '../../services/agent-tools-builtin.js';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { execFileSync } from 'node:child_process';
+import { registerTool } from '../../services/agent-tools.js';
+import { registerGitTools } from '../../services/agent-tools-git.js';
 
 /**
  * /api/agent — the ForgePilot deterministic kernel surface.
@@ -832,5 +838,123 @@ describe('/api/agent tool endpoints', () => {
   it('rejects a bad limit on the audit trail', async () => {
     const res = await call(app, 'GET', '/api/agent/tools/calls?limit=0', token);
     expect(res.status).toBe(400);
+  });
+});
+
+/**
+ * Regression: the invoke route used to merge the caller's `policy` object into
+ * the context the policy engine judges against. Both of these were confirmed
+ * to succeed against a live server before the fix.
+ */
+describe('/api/agent tool invoke cannot be talked out of its guards', () => {
+  let app: Express;
+  let token: string;
+  let repo: string;
+
+  beforeAll(async () => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+    token = mintDashboardToken('approver@example.com');
+    clearTools();
+    registerBuiltinTools();
+    registerGitTools();
+
+    repo = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'agent-route-git-')));
+    const env = {
+      ...process.env,
+      GIT_AUTHOR_NAME: 'T',
+      GIT_AUTHOR_EMAIL: 't@e.com',
+      GIT_COMMITTER_NAME: 'T',
+      GIT_COMMITTER_EMAIL: 't@e.com',
+    };
+    execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, env });
+    await fs.writeFile(path.join(repo, 'f.txt'), 'x=1\n');
+    execFileSync('git', ['add', '.'], { cwd: repo, env });
+    execFileSync('git', ['commit', '-m', 'init'], { cwd: repo, env });
+    process.env.AGENT_WORKSPACE_ROOT = repo;
+  });
+
+  afterAll(async () => {
+    delete process.env.AGENT_WORKSPACE_ROOT;
+    await fs.rm(repo, { recursive: true, force: true });
+  });
+
+  it('will not un-protect a branch on request', async () => {
+    await fs.writeFile(path.join(repo, 'f.txt'), 'x=2\n');
+    const res = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'git.commit.create',
+      args: { message: 'commit straight to main' },
+      grantedScopes: ['repository:write'],
+      policy: { protectedBranches: [] },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.outcome).toBe('denied');
+    expect(res.body.reason).toContain('protected ref "main"');
+
+    const log = execFileSync('git', ['log', '--oneline'], { cwd: repo, encoding: 'utf8' });
+    expect(log.trim().split('\n')).toHaveLength(1);
+  });
+
+  it('will not let a caller nominate itself as the approver', async () => {
+    registerTool({
+      name: 'deploy.production',
+      description: 'ship it',
+      schema: { type: 'object', properties: {}, additionalProperties: false },
+      handler: async () => 'shipped',
+    });
+
+    const res = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'deploy.production',
+      args: {},
+      grantedScopes: ['deploy:write'],
+      policy: { approverUserId: 'i-am-the-agent' },
+      approvedBy: 'i-am-the-agent',
+    });
+
+    expect(res.body.outcome).toBe('denied');
+    // The gate compares against the *session* identity.
+    expect(res.body.reason).toContain('only "approver@example.com" may approve');
+  });
+
+  it('accepts an approval from the authenticated session identity', async () => {
+    registerTool({
+      name: 'deploy.production',
+      description: 'ship it',
+      schema: { type: 'object', properties: {}, additionalProperties: false },
+      handler: async () => 'shipped',
+    });
+
+    const res = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'deploy.production',
+      args: {},
+      grantedScopes: ['deploy:write'],
+      approvedBy: 'approver@example.com',
+    });
+
+    expect(res.body.ok).toBe(true);
+    expect(res.body.result).toBe('shipped');
+  });
+
+  it('will not raise autonomy beyond the configured ceiling', async () => {
+    // `full` autonomy would waive approval requirements; a request may not ask
+    // for it. The call is still gated, proving the ceiling held.
+    registerTool({
+      name: 'deploy.production',
+      description: 'ship it',
+      schema: { type: 'object', properties: {}, additionalProperties: false },
+      handler: async () => 'shipped',
+    });
+
+    const res = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'deploy.production',
+      args: {},
+      grantedScopes: ['deploy:write'],
+      policy: { autonomy: 'full' },
+    });
+
+    expect(res.body.outcome).toBe('denied');
+    expect(res.body.reason).toContain('requires human approval');
   });
 });
