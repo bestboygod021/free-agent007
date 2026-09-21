@@ -662,11 +662,17 @@ The behaviour that matters:
 
 Be clear about this before you build on it.
 
-**Phases can read, but they cannot change anything.** A phase now inspects the
-workspace before deciding, but only with read-only tools — by construction, not
-by convention. Nothing yet lets a run edit a file, commit, or open a pull
-request on its own; that needs a supervised execution path with approvals,
-plus git operations and a real container sandbox.
+**Autonomous phases still cannot change anything.** A run can now branch,
+patch and commit — but only through a supervised call carrying a scope. No
+phase reaches those tools on its own, by construction rather than convention.
+Closing that last gap means letting an approved phase execute a write step,
+which is a product decision about how much rope to give an agent, not a
+missing mechanism.
+
+**There is no pull request, and no sandbox.** Work stays on a local branch:
+nothing pushes, and nothing opens a PR. Commands run as the server user with a
+scrubbed environment, not in a container, so this is safe for a repository you
+control and not for untrusted code.
 
 **Its judgement is only as good as the model's.** The kernel guarantees the
 *shape* of a run: legal transitions, budgets, human gates, a verifiable trail.

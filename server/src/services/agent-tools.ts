@@ -46,6 +46,16 @@ export interface ToolDefinition {
   handler: ToolHandler;
   /** Default ceiling for this tool; a caller may lower it but never raise it. */
   timeoutMs?: number;
+  /**
+   * Which ref this call is really about to write, for the protected-branch
+   * guard. A tool resolves this from the world (e.g. by reading HEAD) rather
+   * than taking a model's word for it: a model wanting to commit to `main`
+   * would simply not mention `main`.
+   */
+  resolveTargetRef?: (
+    args: Record<string, unknown>,
+    workspaceRoot: string,
+  ) => Promise<string | null>;
 }
 
 export interface ToolCallResult {
@@ -244,13 +254,31 @@ export async function invokeTool(params: InvokeParams): Promise<ToolCallResult> 
     ...params.policy,
   } as PolicyContext;
 
+  // Resolved before the verdict, so the guard judges the branch the repository
+  // is actually on. A resolver that fails is treated as "unknown", and an
+  // unknown ref must not silently become "no ref to protect".
+  let targetRef: string | null = null;
+  if (def.resolveTargetRef) {
+    try {
+      targetRef = await def.resolveTargetRef(params.args ?? {}, params.workspaceRoot);
+    } catch (err) {
+      return deny(
+        `could not determine which ref "${params.tool}" would write: ${
+          err instanceof Error ? err.message : 'unknown error'
+        }`,
+      );
+    }
+  } else if (typeof params.args?.ref === 'string') {
+    targetRef = params.args.ref;
+  }
+
   let policy: PolicyVerdict;
   try {
     policy = evaluateToolCall(
       {
         tool: params.tool,
         grantedScopes: params.grantedScopes ?? [],
-        ...(typeof params.args?.ref === 'string' ? { targetRef: params.args.ref } : {}),
+        ...(targetRef === null ? {} : { targetRef }),
       },
       ctx,
     );

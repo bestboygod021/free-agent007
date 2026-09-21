@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-287 test files, 3,524 tests. It talks to 20 provider families, fails over
+288 test files, 3,544 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -130,7 +130,7 @@ This is where the two-systems problem dominates. Summary rather than 130 rows:
 | Area | Status | Reality |
 |---|---|---|
 | Agent runtime (36–60) | **Partial — ~16 of 25** | A full loop plus an autonomous driver. `services/agent-runtime.ts` (`agent_runs`) gives durable state-machine execution (42), step/token/cost/time ceilings (46–49), manual stop and safe cancel (50–51), crash resume (52), per-step checkpoints (53), human-approval gates (56), deterministic replay (54) and structured stop reasons (59). `services/agent-driver.ts` adds the planner/executor pair (39–40): it picks the phase, asks a model through this gateway's own pool (`agent-completion.ts`), and maps the reply to one legal event — a constrained observe/decide/act cycle with real tool use (41) via `agent-evidence.ts`, and outcomes fed back into project memory (58). Still missing: graph execution (43) and parallel sub-agents (44–45). |
-| Tools (61–85) | **Partial — ~8 of 25** | `services/agent-tools.ts` is a real registry: registration with JSON-Schema validation (61–62), invocation with policy enforcement and human approval (63, 69), per-call timeouts (66), a redacted audit trail of every attempt (67, 70) and a catalogue shaped for tool-calling models (64). Built-ins cover filesystem read/list/search/write and a no-shell test runner, confined to a workspace root that callers cannot choose. Still missing: a third-party tool SDK and marketplace (71–75), MCP-style dynamic discovery (76–78), parallel/scheduled tool execution (79–81) and retries with compensation (82–85). |
+| Tools (61–85) | **Partial — ~8 of 25** | `services/agent-tools.ts` is a real registry: registration with JSON-Schema validation (61–62), invocation with policy enforcement and human approval (63, 69), per-call timeouts (66), a redacted audit trail of every attempt (67, 70) and a catalogue shaped for tool-calling models (64). Built-ins cover filesystem read/list/search/write, a no-shell test runner and git status/diff/branch/patch/commit (68), confined to a workspace root that callers cannot choose; writes resolve their own target ref so the protected-branch guard cannot be evaded by omission. Still missing: a third-party tool SDK and marketplace (71–75), MCP-style dynamic discovery (76–78), parallel/scheduled tool execution (79–81) and retries with compensation (82–85). |
 | Memory (86–110) | **Partial — 8 of 25** | Delivered last turn: project memory, provenance (96), expiry (94), user deletion (95), tags (106), PII/secret refusal (109), retention (110), tenant isolation. Missing: semantic search (101 — search is lexical), conversation summarisation (92), contradiction detection (97–98), encryption at rest (105), episodic/semantic split (88–89). |
 | RAG (111–140) | **Absent, with one foundation** | `services/embeddings.ts` and an `embedding_models` table exist and work. There is no vector store, no chunker, no document parser, no connector, no reranker, no citations. Item 130 (citations) is the one that matters most and is entirely missing. |
 | Workflows (141–165) | **Rules only** | `task-dag.ts` validates graphs and plans parallel waves (142, 146, 147 as *logic*). `workflow-automation.ts` explicitly executes nothing. No builder, no triggers, no versioning. |
@@ -243,13 +243,13 @@ already exist.
 |---|---|---|
 | 1. Gateway/API | 14 | 15 |
 | 2. Providers | 17 | 20 |
-| 3–7. Agent, tools, memory, RAG, workflow | ~36 | 130 |
-| 8–10. Coding, browser, data | ~1 | 80 |
+| 3–7. Agent, tools, memory, RAG, workflow | ~38 | 130 |
+| 8–10. Coding, browser, data | ~4 | 80 |
 | 11. Security | 14 | 25 |
 | 12. Identity | ~4 | 25 |
 | 13–14. Observability, cost | ~18 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~145** | **500** |
+| **Total** | **~150** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
@@ -288,10 +288,12 @@ exists; connect them with a similarity threshold.
 
 **5. Tool registry and SDK** (items 61–67) — **done**
 Delivered in `services/agent-tools.ts`, joined to the driver by
-`services/agent-evidence.ts`: a phase now inspects the workspace with
-read-only tools before it decides, and records what it looked at. What remains
-is the *supervised* path — letting a run edit files, commit and open a pull
-request behind approvals — plus git operations and a container sandbox.
+`services/agent-evidence.ts`, and extended to git in
+`services/agent-tools-git.ts`. A phase inspects the workspace with read-only
+tools before deciding; a supervised, scoped call can branch, patch and commit.
+What remains is pushing and opening a pull request, a container sandbox for
+untrusted code, and the product decision of whether an approved phase may
+execute a write step unattended.
 
 Deliberately deferred: browser automation (§9) and business connectors (§10)
 are large from-scratch subsystems with no foundation here, and they do not

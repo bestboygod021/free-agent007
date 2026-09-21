@@ -218,6 +218,38 @@ exactly as before, and the run does not move. Every call is recorded in
 `agent_tool_calls` against the run, and the tools consulted are written onto
 the checkpoint, so the history shows what each decision was based on.
 
+### Git — the supervised write path
+
+Reading is safe unattended; changing a repository is not. Every git tool that
+writes carries a side effect, so `unattendedTools()` excludes it and an
+autonomous phase can never reach it. They are callable only through an
+explicit, scoped invocation.
+
+The design problem worth recording is the protected-branch guard. The policy
+engine refuses a write to a protected ref, but only when the caller declares
+which ref is being written — and asking a *model* to declare it is worthless,
+because a model wanting to commit to `main` would simply omit it. `ToolDefinition`
+therefore gained `resolveTargetRef`, a hook the registry calls before asking
+for a verdict. The git tools implement it by reading `HEAD`, so the guard is
+evaluated against what the repository is actually on. A resolver that throws
+is a denial, not an absent ref: unknown must not degrade to unprotected.
+
+Tool names are load-bearing. `git.status.read` and `git.diff.read` end in
+`.read` so `BASELINE_RULES` classifies them as reads with no side effect —
+which is also why phases may use them as evidence. `git.patch.file.write` ends
+in `.file.write` so it inherits `repository:write`. A name the rule set does
+not match falls to the catch-all default (high risk, always approve): safe,
+but it would put a human in front of every routine read.
+
+Three smaller decisions:
+
+- git runs with `GIT_TERMINAL_PROMPT=0`, no askpass and no system config, so an
+  agent cannot authenticate as the human who installed the gateway.
+- Commits use a distinct identity (`FreeLLMAPI Agent`), so history separates
+  machine work from human work permanently.
+- `--no-verify` is deliberately not passed, and `git apply --check` runs before
+  `git apply`, so hooks still apply and a bad patch leaves the tree untouched.
+
 ### Memory — what the agent remembers between runs
 
 Facts are scoped to an `(organizationId, projectId)` pair, carry mandatory
