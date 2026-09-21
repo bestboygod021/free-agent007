@@ -41,6 +41,15 @@ export function createUser(email: string, password: string): SessionUser {
   return { userId: Number(result.lastInsertRowid), email: normalized };
 }
 
+/** Look up an account by address. Used when an invite lands on an email that
+ *  already has one. */
+export function findUserByEmail(email: string): SessionUser | null {
+  const row = getDb()
+    .prepare('SELECT id, email FROM users WHERE email = ?')
+    .get(normalizeEmail(email)) as { id: number; email: string } | undefined;
+  return row ? { userId: row.id, email: row.email } : null;
+}
+
 /** Verify credentials. Returns the user on success, null on failure. */
 export function verifyCredentials(email: string, password: string): SessionUser | null {
   const db = getDb();

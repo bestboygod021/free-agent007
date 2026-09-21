@@ -685,6 +685,64 @@ Roles rank `viewer < agent < reviewer < developer < admin < owner`. A `viewer`
 reads but cannot write. An `agent` writes but cannot create projects or change
 membership — an autonomous run should not be able to widen its own access.
 
+#### Inviting someone
+
+There is no open registration route: an install is claimed once at setup, and
+an invite is the only way a second account can exist. An `admin` or `owner`
+issues one:
+
+```bash
+curl -s -X POST localhost:3001/api/agent/organizations/default/invites \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"email":"bob@example.com","role":"developer"}'
+```
+
+```json
+{"invite":{"inviteId":"inv_…","email":"bob@example.com","role":"developer",
+  "expiresAt":1790625052158},
+ "token":"2f411fcc…"}
+```
+
+The token is shown **once** — only its hash is stored, so a leaked database
+cannot be used to redeem outstanding invites. Lost it? Revoke and re-invite.
+
+Bob redeems it without being logged in, because he has no account yet. The
+token is the authorisation:
+
+```bash
+curl -s -X POST localhost:3001/api/auth/accept-invite \
+  -H 'Content-Type: application/json' \
+  -d '{"token":"2f411fcc…","password":"a-password-he-chooses"}'
+```
+
+He gets a session, an account and the membership in one step. The invite is
+single-use, expires in seven days by default, and is bound to the address it
+was issued to.
+
+Granting `owner` or `admin` needs the password again:
+
+```bash
+-H 'x-reauth-password: your-password'
+```
+
+The kernel marks elevated grants `requiresMfa`. This deployment has no MFA, so
+re-authentication is the closest honest substitute — weaker, and not a
+replacement.
+
+**One property worth understanding:** whoever holds the link claims the seat.
+If the invite address has no account yet, redeeming the token *creates* that
+account, so the invite must be delivered over a channel you trust. Once the
+address does have an account, redeeming requires its password.
+
+| Route | Who |
+|---|---|
+| `GET /organizations/:org/members` | admin, owner |
+| `POST /organizations/:org/invites` | admin, owner (+ re-auth for elevated) |
+| `DELETE /organizations/:org/invites/:id` | admin, owner |
+| `PATCH /organizations/:org/members/:userId` | admin, owner (kernel rules apply) |
+| `DELETE /organizations/:org/members/:userId` | admin, owner — never the last owner |
+| `POST /api/auth/accept-invite` | anyone holding a valid token |
+
 Approval works the same way: `approvedBy` must match the email on the session
 token, so the only way to approve a call is to be logged in as that person.
 

@@ -87,7 +87,18 @@ import {
   isValidIdentifier,
   type Scope,
   type ScopeFailure,
+  type Role,
 } from '../services/agent-tenancy.js';
+import {
+  createInvite,
+  revokeInvite,
+  listInvites,
+  listMembers,
+  changeRole,
+  removeMember,
+  isInviteFailure,
+} from '../services/agent-invites.js';
+import { verifyCredentials } from '../services/auth.js';
 
 /**
  * ForgePilot agent kernel surface (merged from the `code-agent` blueprint).
@@ -667,6 +678,178 @@ agentRouter.get('/organizations', (req: Request, res: Response) => {
     projects: listProjects(org.organizationId),
   }));
   res.json({ organizations });
+});
+
+/**
+ * Resolve an administrable organisation for the caller, or send the refusal.
+ *
+ * Returns null when it has already answered, so callers just `return`.
+ */
+function requireAdmin(req: Request, res: Response): { userId: number; organizationId: string; role: Role } | null {
+  const userId = callerId(req);
+  if (userId === null) {
+    forbidden(res, 'authentication is required.');
+    return null;
+  }
+  const organizationId = pathParam(req.params.organizationId);
+  if (organizationId === null) {
+    badRequest(res, 'organizationId is required.');
+    return null;
+  }
+  const role = membershipRole(userId, organizationId);
+  if (role === null) {
+    res.status(404).json({
+      error: { message: `organization "${organizationId}" was not found.`, type: 'invalid_request_error' },
+    });
+    return null;
+  }
+  if (!canAdminister(role)) {
+    forbidden(res, `role "${role}" may not manage this organization.`);
+    return null;
+  }
+  return { userId, organizationId, role };
+}
+
+/**
+ * The kernel marks owner and admin grants `requiresMfa`. This deployment has
+ * no MFA, so the closest honest equivalent is the re-auth header the keys
+ * export already uses: prove the password again before handing out an
+ * elevated role. Calling it MFA would be a lie; skipping it would ignore the
+ * rule.
+ */
+function elevatedRoleNeedsReauth(req: Request, res: Response, role: unknown): boolean {
+  if (role !== 'owner' && role !== 'admin') return false;
+  const email = (req as Request & { user?: { email?: string } }).user?.email;
+  const password = req.headers['x-reauth-password'];
+  if (typeof email !== 'string' || typeof password !== 'string' || !verifyCredentials(email, password)) {
+    res.status(403).json({
+      error: {
+        message: 'Granting owner or admin requires re-entering your password (x-reauth-password).',
+        type: 'authentication_error',
+      },
+    });
+    return true;
+  }
+  return false;
+}
+
+/** GET /api/agent/organizations/:organizationId/members */
+agentRouter.get('/organizations/:organizationId/members', (req: Request, res: Response) => {
+  const ctx = requireAdmin(req, res);
+  if (ctx === null) return;
+  res.json({
+    members: listMembers(ctx.organizationId),
+    invites: listInvites(ctx.organizationId).map((invite) => ({
+      inviteId: invite.inviteId,
+      email: invite.email,
+      role: invite.role,
+      expiresAt: invite.expiresAt,
+      acceptedAt: invite.acceptedAt,
+    })),
+  });
+});
+
+/**
+ * POST /api/agent/organizations/:organizationId/invites
+ *
+ * Returns the token once. It is stored only as a hash, so it cannot be shown
+ * again — an inviter who loses it revokes and re-invites.
+ */
+agentRouter.post('/organizations/:organizationId/invites', (req: Request, res: Response) => {
+  const ctx = requireAdmin(req, res);
+  if (ctx === null) return;
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+  if (elevatedRoleNeedsReauth(req, res, body.role)) return;
+
+  const result = createInvite({
+    organizationId: ctx.organizationId,
+    actorUserId: ctx.userId,
+    email: body.email,
+    role: body.role,
+    ...(typeof body.ttlMs === 'number' ? { ttlMs: body.ttlMs } : {}),
+  });
+  if (isInviteFailure(result)) {
+    res.status(result.status).json({ error: { message: result.message, type: 'invalid_request_error' } });
+    return;
+  }
+  res.status(201).json({
+    invite: {
+      inviteId: result.invite.inviteId,
+      email: result.invite.email,
+      role: result.invite.role,
+      expiresAt: result.invite.expiresAt,
+    },
+    // Shown once, never again.
+    token: result.token,
+  });
+});
+
+/** DELETE /api/agent/organizations/:organizationId/invites/:inviteId */
+agentRouter.delete('/organizations/:organizationId/invites/:inviteId', (req: Request, res: Response) => {
+  const ctx = requireAdmin(req, res);
+  if (ctx === null) return;
+  const inviteId = pathParam(req.params.inviteId);
+  if (inviteId === null) {
+    badRequest(res, 'inviteId is required.');
+    return;
+  }
+  if (!revokeInvite({ organizationId: ctx.organizationId, inviteId })) {
+    res.status(404).json({
+      error: { message: 'no pending invite with that id.', type: 'invalid_request_error' },
+    });
+    return;
+  }
+  res.json({ revoked: true });
+});
+
+/** PATCH /api/agent/organizations/:organizationId/members/:userId — change a role. */
+agentRouter.patch('/organizations/:organizationId/members/:userId', (req: Request, res: Response) => {
+  const ctx = requireAdmin(req, res);
+  if (ctx === null) return;
+  const subject = Number(pathParam(req.params.userId));
+  if (!Number.isInteger(subject)) {
+    badRequest(res, 'userId must be an integer.');
+    return;
+  }
+  const body = req.body;
+  if (!isPlainObject(body)) {
+    badRequest(res, 'request body must be a JSON object.');
+    return;
+  }
+  if (elevatedRoleNeedsReauth(req, res, body.role)) return;
+
+  const result = changeRole({
+    organizationId: ctx.organizationId,
+    actorUserId: ctx.userId,
+    subjectUserId: subject,
+    nextRole: body.role,
+  });
+  if (isInviteFailure(result)) {
+    res.status(result.status).json({ error: { message: result.message, type: 'invalid_request_error' } });
+    return;
+  }
+  res.json({ userId: subject, role: result.role });
+});
+
+/** DELETE /api/agent/organizations/:organizationId/members/:userId */
+agentRouter.delete('/organizations/:organizationId/members/:userId', (req: Request, res: Response) => {
+  const ctx = requireAdmin(req, res);
+  if (ctx === null) return;
+  const subject = Number(pathParam(req.params.userId));
+  if (!Number.isInteger(subject)) {
+    badRequest(res, 'userId must be an integer.');
+    return;
+  }
+  const result = removeMember({ organizationId: ctx.organizationId, subjectUserId: subject });
+  if (isInviteFailure(result)) {
+    res.status(result.status).json({ error: { message: result.message, type: 'invalid_request_error' } });
+    return;
+  }
+  res.json({ removed: true });
 });
 
 /** POST /api/agent/organizations/:organizationId/projects — add a project. */

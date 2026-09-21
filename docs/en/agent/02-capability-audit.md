@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-290 test files, 3,597 tests. It talks to 20 provider families, fails over
+291 test files, 3,631 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -195,19 +195,35 @@ changes against.
 | 278 Organisations | **Built** | `organizations`, owner assigned transactionally |
 | 279 Projects | **Built** | `projects`, ids unique per organisation |
 | 275–276 RBAC/ABAC | **Partial** | role ranking gates read/write/administer on the agent surface only |
-| 271–274, 280 | **Absent** | SSO, OIDC, MFA, passkeys, service accounts |
+| 280 Service accounts | **Partial** | the `agent` role is one in all but name: it writes, but cannot administer |
+| 294 Invitations | **Built** | `services/agent-invites.ts` — single-use hashed tokens, bound to one address, expiring |
+| 271–274 | **Absent** | SSO, OIDC, MFA, passkeys |
 
 **Scope of the enforcement, stated plainly:** it covers `/api/agent/*`. The
-gateway's keys, models and logs remain single-tenant, and the invite and
-role-change rules in the kernel are still unreachable — nothing calls
-`decideMembershipInvite` yet, because there is no invite endpoint. The tables
-those rules need now exist, which is the part that was missing.
+gateway's keys, models and logs remain single-tenant.
+
+`decideMembershipInvite` and `decideRoleChange` are now reachable — the invite
+routes call them rather than restating their rules, so the refusal messages
+users see (*"only owner may grant elevated organization roles"*) come from the
+kernel itself. Two things about that are worth stating plainly:
+
+- **MFA is substituted, not implemented.** The kernel marks owner and admin
+  grants `requiresMfa`. There is no MFA here, so those grants require
+  re-entering the password (`x-reauth-password`, the same mechanism the key
+  export already uses). That is weaker than MFA and is not a replacement for
+  it.
+- **One kernel rule made a guard of mine dead code.** A last-owner check in
+  `changeRole` turned out to be unreachable: `decideRoleChange` only permits
+  demoting an owner when the actor is another owner, so a second owner exists
+  by construction. It was deleted rather than left in as a decorative safety
+  net. The equivalent check in `removeMember` *is* load-bearing — deletion has
+  no such kernel rule — and a test fails if it is removed.
 
 **Built:** 281 (scoped API keys, `key_model_scope`), 282–283 partially
 (`key_monthly_usage`, `key-budget.ts`), 291 (admin dashboard), 292 partially
 (`server_logs` — appended, not tamper-evident).
 
-**Verdict:** ~8 of 25, up from ~4.
+**Verdict:** ~10 of 25, up from ~4.
 
 ---
 
@@ -261,10 +277,10 @@ already exist.
 | 3–7. Agent, tools, memory, RAG, workflow | ~38 | 130 |
 | 8–10. Coding, browser, data | ~4 | 80 |
 | 11. Security | 16 | 25 |
-| 12. Identity | ~8 | 25 |
+| 12. Identity | ~10 | 25 |
 | 13–14. Observability, cost | ~19 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~157** | **500** |
+| **Total** | **~159** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
@@ -278,13 +294,12 @@ Sequenced by *what unblocks the most*, not by list order. Item 2 is done; the
 rest stand.
 
 **1. Organisations, projects and RBAC** (items 275–279, unblocks 19, 262, §16)
-— **partly done**
-The tables exist and the agent surface enforces them
-(`services/agent-tenancy.ts`): membership decides scope, so a request naming
-another tenant is refused rather than believed. What remains under this
-heading is an invite flow (the kernel's `decideMembershipInvite` is written and
-still unreachable), a user-management UI, and extending tenancy to the
-gateway's own tables — that last one is the larger half.
+— **done for the agent surface**
+Membership decides scope (`services/agent-tenancy.ts`), and organisations can
+now grow: `services/agent-invites.ts` issues single-use invites, and
+`POST /api/auth/accept-invite` is the only way a second account can exist on an
+install. What remains is a user-management UI, real MFA, and extending tenancy
+to the gateway's own tables — that last one is the larger half.
 
 **2. An agent execution loop** (items 39–44, 52–53) — **done**
 Delivered in `services/agent-runtime.ts`, with autonomy in

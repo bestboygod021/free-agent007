@@ -314,6 +314,30 @@ that is a weaker guarantee: it holds only because every scoped route calls
 `resolveScope` first. A new route that forgets to is a new hole, which is why
 the route tests assert the refusal rather than trusting the convention.
 
+### Making the identity rules reachable
+
+`identity-access-contract.ts` was the clearest example in the repo of "the
+rules exist, the machinery does not": `decideMembershipInvite` and
+`decideRoleChange` encode who may invite whom and who may be promoted, are
+fully tested, and had no callers. Its own header explains why — *"it does not
+implement an auth provider, mailer or durable membership store."*
+
+`services/agent-invites.ts` supplies exactly those missing pieces and calls the
+rules rather than restating them, so the message a user sees when an admin
+tries to create an owner is the kernel's own sentence. Wiring it up taught two
+things:
+
+- **Delegating properly means deleting your own guards.** A last-owner check
+  written into `changeRole` proved unreachable, because `decideRoleChange`
+  only permits demoting an owner when the actor is a *different* owner — so a
+  second owner always exists on that path. Keeping it would have implied a
+  danger the kernel had already removed. The same check in `removeMember` is
+  real, because deletion has no kernel rule, and a test fails without it.
+- **A rule can require something the deployment lacks.** Elevated grants come
+  back `requiresMfa: true`, and there is no MFA here. Rather than ignore the
+  flag or pretend to satisfy it, those grants require re-entering the
+  password. The gap is recorded rather than papered over.
+
 ### Memory — what the agent remembers between runs
 
 Facts are scoped to an `(organizationId, projectId)` pair, carry mandatory

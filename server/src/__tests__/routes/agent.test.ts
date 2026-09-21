@@ -29,10 +29,11 @@ import { registerGitTools } from '../../services/agent-tools-git.js';
 
 async function call(
   app: Express,
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'DELETE' | 'PATCH',
   path: string,
   token?: string,
   body?: unknown,
+  extraHeaders?: Record<string, string>,
 ) {
   const server = app.listen(0, '127.0.0.1');
   if (!server.listening) {
@@ -44,6 +45,7 @@ async function call(
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      ...(extraHeaders ?? {}),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
@@ -1142,5 +1144,169 @@ describe('/api/agent tenancy is resolved from membership, not the body', () => {
     const used = await call(app, 'POST', '/api/agent/memory', aliceToken,
       memory('acme', 'billing', 'billing fact'));
     expect(used.status).toBe(201);
+  });
+});
+
+
+describe('/api/agent membership invites', () => {
+  let app: Express;
+  let ownerToken: string;
+  let adminToken: string;
+  let devToken: string;
+  let devId: number;
+
+  const PASSWORD = 'password123';
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+
+    const owner = createUser('owner@example.com', PASSWORD);
+    ownerToken = createSession(owner.userId);
+    createOrganization({ organizationId: 'acme', name: 'Acme', ownerUserId: owner.userId });
+    createProject({ organizationId: 'acme', projectId: 'web', name: 'Web' });
+
+    const admin = createUser('admin@example.com', PASSWORD);
+    adminToken = createSession(admin.userId);
+    addMember({ organizationId: 'acme', userId: admin.userId, role: 'admin' });
+
+    const dev = createUser('dev@example.com', PASSWORD);
+    devId = dev.userId;
+    devToken = createSession(dev.userId);
+    addMember({ organizationId: 'acme', userId: dev.userId, role: 'developer' });
+  });
+
+  const reauth = { 'x-reauth-password': PASSWORD };
+
+  it('invites, and returns the token exactly once', async () => {
+    const res = await call(app, 'POST', '/api/agent/organizations/acme/invites', ownerToken,
+      { email: 'new@example.com', role: 'developer' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.token).toMatch(/^[0-9a-f]{64}$/);
+
+    // The listing never shows it again.
+    const listed = await call(app, 'GET', '/api/agent/organizations/acme/members', ownerToken);
+    expect(JSON.stringify(listed.body)).not.toContain(res.body.token);
+  });
+
+  it('turns an invite into a working second account', async () => {
+    const invited = await call(app, 'POST', '/api/agent/organizations/acme/invites', ownerToken,
+      { email: 'joiner@example.com', role: 'developer' });
+
+    // No auth: the invitee has no account yet. The token is the authorisation.
+    const accepted = await call(app, 'POST', '/api/auth/accept-invite', undefined,
+      { token: invited.body.token, password: 'joinerpassword' });
+
+    expect(accepted.status).toBe(201);
+    expect(accepted.body).toMatchObject({ email: 'joiner@example.com', organizationId: 'acme', role: 'developer' });
+
+    // And the session it returns can actually do the work the role allows.
+    const wrote = await call(app, 'POST', '/api/agent/memory', accepted.body.token, {
+      organizationId: 'acme',
+      projectId: 'web',
+      kind: 'project_fact',
+      content: 'written by the invited user',
+      trust: 'observed',
+      source: { sourceType: 'user', sourceId: 'joiner', evidenceHash: 'h' },
+    });
+    expect(wrote.status).toBe(201);
+  });
+
+  it('will not let the newcomer exceed the role they were given', async () => {
+    const invited = await call(app, 'POST', '/api/agent/organizations/acme/invites', ownerToken,
+      { email: 'viewer@example.com', role: 'viewer' });
+    const accepted = await call(app, 'POST', '/api/auth/accept-invite', undefined,
+      { token: invited.body.token, password: 'viewerpassword' });
+
+    const wrote = await call(app, 'POST', '/api/agent/memory', accepted.body.token, {
+      organizationId: 'acme',
+      projectId: 'web',
+      kind: 'project_fact',
+      content: 'a viewer should not write this',
+      trust: 'observed',
+      source: { sourceType: 'user', sourceId: 'v', evidenceHash: 'h' },
+    });
+    expect(wrote.status).toBe(403);
+
+    const invitedOthers = await call(app, 'POST', '/api/agent/organizations/acme/invites',
+      accepted.body.token, { email: 'chain@example.com', role: 'owner' });
+    expect(invitedOthers.status).toBe(403);
+  });
+
+  it('refuses a developer the whole management surface', async () => {
+    for (const [method, path, body] of [
+      ['GET', '/api/agent/organizations/acme/members', undefined],
+      ['POST', '/api/agent/organizations/acme/invites', { email: 'x@example.com', role: 'viewer' }],
+      ['PATCH', `/api/agent/organizations/acme/members/${devId}`, { role: 'admin' }],
+      ['DELETE', `/api/agent/organizations/acme/members/${devId}`, undefined],
+    ] as const) {
+      const res = await call(app, method, path, devToken, body);
+      expect(res.status).toBe(403);
+    }
+  });
+
+  it('requires the password again before granting owner or admin', async () => {
+    const without = await call(app, 'POST', '/api/agent/organizations/acme/invites', ownerToken,
+      { email: 'elevated@example.com', role: 'admin' });
+    expect(without.status).toBe(403);
+    expect(without.body.error.message).toContain('x-reauth-password');
+
+    const wrong = await call(app, 'POST', '/api/agent/organizations/acme/invites', ownerToken,
+      { email: 'elevated@example.com', role: 'admin' }, { 'x-reauth-password': 'not-it' });
+    expect(wrong.status).toBe(403);
+
+    const right = await call(app, 'POST', '/api/agent/organizations/acme/invites', ownerToken,
+      { email: 'elevated@example.com', role: 'admin' }, reauth);
+    expect(right.status).toBe(201);
+  });
+
+  it('does not require re-auth for an ordinary role', async () => {
+    const res = await call(app, 'POST', '/api/agent/organizations/acme/invites', ownerToken,
+      { email: 'ordinary@example.com', role: 'reviewer' });
+    expect(res.status).toBe(201);
+  });
+
+  it('applies the kernel\'s rule when an admin overreaches', async () => {
+    const res = await call(app, 'POST', '/api/agent/organizations/acme/invites', adminToken,
+      { email: 'esc@example.com', role: 'owner' }, reauth);
+    expect(res.status).toBe(403);
+    expect(res.body.error.message).toContain('only owner may grant elevated');
+  });
+
+  it('revokes a pending invite', async () => {
+    const created = await call(app, 'POST', '/api/agent/organizations/acme/invites', ownerToken,
+      { email: 'revoked@example.com', role: 'viewer' });
+
+    const revoked = await call(app, 'DELETE',
+      `/api/agent/organizations/acme/invites/${created.body.invite.inviteId}`, ownerToken);
+    expect(revoked.status).toBe(200);
+
+    const used = await call(app, 'POST', '/api/auth/accept-invite', undefined,
+      { token: created.body.token, password: 'whatever12' });
+    expect(used.status).toBe(404);
+  });
+
+  it('changes a role and then removes the member', async () => {
+    const promoted = await call(app, 'PATCH', `/api/agent/organizations/acme/members/${devId}`,
+      ownerToken, { role: 'reviewer' });
+    expect(promoted.status).toBe(200);
+    expect(promoted.body.role).toBe('reviewer');
+
+    const removed = await call(app, 'DELETE', `/api/agent/organizations/acme/members/${devId}`,
+      ownerToken);
+    expect(removed.status).toBe(200);
+
+    // Gone: the scope no longer resolves for them.
+    const after = await call(app, 'GET',
+      '/api/agent/memory/stats?organizationId=acme&projectId=web', devToken);
+    expect(after.status).toBe(404);
+  });
+
+  it('will not strand an organisation without an owner', async () => {
+    const res = await call(app, 'DELETE', '/api/agent/organizations/acme/members/1', adminToken);
+    expect(res.status).toBe(409);
+    expect(res.body.error.message).toContain('at least one owner');
   });
 });
