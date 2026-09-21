@@ -378,6 +378,19 @@ describe('gateway outcome parsing', () => {
     expect(parseOutcome('This could pass or fail depending on load.', allowed)).toBeNull();
   });
 
+  it('keeps the full text in detail so a tool request survives intact', () => {
+    // Regression: `outcome` is truncated to 40 chars for the refusal message.
+    // Evidence gathering reads the tool protocol out of `detail`, so if that
+    // were truncated too, `TOOL fs.read_file {"path":"src/server.ts"}` would
+    // arrive with its JSON cut in half and never parse.
+    const request = 'TOOL fs.read_file {"path":"src/server.ts","encoding":"utf8"}';
+    const parsed = parseOutcome(request, allowed);
+    // It is not a decision...
+    expect(parsed).toBeNull();
+    // ...and the caller must therefore preserve the whole line itself.
+    expect(request.length).toBeGreaterThan(40);
+  });
+
   it('refuses an empty or unrelated answer', () => {
     expect(parseOutcome('', allowed)).toBeNull();
     expect(parseOutcome('I am not sure what you mean.', allowed)).toBeNull();

@@ -3,6 +3,7 @@ import { getRun, step, type AgentRun, AgentRunError } from './agent-runtime.js';
 import { recall, remember } from './agent-memory.js';
 import { resolveMode } from '@freellmapi/agent/core/compute-mode.js';
 import { redactSecrets } from '@freellmapi/agent/core/redaction.js';
+import { gatherEvidence, type EvidenceEntry } from './agent-evidence.js';
 import type { RunEvent } from '@freellmapi/agent/core/state-machine.js';
 import type { ModelTaskType, RunState } from '@freellmapi/agent/core/types.js';
 
@@ -47,6 +48,12 @@ interface PhasePlan {
   instruction: string;
   /** Legal outcomes for this phase, mapped to the event each one implies. */
   outcomes: Record<string, RunEvent>;
+  /**
+   * Tools this phase may use to check its answer before deciding. Always
+   * intersected with what is safe to run unattended, so naming a dangerous
+   * tool here cannot widen what an unsupervised run does.
+   */
+  tools?: readonly string[];
 }
 
 /**
@@ -63,6 +70,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Decide whether this goal is clear enough to specify. Answer "clear" if you can write a specification from it, or "unclear" if you must ask the user a question first.',
     outcomes: { clear: 'spec_ready', unclear: 'needs_clarification' },
+    tools: ['fs.read_file', 'fs.list', 'fs.search'],
   },
   CLARIFY: {
     taskType: 'clarification',
@@ -79,6 +87,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Write the specification. Answer "ready" when the acceptance criteria are stated, or "unclear" if something essential is still missing.',
     outcomes: { ready: 'spec_ready', unclear: 'needs_clarification' },
+    tools: ['fs.read_file', 'fs.list', 'fs.search'],
   },
   PLAN: {
     taskType: 'planning',
@@ -86,6 +95,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Produce an implementation plan as an ordered task list. Answer "ready" when the plan is complete.',
     outcomes: { ready: 'plan_ready', unclear: 'needs_clarification' },
+    tools: ['fs.read_file', 'fs.list', 'fs.search'],
   },
   RECON: {
     taskType: 'code_review',
@@ -93,6 +103,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Survey what the plan will touch and note the risks. Answer "complete" when the survey is done.',
     outcomes: { complete: 'recon_complete' },
+    tools: ['fs.read_file', 'fs.list', 'fs.search'],
   },
   IMPLEMENT: {
     taskType: 'code_generation',
@@ -100,6 +111,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Describe the change for the next task in the plan. Answer "done" when the batch is ready to test.',
     outcomes: { done: 'implementation_batch_done' },
+    tools: ['fs.read_file', 'fs.list', 'fs.search'],
   },
   TEST: {
     taskType: 'test_generation',
@@ -107,6 +119,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Judge whether the implemented change satisfies its acceptance criteria. Answer "pass" or "fail".',
     outcomes: { pass: 'tests_passed', fail: 'tests_failed' },
+    tools: ['fs.read_file', 'fs.list', 'fs.search'],
   },
   REPAIR: {
     taskType: 'repair',
@@ -114,6 +127,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Diagnose the failure and describe the fix. Answer "fixed" when the repair is ready to retest.',
     outcomes: { fixed: 'repair_succeeded', fail: 'tests_failed' },
+    tools: ['fs.read_file', 'fs.list', 'fs.search'],
   },
   SECURITY_REVIEW: {
     taskType: 'security_review',
@@ -121,6 +135,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Review the change for security problems. Answer "clear" if none block release, or "blocked" if one does.',
     outcomes: { clear: 'security_clear', blocked: 'security_blocked' },
+    tools: ['fs.read_file', 'fs.list', 'fs.search'],
   },
   PREVIEW: {
     taskType: 'documentation',
@@ -135,6 +150,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Confirm the deployment behaves as specified. Answer "verified" if it does, or "fail" if it does not.',
     outcomes: { verified: 'finalized', fail: 'tests_failed' },
+    tools: ['fs.read_file', 'fs.list', 'fs.search'],
   },
 };
 
@@ -148,6 +164,14 @@ export interface AdvanceOptions {
   complete: CompletionFn;
   /** Attach recalled project memory to the prompt. Default true. */
   useMemory?: boolean;
+  /**
+   * Let the phase inspect the workspace with read-only tools before it decides.
+   * Off unless a workspace is supplied: a driver with nothing to read should
+   * not pay for the extra round trips.
+   */
+  workspaceRoot?: string | undefined;
+  /** Tool calls allowed per phase. Default 3, capped by the evidence module. */
+  maxToolCalls?: number | undefined;
   now?: number;
 }
 
@@ -187,6 +211,8 @@ export interface AdvanceResult {
   event?: RunEvent;
   outcome?: string;
   model?: string;
+  /** Tools the phase consulted before answering, when evidence was enabled. */
+  evidence?: EvidenceEntry[];
 }
 
 const MAX_DETAIL_CHARS = 8000;
@@ -297,16 +323,50 @@ export async function advance(options: AdvanceOptions): Promise<AdvanceResult> {
   const rule = profile.routing[phase.taskType];
   const allowed = Object.keys(phase.outcomes);
 
-  const answer = await options.complete({
-    runId: run.runId,
-    state: run.state,
-    taskType: phase.taskType,
-    promptFile: phase.promptFile,
-    prompt: buildPrompt(run, phase, options.useMemory !== false),
-    allowedOutcomes: allowed,
-    maxCost: rule?.maxCost ?? profile.budget.maxCostPerRun,
-    preferredLocality: rule?.preferredLocality ?? 'cloud',
-  });
+  const basePrompt = buildPrompt(run, phase, options.useMemory !== false);
+  const askModel = (prompt: string): Promise<CompletionResponse> =>
+    options.complete({
+      runId: run.runId,
+      state: run.state,
+      taskType: phase.taskType,
+      promptFile: phase.promptFile,
+      prompt,
+      allowedOutcomes: allowed,
+      maxCost: rule?.maxCost ?? profile.budget.maxCostPerRun,
+      preferredLocality: rule?.preferredLocality ?? 'cloud',
+    });
+
+  let evidence: EvidenceEntry[] = [];
+  let answer: CompletionResponse;
+
+  if (options.workspaceRoot && phase.tools && phase.tools.length > 0) {
+    // The model may look before it leaps. `gatherEvidence` returns the raw
+    // final text plus a transcript; the outcome is parsed from that text by
+    // the same rules as the no-evidence path, so evidence changes what the
+    // model knows and never what it is allowed to say.
+    let last: CompletionResponse | undefined;
+    const gathered = await gatherEvidence({
+      runId: run.runId,
+      organizationId: run.organizationId,
+      projectId: run.projectId,
+      workspaceRoot: options.workspaceRoot,
+      allowedTools: phase.tools,
+      basePrompt,
+      ...(options.maxToolCalls === undefined ? { maxCalls: 3 } : { maxCalls: options.maxToolCalls }),
+      policy: { privacyLevel: run.privacyLevel as never },
+      ask: async (prompt: string) => {
+        last = await askModel(prompt);
+        // The tool protocol lives in the model's prose, so evidence gathering
+        // reads `detail`; `outcome` is whatever the completion layer could
+        // extract and is used only for the final decision.
+        return `${last.outcome ?? ''}\n${last.detail ?? ''}`;
+      },
+    });
+    evidence = gathered.evidence;
+    answer = last ?? { outcome: '' };
+  } else {
+    answer = await askModel(basePrompt);
+  }
 
   const outcome = String(answer.outcome ?? '').trim().toLowerCase();
   const event = phase.outcomes[outcome];
@@ -329,6 +389,13 @@ export async function advance(options: AdvanceOptions): Promise<AdvanceResult> {
       outcome,
       ...(detail === undefined ? {} : { detail: redactSecrets(detail).text }),
       ...(answer.model === undefined ? {} : { model: answer.model }),
+      ...(evidence.length === 0
+        ? {}
+        : {
+            // What the decision was actually based on. Summaries are already
+            // redacted by the evidence layer.
+            evidence: evidence.map((e) => ({ tool: e.tool, args: e.args, ok: e.ok })),
+          }),
       driver: 'auto',
     },
     ...(answer.tokensUsed === undefined ? {} : { tokensUsed: answer.tokensUsed }),
@@ -342,6 +409,7 @@ export async function advance(options: AdvanceOptions): Promise<AdvanceResult> {
     event,
     outcome,
     ...(answer.model === undefined ? {} : { model: answer.model }),
+    ...(evidence.length === 0 ? {} : { evidence }),
     ...(result.ok ? {} : { stopped: 'refused' as const, reason: result.reason }),
   };
 }

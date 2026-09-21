@@ -187,6 +187,37 @@ are all refused by the same test.
 arguments, and the provider API keys in the server's environment are not
 inherited by anything a run executes.
 
+### Evidence — joining the driver to the tools
+
+The driver decides and the registry acts; `services/agent-evidence.ts` is what
+lets a phase do the second before committing to the first. Given a workspace,
+a phase may call read-only tools and put the results in front of the model
+before it answers.
+
+Two constraints shape the design.
+
+**Autonomy must not smuggle in authority.** The tools available to an
+unattended phase are *derived*, not declared: a tool qualifies only if
+`evaluateToolCall` allows it with an empty scope grant, demands no approval,
+and reports no side effect. That is the definition of "cannot change anything
+and needs no permission", so reads pass and every write, deploy or credential
+tool is excluded — including tools registered later, without this module being
+told about them. A phase's own list is then intersected with that set, so an
+over-generous phase table cannot widen what an unsupervised run may do.
+
+**The loop must terminate.** The model can do exactly two things — request one
+tool or answer — and requests are capped per phase. A model that keeps asking
+runs out of turns and is then required to decide on what it has. A malformed
+`TOOL` line is treated as a final answer rather than retried, so broken JSON
+cannot spin the loop either.
+
+Evidence changes what the model knows, never what it may say. The outcome is
+parsed from the final text by the same rules as the no-evidence path, so a
+phase that reads three files and then demands an illegal event is refused
+exactly as before, and the run does not move. Every call is recorded in
+`agent_tool_calls` against the run, and the tools consulted are written onto
+the checkpoint, so the history shows what each decision was based on.
+
 ### Memory — what the agent remembers between runs
 
 Facts are scoped to an `(organizationId, projectId)` pair, carry mandatory

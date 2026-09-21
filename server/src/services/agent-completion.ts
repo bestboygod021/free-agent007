@@ -122,11 +122,13 @@ export function gatewayCompletion(options: GatewayCompletionOptions = {}): Compl
       const text = data.choices?.[0]?.message?.content ?? '';
       const parsed = parseOutcome(text, request.allowedOutcomes);
 
-      // An unparseable answer is reported as-is. The driver treats an outcome
-      // it does not recognise as a refusal and leaves the run untouched.
+      // An unparseable answer is reported as-is, truncated, because it only
+      // ever appears in a refusal message. `detail` always carries the FULL
+      // text: evidence gathering reads the tool protocol out of it, and
+      // truncating here would corrupt a `TOOL name {json}` line mid-argument.
       return {
         outcome: parsed?.outcome ?? text.trim().slice(0, 40),
-        ...(parsed?.detail === undefined ? {} : { detail: parsed.detail }),
+        detail: parsed?.detail ?? text.trim(),
         ...(data.model === undefined ? {} : { model: data.model }),
         tokensUsed: data.usage?.total_tokens ?? 0,
       };

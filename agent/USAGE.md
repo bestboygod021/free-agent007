@@ -496,6 +496,68 @@ Arguments and result previews are redacted before storage, so a secret passed
 by mistake does not become a permanent row — while the caller still receives
 the real value.
 
+### Joining the two: phases that look before they leap
+
+The driver decides and tools act, but on their own they stay separate — a
+phase would answer from the goal and its own history, which is an educated
+guess about a repository nobody has read. Pass `useTools` and a phase may
+inspect the workspace first:
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/runs/$RUN/advance \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"once":true,"useTools":true,"maxToolCalls":3}'
+```
+
+```
+ok: True | outcome: clear -> spec_ready | state: PLAN
+
+what it looked at before deciding:
+  fs.search {"query":"rate limiting"}   ok=True
+     hits: src/server.ts:3  "// NOTE: no rate limiting is configured yet."
+  fs.read_file {"path":"src/server.ts"} ok=True
+     import express from 'express'; export const app = express(); …
+```
+
+The checkpoint records the provenance, so the history says not just what was
+decided but what it was decided on:
+
+```
+seq 1  spec_ready -> PLAN
+   based on: fs.search, fs.read_file
+```
+
+#### Autonomy does not grant authority
+
+An unattended phase may only use tools that need **no scope and no approval**,
+and that set is *derived* rather than listed: a tool qualifies only if the
+policy engine allows it with an empty scope grant and demands no sign-off.
+Register a dangerous tool tomorrow and it is excluded automatically.
+
+A phase's own wish list is intersected with that set, so naming a write tool in
+the phase table cannot widen what an unsupervised run does. A model that tries
+anyway gets told, and still has to decide:
+
+```
+fs.file.write   ok=False  "fs.file.write" is not available in this phase.
+                          Available: fs.list, fs.read_file, fs.search
+sandbox.test    ok=False  "sandbox.test" is not available in this phase.
+fs.read_file    ok=False  path "../outside-secret.txt" escapes the workspace.
+```
+
+No file was written, no command ran, nothing outside the workspace was read.
+
+Two more things keep the loop bounded. Tool calls are capped per phase
+(`maxToolCalls`, default 3): a model that keeps asking runs out of turns and is
+then required to answer on what it has. And a malformed `TOOL` line is read as
+a final answer rather than retried, so a model cannot spin the loop by
+producing broken JSON.
+
+Evidence changes what the model **knows**, never what it may **say**: the
+outcome is still parsed against the phase's permitted words, so a model that
+reads three files and then demands `deploy_approved` is refused exactly as
+before.
+
 ## 6. Memory: what it remembers
 
 An agent that forgets your project between runs will keep asking the same
@@ -600,10 +662,11 @@ The behaviour that matters:
 
 Be clear about this before you build on it.
 
-**Phases do not call tools yet.** Both halves now exist — the driver decides,
-and [tools](#tools-how-a-run-changes-anything) act — but they are still
-invoked separately. Nothing yet hands a phase the catalogue and lets it choose;
-that wiring, plus git operations and a real sandbox, is the remaining work.
+**Phases can read, but they cannot change anything.** A phase now inspects the
+workspace before deciding, but only with read-only tools — by construction, not
+by convention. Nothing yet lets a run edit a file, commit, or open a pull
+request on its own; that needs a supervised execution path with approvals,
+plus git operations and a real container sandbox.
 
 **Its judgement is only as good as the model's.** The kernel guarantees the
 *shape* of a run: legal transitions, budgets, human gates, a verifiable trail.

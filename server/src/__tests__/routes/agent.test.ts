@@ -740,6 +740,16 @@ describe('/api/agent driver endpoint', () => {
     expect(res.body.error.message).toContain('model');
   });
 
+  it('rejects an out-of-range tool-call budget', async () => {
+    const runId = await create();
+    const res = await call(app, 'POST', `/api/agent/runs/${runId}/advance`, token, {
+      useTools: true,
+      maxToolCalls: 99,
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('maxToolCalls');
+  });
+
   it('refuses to remember a run that has not finished', async () => {
     const runId = await create();
     const res = await call(app, 'POST', `/api/agent/runs/${runId}/remember`, token, {});

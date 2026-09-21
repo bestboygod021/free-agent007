@@ -1174,15 +1174,42 @@ agentRouter.post('/runs/:runId/advance', (req: Request, res: Response) => {
     return;
   }
 
+  const maxToolCalls = body.maxToolCalls;
+  if (
+    maxToolCalls !== undefined &&
+    (typeof maxToolCalls !== 'number' ||
+      !Number.isInteger(maxToolCalls) ||
+      maxToolCalls < 0 ||
+      maxToolCalls > 20)
+  ) {
+    badRequest(res, '"maxToolCalls" must be an integer between 0 and 20.');
+    return;
+  }
+
   const complete = gatewayCompletion({
     ...(typeof body.model === 'string' ? { model: body.model } : {}),
   });
+
+  // Evidence gathering is opt-in per request. The workspace root itself is
+  // still server configuration -- `useTools` only says whether to use it.
+  const evidenceOptions =
+    body.useTools === true
+      ? {
+          workspaceRoot: agentWorkspaceRoot(),
+          ...(typeof maxToolCalls === 'number' ? { maxToolCalls } : {}),
+        }
+      : {};
 
   // `once: true` runs a single phase, which is the useful default for a UI
   // that wants to show each step; otherwise drive until a human is needed.
   const driving =
     body.once === true
-      ? advance({ runId, complete, ...(body.useMemory === false ? { useMemory: false } : {}) }).then(
+      ? advance({
+          runId,
+          complete,
+          ...evidenceOptions,
+          ...(body.useMemory === false ? { useMemory: false } : {}),
+        }).then(
           (result) => ({
             run: result.run,
             steps: [result],
@@ -1193,6 +1220,7 @@ agentRouter.post('/runs/:runId/advance', (req: Request, res: Response) => {
       : advanceUntil({
           runId,
           complete,
+          ...evidenceOptions,
           ...(maxSteps === undefined ? {} : { maxSteps }),
           ...(body.useMemory === false ? { useMemory: false } : {}),
         });
