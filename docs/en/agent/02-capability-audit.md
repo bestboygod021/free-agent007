@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-297 test files, 3,732 tests. It talks to 20 provider families, fails over
+300 test files, 3,782 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -146,9 +146,9 @@ This is still the bulk of the list and the bulk of the work.
 |---|---|---|
 | Coding (166–195) | **Partial** | Navigation is real: `services/code-index.ts` maps declarations and `code.symbol.search` / `code.outline.read` / `code.file.outline.read` are offered to every read-only phase. Patch application and commits exist via `agent-tools-git.ts`. Still absent: PR creation, a real execution sandbox, refactoring across files. `repository-context-runtime.ts` and `repository-intelligence-runtime.ts` remain unreachable pure logic. |
 | Browser (196–220) | **Absent** | No Playwright, no Puppeteer, no browser dependency of any kind. `browser-signal-runtime.ts` processes *hypothetical* browser signals. This is a from-scratch subsystem. |
-| Business data (221–245) | **Absent** | No SQL agent, no CSV/Excel analysis, no CRM/email/calendar connectors. |
+| Business data (221–245) | **Partial** | `services/tabular-query.ts` loads a CSV into a private in-memory SQLite database and answers read-only SQL against it (`data.csv.query`, `data.csv.schema.read`). No Excel parser, and no CRM/email/calendar connectors. |
 
-**Verdict:** ~5 of 80.
+**Verdict:** ~9 of 80.
 
 A note on item 189 (secret scanning), which the previous pass scored as the
 one built capability here. `redaction.ts` was real but only half-connected:
@@ -292,12 +292,12 @@ accept knowingly.
 | 1. Gateway/API | 14 | 15 |
 | 2. Providers | 17 | 20 |
 | 3–7. Agent, tools, memory, RAG, workflow | ~44 | 130 |
-| 8–10. Coding, browser, data | ~5 | 80 |
+| 8–10. Coding, browser, data | ~9 | 80 |
 | 11. Security | 16 | 25 |
 | 12. Identity | ~10 | 25 |
 | 13–14. Observability, cost | ~20 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~167** | **500** |
+| **Total** | **~171** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
@@ -364,7 +364,24 @@ agent and client trees, and invents nothing on commented-out code, call sites
 or strings. What it cannot do is semantic: no re-export resolution, no type
 following, no dynamically built names.
 
-**6. Tool registry and SDK** (items 61–67) — **done**
+**6. Tabular data** (items 221–226) — **done for CSV**
+`services/tabular-query.ts`. A model asked for a total used to have one
+option: read the whole file into the prompt and add the numbers up — which
+does not fit and is the least reliable arithmetic available. SQLite is exact
+and free.
+
+The isolation is the design. A CSV is loaded into a *separate* in-memory
+database, so a query cannot name `api_keys` no matter how it is written —
+verified live, the error is `no such table`. Writes are stopped by
+`PRAGMA query_only` in the engine, not by a regex; `statement.readonly` is
+consulted first only to give a clear message. Stacked statements need no
+guard because `prepare()` rejects a string with more than one statement.
+
+One trap found by probing rather than reading: `ATTACH DATABASE '/any/file'`
+reports `readonly === true` and is permitted under `query_only`. It is a
+file-read primitive wearing a SELECT's clothes, and it is refused by name.
+
+**7. Tool registry and SDK** (items 61–67) — **done**
 Delivered in `services/agent-tools.ts`, joined to the driver by
 `services/agent-evidence.ts`, and extended to git in
 `services/agent-tools-git.ts`. A phase inspects the workspace with read-only

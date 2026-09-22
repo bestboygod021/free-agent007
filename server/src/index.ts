@@ -4,6 +4,7 @@ import { initDb, getDb } from './db/index.js';
 import { registerBuiltinTools, ensureWorkspaceRoot } from './services/agent-tools-builtin.js';
 import { registerGitTools } from './services/agent-tools-git.js';
 import { registerCodeTools } from './services/agent-tools-code.js';
+import { registerDataTools } from './services/agent-tools-data.js';
 import { startHealthChecker, checkAllKeys } from './services/health.js';
 import { restoreProxySettings, flushProxyCache } from './lib/proxy.js';
 import { startWakeDetect } from './lib/wake-detect.js';
@@ -53,6 +54,7 @@ async function main() {
   registerBuiltinTools();
   registerGitTools();
   registerCodeTools();
+  registerDataTools();
   void ensureWorkspaceRoot().catch((err: unknown) => {
     console.warn(
       `[agent] could not create the tool workspace: ${err instanceof Error ? err.message : String(err)}`,

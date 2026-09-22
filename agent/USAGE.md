@@ -429,11 +429,11 @@ curl -s http://localhost:3001/api/agent/tools -H "Authorization: Bearer $TOKEN"
 ```
 
 ```
-code.file.outline.read   code.outline.read   code.symbol.search
-fs.file.write            fs.list             fs.read_file
-fs.search                git.branch.create   git.commit.create
-git.diff.read            git.patch.file.write git.status.read
-sandbox.test
+code.file.outline.read   code.outline.read     code.symbol.search
+data.csv.query           data.csv.schema.read  fs.file.write
+fs.list                  fs.read_file          fs.search
+git.branch.create        git.commit.create     git.diff.read
+git.patch.file.write     git.status.read       sandbox.test
 ```
 
 ```bash
@@ -611,6 +611,74 @@ truncated index is weaker than "not present".
 The index is rebuilt per call and never stored. An index is a cache of the
 working tree, and a stale one is worse than none — it sends the agent to a
 line number that has moved.
+
+### Asking a spreadsheet a question
+
+A model asked for a total has historically had one option: read the whole CSV
+into the prompt and add the numbers up. A file of any size does not fit, and
+a language model doing arithmetic over a thousand rows is the least reliable
+component in the system. SQLite is exact and costs nothing.
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/tools/invoke \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"tool":"data.csv.schema.read","args":{"path":"sales.csv"}}'
+```
+
+```json
+{
+  "rowCount": 5,
+  "columns": [
+    { "name": "region",  "original": "Region",  "type": "TEXT" },
+    { "name": "units",   "original": "Units",   "type": "INTEGER" },
+    { "name": "revenue", "original": "Revenue", "type": "REAL" }
+  ]
+}
+```
+
+`original` is kept so a question phrased in the spreadsheet's own words
+("Total Amount") maps to the column name a query can use (`total_amount`).
+Then ask:
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/tools/invoke \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"tool":"data.csv.query","args":{
+        "path":"sales.csv",
+        "sql":"SELECT region, SUM(units) AS units FROM data GROUP BY region"}}'
+```
+
+The CSV reader is written here rather than installed — RFC 4180 is small, and
+a dependency to parse commas is a poor trade. It handles quoted fields with
+embedded commas and newlines, doubled quotes, CRLF and a BOM. A blank numeric
+cell becomes `NULL`, never `0`, so an average is not quietly wrong. One
+unparseable value makes a whole column `TEXT` rather than silently dropping
+the row that contained `N/A`.
+
+**Why a query cannot reach your data.** The CSV is loaded into a *separate*
+in-memory SQLite database. The gateway's own `freeapi.db` is never opened by
+this code, so `SELECT * FROM api_keys` fails with `no such table` — the
+isolation does not depend on getting a filter right.
+
+Writes are stopped by `PRAGMA query_only` inside the engine, so obfuscating a
+`DELETE` buys nothing; `statement.readonly` is checked first only to return a
+clear message. `SELECT 1; DROP TABLE data` is rejected by the driver, which
+refuses any string holding more than one statement.
+
+| Attempt | Result |
+|---|---|
+| `DELETE FROM data` | refused — read-only |
+| `SELECT 1; DROP TABLE data` | refused — more than one statement |
+| `ATTACH DATABASE '/path/x.db'` | refused by name (see below) |
+| `SELECT * FROM api_keys` | `no such table` — different database |
+| `data.csv.query` on `.env` | refused — credential filename |
+
+That third row is worth explaining. `ATTACH DATABASE '/any/file.db'` reports
+`readonly === true` and is allowed under `query_only` — it is a file-read
+primitive wearing a SELECT's clothes. It is refused by keyword because the
+engine's own read-only enforcement does not cover it. That is the only
+keyword check here; a long blacklist would mean the defence was in the wrong
+layer.
 
 ### Credential files are refused, not redacted
 

@@ -80,6 +80,8 @@ const READ_ONLY_TOOLS = [
   'code.symbol.search',
   'code.outline.read',
   'code.file.outline.read',
+  'data.csv.schema.read',
+  'data.csv.query',
   'fs.read_file',
   'fs.list',
   'fs.search',
