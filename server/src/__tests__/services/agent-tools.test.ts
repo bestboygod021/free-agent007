@@ -278,6 +278,43 @@ describe('agent tool registry', () => {
     expect(hits.some((h) => h.path.endsWith('app.ts'))).toBe(true);
   });
 
+  it('refuses to read a file whose name says it holds credentials', async () => {
+    await fs.writeFile(path.join(workspace, '.env'), 'STRIPE_SECRET=sk_live_not_a_pattern\n');
+    const res = await call({ args: { path: '.env' } });
+    expect(res.outcome).toBe('error');
+    expect(res.reason).toContain('refusing to read');
+    // The point of the guard: the value never reaches the caller, and so never
+    // reaches a model prompt.
+    expect(JSON.stringify(res)).not.toContain('sk_live_not_a_pattern');
+  });
+
+  it('refuses a credential file in a subdirectory too', async () => {
+    await fs.mkdir(path.join(workspace, 'apps'), { recursive: true });
+    await fs.writeFile(path.join(workspace, 'apps', '.env.production'), 'DB_PASSWORD=hunter2\n');
+    const res = await call({ args: { path: 'apps/.env.production' } });
+    expect(res.outcome).toBe('error');
+    expect(res.reason).toContain('refusing to read');
+  });
+
+  it('does not let fs.search read a refused file one line at a time', async () => {
+    // The value is deliberately not a recognisable secret *pattern*: this is
+    // exactly the case redactSecrets cannot catch, which is why the filename
+    // rule has to exist.
+    await fs.writeFile(path.join(workspace, '.env'), 'INTERNAL_TOKEN=plain_words_only\n');
+    const res = await call({ tool: 'fs.search', args: { query: 'plain_words_only' } });
+    expect(res.ok).toBe(true);
+    const hits = (res.result as { hits: { path: string }[] }).hits;
+    expect(hits).toEqual([]);
+  });
+
+  it('still reads ordinary files that merely sit next to a secret', async () => {
+    await fs.writeFile(path.join(workspace, '.env'), 'SECRET=x\n');
+    await fs.writeFile(path.join(workspace, 'env.ts'), 'export const useEnv = true;\n');
+    const res = await call({ args: { path: 'env.ts' } });
+    expect(res.ok).toBe(true);
+    expect((res.result as { content: string }).content).toContain('useEnv');
+  });
+
   it('runs a sandboxed process without a shell', async () => {
     const res = await call({ tool: 'sandbox.test', args: { command: 'node --version' } });
     expect(res.ok).toBe(true);

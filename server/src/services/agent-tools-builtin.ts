@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { registerTool, ToolError, type ToolInvocationContext } from './agent-tools.js';
+import { isSensitivePath } from '@freellmapi/agent/core/redaction.js';
 
 /**
  * The built-in tool set: the smallest collection that lets a run actually do
@@ -18,7 +19,7 @@ const MAX_LIST_ENTRIES = 1000;
 const MAX_SEARCH_HITS = 200;
 
 /** Directories that are never worth walking and expensive when they are huge. */
-const SKIP_DIRS = new Set([
+export const SKIP_DIRS = new Set([
   'node_modules',
   '.git',
   'dist',
@@ -37,7 +38,7 @@ const SKIP_DIRS = new Set([
  * applied to the root so that a root which is itself a symlink (common on
  * macOS, where /tmp -> /private/tmp) does not produce false refusals.
  */
-async function resolveInside(root: string, relative: unknown): Promise<string> {
+export async function resolveInside(root: string, relative: unknown): Promise<string> {
   if (typeof relative !== 'string' || relative.trim() === '') {
     throw new ToolError('path must be a non-empty string.');
   }
@@ -62,6 +63,34 @@ async function resolveInside(root: string, relative: unknown): Promise<string> {
     throw new ToolError(`path "${relative}" resolves outside the workspace.`);
   }
   return target;
+}
+
+/**
+ * Refuse to open a file whose *name* says it holds credentials.
+ *
+ * `redactSecrets` already scrubs tool output, but it works on patterns it
+ * recognises — `sk-...`, a JWT, an `AKIA` key. A `.env` is a file of
+ * `NAME=value` lines where the value can be any string at all, so a bespoke
+ * internal token, a database password or a webhook URL passes straight
+ * through it and into the model's prompt. The filename is the reliable
+ * signal here, not the content.
+ *
+ * The rule itself is `isSensitivePath` from the agent kernel — the same list
+ * the redaction layer publishes. Importing it rather than restating it means
+ * a name added there is honoured here without anyone remembering to.
+ *
+ * This is a read-side guard. Writing `.env` is a different question (an agent
+ * scaffolding a project has a fair reason to) and is left to the policy
+ * engine, which classifies writes by side effect.
+ */
+function assertReadable(relative: string): void {
+  if (isSensitivePath(relative)) {
+    throw new ToolError(
+      `refusing to read "${relative}": file names of this kind hold credentials. ` +
+        'Ask a human for the specific value if the task genuinely needs it.',
+      403,
+    );
+  }
 }
 
 /**
@@ -100,6 +129,7 @@ export function registerBuiltinTools(): void {
       additionalProperties: false,
     },
     async handler(args, ctx) {
+      assertReadable(String(args.path));
       const file = await resolveInside(ctx.workspaceRoot, args.path);
       const stat = await fs.stat(file).catch(() => null);
       if (!stat) throw new ToolError(`no such file: ${String(args.path)}`, 404);
@@ -185,6 +215,9 @@ export function registerBuiltinTools(): void {
           }
           if (!entry.isFile()) continue;
           if (exts && !exts.some((e) => entry.name.endsWith(e))) continue;
+          // Same rule as fs.read_file. Without this, `fs.search` is a way to
+          // read a refused file one matching line at a time.
+          if (isSensitivePath(entry.name)) continue;
 
           const stat = await fs.stat(full).catch(() => null);
           if (!stat || stat.size > MAX_READ_BYTES) continue;

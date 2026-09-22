@@ -471,6 +471,27 @@ Omitted context fields default to the **most restrictive** interpretation
 (supervised autonomy, private work, `main` protected), so a malformed request
 can never accidentally widen permissions.
 
+### A tool's name is part of its security classification
+
+The engine classifies by the suffix of a dotted name: `*.read`, `*.search`,
+`*.list` are the read vocabulary, `*.file.write` is a local write, and
+anything matching no rule falls to the default — `external_write`, `high`,
+approval required.
+
+That default is why the code navigation tools are called
+`code.symbol.search`, `code.outline.read` and `code.file.outline.read`. They
+were first written as `code.symbol.find` and `code.outline`, which match
+nothing, so they were classified as high-risk external writes and
+`unattendedTools()` filtered them out of every phase. The tools registered
+correctly and were simply never offered to a model — a silent failure, since
+nothing errors when a capability is merely absent from a prompt.
+
+The engine behaved correctly: it fails closed on names it does not recognise.
+The lesson is that renaming a tool can change what it is allowed to do, so a
+rename is a policy change. `agent-tools-code.test.ts` asserts the
+classification directly for that reason — a "tidy-up" that renames these back
+fails a test instead of quietly disabling three tools.
+
 ## Prompt library
 
 Thirteen versioned agent prompts live in `agent/prompts/`, each bound to an

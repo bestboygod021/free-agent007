@@ -236,14 +236,32 @@ describe('evidence gathering', () => {
     expect(rows[0]!.tool).toBe('fs.list');
   });
 
-  it('keeps secrets found in a file out of the prompt', async () => {
-    await fs.writeFile(path.join(workspace, '.env'), `OPENAI_API_KEY=sk-${'a'.repeat(32)}\n`);
-    const { model, result } = gather(['TOOL fs.read_file {"path":".env"}', 'clear']);
+  it('redacts a secret that appears in an ordinary file', async () => {
+    // Deliberately NOT a credential filename: this exercises the redaction
+    // layer, which only runs on files the tool agrees to open. A secret can
+    // appear anywhere — a test fixture, a stray log — and that is the case
+    // pattern-based redaction exists for.
+    await fs.writeFile(path.join(workspace, 'notes.txt'), `OPENAI_API_KEY=sk-${'a'.repeat(32)}\n`);
+    const { model, result } = gather(['TOOL fs.read_file {"path":"notes.txt"}', 'clear']);
     await result;
 
     const secondPrompt = model.seen[1]!;
     expect(secondPrompt).not.toContain('a'.repeat(32));
     expect(secondPrompt).toContain('REDACTED');
+  });
+
+  it('never opens a credential file in the first place', async () => {
+    // The stronger guarantee, and the reason the test above had to move off
+    // `.env`: redaction catches secrets shaped like known patterns, but a
+    // `.env` holds arbitrary values. Refusing by filename covers what the
+    // pattern matcher cannot.
+    await fs.writeFile(path.join(workspace, '.env'), 'INTERNAL_TOKEN=plain_words_no_pattern\n');
+    const { model, result } = gather(['TOOL fs.read_file {"path":".env"}', 'clear']);
+    await result;
+
+    const secondPrompt = model.seen[1]!;
+    expect(secondPrompt).not.toContain('plain_words_no_pattern');
+    expect(secondPrompt).toContain('refusing to read');
   });
 
   it('skips the loop entirely when no tools are available', async () => {

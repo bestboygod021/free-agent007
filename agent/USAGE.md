@@ -429,7 +429,11 @@ curl -s http://localhost:3001/api/agent/tools -H "Authorization: Bearer $TOKEN"
 ```
 
 ```
-fs.file.write   fs.list   fs.read_file   fs.search   sandbox.test
+code.file.outline.read   code.outline.read   code.symbol.search
+fs.file.write            fs.list             fs.read_file
+fs.search                git.branch.create   git.commit.create
+git.diff.read            git.patch.file.write git.status.read
+sandbox.test
 ```
 
 ```bash
@@ -557,6 +561,86 @@ Evidence changes what the model **knows**, never what it may **say**: the
 outcome is still parsed against the phase's permitted words, so a model that
 reads three files and then demands `deploy_approved` is refused exactly as
 before.
+
+### Navigating code without reading all of it
+
+Given only `fs.search`, a run asked to change `calculateTax` greps the name,
+gets every call site and import, then reads whole files looking for the one
+line that defines it. Most of a context window goes on text nobody needed.
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/tools/invoke \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"tool":"code.symbol.search","args":{"name":"calculateTax"}}'
+```
+
+```json
+{
+  "matches": [{
+    "name": "calculateTax", "kind": "function",
+    "path": "src/services/billing.ts", "line": 8, "exported": true,
+    "signature": "export function calculateTax(invoice: Invoice): number {"
+  }],
+  "totalMatches": 1, "filesScanned": 2, "indexTruncated": false
+}
+```
+
+One match: the definition, not the import in `checkout.ts` and not the call
+below it. Pass `includeSource: true` to get the first lines of the body with
+it, so the caller can verify the hit rather than trust it.
+
+`code.outline.read` gives the whole repository as a map — exported symbols per
+file, a few hundred tokens for a codebase — and `code.file.outline.read` gives
+one file's structure including private functions and class methods. The usual
+order is outline to orient, symbol search to locate, `fs.read_file` to read
+only what matters.
+
+**What it is.** A hand-written scanner over declaration syntax, not a
+compiler. `typescript` is a devDependency here, so importing it at runtime
+would break `npm ci --omit=dev` — a feature that only works on developer
+machines is worse than a blunter one that works everywhere. Measured against
+the real TypeScript AST it found every one of 6,281 top-level declarations in
+this repository, and reports nothing for commented-out code, call sites or
+names inside strings.
+
+**What it is not.** It has no semantics: a re-export is not followed, a type
+alias is not resolved, and a name assembled at runtime is invisible. It says
+`indexTruncated` when a limit stopped the scan, because "not found" in a
+truncated index is weaker than "not present".
+
+The index is rebuilt per call and never stored. An index is a cache of the
+working tree, and a stale one is worse than none — it sends the agent to a
+line number that has moved.
+
+### Credential files are refused, not redacted
+
+Tool output is scrubbed for secrets that match known patterns — an `sk-...`
+key, a JWT. That cannot protect a `.env`, whose values are arbitrary:
+`INTERNAL_TOKEN=plain_words` matches no pattern at all.
+
+So the read tools refuse by filename:
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/tools/invoke \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"tool":"fs.read_file","args":{"path":".env"}}'
+```
+
+```json
+{
+  "ok": false, "outcome": "error",
+  "reason": "refusing to read \".env\": file names of this kind hold credentials. Ask a human for the specific value if the task genuinely needs it."
+}
+```
+
+`fs.search` skips the same files rather than returning their matching lines,
+and the code index never opens them. The list is `SENSITIVE_PATHS` in the
+kernel's `redaction.ts` — `.env*`, `id_rsa`, `credentials`, `secrets.y[a]ml`,
+`.npmrc`, `.netrc` and friends — imported rather than restated, so adding a
+name there covers every read path at once.
+
+This is a read-side rule. Writing such a file is a separate question, left to
+the policy engine, which classifies writes by side effect.
 
 ### Git: the supervised write path
 

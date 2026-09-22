@@ -64,6 +64,29 @@ interface PhasePlan {
  * table — that is checked by a test, so this map cannot silently drift from
  * the state machine.
  */
+/**
+ * The read-only tool set every code-reading phase gets.
+ *
+ * Named once rather than repeated per phase: when this list was nine copies of
+ * the same literal, adding a tool meant editing nine lines and silently
+ * granting it to eight phases if you missed one.
+ *
+ * `code.*` are navigation tools — find a definition, outline a file — and they
+ * come first deliberately. A model picks from this list roughly in order, and
+ * starting from "where is this defined" costs a fraction of what starting from
+ * "grep and read whole files" does.
+ */
+const READ_ONLY_TOOLS = [
+  'code.symbol.search',
+  'code.outline.read',
+  'code.file.outline.read',
+  'fs.read_file',
+  'fs.list',
+  'fs.search',
+  'git.status.read',
+  'git.diff.read',
+] as const;
+
 const PHASES: Partial<Record<RunState, PhasePlan>> = {
   INTAKE: {
     taskType: 'intake',
@@ -71,7 +94,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Decide whether this goal is clear enough to specify. Answer "clear" if you can write a specification from it, or "unclear" if you must ask the user a question first.',
     outcomes: { clear: 'spec_ready', unclear: 'needs_clarification' },
-    tools: ['fs.read_file', 'fs.list', 'fs.search', 'git.status.read', 'git.diff.read'],
+    tools: READ_ONLY_TOOLS,
   },
   CLARIFY: {
     taskType: 'clarification',
@@ -88,7 +111,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Write the specification. Answer "ready" when the acceptance criteria are stated, or "unclear" if something essential is still missing.',
     outcomes: { ready: 'spec_ready', unclear: 'needs_clarification' },
-    tools: ['fs.read_file', 'fs.list', 'fs.search', 'git.status.read', 'git.diff.read'],
+    tools: READ_ONLY_TOOLS,
   },
   PLAN: {
     taskType: 'planning',
@@ -96,7 +119,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Produce an implementation plan as an ordered task list. Answer "ready" when the plan is complete.',
     outcomes: { ready: 'plan_ready', unclear: 'needs_clarification' },
-    tools: ['fs.read_file', 'fs.list', 'fs.search', 'git.status.read', 'git.diff.read'],
+    tools: READ_ONLY_TOOLS,
   },
   RECON: {
     taskType: 'code_review',
@@ -104,7 +127,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Survey what the plan will touch and note the risks. Answer "complete" when the survey is done.',
     outcomes: { complete: 'recon_complete' },
-    tools: ['fs.read_file', 'fs.list', 'fs.search', 'git.status.read', 'git.diff.read'],
+    tools: READ_ONLY_TOOLS,
   },
   IMPLEMENT: {
     taskType: 'code_generation',
@@ -112,7 +135,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Describe the change for the next task in the plan. Answer "done" when the batch is ready to test.',
     outcomes: { done: 'implementation_batch_done' },
-    tools: ['fs.read_file', 'fs.list', 'fs.search', 'git.status.read', 'git.diff.read'],
+    tools: READ_ONLY_TOOLS,
   },
   TEST: {
     taskType: 'test_generation',
@@ -120,7 +143,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Judge whether the implemented change satisfies its acceptance criteria. Answer "pass" or "fail".',
     outcomes: { pass: 'tests_passed', fail: 'tests_failed' },
-    tools: ['fs.read_file', 'fs.list', 'fs.search', 'git.status.read', 'git.diff.read'],
+    tools: READ_ONLY_TOOLS,
   },
   REPAIR: {
     taskType: 'repair',
@@ -128,7 +151,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Diagnose the failure and describe the fix. Answer "fixed" when the repair is ready to retest.',
     outcomes: { fixed: 'repair_succeeded', fail: 'tests_failed' },
-    tools: ['fs.read_file', 'fs.list', 'fs.search', 'git.status.read', 'git.diff.read'],
+    tools: READ_ONLY_TOOLS,
   },
   SECURITY_REVIEW: {
     taskType: 'security_review',
@@ -136,7 +159,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Review the change for security problems. Answer "clear" if none block release, or "blocked" if one does.',
     outcomes: { clear: 'security_clear', blocked: 'security_blocked' },
-    tools: ['fs.read_file', 'fs.list', 'fs.search', 'git.status.read', 'git.diff.read'],
+    tools: READ_ONLY_TOOLS,
   },
   PREVIEW: {
     taskType: 'documentation',
@@ -151,7 +174,7 @@ const PHASES: Partial<Record<RunState, PhasePlan>> = {
     instruction:
       'Confirm the deployment behaves as specified. Answer "verified" if it does, or "fail" if it does not.',
     outcomes: { verified: 'finalized', fail: 'tests_failed' },
-    tools: ['fs.read_file', 'fs.list', 'fs.search', 'git.status.read', 'git.diff.read'],
+    tools: READ_ONLY_TOOLS,
   },
 };
 

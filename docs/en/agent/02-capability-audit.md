@@ -15,7 +15,7 @@ There are **two different systems** in this repo, and the difference decides
 what any of these 500 features actually costs to build.
 
 **1. The gateway (`server/`) — a real, working product.**
-295 test files, 3,701 tests. It talks to 20 provider families, fails over
+297 test files, 3,732 tests. It talks to 20 provider families, fails over
 between them, normalises their wire formats, tracks cost and quota, and serves
 an OpenAI-compatible API. When this document says a feature exists, it almost
 always lives here.
@@ -144,11 +144,20 @@ This is still the bulk of the list and the bulk of the work.
 
 | Area | Status | Reality |
 |---|---|---|
-| Coding (166–195) | **Rules only / Absent** | `repository-context-runtime.ts` and `repository-intelligence-runtime.ts` are unreachable pure logic. No repo indexing, no patch generation, no PR creation, no sandbox. Item 189 (secret scanning) is the exception — `redaction.ts` is real and used. |
+| Coding (166–195) | **Partial** | Navigation is real: `services/code-index.ts` maps declarations and `code.symbol.search` / `code.outline.read` / `code.file.outline.read` are offered to every read-only phase. Patch application and commits exist via `agent-tools-git.ts`. Still absent: PR creation, a real execution sandbox, refactoring across files. `repository-context-runtime.ts` and `repository-intelligence-runtime.ts` remain unreachable pure logic. |
 | Browser (196–220) | **Absent** | No Playwright, no Puppeteer, no browser dependency of any kind. `browser-signal-runtime.ts` processes *hypothetical* browser signals. This is a from-scratch subsystem. |
 | Business data (221–245) | **Absent** | No SQL agent, no CSV/Excel analysis, no CRM/email/calendar connectors. |
 
-**Verdict:** ~1 of 80.
+**Verdict:** ~5 of 80.
+
+A note on item 189 (secret scanning), which the previous pass scored as the
+one built capability here. `redaction.ts` was real but only half-connected:
+it scrubbed tool *output* for recognisable patterns, while `fs.read_file`
+would happily open `.env` and hand over its contents. Pattern redaction
+cannot help there — a `.env` holds arbitrary values, and `INTERNAL_TOKEN=
+plain_words` matches nothing. `isSensitivePath` existed, was tested, and had
+no callers. It now guards the read tools, so the filename rule and the
+content rule are both connected.
 
 ---
 
@@ -283,12 +292,12 @@ accept knowingly.
 | 1. Gateway/API | 14 | 15 |
 | 2. Providers | 17 | 20 |
 | 3–7. Agent, tools, memory, RAG, workflow | ~44 | 130 |
-| 8–10. Coding, browser, data | ~4 | 80 |
+| 8–10. Coding, browser, data | ~5 | 80 |
 | 11. Security | 16 | 25 |
 | 12. Identity | ~10 | 25 |
 | 13–14. Observability, cost | ~20 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~166** | **500** |
+| **Total** | **~167** | **500** |
 
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
@@ -340,7 +349,22 @@ similar to a query are usually sibling questions rather than rewordings —
 which is exactly when a wrong cached answer looks plausible. Enable with
 `SEMANTIC_CACHE=true`.
 
-**5. Tool registry and SDK** (items 61–67) — **done**
+**5. Code navigation** (items 166–170) — **done**
+`services/code-index.ts` plus three read-only tools. A run can now ask "where
+is `resolveScope` defined" and get `file:line` with the signature, instead of
+grepping a name, getting its call sites, and reading whole files to find the
+declaration. The index is built on demand and thrown away: an index is a cache
+of the working tree, and a stale one sends the agent to a line that has moved.
+
+It is a hand-written scanner, not the TypeScript compiler, because
+`typescript` is a devDependency — importing it at runtime would break
+`npm ci --omit=dev`. Measured against `ts.createSourceFile` as an oracle it
+found 6,281 of 6,281 top-level declarations across this repository's server,
+agent and client trees, and invents nothing on commented-out code, call sites
+or strings. What it cannot do is semantic: no re-export resolution, no type
+following, no dynamically built names.
+
+**6. Tool registry and SDK** (items 61–67) — **done**
 Delivered in `services/agent-tools.ts`, joined to the driver by
 `services/agent-evidence.ts`, and extended to git in
 `services/agent-tools-git.ts`. A phase inspects the workspace with read-only
@@ -365,6 +389,12 @@ Two rules, learned from the `agent/` workspace:
    phases M9–M208 `designed_only`, which is admirable — but the module names
    still read like finished work. Prefer "the rules exist, the machinery does
    not" over both "done" and "missing".
+3. **Add up the table.** The §8–10 row read `~4` while the section below it
+   read `~1`, so the grand total was three higher than the parts for at least
+   one revision. A number in a summary that nobody re-derives will drift.
+4. **"Exists" is not "connected".** `isSensitivePath` had a test and no
+   callers; `redaction.ts` was scored as built on that basis. Before scoring
+   a capability, grep for who *calls* it.
 
 See [`01-agent-kernel.md`](./01-agent-kernel.md) for what the kernel decides
 today, and [`agent/USAGE.md`](../../../agent/USAGE.md) for how to drive it.
