@@ -209,9 +209,9 @@ revisited before this is multi-operator.
 
 ---
 
-## 3. Five high-severity advisories in production dependencies
+## 3. High-severity advisories in production dependencies — **fixed**
 
-`npm audit --omit=dev` reports 9 vulnerabilities, 5 high. Two are on live
+`npm audit --omit=dev` reported 9 vulnerabilities, 5 high. Two were on live
 request paths:
 
 - **`multer`** — DoS via crafted multipart request. Reachable at
@@ -219,12 +219,57 @@ request paths:
 - **`sharp`** — libheif vulnerabilities. Reachable via
   `lib/image-normalize.ts`, i.e. any request carrying an image.
 
-`js-yaml`, `fast-uri` and `browserslist` are the others. None is theoretical:
-all five sit in the dependency tree of a running server.
+`js-yaml`, `fast-uri`, `browserslist`, `qs` and `hono` were the others. None
+was theoretical: all sat in the dependency tree of a running server.
 
-There is no automated dependency scanning in CI. `.github/workflows/ci.yml`
-runs migrations, tests, lint and build — all good — but nothing fails the
-build when a dependency picks up a known CVE, so this will recur.
+### The correction I owe the earlier draft
+
+The first version of this review said `npm audit fix` did not resolve them. It
+does. I had run `--dry-run` and read its "to address all issues (including
+breaking changes)" footer as applying to everything listed, when that footer
+describes only the subset needing `--force`. The rest were in-range upgrades
+all along. The lesson is narrow and worth keeping: *`--dry-run` output has to
+be read per-advisory, not as a verdict on the whole run.*
+
+All of them are now resolved inside the existing semver ranges —
+`package.json` is unchanged, only the lockfile moved:
+
+| | was | now |
+|---|---|---|
+| `multer` | ≤2.2.0 | 2.4.0 |
+| `sharp` | <0.35.4 | 0.35.4 |
+| `js-yaml` | 4.0.0–4.3.1 | 4.3.2 |
+| `fast-uri` | 3.0.0–3.1.5 | 3.1.8 |
+| `browserslist` | ≤4.28.6 | 4.29.0 |
+| `qs` | ≤6.15.3 | 6.16.0 |
+
+`npm audit --omit=dev` now reports zero. Three moderate advisories remain
+against `@vitest/mocker`, which is a devDependency and not reachable from a
+request; upgrading it means a major vitest bump and belongs in its own change.
+
+Since the full suite passes it is tempting to stop there, but a test suite does
+not exercise a native image codec or a multipart parser the way a request does,
+so both were smoke-tested directly — `multer.single()` still returns middleware,
+`sharp` still encodes a PNG.
+
+### The gate that should have caught it
+
+There was no automated dependency scanning in CI. Added as its own job:
+
+```yaml
+- name: Audit production dependencies
+  run: npm audit --omit=dev --audit-level=high
+```
+
+Two deliberate narrowings. `--omit=dev`, because a vulnerability in a test
+runner is not reachable by a request; `--audit-level=high`, because a gate that
+goes red for things nobody will act on gets ignored, and an ignored gate is
+worse than no gate. It is a separate job from the test matrix so an advisory
+published overnight cannot mask a real test failure.
+
+I verified the gate actually fails by pinning `multer@2.0.0` and re-running it:
+exit 1, ten advisories listed. A green check on a control that cannot go red is
+not evidence of anything.
 
 ---
 
@@ -332,9 +377,10 @@ Recorded so the next reviewer does not spend time here again.
    regression test added, mutation-verified. See finding 1.
 2. ~~**Authenticate the worker endpoints**~~ — **done.** Worker credentials,
    fail-closed, mutation-verified. See finding 2.
-3. **Add `npm audit` to CI and patch the five high advisories** — known CVEs
-   on live request paths. This is now the top open item.
-4. **Add PR creation** — small, and completes the coding workflow.
+3. ~~**Add `npm audit` to CI and patch the high advisories**~~ — **done.** Zero
+   production advisories; gate added and verified to fail. See finding 3.
+4. **Add PR creation** — small, and completes the coding workflow. Now the top
+   open item.
 5. **Split `proxy.ts`** — pay down the cost before it compounds further.
 6. **Browser automation** — the largest capability gap, and a project rather
    than a task.
