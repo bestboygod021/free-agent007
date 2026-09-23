@@ -11,7 +11,7 @@ rate.
 
 ---
 
-## 1. Cross-tenant access on runs and jobs — **confirmed, exploitable**
+## 1. Cross-tenant access on runs and jobs — **confirmed, exploitable — now fixed**
 
 **Severity: high.** This is the only finding here that is a live security bug
 rather than a gap.
@@ -69,14 +69,51 @@ genuinely global (policy evaluation, prompt library), but these need one:
 not a tenant. It should be authenticated as a worker rather than scoped to an
 organisation, which is a different fix.
 
-### The shape of the fix
+### The fix, and why it is not the one I first proposed
 
-Not a per-route `if`. Twelve hand-written checks is twelve chances to forget
-the thirteenth — which is exactly how this happened. The service functions
-that load by id (`getRun`, `getJob`) should require an organisation and filter
-in SQL, so the *type system* forces every caller to supply one. A route that
-does not have a scope then fails to compile rather than failing quietly at
-runtime.
+My first instinct was to change the service signatures: make `getRun` and
+`getJob` require an organisation and filter in SQL, so the *type system* forces
+every caller to supply one. I abandoned that after reading the callers.
+`agent-driver.ts:322` and `:519` call `getRun` from inside the driver, where
+there is no user and no request — the driver is the thing executing the run.
+Forcing a scope there would mean inventing a fake one, and a fake scope that
+satisfies the compiler is worse than no scope at all: it looks checked.
+
+So the guard went in the route layer instead, but as **one** function rather
+than twelve hand-written `if`s — twelve checks is twelve chances to forget the
+thirteenth, which is how this happened in the first place:
+
+```ts
+function authorizeRecord(req, res, record, what, id, { write } = {}): boolean
+```
+
+It collapses three decisions that were previously scattered:
+
+- record missing → `404`
+- caller is not a member of `record.organizationId` → **the same `404`**, never
+  a `403`. A `403` would confirm the id is real, which hands an attacker an
+  oracle for enumerating other tenants' run ids. This matches what
+  `resolveScope` already did on the scoped routes.
+- `write: true` and the member's role cannot write → `403`. Here the distinction
+  is safe: the caller already knows the record exists.
+
+Applied to ten routes: `GET /runs/:id`, `step`, `decision`, `cancel`, `advance`,
+`remember`, `checkpoints`, `verify`, `GET /jobs/:id`, `POST /jobs/:id/cancel`.
+
+Two routes were leaking without needing an id at all, and needed different
+fixes:
+
+- `GET /runs/resumable` returned every in-flight run on the instance. This was
+  the *harvesting* step — it is what made the by-id routes worth attacking. Now
+  filtered to the caller's organisations.
+- `GET /tools/calls` took `organizationId` as an **optional** query parameter,
+  so omitting it returned every tenant's audit trail, redacted argument
+  previews included. It is now required and membership-checked.
+
+`POST /jobs/claim`, `/complete` and `/fail` are deliberately left alone. They
+are worker endpoints, not tenant endpoints — a worker legitimately claims jobs
+across organisations. They need *worker* authentication, which is a separate
+piece of work and is listed in the gaps below rather than papered over here.
 
 ### Why the tests did not catch it
 
@@ -85,6 +122,17 @@ test for a *nonexistent* id. Nothing asserts a *real id belonging to someone
 else*. The tenancy suite tests the tenancy service in isolation, and the route
 suite tests the routes without tenancy. Both pass; the integration between
 them is untested, and that gap is precisely where the bug lives.
+
+The regression test added with the fix (`/api/agent cross-tenant isolation` in
+`agent.test.ts`) is written the other way round: a real run owned by `acme`, a
+real session belonging to `rival`, and an assertion on every route the exploit
+touched. It also asserts that a refused `step` left the run in `INTAKE` — a
+guard that returns `404` *after* mutating is not a guard — and that the owning
+tenant can still do all of it, so the fix cannot be "deny everything".
+
+I verified the test actually exercises the guard by mutating
+`membershipRole(...) ?? 'owner'` and confirming three tests fail. A green test
+that never reaches the code it claims to cover is worse than no test.
 
 ---
 
@@ -207,11 +255,16 @@ Recorded so the next reviewer does not spend time here again.
 
 ## Recommended order
 
-1. **Fix cross-tenant run/job access** — a security bug with a working
-   exploit. Change the service signatures so the compiler enforces the scope.
-2. **Add `npm audit` to CI and patch the five high advisories** — known CVEs
+1. ~~**Fix cross-tenant run/job access**~~ — **done.** Twelve routes guarded,
+   regression test added, mutation-verified. See finding 1.
+2. **Authenticate the worker endpoints** (`/jobs/claim`, `/complete`, `/fail`).
+   These were scoped out of the fix above because they are not tenant routes,
+   but right now any authenticated user can claim another tenant's job and read
+   its payload through the claim response. This is the remaining half of
+   finding 1 and it needs a worker identity, not a membership check.
+3. **Add `npm audit` to CI and patch the five high advisories** — known CVEs
    on live request paths.
-3. **Add PR creation** — small, and completes the coding workflow.
-4. **Split `proxy.ts`** — pay down the cost before it compounds further.
-5. **Browser automation** — the largest capability gap, and a project rather
+4. **Add PR creation** — small, and completes the coding workflow.
+5. **Split `proxy.ts`** — pay down the cost before it compounds further.
+6. **Browser automation** — the largest capability gap, and a project rather
    than a task.

@@ -673,6 +673,52 @@ function callerId(req: Request): number | null {
 }
 
 /**
+ * Authorise a caller against a record they named by id.
+ *
+ * The scoped routes take `organizationId` in the body and go through
+ * `resolveScope`. The by-id routes cannot: the caller supplies only a run or
+ * job id, and the organisation is a property of the *stored record*. Without
+ * this, "knowing the id" was the entire authorisation model — and a run id
+ * leaks through logs, screenshots, support tickets and `/runs/resumable`.
+ *
+ * The failure is a 404 rather than a 403, matching `resolveScope`: telling a
+ * stranger that a run exists but is not theirs confirms the id is real.
+ *
+ * `write` distinguishes reading a record from driving it. A viewer may look
+ * at a run; advancing, approving or cancelling one needs write.
+ */
+function authorizeRecord(
+  req: Request,
+  res: Response,
+  record: { organizationId: string } | null,
+  what: string,
+  id: string,
+  options: { write?: boolean } = {},
+): boolean {
+  const notFound = (): boolean => {
+    res.status(404).json({ error: { message: `no such ${what}: ${id}`, type: 'not_found' } });
+    return false;
+  };
+
+  if (!record) return notFound();
+
+  const userId = callerId(req);
+  if (userId === null) {
+    forbidden(res, 'authentication is required.');
+    return false;
+  }
+
+  const role = membershipRole(userId, record.organizationId);
+  if (role === null) return notFound();
+
+  if (options.write === true && !canWrite(role)) {
+    forbidden(res, `role "${role}" cannot modify a ${what}.`);
+    return false;
+  }
+  return true;
+}
+
+/**
  * GET /api/agent/organizations — the scopes this caller may act in.
  *
  * A client needs this before it can send a scoped request at all, and it
@@ -1384,6 +1430,7 @@ agentRouter.post('/jobs/:jobId/cancel', (req: Request, res: Response) => {
     badRequest(res, 'job id must be a single path segment.');
     return;
   }
+  if (!authorizeRecord(req, res, getJob(jobId), 'job', jobId, { write: true })) return;
   try {
     res.json({ job: cancelJob(jobId) });
   } catch (err) {
@@ -1404,10 +1451,7 @@ agentRouter.get('/jobs/:jobId', (req: Request, res: Response) => {
     return;
   }
   const job = getJob(jobId);
-  if (!job) {
-    res.status(404).json({ error: { message: `no such job: ${jobId}`, type: 'not_found' } });
-    return;
-  }
+  if (!authorizeRecord(req, res, job, 'job', jobId)) return;
   res.json({ job });
 });
 
@@ -1491,8 +1535,17 @@ agentRouter.get('/runs', (req: Request, res: Response) => {
 });
 
 /** GET /api/agent/runs/resumable — runs that were in flight when we last stopped. */
-agentRouter.get('/runs/resumable', (_req: Request, res: Response) => {
-  const runs = resumableRuns();
+agentRouter.get('/runs/resumable', (req: Request, res: Response) => {
+  const userId = callerId(req);
+  if (userId === null) {
+    forbidden(res, 'authentication is required.');
+    return;
+  }
+  // Filtered by membership, not returned wholesale: this endpoint was the one
+  // place a caller could harvest run ids belonging to other tenants, which is
+  // what made the by-id routes worth attacking.
+  const mine = new Set(listOrganizations(userId).map((org) => org.organizationId));
+  const runs = resumableRuns().filter((run) => mine.has(run.organizationId));
   res.json({ runs, count: runs.length });
 });
 
@@ -1504,10 +1557,7 @@ agentRouter.get('/runs/:runId', (req: Request, res: Response) => {
     return;
   }
   const run = getRun(runId);
-  if (!run) {
-    res.status(404).json({ error: { message: `no such run: ${runId}`, type: 'not_found' } });
-    return;
-  }
+  if (!authorizeRecord(req, res, run, 'run', runId)) return;
   res.json({ run });
 });
 
@@ -1536,6 +1586,7 @@ agentRouter.post('/runs/:runId/step', (req: Request, res: Response) => {
       return;
     }
   }
+  if (!authorizeRecord(req, res, getRun(runId), 'run', runId, { write: true })) return;
 
   try {
     res.json(
@@ -1564,6 +1615,7 @@ agentRouter.post('/runs/:runId/decision', (req: Request, res: Response) => {
     badRequest(res, '"approved" must be a boolean.');
     return;
   }
+  if (!authorizeRecord(req, res, getRun(runId), 'run', runId, { write: true })) return;
   try {
     res.json(decide(runId, body.approved));
   } catch (err) {
@@ -1579,6 +1631,7 @@ agentRouter.post('/runs/:runId/cancel', (req: Request, res: Response) => {
     return;
   }
   const body = isPlainObject(req.body) ? req.body : {};
+  if (!authorizeRecord(req, res, getRun(runId), 'run', runId, { write: true })) return;
   try {
     const reason = typeof body.reason === 'string' && body.reason.trim() !== '' ? body.reason : undefined;
     res.json({ run: cancelRun(runId, reason) });
@@ -1594,10 +1647,7 @@ agentRouter.get('/runs/:runId/checkpoints', (req: Request, res: Response) => {
     badRequest(res, 'run id must be a single path segment.');
     return;
   }
-  if (!getRun(runId)) {
-    res.status(404).json({ error: { message: `no such run: ${runId}`, type: 'not_found' } });
-    return;
-  }
+  if (!authorizeRecord(req, res, getRun(runId), 'run', runId)) return;
   const checkpoints = getCheckpoints(runId);
   res.json({ checkpoints, count: checkpoints.length });
 });
@@ -1609,10 +1659,7 @@ agentRouter.get('/runs/:runId/verify', (req: Request, res: Response) => {
     badRequest(res, 'run id must be a single path segment.');
     return;
   }
-  if (!getRun(runId)) {
-    res.status(404).json({ error: { message: `no such run: ${runId}`, type: 'not_found' } });
-    return;
-  }
+  if (!authorizeRecord(req, res, getRun(runId), 'run', runId)) return;
   res.json(verifyChain(runId));
 });
 
@@ -1658,6 +1705,8 @@ agentRouter.post('/runs/:runId/advance', (req: Request, res: Response) => {
     badRequest(res, '"maxToolCalls" must be an integer between 0 and 20.');
     return;
   }
+
+  if (!authorizeRecord(req, res, getRun(runId), 'run', runId, { write: true })) return;
 
   const complete = gatewayCompletion({
     ...(typeof body.model === 'string' ? { model: body.model } : {}),
@@ -1719,6 +1768,7 @@ agentRouter.post('/runs/:runId/remember', (req: Request, res: Response) => {
     badRequest(res, 'run id must be a single path segment.');
     return;
   }
+  if (!authorizeRecord(req, res, getRun(runId), 'run', runId, { write: true })) return;
   try {
     res.json(rememberOutcome(runId));
   } catch (err) {
@@ -1821,11 +1871,29 @@ agentRouter.get('/tools/calls', (req: Request, res: Response) => {
     badRequest(res, '"limit" must be a positive integer.');
     return;
   }
+  // The audit trail is per-tenant. When organizationId was optional, omitting
+  // it returned every tenant's tool calls -- including the redacted argument
+  // previews -- to any authenticated user.
+  const userId = callerId(req);
+  if (userId === null) {
+    forbidden(res, 'authentication is required.');
+    return;
+  }
+  const organizationId = req.query.organizationId;
+  if (typeof organizationId !== 'string' || organizationId.trim() === '') {
+    badRequest(res, '"organizationId" is required.');
+    return;
+  }
+  if (membershipRole(userId, organizationId.trim()) === null) {
+    res.status(404).json({
+      error: { message: `organization "${organizationId.trim()}" was not found.`, type: 'not_found' },
+    });
+    return;
+  }
+
   res.json({
     calls: listToolCalls({
-      ...(typeof req.query.organizationId === 'string'
-        ? { organizationId: req.query.organizationId }
-        : {}),
+      organizationId: organizationId.trim(),
       ...(typeof req.query.projectId === 'string' ? { projectId: req.query.projectId } : {}),
       ...(typeof req.query.runId === 'string' ? { runId: req.query.runId } : {}),
       ...(typeof req.query.outcome === 'string' ? { outcome: req.query.outcome } : {}),

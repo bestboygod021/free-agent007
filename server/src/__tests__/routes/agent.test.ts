@@ -1452,3 +1452,127 @@ describe('/api/agent documents and citations', () => {
     expect(after.body.citations).toEqual([]);
   });
 });
+
+/**
+ * Cross-tenant isolation on the by-id routes.
+ *
+ * The scoped routes take `organizationId` in the body and go through
+ * `resolveScope`, which was well covered. The by-id routes take only a run or
+ * job id, so for a while "knowing the id" was the whole authorisation model:
+ * a member of one organisation could read, advance, approve and cancel
+ * another organisation's runs, and read another organisation's job payloads.
+ *
+ * The suite above missed it because it tests *unknown* ids — `404s an unknown
+ * run rather than inventing one`. The dangerous case is a **real id owned by
+ * someone else**, which is what these assert.
+ */
+describe('/api/agent cross-tenant isolation', () => {
+  let app: Express;
+  let owner: string;
+  let outsider: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    initDb(':memory:');
+    app = createApp();
+
+    const a = createUser('tenant-owner@example.com', 'password123');
+    createOrganization({ organizationId: 'acme', name: 'Acme', ownerUserId: a.userId });
+    createProject({ organizationId: 'acme', projectId: 'web', name: 'Web' });
+    owner = createSession(a.userId);
+
+    const b = createUser('tenant-outsider@example.com', 'password123');
+    createOrganization({ organizationId: 'rival', name: 'Rival', ownerUserId: b.userId });
+    createProject({ organizationId: 'rival', projectId: 'app', name: 'App' });
+    outsider = createSession(b.userId);
+  });
+
+  async function ownerRun(goal: string): Promise<string> {
+    const res = await call(app, 'POST', '/api/agent/runs', owner, {
+      goal, organizationId: 'acme', projectId: 'web', mode: 'free',
+    });
+    expect(res.status).toBe(201);
+    return res.body.run.runId as string;
+  }
+
+  it('hides another tenant\'s run behind the same 404 as a missing one', async () => {
+    const runId = await ownerRun('acme confidential: migrate billing');
+    const res = await call(app, 'GET', `/api/agent/runs/${runId}`, outsider);
+    expect(res.status).toBe(404);
+    // A 403 would confirm the id is real. The refusal must be indistinguishable
+    // from a run that does not exist.
+    expect(JSON.stringify(res.body)).not.toContain('confidential');
+  });
+
+  it('refuses every state-changing route on another tenant\'s run', async () => {
+    const runId = await ownerRun('acme confidential: state machine');
+    const attempts: [string, 'GET' | 'POST', string, unknown][] = [
+      ['step', 'POST', `/api/agent/runs/${runId}/step`, { event: 'spec_ready' }],
+      ['decision', 'POST', `/api/agent/runs/${runId}/decision`, { approved: true }],
+      ['cancel', 'POST', `/api/agent/runs/${runId}/cancel`, {}],
+      ['advance', 'POST', `/api/agent/runs/${runId}/advance`, {}],
+      ['remember', 'POST', `/api/agent/runs/${runId}/remember`, {}],
+      ['checkpoints', 'GET', `/api/agent/runs/${runId}/checkpoints`, undefined],
+      ['verify', 'GET', `/api/agent/runs/${runId}/verify`, undefined],
+    ];
+    for (const [label, method, path, body] of attempts) {
+      const res = await call(app, method, path, outsider, body);
+      expect(res.status, label).toBe(404);
+      expect(JSON.stringify(res.body), label).not.toContain('confidential');
+    }
+
+    // And the run is untouched: a refused step must not have advanced it.
+    const after = await call(app, 'GET', `/api/agent/runs/${runId}`, owner);
+    expect(after.body.run.state).toBe('INTAKE');
+  });
+
+  it('does not leak a job payload to another tenant', async () => {
+    const created = await call(app, 'POST', '/api/agent/jobs', owner, {
+      queue: 'run', kind: 'demo', organizationId: 'acme', projectId: 'web',
+      payload: { secret: 'acme-only-payload' }, idempotencyKey: 'tenancy-1',
+    });
+    expect(created.status).toBe(201);
+    const jobId = created.body.job.jobId;
+
+    const read = await call(app, 'GET', `/api/agent/jobs/${jobId}`, outsider);
+    expect(read.status).toBe(404);
+    expect(JSON.stringify(read.body)).not.toContain('acme-only-payload');
+
+    const cancelled = await call(app, 'POST', `/api/agent/jobs/${jobId}/cancel`, outsider, {});
+    expect(cancelled.status).toBe(404);
+  });
+
+  it('does not hand out other tenants\' run ids through /runs/resumable', async () => {
+    await ownerRun('acme confidential: resumable');
+    const res = await call(app, 'GET', '/api/agent/runs/resumable', outsider);
+    expect(res.status).toBe(200);
+    // This endpoint was the harvesting step that made the by-id routes worth
+    // attacking in the first place.
+    expect(JSON.stringify(res.body)).not.toContain('confidential');
+  });
+
+  it('scopes the tool-call audit trail to one organisation', async () => {
+    const unscoped = await call(app, 'GET', '/api/agent/tools/calls', outsider);
+    expect(unscoped.status).toBe(400);
+
+    const cross = await call(app, 'GET', '/api/agent/tools/calls?organizationId=acme', outsider);
+    expect(cross.status).toBe(404);
+  });
+
+  it('still lets the owning tenant do all of it', async () => {
+    const runId = await ownerRun('legitimate acme work');
+
+    expect((await call(app, 'GET', `/api/agent/runs/${runId}`, owner)).status).toBe(200);
+    expect((await call(app, 'GET', `/api/agent/runs/${runId}/checkpoints`, owner)).status).toBe(200);
+    expect(
+      (await call(app, 'POST', `/api/agent/runs/${runId}/step`, owner, { event: 'spec_ready' }))
+        .status,
+    ).toBe(200);
+    expect(
+      (await call(app, 'GET', '/api/agent/tools/calls?organizationId=acme', owner)).status,
+    ).toBe(200);
+
+    const resumable = await call(app, 'GET', '/api/agent/runs/resumable', owner);
+    expect(JSON.stringify(resumable.body)).toContain('legitimate acme work');
+  });
+});
