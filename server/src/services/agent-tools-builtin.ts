@@ -1,8 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { registerTool, ToolError, type ToolInvocationContext } from './agent-tools.js';
 import { isSensitivePath } from '@freellmapi/agent/core/redaction.js';
+import { spawnIsolated, probeIsolation, describeIsolation } from './agent-sandbox.js';
 import {
   attestSpawn,
   PROCESS_SAFETY_CLAIMS,
@@ -337,6 +337,8 @@ function runProcess(
   stderr: string;
   timedOut: boolean;
   attestations: ReturnType<AttestationSet['all']>;
+  isolated: boolean;
+  isolation: string;
 }> {
   const spawnOptions = {
     cwd: ctx.workspaceRoot,
@@ -369,37 +371,32 @@ function runProcess(
     );
   }
 
-  return new Promise((resolve, reject) => {
-    const child = spawn(bin, argv, spawnOptions);
-
-    let stdout = '';
-    let stderr = '';
-    const cap = PROCESS_OUTPUT_CAP;
-    child.stdout.on('data', (c: Buffer) => {
-      if (stdout.length < cap) stdout += c.toString('utf8');
-    });
-    child.stderr.on('data', (c: Buffer) => {
-      if (stderr.length < cap) stderr += c.toString('utf8');
-    });
-
-    const onAbort = () => child.kill('SIGKILL');
-    ctx.signal.addEventListener('abort', onAbort, { once: true });
-
-    child.on('error', (err) => {
-      ctx.signal.removeEventListener('abort', onAbort);
-      reject(new ToolError(`could not run "${bin}": ${err.message}`));
-    });
-    child.on('close', (code) => {
-      ctx.signal.removeEventListener('abort', onAbort);
-      resolve({
-        exitCode: code ?? -1,
-        stdout: stdout.slice(0, cap),
-        stderr: stderr.slice(0, cap),
-        timedOut: ctx.signal.aborted,
-        // Returned so the caller can see what was established, not just that
-        // something was. An audit trail of "it was fine" is worth little.
-        attestations: attested.all(),
-      });
-    });
-  });
+  // The spawn itself now goes through the namespace boundary when the kernel
+  // allows one. `spawnIsolated` reports whether it achieved isolation rather
+  // than assuming it, and that answer is passed through to the caller: a run
+  // that was not isolated must not look like one that was.
+  return spawnIsolated(bin, argv, {
+    cwd: spawnOptions.cwd,
+    env: spawnOptions.env,
+    signal: ctx.signal,
+    timeoutMs: PROCESS_TIMEOUT_MS,
+    outputCapBytes: PROCESS_OUTPUT_CAP,
+  }).then(
+    (result) => ({
+      exitCode: result.exitCode,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      timedOut: result.timedOut || ctx.signal.aborted,
+      // Returned so the caller can see what was established, not just that
+      // something was. An audit trail of "it was fine" is worth little.
+      attestations: attested.all(),
+      isolated: result.isolated,
+      isolation: describeIsolation(probeIsolation()),
+    }),
+    (err: unknown) => {
+      throw new ToolError(
+        `could not run "${bin}": ${err instanceof Error ? err.message : 'spawn failed'}`,
+      );
+    },
+  );
 }

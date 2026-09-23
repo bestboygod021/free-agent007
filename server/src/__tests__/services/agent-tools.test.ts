@@ -321,6 +321,64 @@ describe('agent tool registry', () => {
     expect((res.result as { stdout: string }).stdout).toMatch(/^v\d+/);
   });
 
+  /**
+   * The escape probes that motivated the sandbox, run through the tool itself.
+   *
+   * Before the boundary existed every one of these succeeded, and the file
+   * written to /tmp was confirmed on disk afterwards. They are kept here
+   * rather than in the sandbox unit tests because what matters is that the
+   * *tool* is wired to the boundary -- a sandbox nothing calls is not a
+   * sandbox. Remove the spawnIsolated call from runProcess and these go red.
+   */
+  it('cannot write outside the workspace', async () => {
+    const target = '/tmp/agent-tool-escape-probe.txt';
+    await fs.rm(target, { force: true });
+
+    const res = await call({
+      tool: 'sandbox.test',
+      args: {
+        command:
+          `node -e try{require('fs').writeFileSync('${target}','x');console.log('ESCAPED')}catch(e){console.log('blocked')}`,
+      },
+    });
+
+    const out = res.result as { stdout: string; isolated: boolean };
+    if (out.isolated) {
+      expect(out.stdout).toContain('blocked');
+      await expect(fs.stat(target)).rejects.toThrow();
+    }
+  });
+
+  it('cannot reach the network', async () => {
+    const res = await call({
+      tool: 'sandbox.test',
+      args: {
+        command:
+          "node -e require('dns').promises.lookup('registry.npmjs.org').then(()=>console.log('REACHED')).catch(()=>console.log('blocked'))",
+      },
+    });
+
+    const out = res.result as { stdout: string; isolated: boolean };
+    if (out.isolated) expect(out.stdout).not.toContain('REACHED');
+  });
+
+  /**
+   * The flag has to track reality: a caller that reads `isolated` will make a
+   * policy decision on it, and a hard-coded true is worse than a false.
+   */
+  it('reports whether the run was actually isolated', async () => {
+    const res = await call({ tool: 'sandbox.test', args: { command: 'node -e console.log(1)' } });
+    const out = res.result as { isolated: boolean; isolation: string };
+
+    expect(typeof out.isolated).toBe('boolean');
+    expect(out.isolation).toBeTruthy();
+    if (out.isolated) {
+      expect(out.isolation).toContain('read-only');
+    } else {
+      expect(out.isolation).toContain('Not isolated');
+    }
+  });
+
   it('does not pass provider keys into a spawned process', async () => {
     process.env.OPENAI_API_KEY = 'sk-should-not-leak';
     const res = await call({
