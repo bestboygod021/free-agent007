@@ -12,7 +12,7 @@ or audio endpoint, behind a single `/v1` API. Keys stored encrypted. A router
 picks the best available model per request, fails over when one is
 rate-limited, and tracks per-key usage so you stay under every free-tier cap.
 
-**The agent** — the ForgePilot deterministic kernel, wired to 19 audited tools.
+**The agent** — the ForgePilot deterministic kernel, wired to 21 audited tools.
 It reads code, finds every use of a symbol, writes patches, commits, runs tests
 inside a real kernel namespace sandbox, and opens pull requests under a
 credential the model never sees. Every tool call passes six gates and lands in
@@ -187,7 +187,7 @@ Based on public documentation, July 2026 — corrections welcome.
 - **MCP server & interactive docs** — agents can introspect usable models, provider health, and routing strategy over `/mcp`; a dependency-free OpenAPI viewer lives at `/v1/docs`. [Coding agents →](docs/en/clients/01-agent-clients.md)
 - **Ops niceties** — opt-in response cache, encrypted DB backups, periodic key health checks, bulk key import/export, declarative startup config. [Install & deploy →](docs/en/install/01-install.md)
 - **Runs anywhere Node 20+ runs** — Windows, macOS, Linux servers, or a small ARM SBC (Raspberry Pi included). ~40 MB RSS at idle behind PM2 / systemd / whatever supervisor you prefer.
-- **ForgePilot agent kernel, wired to real tools** — a deterministic decision core for agent-driven delivery: compute modes (free/paid/local), tool-call and egress policy, a run state machine, task-DAG wave planning, secret redaction, evidence auditing, JSON Schema output contracts and a versioned prompt library. On top of it, 19 audited tools: filesystem, code navigation with reference classification, git, pull-request creation under a separate credential, egress-controlled web reading, SQL over CSV, and a test runner inside a real namespace sandbox. Served at `/api/agent`, with a dashboard at `/forgepilot`. [Details →](#the-agent-forgepilot-kernel--a-wired-toolchain)
+- **ForgePilot agent kernel, wired to real tools** — a deterministic decision core for agent-driven delivery: compute modes (free/paid/local), tool-call and egress policy, a run state machine, task-DAG wave planning, secret redaction, evidence auditing, JSON Schema output contracts and a versioned prompt library. On top of it, 21 audited tools: filesystem, code navigation with reference classification, atomic cross-file rename, git, pull-request creation under a separate credential, egress-controlled web reading, SQL over CSV, and a test runner inside a real namespace sandbox. Served at `/api/agent`, with a dashboard at `/forgepilot`. [Details →](#the-agent-forgepilot-kernel--a-wired-toolchain)
 
 The scope is deliberately narrow — see [what's not supported yet](docs/en/architecture/00-high-level-index.md#not-yet-supported).
 
@@ -205,7 +205,7 @@ tested code, not by a language model.
 
 ```bash
 npm run agent:test        # kernel tests
-npm test -w @freellmapi/server   # 3,985 server tests
+npm test -w @freellmapi/server   # 4,020 server tests
 npm run agent:typecheck   # strict tsc, zero @ts-ignore
 ```
 
@@ -223,6 +223,7 @@ test that fails if its guard is removed.
 | Forge | `git.pull_request.create` | Under a separate, revocable forge credential that is never written to `.git/config` |
 | Execution | `sandbox.test` | Runs inside a `user`/`mount`/`net`/`pid` namespace: read-only root, writable workspace only, no network |
 | Web | `web.page.read` `web.page.search` | Egress-controlled: cloud metadata IPs, private ranges and decimal-encoded addresses refused, re-checked on every redirect hop |
+| Refactoring | `code.rename.preview.read` `code.rename.apply` | Preview is a read; apply re-derives the preview, refuses a stale digest, and writes every file or none |
 | Data | `data.csv.query` `data.csv.schema.read` | SQL over a spreadsheet, in a sandbox that cannot reach the gateway's own database |
 
 ### Six gates every tool call passes
@@ -371,7 +372,7 @@ as not configured instead of failing halfway through a push.
 TOKEN=...   # from /api/auth/setup or /api/auth/login
 
 curl -s localhost:3001/api/agent/tools \
-  -H "Authorization: Bearer $TOKEN"        # list the 19 tools
+  -H "Authorization: Bearer $TOKEN"        # list the 21 tools
 
 curl -s -X POST localhost:3001/api/agent/tools/invoke \
   -H "Authorization: Bearer $TOKEN" \
@@ -416,7 +417,7 @@ The flag tracks reality — it is never hard-coded, and a test fails if it is.
 
 ```bash
 npm test                          # everything
-npm test -w @freellmapi/server    # 3,985 server tests, ~4 min
+npm test -w @freellmapi/server    # 4,020 server tests, ~4 min
 npm run agent:test                # kernel tests
 npm run lint && npm run build
 ```
@@ -614,10 +615,15 @@ successes is not useful:
   root, and there is no CPU or memory ceiling without cgroup delegation. The
   wall-clock timeout is the only resource bound. All of this is reported by
   `describeIsolation()` at runtime.
-- **There is no atomic multi-file write.** A refactor that touches ten files
-  can leave the repository half-changed. The design for fixing it is written
-  up in [docs/en/agent/05-atomic-refactor-design.md](docs/en/agent/05-atomic-refactor-design.md).
-- **Roughly 175 of 500 catalogued capabilities are implemented.** No browser
+- **The atomic write is atomic per file, not per commit.** `code.rename.apply`
+  writes every file through a temp-and-`rename` swap and rolls back from
+  in-memory originals if a later rename fails, so an interrupted refactor is
+  restored. It is a loop of atomic operations, not one atomic operation: a
+  power loss mid-loop is not covered, and a rollback that itself fails is
+  reported with the exact list of unrestored files rather than swallowed. The
+  design and its limits are in
+  [docs/en/agent/05-atomic-refactor-design.md](docs/en/agent/05-atomic-refactor-design.md).
+- **Roughly 177 of 500 catalogued capabilities are implemented.** No browser
   automation, no PDF/DOCX parsing, no OpenTelemetry — those dependencies are
   absent from the lockfile, which is checked rather than assumed.
 

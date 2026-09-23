@@ -126,6 +126,23 @@ export const BASELINE_RULES: readonly ToolPolicyRule[] = [
     reversible: true,
     requiredScopes: ["repository:write"],
   },
+  // A rename rewrites many files at once. Without this rule the name falls to
+  // the catch-all, which is nominally stricter (`high`) but carries **no
+  // required scope at all** — measured against this engine before the rule was
+  // added. Naming it explicitly is what makes the scope demand real.
+  //
+  // `reversible: false` is deliberate and is the one place this differs from
+  // `*.file.write`: a multi-file edit that fails partway cannot be undone by
+  // re-running the tool, because the tool no longer knows what the original
+  // content was.
+  {
+    tool: "*.rename.apply",
+    sideEffect: "local_write",
+    riskLevel: "high",
+    reversible: false,
+    requiredScopes: ["repository:write"],
+    alwaysApprove: true,
+  },
 
   // --- externally visible writes (risk class C) --------------------------
   {

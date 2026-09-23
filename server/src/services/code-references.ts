@@ -288,9 +288,19 @@ export function classifyReferences(
  */
 function classifyQuoted(beforeQuote: string): ReferenceContext {
   const t = beforeQuote.trimStart();
-  if (/^(import|export)\b/.test(t) || /\bfrom\s*$/.test(t.trimEnd())) {
-    return 'import';
-  }
+
+  // A module specifier is a quoted string that a module statement is reaching
+  // for, which in practice means the prefix ends in `from`, or the statement
+  // is a bare side-effect import or re-export.
+  //
+  // Anchoring on the `import`/`export` keyword alone was wrong and shipped
+  // that way: `export const label = 'widgetise';` starts with `export` and is
+  // an ordinary string literal. The `=` is what distinguishes a declaration
+  // from a module statement, and a rename must not treat the two alike -- one
+  // is renameable text, the other is a file path.
+  if (/\bfrom\s*$/.test(t.trimEnd())) return 'import';
+  if (/^(import|export)\b/.test(t) && !t.includes('=')) return 'import';
+
   return 'string';
 }
 

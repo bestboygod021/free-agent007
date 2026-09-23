@@ -248,14 +248,39 @@ rename.
    Still not covered, and said out loud rather than buried: read access is
    *reduced by masking, not eliminated* (no `pivot_root` here), and there
    is no CPU or memory ceiling without cgroup delegation.
-4. **Atomic multi-file refactoring** — the one structural gap left in this
-   phase, now designed in full:
-   **[05-atomic-refactor-design.md](05-atomic-refactor-design.md)**. The
-   measurement that shaped it: a realistic rename in this repository touches
-   4–12 files and rewrites up to 190 KB, and **no write path in the codebase
-   is atomic today** — no `rename()`, no `fsync`, no temp-and-swap anywhere.
-   So atomicity is not a refinement of an existing mechanism; it has to be
-   built, and `fs.file.write` should adopt it afterwards.
+4. ~~**Atomic multi-file refactoring**~~ — **done.** Designed in
+   **[05-atomic-refactor-design.md](05-atomic-refactor-design.md)** and built
+   as `atomic-write.ts` + `code-rename.ts`, exposed as
+   `code.rename.preview.read` and `code.rename.apply`. The measurement that
+   shaped it: a realistic rename here touches 4–12 files and rewrites up to
+   190 KB, and **no write path in the codebase was atomic** — no `rename()`,
+   no `fsync`, no temp-and-swap anywhere — so it had to be built rather than
+   refined.
+
+   Three lessons worth more than the feature:
+
+   - **A failure test can exercise the wrong failure and still look right.**
+     Killing the rollback mutant took three attempts. Making the target a
+     directory failed in phase 1 (read); `chmod 0o555` on the directory failed
+     in phase 2 (temp write, because the temp file lives beside its target).
+     Both left the test green with the rollback code *entirely deleted*. Only
+     stubbing `fs.rename` to fail on the seventh call reached phase 3. Before
+     trusting a failure test, ask which phase actually failed.
+   - **`fsync` is not observable by reading the file back** — the page cache
+     answers. Counting `handle.sync()` calls through a stubbed `fs.open` is a
+     weaker test, and that weakness is recorded in the test rather than
+     hidden, because without it deleting `fsync` turns nothing red.
+   - **Classification bugs hide until something acts on them.** Building the
+     rename surfaced a real bug in `code-references.ts`, shipped earlier and
+     tested: `export const label = 'widgetise';` was classified as an *import*
+     because the line starts with `export`. Read-only navigation merely
+     mislabelled a row; a rename would have refused to rewrite a legitimate
+     string, or rewritten a module path. **A writer is a much harsher test of
+     a reader than the reader's own tests are.**
+
+   Still not covered, said out loud: phase 3 is a loop of atomic operations,
+   not one atomic operation — a power loss mid-loop is not covered, and
+   `fs.file.write` has *not* yet adopted the atomic path.
 
 ---
 

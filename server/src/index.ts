@@ -6,6 +6,7 @@ import { registerGitTools } from './services/agent-tools-git.js';
 import { registerCodeTools } from './services/agent-tools-code.js';
 import { registerDataTools } from './services/agent-tools-data.js';
 import { registerWebTools } from './services/agent-tools-web.js';
+import { registerRenameTools } from './services/agent-tools-rename.js';
 import { registerForgeTools } from './services/agent-tools-forge.js';
 import { startHealthChecker, checkAllKeys } from './services/health.js';
 import { restoreProxySettings, flushProxyCache } from './lib/proxy.js';
@@ -59,6 +60,7 @@ async function main() {
   registerDataTools();
   registerWebTools();
   registerForgeTools();
+  registerRenameTools();
   void ensureWorkspaceRoot().catch((err: unknown) => {
     console.warn(
       `[agent] could not create the tool workspace: ${err instanceof Error ? err.message : String(err)}`,

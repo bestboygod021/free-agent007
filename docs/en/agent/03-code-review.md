@@ -2,7 +2,7 @@
 
 A review of the system as it stands at `008c23c`, written from the position of
 someone who has to operate it rather than demo it. Roughly 203,000 lines of
-TypeScript across 951 files, 3,782 server tests, 613 agent tests.
+TypeScript across 975 files, 4,020 server tests, 613 agent tests.
 
 Findings are ordered by what I would fix first, and every one of them was
 *reproduced* before being written down. Where I guessed and was wrong, that is

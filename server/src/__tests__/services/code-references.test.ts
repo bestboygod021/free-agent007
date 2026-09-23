@@ -58,6 +58,31 @@ describe('classifyReferences', () => {
     expect(refs.map((r) => r.context)).not.toContain('import');
   });
 
+  /**
+   * Found while building the rename tool: `export const label = 'widgetise';`
+   * was classified as an import because the line starts with `export`. It is
+   * an ordinary string literal, and the distinction decides whether a rename
+   * may rewrite it -- a module specifier is a file path, a string literal is
+   * renameable text.
+   */
+  it('does not treat an exported string constant as a module specifier', () => {
+    const refs = classifyReferences('a.ts', "export const label = 'widgetise';\n", 'widgetise');
+
+    expect(refs.map((r) => r.context)).toEqual(['string']);
+  });
+
+  it('still classifies a bare side-effect import as an import', () => {
+    const refs = classifyReferences('a.ts', "import './widgetise.js';\n", 'widgetise');
+
+    expect(refs.map((r) => r.context)).toEqual(['import']);
+  });
+
+  it('classifies a re-export specifier as an import', () => {
+    const refs = classifyReferences('a.ts', "export * from './widgetise.js';\n", 'widgetise');
+
+    expect(refs.map((r) => r.context)).toEqual(['import']);
+  });
+
   it('classifies an import specifier as import, not string', () => {
     const src = "import { redactToken } from './redactToken.js';\n";
     const refs = classifyReferences('a.ts', src, 'redactToken');
