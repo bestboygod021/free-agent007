@@ -248,6 +248,14 @@ rename.
    Still not covered, and said out loud rather than buried: read access is
    *reduced by masking, not eliminated* (no `pivot_root` here), and there
    is no CPU or memory ceiling without cgroup delegation.
+4. **Atomic multi-file refactoring** — the one structural gap left in this
+   phase, now designed in full:
+   **[05-atomic-refactor-design.md](05-atomic-refactor-design.md)**. The
+   measurement that shaped it: a realistic rename in this repository touches
+   4–12 files and rewrites up to 190 KB, and **no write path in the codebase
+   is atomic today** — no `rename()`, no `fsync`, no temp-and-swap anywhere.
+   So atomicity is not a refinement of an existing mechanism; it has to be
+   built, and `fs.file.write` should adopt it afterwards.
 
 ---
 

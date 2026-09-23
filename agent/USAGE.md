@@ -1210,8 +1210,10 @@ It cannot guarantee that a model answering `pass` actually ran your tests. The
 structure is trustworthy; the content still needs review.
 
 **Most of the documentation describes plans.** Phases M9–M208 in `agent/docs/`
-are marked `designed_only`: billing, sandbox runtime, marketplace and the rest
-are specified but not implemented. The 611 kernel tests cover the modules
+are marked `designed_only`: billing and the marketplace are specified but not
+implemented. Sandbox runtime and persistence are no longer in that list —
+`sandbox.test` now runs inside a real kernel namespace and runs survive a
+restart. The 613 kernel tests cover the modules
 listed in this guide — nothing more.
 
 Three things that used to be on this list no longer are. **Memory** and the

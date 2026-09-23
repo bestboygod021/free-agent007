@@ -15,7 +15,7 @@ is additive.
 | `src/core/**` — 225 deterministic kernel modules | `agent/src/core/**` |
 | `schema/**` — 12 JSON Schema output contracts | `agent/schema/**` |
 | `prompts/**` — 13 versioned agent prompts | `agent/prompts/**` |
-| `test/**` — 611 tests | `agent/test/**` |
+| `test/**` — 613 tests | `agent/test/**` |
 | `docs/**` — 231 design documents | `agent/docs/**` |
 | `apps/api`, `apps/playground` | `agent/apps/**` |
 | `examples/`, `prisma/`, `scripts/`, `openapi.yaml` | `agent/**` |
@@ -69,7 +69,7 @@ quality gates, run states and the prompt library.
 ## Commands
 
 ```bash
-npm run agent:test        # 611 kernel tests
+npm run agent:test        # 613 kernel tests
 npm run agent:typecheck   # strict tsc, no emit
 npm run build -w agent    # emit dist/ for the server to import
 npm run agent:prompt:list # list the prompt library
@@ -79,8 +79,26 @@ npm run agent:playground  # the blueprint's standalone playground
 ## Honest status
 
 The kernel modules are deterministic contracts, validation and decision logic
-with real tests. Phases M9–M208 in `docs/` are marked `designed_only`:
+with real tests. Phases M9–M208 in `docs/` were marked `designed_only`:
 persistence, UI, billing providers, sandbox runtime, marketplace and the other
-production concerns described there are **designed, not implemented**. The
-merge did not change that status, and the kernel makes no production claim it
-did not make in the source repository.
+production concerns described there were **designed, not implemented**.
+
+Since the merge, some of that has changed and the rest has not. What is now
+real, with a live caller and a test that fails if the guard is removed:
+
+- **Persistence** — runs, memory and the job queue survive a restart.
+- **Sandbox runtime** — `sandbox.test` executes inside a user/mount/net/pid
+  namespace with a read-only root and no network. Verified by escape probes,
+  not by reading a man page.
+- **Tooling** — 19 registered tools behind schema validation, the policy
+  engine, approval, a timeout and an audit row.
+
+What remains `designed_only` is unchanged: billing providers, the marketplace,
+and most of the UI surface described in those phase documents.
+
+The number worth knowing before planning around this: **of 225 modules in
+`agent/src/core`, 16 have a production caller and 209 do not.** 200 of the 209
+take safety facts as boolean parameters, so they validate a claim rather than
+establishing one. Wiring them is therefore not plumbing — it needs a
+measurement layer first, which `server/src/services/agent-attestation.ts`
+began.
