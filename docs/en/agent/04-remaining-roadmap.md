@@ -302,9 +302,25 @@ rename.
    Renaming it to sort first killed the mutant. **When a mutant survives, the
    fixture is usually wrong, not the assertion.**
 
+   Auditing the last direct writer, `git.patch.file.write`, found a
+   concurrency bug that had nothing to do with atomicity. It staged the diff
+   to `.git/agent-patch-${Date.now()}.diff`, and `Date.now()` has millisecond
+   resolution — measured here at **4,948 calls producing 5 distinct values in
+   5 ms**, so roughly a thousand calls share a name. Two concurrent patches
+   wrote, read and deleted the same file.
+
+   The observed failure is the part worth recording. With `Date.now()` frozen,
+   one call returned **`applied: true` while its own diff was never applied**:
+   its staging file had been overwritten between `git apply --check` and
+   `git apply --apply`, so it validated one patch and applied another, then
+   reported success. A crash would have been better. The name now carries
+   `process.pid` and eight random bytes, and the test freezes `Date.now()` —
+   without freezing it the two calls land a millisecond apart and the
+   collision never happens, which is exactly the "green test exercising a
+   path that never runs" trap from the rollback work.
+
    Still not covered, said out loud: phase 3 is a loop of atomic operations,
-   not one atomic operation — a power loss mid-loop is not covered, and
-   `git.patch.file.write` still writes its patch file directly.
+   not one atomic operation — a power loss mid-loop is not covered.
 
 ---
 

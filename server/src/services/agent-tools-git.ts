@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { registerTool, ToolError, type ToolInvocationContext } from './agent-tools.js';
 
 /**
@@ -279,7 +280,17 @@ export function registerGitTools(): void {
       const patch = String(args.patch ?? '');
       if (patch.length > MAX_DIFF_CHARS) throw new ToolError('patch is too large.');
 
-      const patchFile = path.join(ctx.workspaceRoot, '.git', `agent-patch-${Date.now()}.diff`);
+      // Date.now() alone was a collision: it has millisecond resolution, and
+      // roughly a thousand calls land on the same value. Two concurrent
+      // patches then shared one staging file, and the observed result was
+      // worse than a crash -- one call returned `applied: true` having
+      // applied the *other* call's diff, because its own file had been
+      // overwritten between the --check and the --apply.
+      const patchFile = path.join(
+        ctx.workspaceRoot,
+        '.git',
+        `agent-patch-${process.pid}-${crypto.randomBytes(8).toString('hex')}.diff`,
+      );
       await fs.writeFile(patchFile, patch.endsWith('\n') ? patch : `${patch}\n`, 'utf8');
 
       try {

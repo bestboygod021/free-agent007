@@ -188,6 +188,77 @@ describe('git tools', () => {
     expect(await fs.readFile(path.join(repo, 'app.ts'), 'utf8')).toContain('8080');
   });
 
+  /**
+   * The patch is staged to a file named after Date.now(), and Date.now() has
+   * millisecond resolution: roughly a thousand calls land on the same value.
+   * Two concurrent patches therefore write, read and delete the *same* file,
+   * so one applies the other's diff or the `finally` of the first deletes the
+   * file the second is still using.
+   */
+  it('keeps two concurrent patches from sharing a staging file', async () => {
+    run(['switch', '--create', 'agent/work'], repo);
+    await fs.writeFile(path.join(repo, 'a.ts'), 'a1\n', 'utf8');
+    await fs.writeFile(path.join(repo, 'b.ts'), 'b1\n', 'utf8');
+    run(['add', '-A'], repo);
+    run(['commit', '-m', 'two files'], repo);
+
+    const patchFor = (file: string, from: string, to: string) =>
+      [
+        `diff --git a/${file} b/${file}`,
+        'index 0000000..1111111 100644',
+        `--- a/${file}`,
+        `+++ b/${file}`,
+        '@@ -1 +1 @@',
+        `-${from}`,
+        `+${to}`,
+        '',
+      ].join('\n');
+
+    // Date.now() is frozen, because otherwise the two calls land a
+    // millisecond apart and the collision this test exists for never
+    // happens. Without the fix the observed failure was not a crash: one
+    // call returned ok having applied the OTHER call's diff.
+    const realNow = Date.now;
+    Date.now = () => 1_700_000_000_000;
+
+    let first;
+    let second;
+    try {
+      [first, second] = await Promise.all([
+        call('git.patch.file.write', { patch: patchFor('a.ts', 'a1', 'a2') }),
+        call('git.patch.file.write', { patch: patchFor('b.ts', 'b1', 'b2') }),
+      ]);
+    } finally {
+      Date.now = realNow;
+    }
+
+    expect([first!.ok, second!.ok]).toEqual([true, true]);
+    // Both diffs landed; neither call reported success for work it did not do.
+    expect(await fs.readFile(path.join(repo, 'a.ts'), 'utf8')).toBe('a2\n');
+    expect(await fs.readFile(path.join(repo, 'b.ts'), 'utf8')).toBe('b2\n');
+  });
+
+  it('leaves no staging file behind in .git', async () => {
+    run(['switch', '--create', 'agent/work'], repo);
+    const patch = [
+      'diff --git a/app.ts b/app.ts',
+      'index 0000000..1111111 100644',
+      '--- a/app.ts',
+      '+++ b/app.ts',
+      '@@ -1 +1 @@',
+      '-export const port = 3001;',
+      '+export const port = 8080;',
+      '',
+    ].join('\n');
+
+    await call('git.patch.file.write', { patch });
+
+    const left = (await fs.readdir(path.join(repo, '.git'))).filter((f) =>
+      f.startsWith('agent-patch-'),
+    );
+    expect(left).toEqual([]);
+  });
+
   it('refuses a patch that does not apply, leaving the tree untouched', async () => {
     run(['switch', '--create', 'agent/work'], repo);
     const before = await fs.readFile(path.join(repo, 'app.ts'), 'utf8');
