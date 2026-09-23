@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import type { Express } from 'express';
 import { createApp } from '../../app.js';
 import { initDb } from '../../db/index.js';
@@ -94,6 +94,13 @@ async function call(
  * default; it is now membership, so a test user needs a real organisation.
  */
 
+
+// Worker credentials for the queue-runner endpoints. These are configuration,
+// not request data: `AGENT_WORKER_TOKENS` maps a workerId to its secret, and
+// the route derives the identity from whichever secret matched.
+const WORKER_A_TOKEN = 'a'.repeat(32);
+const WORKER_B_TOKEN = 'b'.repeat(32);
+const WORKER_TOKENS_ENV = `worker-a:${WORKER_A_TOKEN},worker-b:${WORKER_B_TOKEN}`;
 
 function mintScopedToken(email: string): string {
   const user = createUser(email, 'password123');
@@ -463,9 +470,14 @@ describe('/api/agent memory and jobs', () => {
 
   beforeAll(() => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    process.env.AGENT_WORKER_TOKENS = WORKER_TOKENS_ENV;
     initDb(':memory:');
     app = createApp();
     token = mintScopedToken('agent-durable@example.com');
+  });
+
+  afterAll(() => {
+    delete process.env.AGENT_WORKER_TOKENS;
   });
 
   const fact = {
@@ -550,18 +562,22 @@ describe('/api/agent memory and jobs', () => {
     });
     expect(created.status).toBe(201);
 
-    const claimed = await call(app, 'POST', '/api/agent/jobs/claim', token, {
-      queue: 'run',
-      workerId: 'worker-http',
-      limit: 1,
-    });
+    // The worker identifies itself with its credential; `workerId` in the body
+    // is no longer read, because a body field cannot be an identity.
+    const claimed = await call(
+      app, 'POST', '/api/agent/jobs/claim', token,
+      { queue: 'run', limit: 1 },
+      { 'X-Agent-Worker-Token': WORKER_A_TOKEN },
+    );
     expect(claimed.status).toBe(200);
     expect(claimed.body.count).toBe(1);
+    expect(claimed.body.jobs[0].workerId).toBe('worker-a');
     const jobId = claimed.body.jobs[0].jobId;
 
-    const done = await call(app, 'POST', `/api/agent/jobs/${jobId}/complete`, token, {
-      workerId: 'worker-http',
-    });
+    const done = await call(
+      app, 'POST', `/api/agent/jobs/${jobId}/complete`, token, {},
+      { 'X-Agent-Worker-Token': WORKER_A_TOKEN },
+    );
     expect(done.status).toBe(200);
     expect(done.body.job.status).toBe('completed');
   });
@@ -573,15 +589,20 @@ describe('/api/agent memory and jobs', () => {
       idempotencyKey: 'http-job-2',
       payload: { task: 'lint' },
     });
-    const claimed = await call(app, 'POST', '/api/agent/jobs/claim', token, {
-      queue: 'tool',
-      workerId: 'owner',
-    });
+    const claimed = await call(
+      app, 'POST', '/api/agent/jobs/claim', token,
+      { queue: 'tool' },
+      { 'X-Agent-Worker-Token': WORKER_A_TOKEN },
+    );
     const jobId = claimed.body.jobs[0].jobId;
 
-    const stolen = await call(app, 'POST', `/api/agent/jobs/${jobId}/complete`, token, {
-      workerId: 'impostor',
-    });
+    // worker-b is a *legitimate* worker with a valid credential. It still may
+    // not complete a job it does not hold: authentication says who you are,
+    // the lease says what is yours. Both layers have to hold.
+    const stolen = await call(
+      app, 'POST', `/api/agent/jobs/${jobId}/complete`, token, {},
+      { 'X-Agent-Worker-Token': WORKER_B_TOKEN },
+    );
     expect(stolen.status).toBe(400);
     expect(stolen.body.error.message).toContain('not currently leased');
   });
@@ -1574,5 +1595,182 @@ describe('/api/agent cross-tenant isolation', () => {
 
     const resumable = await call(app, 'GET', '/api/agent/runs/resumable', owner);
     expect(JSON.stringify(resumable.body)).toContain('legitimate acme work');
+  });
+});
+
+/**
+ * Worker authentication on the queue-runner endpoints.
+ *
+ * `claim`, `complete` and `fail` are not tenant routes: a worker legitimately
+ * handles jobs from every organisation, so the membership check that guards
+ * the by-id routes is the wrong control here. For a while there was no control
+ * at all — the caller asserted a `workerId` in the body and was believed, so
+ * any dashboard session could claim another tenant's job, read its payload out
+ * of the claim response, and burn the attempt budget with repeated `/fail`
+ * calls until the job dead-lettered.
+ *
+ * The lease check on `complete`/`fail` was not a defence against this: it
+ * verifies the caller is the lease *holder*, and the attacker became the lease
+ * holder one call earlier.
+ */
+describe('/api/agent worker endpoints', () => {
+  let app: Express;
+  let tenant: string;
+  let outsider: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    process.env.AGENT_WORKER_TOKENS = WORKER_TOKENS_ENV;
+    initDb(':memory:');
+    app = createApp();
+
+    const a = createUser('worker-tenant@example.com', 'password123');
+    createOrganization({ organizationId: 'acme', name: 'Acme', ownerUserId: a.userId });
+    createProject({ organizationId: 'acme', projectId: 'web', name: 'Web' });
+    tenant = createSession(a.userId);
+
+    const b = createUser('worker-outsider@example.com', 'password123');
+    createOrganization({ organizationId: 'rival', name: 'Rival', ownerUserId: b.userId });
+    outsider = createSession(b.userId);
+  });
+
+  afterAll(() => {
+    delete process.env.AGENT_WORKER_TOKENS;
+  });
+
+  let counter = 0;
+  // Each test gets its own queue. Claimed-but-never-completed jobs from an
+  // earlier test would otherwise eat the concurrency budget and make a later
+  // claim return zero jobs for a reason that has nothing to do with auth.
+  async function enqueue(secret: string, queue = 'run'): Promise<string> {
+    counter += 1;
+    const res = await call(app, 'POST', '/api/agent/jobs', tenant, {
+      queue, kind: 'demo', organizationId: 'acme', projectId: 'web',
+      payload: { secret }, idempotencyKey: `worker-suite-${counter}`,
+    });
+    expect(res.status).toBe(201);
+    return res.body.job.jobId as string;
+  }
+
+  const asWorkerA = { 'X-Agent-Worker-Token': WORKER_A_TOKEN };
+
+  it('refuses a claim from a session with no worker credential', async () => {
+    await enqueue('acme-only-payload');
+    const res = await call(app, 'POST', '/api/agent/jobs/claim', outsider, {
+      queue: 'run', workerId: 'rival-worker',
+    });
+    expect(res.status).toBe(401);
+    // The exploit's whole value was the payload coming back in this response.
+    expect(JSON.stringify(res.body)).not.toContain('acme-only-payload');
+  });
+
+  it('ignores a workerId supplied in the body', async () => {
+    await enqueue('body-identity-check');
+    const res = await call(
+      app, 'POST', '/api/agent/jobs/claim', tenant,
+      { queue: 'run', workerId: 'i-am-whoever-i-say' },
+      asWorkerA,
+    );
+    expect(res.status).toBe(200);
+    // Identity comes from the credential that matched, never from the body.
+    for (const job of res.body.jobs) expect(job.workerId).toBe('worker-a');
+  });
+
+  it('refuses a claim with a wrong token', async () => {
+    const res = await call(
+      app, 'POST', '/api/agent/jobs/claim', tenant,
+      { queue: 'run' },
+      { 'X-Agent-Worker-Token': 'z'.repeat(32) },
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('refuses complete and fail without a worker credential', async () => {
+    const jobId = await enqueue('lease-protection', 'model');
+    const claimed = await call(
+      app, 'POST', '/api/agent/jobs/claim', tenant, { queue: 'model', limit: 100 }, asWorkerA,
+    );
+    expect(claimed.body.count).toBeGreaterThan(0);
+
+    const done = await call(app, 'POST', `/api/agent/jobs/${jobId}/complete`, outsider, {});
+    expect(done.status).toBe(401);
+
+    const failed = await call(app, 'POST', `/api/agent/jobs/${jobId}/fail`, outsider, {
+      workerId: 'rival-worker', error: 'sabotage',
+    });
+    expect(failed.status).toBe(401);
+  });
+
+  it('does not let a failed attempt burn the retry budget', async () => {
+    const jobId = await enqueue('budget-protection');
+    const before = await call(app, 'GET', `/api/agent/jobs/${jobId}`, tenant);
+    const attemptsBefore = before.body.job.attempts;
+
+    await call(app, 'POST', `/api/agent/jobs/${jobId}/fail`, outsider, {
+      workerId: 'rival-worker', error: 'sabotage',
+    });
+
+    const after = await call(app, 'GET', `/api/agent/jobs/${jobId}`, tenant);
+    // A rejected call must not have side effects. Without this, an attacker who
+    // could not read the payload could still dead-letter the job.
+    expect(after.body.job.attempts).toBe(attemptsBefore);
+    expect(after.body.job.status).toBe(before.body.job.status);
+  });
+
+  it('still lets a credentialled worker run the full lifecycle', async () => {
+    const jobId = await enqueue('legitimate-work', 'tool');
+    const claimed = await call(
+      app, 'POST', '/api/agent/jobs/claim', tenant, { queue: 'tool', limit: 100 }, asWorkerA,
+    );
+    expect(claimed.status).toBe(200);
+    const mine = claimed.body.jobs.find((j: { jobId: string }) => j.jobId === jobId);
+    expect(mine).toBeDefined();
+    // A worker is meant to see the payload -- it is the thing doing the work.
+    expect(JSON.stringify(mine)).toContain('legitimate-work');
+
+    const done = await call(
+      app, 'POST', `/api/agent/jobs/${jobId}/complete`, tenant, {}, asWorkerA,
+    );
+    expect(done.status).toBe(200);
+    expect(done.body.job.status).toBe('completed');
+  });
+
+  it('still enforces the lease between two legitimate workers', async () => {
+    const jobId = await enqueue('lease-between-workers', 'benchmark');
+    await call(
+      app, 'POST', '/api/agent/jobs/claim', tenant, { queue: 'benchmark', limit: 100 }, asWorkerA,
+    );
+
+    const stolen = await call(
+      app, 'POST', `/api/agent/jobs/${jobId}/complete`, tenant, {},
+      { 'X-Agent-Worker-Token': WORKER_B_TOKEN },
+    );
+    // Authentication says who you are; the lease says what is yours. Adding the
+    // first layer must not have removed the second.
+    expect(stolen.status).toBe(400);
+    expect(stolen.body.error.message).toContain('not currently leased');
+  });
+});
+
+describe('/api/agent worker endpoints without configuration', () => {
+  let app: Express;
+  let token: string;
+
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = '0'.repeat(64);
+    delete process.env.AGENT_WORKER_TOKENS;
+    initDb(':memory:');
+    app = createApp();
+    token = mintScopedToken('worker-unconfigured@example.com');
+  });
+
+  it('disables the claim surface rather than leaving it open', async () => {
+    const res = await call(app, 'POST', '/api/agent/jobs/claim', token, {
+      queue: 'run', workerId: 'anyone',
+    });
+    // 503, not 200: an operator who has not configured workers gets a queue
+    // nothing can drain, which is visible, rather than one anyone can drain.
+    expect(res.status).toBe(503);
+    expect(res.body.error.message).toContain('AGENT_WORKER_TOKENS');
   });
 });

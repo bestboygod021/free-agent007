@@ -381,9 +381,9 @@ however large — can reach across projects.
 | Method | Path | Answers |
 |---|---|---|
 | `POST` | `/api/agent/jobs` | Enqueue work (idempotent per key) |
-| `POST` | `/api/agent/jobs/claim` | Lease jobs for a worker |
-| `POST` | `/api/agent/jobs/:jobId/complete` | Report success |
-| `POST` | `/api/agent/jobs/:jobId/fail` | Report failure — retries, then dead-letters |
+| `POST` | `/api/agent/jobs/claim` | Lease jobs for a worker (**worker credential**) |
+| `POST` | `/api/agent/jobs/:jobId/complete` | Report success (**worker credential**) |
+| `POST` | `/api/agent/jobs/:jobId/fail` | Report failure — retries, then dead-letters (**worker credential**) |
 | `POST` | `/api/agent/jobs/:jobId/cancel` | Stop a job that has not finished |
 | `GET` | `/api/agent/jobs/stats` | Queue depth plus the configured policies |
 | `GET` | `/api/agent/jobs/:jobId` | Inspect one job |
@@ -402,6 +402,40 @@ Three properties matter more than the endpoint list:
 - **Retries are bounded.** A job that keeps failing backs off exponentially and
   then moves to `dead_letter`, the same fail-closed reasoning the run state
   machine applies to its repair budget.
+
+#### Two kinds of caller, two kinds of authorisation
+
+The queue is the one place in the agent surface where "authenticated" is not a
+single thing:
+
+- **Tenant callers** enqueue, inspect and cancel jobs belonging to their own
+  organisation. A dashboard session is enough, and the organisation is read
+  from the stored job, never from the request.
+- **Workers** lease jobs across organisations, run them and report back. A
+  worker legitimately sees every tenant's payload — it is the thing doing the
+  work — so a membership check is the wrong control. `claim`, `complete` and
+  `fail` require a **worker credential** instead, sent as
+  `X-Agent-Worker-Token`.
+
+Credentials come from `AGENT_WORKER_TOKENS`, a comma-separated list of
+`workerId:token` pairs:
+
+```bash
+AGENT_WORKER_TOKENS=runner-a:$(openssl rand -hex 24),runner-b:$(openssl rand -hex 24)
+```
+
+Three properties of that design are deliberate:
+
+- **The workerId comes from the credential, not the body.** Earlier the caller
+  named itself in the request and was believed, which meant any dashboard
+  session could claim another tenant's job and read its payload out of the
+  claim response. A field the caller controls cannot be an identity.
+- **It fails closed.** With nothing configured, `claim` returns `503` and the
+  queue simply does not drain. An operator who has not thought about workers
+  gets a visible problem rather than an invisible one.
+- **Authentication and the lease are separate layers.** Being *a* worker lets
+  you claim; being *the* lease holder lets you complete. `worker-b` presenting
+  a perfectly valid credential still cannot complete `worker-a`'s job.
 
 ### Why a request was refused
 

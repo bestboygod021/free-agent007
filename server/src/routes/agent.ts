@@ -11,6 +11,7 @@ import {
 } from '@freellmapi/agent/core/compute-mode.js';
 import { routeModel } from '@freellmapi/agent/core/model-router.js';
 import { evaluateToolCall, evaluateEgress } from '@freellmapi/agent/core/policy-engine.js';
+import { authenticateWorker } from '../services/agent-worker-auth.js';
 import {
   RUN_STATES,
   TERMINAL_STATES,
@@ -687,6 +688,48 @@ function callerId(req: Request): number | null {
  * `write` distinguishes reading a record from driving it. A viewer may look
  * at a run; advancing, approving or cancelling one needs write.
  */
+/**
+ * Resolve the caller to a *worker* identity for the queue-runner endpoints.
+ *
+ * These three routes (claim / complete / fail) are not tenant routes: a worker
+ * legitimately handles jobs from every organisation, so `authorizeRecord` is
+ * the wrong check. What they need is proof the caller is a worker at all.
+ *
+ * The workerId comes from the matched credential, never from the request body,
+ * so a worker cannot rename itself into another worker's lease.
+ *
+ * Failures are 401, not 404: unlike a record id, the existence of the queue is
+ * not a secret, and an operator debugging a misconfigured runner needs to be
+ * able to tell "wrong token" from "no such route".
+ */
+function authorizeWorker(req: Request, res: Response): string | null {
+  const header = req.headers['x-agent-worker-token'];
+  const presented = typeof header === 'string' ? header : undefined;
+  const result = authenticateWorker(presented);
+  if (result.ok) return result.worker.workerId;
+
+  if (result.reason === 'not_configured') {
+    // Fail closed. An operator who has not configured workers gets a queue
+    // nothing can drain, which is visible; the alternative is a queue anyone
+    // can drain, which is not.
+    res.status(503).json({
+      error: {
+        message:
+          'worker endpoints are disabled: no worker credentials are configured (set AGENT_WORKER_TOKENS).',
+        type: 'not_configured',
+      },
+    });
+    return null;
+  }
+  res.status(401).json({
+    error: {
+      message: 'a valid X-Agent-Worker-Token header is required for worker endpoints.',
+      type: 'authentication_error',
+    },
+  });
+  return null;
+}
+
 function authorizeRecord(
   req: Request,
   res: Response,
@@ -1359,15 +1402,14 @@ agentRouter.post('/jobs/claim', (req: Request, res: Response) => {
     badRequest(res, 'request body must be a JSON object.');
     return;
   }
-  const { queue, workerId, limit } = body;
+  const { queue, limit } = body;
   if (!isQueueName(queue)) {
     badRequest(res, `"queue" must be one of: ${QUEUE_NAMES.join(', ')}.`);
     return;
   }
-  if (typeof workerId !== 'string' || workerId.trim() === '') {
-    badRequest(res, '"workerId" must be a non-empty string.');
-    return;
-  }
+  // The worker names itself through its credential, not through the body.
+  const workerId = authorizeWorker(req, res);
+  if (workerId === null) return;
   if (limit !== undefined && (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1 || limit > 100)) {
     badRequest(res, '"limit" must be an integer between 1 and 100.');
     return;
@@ -1383,18 +1425,17 @@ agentRouter.post('/jobs/claim', (req: Request, res: Response) => {
 
 /** POST /api/agent/jobs/:jobId/complete — report success. */
 agentRouter.post('/jobs/:jobId/complete', (req: Request, res: Response) => {
-  const body = req.body;
-  if (!isPlainObject(body) || typeof body.workerId !== 'string' || body.workerId.trim() === '') {
-    badRequest(res, '"workerId" must be a non-empty string.');
-    return;
-  }
   const jobId = pathParam(req.params.jobId);
   if (jobId === null) {
     badRequest(res, 'job id must be a single path segment.');
     return;
   }
+  const workerId = authorizeWorker(req, res);
+  if (workerId === null) return;
   try {
-    res.json({ job: completeJob(jobId, body.workerId) });
+    // completeJob still checks the lease: being *a* worker is not enough, you
+    // must be the worker holding this job.
+    res.json({ job: completeJob(jobId, workerId) });
   } catch (err) {
     badRequest(res, err instanceof Error ? err.message : 'complete failed');
   }
@@ -1403,11 +1444,7 @@ agentRouter.post('/jobs/:jobId/complete', (req: Request, res: Response) => {
 /** POST /api/agent/jobs/:jobId/fail — report failure; retries or dead-letters. */
 agentRouter.post('/jobs/:jobId/fail', (req: Request, res: Response) => {
   const body = req.body;
-  if (!isPlainObject(body) || typeof body.workerId !== 'string' || body.workerId.trim() === '') {
-    badRequest(res, '"workerId" must be a non-empty string.');
-    return;
-  }
-  if (typeof body.error !== 'string' || body.error.trim() === '') {
+  if (!isPlainObject(body) || typeof body.error !== 'string' || body.error.trim() === '') {
     badRequest(res, '"error" must be a non-empty string describing the failure.');
     return;
   }
@@ -1416,8 +1453,10 @@ agentRouter.post('/jobs/:jobId/fail', (req: Request, res: Response) => {
     badRequest(res, 'job id must be a single path segment.');
     return;
   }
+  const workerId = authorizeWorker(req, res);
+  if (workerId === null) return;
   try {
-    res.json({ job: failJob(jobId, body.workerId, body.error) });
+    res.json({ job: failJob(jobId, workerId, body.error) });
   } catch (err) {
     badRequest(res, err instanceof Error ? err.message : 'fail failed');
   }

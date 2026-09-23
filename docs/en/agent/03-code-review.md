@@ -66,8 +66,7 @@ genuinely global (policy evaluation, prompt library), but these need one:
 | `GET /runs/resumable` | run ids across all tenants |
 
 `POST /jobs/claim` is a special case: it is a worker endpoint, and a worker is
-not a tenant. It should be authenticated as a worker rather than scoped to an
-organisation, which is a different fix.
+not a tenant. It is dealt with in finding 2 rather than here.
 
 ### The fix, and why it is not the one I first proposed
 
@@ -110,10 +109,8 @@ fixes:
   so omitting it returned every tenant's audit trail, redacted argument
   previews included. It is now required and membership-checked.
 
-`POST /jobs/claim`, `/complete` and `/fail` are deliberately left alone. They
-are worker endpoints, not tenant endpoints — a worker legitimately claims jobs
-across organisations. They need *worker* authentication, which is a separate
-piece of work and is listed in the gaps below rather than papered over here.
+`POST /jobs/claim`, `/complete` and `/fail` needed a different fix, done
+second — see finding 2.
 
 ### Why the tests did not catch it
 
@@ -136,7 +133,83 @@ that never reaches the code it claims to cover is worse than no test.
 
 ---
 
-## 2. Five high-severity advisories in production dependencies
+## 2. The job queue believed the caller's `workerId` — **confirmed, now fixed**
+
+The fix above deliberately skipped three routes, so I went back and attacked
+them. `POST /jobs/claim` took a `workerId` in the body and believed it. The
+result, reproduced end to end:
+
+```
+A (acme) enqueues job, payload {"secret":"acme-only-payload"}
+B (rival) POST /jobs/claim {"queue":"run","workerId":"rival-worker"}
+    -> 200, count=1, *** PAYLOAD LEAKED ***
+B POST /jobs/<id>/fail  {"workerId":"rival-worker","error":"sabotage"}
+    -> 200, status=retry_wait, attempts=1
+```
+
+Two distinct harms: the payload of another tenant's job is disclosed, and the
+attacker can burn the attempt budget with repeated `/fail` calls until the job
+dead-letters — a denial of service against work they cannot even see.
+
+### Why the existing lease check did not stop it
+
+`complete` and `fail` already verified that the caller holds the lease, and I
+initially read that as sufficient. It is not. The check asks "are you the lease
+holder?", and the attacker had made itself the lease holder one call earlier.
+A check that validates a state the attacker controls is not a check.
+
+### Why `authorizeRecord` was the wrong fix here
+
+The obvious move — reuse the membership guard from finding 1 — would have been
+wrong. A worker *legitimately* handles jobs from every organisation; that is
+what a queue runner is. Scoping `claim` to the caller's organisations would
+have broken the feature while looking like security.
+
+The queue simply has two kinds of caller, and they need different questions
+asked of them:
+
+| | authenticates with | question asked |
+|---|---|---|
+| tenant (`enqueue`, `GET`, `cancel`) | dashboard session | are you a member of the job's org? |
+| worker (`claim`, `complete`, `fail`) | `X-Agent-Worker-Token` | are you a configured worker at all? |
+
+`AGENT_WORKER_TOKENS` holds `workerId:token` pairs. Three decisions worth
+naming:
+
+- **Identity comes from the credential that matched, not from the body.** The
+  route no longer reads `workerId` from the request at all. This is the same
+  rule `agent-policy-context.ts` already states for policy fields: a control
+  the subject of the control can edit is not a control.
+- **Fail closed.** Unconfigured means `503` and a queue that does not drain,
+  not a queue anyone can drain. A missing credential should produce a visible
+  outage, not silent exposure.
+- **The lease check stays.** Being *a* worker lets you claim; being *the* lease
+  holder lets you complete. I verified the second layer still holds by having a
+  legitimately credentialled `worker-b` try to complete `worker-a`'s job — it
+  gets the same `400 not currently leased` as before. Adding a layer above an
+  existing one is a common way to accidentally remove it.
+
+Tokens are compared with the existing `timingSafeStringEqual`, which HMACs both
+sides to a fixed length, and the loop does not exit early on a match, so the
+response time reveals neither which token matched nor how many are configured.
+
+27 tests cover this (21 on the parser and matcher, 6 on the routes), including
+one asserting that a rejected `/fail` left `attempts` unchanged — a guard that
+refuses *after* the side effect is not a guard. Both halves were
+mutation-verified: making an unknown token resolve to the first configured
+worker kills 8 tests; making the unconfigured case fail open kills 1.
+
+### What is still not covered
+
+There is no rate limit specific to `claim`, so a leaked worker token is worth
+more than it should be. Worker credentials are also static and per-process;
+rotation means an env change and a restart of the *worker*, not the server.
+Both are acceptable for a single-operator deployment and both should be
+revisited before this is multi-operator.
+
+---
+
+## 3. Five high-severity advisories in production dependencies
 
 `npm audit --omit=dev` reports 9 vulnerabilities, 5 high. Two are on live
 request paths:
@@ -155,7 +228,7 @@ build when a dependency picks up a known CVE, so this will recur.
 
 ---
 
-## 3. `routes/proxy.ts` is 2,975 lines
+## 4. `routes/proxy.ts` is 2,975 lines
 
 The largest file in the repository, and the one every request passes through.
 It holds routing, caching (exact and semantic), streaming, retries, budget
@@ -176,7 +249,7 @@ not answerable by reading.
 
 ---
 
-## 4. Capability gaps, honestly ranked
+## 5. Capability gaps, honestly ranked
 
 From the 500-item review in `02-capability-audit.md`, now ~171 built. The gaps
 that actually block real use, rather than the ones that are simply unticked:
@@ -212,7 +285,7 @@ hand.
 
 ---
 
-## 5. What is genuinely good
+## 6. What is genuinely good
 
 A review that only lists faults gives a false picture of where the risk is.
 
@@ -236,7 +309,7 @@ A review that only lists faults gives a false picture of where the risk is.
 
 ---
 
-## 6. Things I suspected and was wrong about
+## 7. Things I suspected and was wrong about
 
 Recorded so the next reviewer does not spend time here again.
 
@@ -257,13 +330,10 @@ Recorded so the next reviewer does not spend time here again.
 
 1. ~~**Fix cross-tenant run/job access**~~ — **done.** Twelve routes guarded,
    regression test added, mutation-verified. See finding 1.
-2. **Authenticate the worker endpoints** (`/jobs/claim`, `/complete`, `/fail`).
-   These were scoped out of the fix above because they are not tenant routes,
-   but right now any authenticated user can claim another tenant's job and read
-   its payload through the claim response. This is the remaining half of
-   finding 1 and it needs a worker identity, not a membership check.
+2. ~~**Authenticate the worker endpoints**~~ — **done.** Worker credentials,
+   fail-closed, mutation-verified. See finding 2.
 3. **Add `npm audit` to CI and patch the five high advisories** — known CVEs
-   on live request paths.
+   on live request paths. This is now the top open item.
 4. **Add PR creation** — small, and completes the coding workflow.
 5. **Split `proxy.ts`** — pay down the cost before it compounds further.
 6. **Browser automation** — the largest capability gap, and a project rather
