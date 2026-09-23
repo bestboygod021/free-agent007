@@ -197,23 +197,43 @@ route has a test that fails if the kernel call is removed.
 
 ## Phase 2 — Close the coding loop
 
-**~23 items (166–195).** The agent can read a repo, search symbols, apply a
-patch and commit. It cannot propose the result to a human.
+**~23 items (166–195).** The agent can read a repo, find where a symbol is
+declared *and* where it is used, apply a patch, commit, and now open a pull
+request. What it still cannot do is run any of that behind an isolation
+boundary, or rewrite a symbol across files in one atomic step.
 
-1. **PR creation** — the one genuinely small item. Note the constraint that
-   makes it interesting: `agent-tools-git.ts` deliberately runs git with
-   `GIT_TERMINAL_PROMPT=0`, `GIT_ASKPASS=''` and `GIT_CONFIG_NOSYSTEM=1`,
-   specifically so *an agent can never authenticate as the human who installed
-   the gateway*. Opening a PR requires a forge credential, which is in direct
-   tension with that rule. The design has to introduce a **separate, scoped,
-   server-configured forge token** — the same shape as the worker credential
-   added this week — rather than reusing the operator's git config. Doing it
-   the easy way would silently undo a deliberate safety property.
-2. **Execution sandbox** — `sandbox.test` runs a test command; there is no
+1. ~~**PR creation**~~ — **done.** `git.pull_request.create`, under a
+   separate `AGENT_FORGE_TOKEN` that is never written to `.git/config`, so
+   the deliberate property in `agent-tools-git.ts` (`GIT_ASKPASS=''`,
+   `GIT_TERMINAL_PROMPT=0`, `GIT_CONFIG_NOSYSTEM=1` — *an agent can never
+   authenticate as the human who installed the gateway*) survives intact.
+   Two things worth carrying forward:
+   - The tool name was chosen by querying the live policy engine, not by
+     taste. `git.pull_request.create` matches a rule carrying
+     `pull_request:write` and `alwaysApprove`. The plausible alternatives
+     (`git.pr.create`, `forge.pr.create`, `git.push`) are classified `high`
+     but carry **no required scope at all** — nominally stricter, actually
+     weaker.
+   - Deleting the token redaction inside the spawn helper left every
+     tool-level test green, because a real git run scrubs URL userinfo
+     before printing and a stubbed push replaces the helper entirely. A
+     guard with no reachable test is not a guard.
+2. ~~**Cross-file refactoring**~~ — **the reference half is done.**
+   `code.references.search` classifies every occurrence as code, string,
+   comment, import or declaration, because the classification *is* the
+   answer: measured on this repository, `redactToken` has 7 code references
+   against 28 inside string literals. It is lexical, not type-aware, and
+   says so — `confidence: approximate` for short or common names rather
+   than a confident wrong number. What remains is the *write* half: a
+   rename that edits the code references and leaves the rest, which needs
+   the multi-file atomic patch this codebase does not have yet.
+3. **Execution sandbox** — `sandbox.test` runs a test command; there is no
    isolation boundary. No docker/podman/bwrap in this environment, so this
-   needs a real design decision, not just a library.
-3. **Cross-file refactoring** — depends on `code-index.ts` gaining a reference
-   graph, not just declarations.
+   needs a real design decision, not just a library. **Now the largest
+   remaining item in this phase**, and the one most likely to be
+   under-costed: `agent-attestation.ts` can already prove *what was asked
+   for* at spawn time, but proving *what the process could reach* needs a
+   boundary that does not exist here.
 
 ---
 
