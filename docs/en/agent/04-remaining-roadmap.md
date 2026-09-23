@@ -82,8 +82,83 @@ Counts are "not built", derived from the audit's per-category scores.
 
 ## Phase 1 — Wire what already exists
 
-**~40 items. Highest value per unit of work in the entire list**, because the
-logic is written and tested; only the call site is missing.
+> **This phase's premise was wrong, and measuring it is the most useful thing
+> in this document. Read the correction below before scheduling any of it.**
+
+**~40 items**, originally listed as the highest value per unit of work in the
+list, on the theory that the logic is written and tested and only the call site
+is missing.
+
+### The measurement that changed this phase
+
+I classified all 209 unwired modules by counting `boolean` fields on their
+exported input interfaces — fields like `sandboxed`, `signed`, `noNetwork`,
+`redacted`, `dnsPinned`, `tenantMatch`.
+
+| | modules |
+|---|---:|
+| declare safety facts as boolean inputs | **200** |
+| declare none | 9 |
+
+And separately: of 225 files in `agent/src/core`, **6** contain any call
+capable of observing the world (`fetch`, `dns`, `crypto`, `fs`, `spawn`).
+
+These are **contract checkers**, not enforcement points. Two live runs, both
+executed before writing any code:
+
+```
+decideM190Egress({ destination: 'http://169.254.169.254/latest/meta-data/',
+                   dnsPinned: true, tlsVerified: true, dlpPassed: true, ... })
+  -> { allowed: true }
+
+decideM196Execution({ sandboxed: true, networkAllowed: false,
+                      secretAccess: false, ... })  -> { allowed: true }
+decideM196Execution({ sandboxed: false, networkAllowed: true,
+                      secretAccess: true, ... })   -> { allowed: false }
+```
+
+Same plugin in the last two. The only difference is whether the caller told the
+truth. **Wiring one of these up produces a guard that rewards honesty and stops
+nothing.**
+
+This is not a criticism of the kernel modules. They encode genuinely useful
+checklists — *what* must hold before a plugin runs, an egress is permitted, a
+model is promoted. What they cannot do is find out whether it holds.
+
+### What Phase 1 actually is
+
+Not "wire up 40 modules". For each one, two separate questions:
+
+1. **Does anything establish the facts it asks for?** If not, that
+   establishing layer is the real work, and it is not small.
+2. **Is the checklist worth keeping once you have?** Usually yes — the kernel
+   already enumerates the conditions, which is the part people get wrong.
+
+Two items have now gone through this:
+
+- **Egress (261)** — shipped as `services/web-fetch.ts`, which resolves DNS and
+  classifies the address via `lib/url-guard.ts` rather than accepting
+  `dnsPinned` from a caller.
+- **Process safety** — shipped as `services/agent-attestation.ts`. An
+  `Attestation` is a claim *paired with how it was established*, and there is
+  deliberately no constructor taking a bare boolean. `attestSpawn()` takes the
+  options object handed to `child_process.spawn` and derives whether it amounts
+  to a sandbox, so the guard cannot drift from what the spawn does — flip
+  `shell: false` to `true` and the spawn is refused. Verified by mutation.
+
+The same shape applies to the rest: something must measure, then the kernel
+checklist becomes useful.
+
+### Revised ordering consequence
+
+Phase 1 is **no longer the cheapest phase**. Its items should be re-costed
+individually and most of them are closer in size to Phase 2 work than to a
+call-site change. Phases 2 and 3 are now the better place to start, and this
+document's earlier claim that Phase 1 is "the only phase where the hard part is
+already done" was exactly backwards: the hard part — establishing facts about
+the running system — is the part that was never written.
+
+### Original module list, retained for reference
 
 Each of these is an existing `agent/src/core` module with no production
 consumer. The work is a table, a route, and a call — not a design.
@@ -99,24 +174,10 @@ consumer. The work is a table, a route, and a call — not a design.
 | `repository-context-runtime` | repo-wide context for coding phases | 166–175 |
 | `session-auth`, `usage-ledger`, `platform-settings` | governance surface | 271–280 |
 
-**A correction to this phase's premise, found by attempting it.** I listed
-`egress-policy-runtime` as a wiring job. It is not, and the reason generalises
-to much of the 209. That module is a *validator*: `decideM190Egress` accepts
-`dnsPinned`, `tlsVerified` and `dlpPassed` as booleans **from its caller**.
-Handed a request for `http://169.254.169.254/latest/meta-data/` with every flag
-asserted true, it returns `allowed: true`. I ran that before writing any code.
-
-So "wire up the egress module" would have produced a guard that enforces
-nothing. What actually shipped for item 261 was `services/web-fetch.ts`, which
-*establishes* the facts — resolves DNS, classifies the address — using the
-existing `lib/url-guard.ts`, and is checked on every redirect hop.
-
-The general lesson for the rest of Phase 1: **a kernel module that takes its
-safety properties as parameters cannot be the enforcement point.** Before
-scheduling one as "wiring", check whether it decides anything or merely
-validates what it is told. The ones that decide (`policy-engine`,
-`state-machine`, `identity-access-contract`) are already wired — which is
-probably not a coincidence.
+The 16 modules that *are* wired include every one that decides something
+without being told it — `policy-engine`, `state-machine`,
+`identity-access-contract`, `model-router`, `redaction`. That is almost
+certainly not a coincidence: the ones that could be used got used.
 
 Two cautions learned the hard way on this codebase:
 
@@ -236,13 +297,17 @@ else, which is why it is last.
 
 | Phase | Theme | Items | Why here |
 |---|---|---:|---|
-| 1 | Wire the existing kernel | ~40 | Logic already written and tested; cheapest real capability |
+| ~~1~~ | ~~Wire the existing kernel~~ | ~40 | **Re-cost it.** 200 of 209 modules take their safety facts as boolean inputs; each needs an establishing layer built first |
 | 2 | Close the coding loop | ~23 | Agent can code but cannot deliver |
 | 3 | Retrieval + Excel | ~34 | Highest user-visible value per unit of work |
 | 4 | Governance and identity | ~39 | Unblocks all of §16 |
 | 5 | Observability | ~13 | Needed before any of this is operable at scale |
 | 6 | Browser | ~25 | Largest gap; partly unprovable in this environment |
 | 7 | Platform and distribution | ~32 | Blocks nothing |
+
+Phase 1 is struck from the top of that order rather than deleted: its items
+are still worth doing, but each needs costing as "build the measurement, then
+apply the checklist" rather than "add a call site". Start at Phase 2.
 
 That is ~206 of the ~334. The remainder is long-tail polish spread across
 categories — worth doing, not worth sequencing.
@@ -257,6 +322,9 @@ Unchanged from the audit, and it is what keeps the numbers honest:
 > it stops working. Logic that exists, is tested, and cannot be called is
 > **designed**, not built.
 
-By that rule, 28,541 lines of this repository are designed. Phase 1 exists to
-convert as much of that as possible into built, and it is first precisely
-because it is the only phase where the hard part is already done.
+By that rule, 28,541 lines of this repository are designed. The uncomfortable
+follow-on, found by measuring rather than assuming: most of it cannot be
+converted to *built* by connecting it, because it asks to be told the things
+that would need to be discovered. The conversion work is writing the
+discovering part — and the checklist it already provides is then genuinely
+useful, which is why none of this argues for deleting any of it.

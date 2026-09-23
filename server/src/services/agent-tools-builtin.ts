@@ -3,6 +3,11 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { registerTool, ToolError, type ToolInvocationContext } from './agent-tools.js';
 import { isSensitivePath } from '@freellmapi/agent/core/redaction.js';
+import {
+  attestSpawn,
+  PROCESS_SAFETY_CLAIMS,
+  type AttestationSet,
+} from './agent-attestation.js';
 
 /**
  * The built-in tool set: the smallest collection that lets a run actually do
@@ -304,29 +309,72 @@ export function registerBuiltinTools(): void {
   });
 }
 
-/** Spawn without a shell, capture bounded output, and honour the abort signal. */
+/** Wall-clock and output ceilings, named so they can be attested rather than assumed. */
+const PROCESS_OUTPUT_CAP = 64 * 1024;
+const PROCESS_TIMEOUT_MS = 120_000;
+
+/**
+ * Spawn without a shell, capture bounded output, and honour the abort signal.
+ *
+ * Before spawning, the options are turned into attestations and checked. This
+ * looks redundant — the options are right there, a few lines above — and that
+ * is exactly the point. The kernel's contract modules ask for `sandboxed:
+ * boolean`, and anything that *asserts* that boolean is trusting itself. Here
+ * the claim is derived from the spawn options themselves, so the guard cannot
+ * drift away from what the spawn actually does: change `shell: false` to
+ * `shell: true` and the attestation flips and the spawn is refused.
+ *
+ * It is a cheap invariant on the one call in this codebase that starts a
+ * process.
+ */
 function runProcess(
   bin: string,
   argv: string[],
   ctx: ToolInvocationContext,
-): Promise<{ exitCode: number; stdout: string; stderr: string; timedOut: boolean }> {
+): Promise<{
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  timedOut: boolean;
+  attestations: ReturnType<AttestationSet['all']>;
+}> {
+  const spawnOptions = {
+    cwd: ctx.workspaceRoot,
+    shell: false as const,
+    // A tool inherits no ambient credentials: the parent's environment is
+    // full of provider API keys and none of them belong in a test run.
+    env: {
+      PATH: process.env.PATH ?? '',
+      HOME: process.env.HOME ?? '',
+      NODE_ENV: 'test',
+      CI: '1',
+    },
+  };
+
+  const attested = attestSpawn({
+    shell: spawnOptions.shell,
+    env: spawnOptions.env,
+    cwd: spawnOptions.cwd,
+    timeoutMs: PROCESS_TIMEOUT_MS,
+    outputCapBytes: PROCESS_OUTPUT_CAP,
+    workspaceRoot: ctx.workspaceRoot,
+  });
+
+  const verdict = attested.requireAll(PROCESS_SAFETY_CLAIMS);
+  if (!verdict.ok) {
+    const detail = [...verdict.missing.map((c) => `${c} (never established)`), ...verdict.failed]
+      .join(', ');
+    return Promise.reject(
+      new ToolError(`refusing to spawn "${bin}": process safety not established — ${detail}`, 403),
+    );
+  }
+
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, argv, {
-      cwd: ctx.workspaceRoot,
-      shell: false,
-      // A tool inherits no ambient credentials: the parent's environment is
-      // full of provider API keys and none of them belong in a test run.
-      env: {
-        PATH: process.env.PATH ?? '',
-        HOME: process.env.HOME ?? '',
-        NODE_ENV: 'test',
-        CI: '1',
-      },
-    });
+    const child = spawn(bin, argv, spawnOptions);
 
     let stdout = '';
     let stderr = '';
-    const cap = 64 * 1024;
+    const cap = PROCESS_OUTPUT_CAP;
     child.stdout.on('data', (c: Buffer) => {
       if (stdout.length < cap) stdout += c.toString('utf8');
     });
@@ -348,6 +396,9 @@ function runProcess(
         stdout: stdout.slice(0, cap),
         stderr: stderr.slice(0, cap),
         timedOut: ctx.signal.aborted,
+        // Returned so the caller can see what was established, not just that
+        // something was. An audit trail of "it was fine" is worth little.
+        attestations: attested.all(),
       });
     });
   });

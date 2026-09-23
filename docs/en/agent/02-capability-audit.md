@@ -299,6 +299,14 @@ accept knowingly.
 | 15–20. UX → advanced | ~41 | 155 |
 | **Total** | **~173** | **500** |
 
+> **A caution about the "rules only" rows below.** 200 of the 209 unwired
+> kernel modules declare their safety properties as `boolean` *inputs*
+> (`sandboxed`, `signed`, `dnsPinned`). They are contract checkers: run
+> `decideM196Execution` with `sandboxed: true` on an unsandboxed plugin and it
+> returns `allowed: true`. Scoring one as "rules only, just needs wiring"
+> overstates how close it is — something has to establish the facts first. See
+> [`04-remaining-roadmap.md`](./04-remaining-roadmap.md) §Phase 1.
+
 > **Sequencing for the remaining ~330 lives in
 > [`04-remaining-roadmap.md`](./04-remaining-roadmap.md)**, which also reports a
 > measurement this table does not: of the 225 files in `agent/src/core`, only
