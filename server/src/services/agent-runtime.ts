@@ -326,6 +326,19 @@ export function createRun(input: CreateRunInput): AgentRun {
   if (!Number.isInteger(maxSteps) || maxSteps < 1) {
     throw new AgentRunError('maxSteps must be a positive integer');
   }
+  // A floor as well as a ceiling. `exhaustedBudget` treats a non-positive
+  // ceiling as "no ceiling" (`row.max_tokens > 0 && ...`), which is right for
+  // a mode that genuinely has no token budget but catastrophic as a value a
+  // caller can send: `maxTokens: -5` asked for *less* and got unlimited. A
+  // run created that way never stopped, while the default stopped after two
+  // steps. Asking for less than the mode allows is legitimate; asking for
+  // zero or less is not a budget.
+  if (input.maxTokens !== undefined && (!Number.isFinite(input.maxTokens) || input.maxTokens < 1)) {
+    throw new AgentRunError('maxTokens must be a positive number');
+  }
+  if (input.maxCost !== undefined && (!Number.isFinite(input.maxCost) || input.maxCost < 0)) {
+    throw new AgentRunError('maxCost must be a non-negative number');
+  }
   const maxTokens = Math.min(input.maxTokens ?? profile.budget.perRunTokens, profile.budget.hardStopTokens);
   const maxCost = Math.min(input.maxCost ?? profile.budget.maxCostPerRun, profile.budget.maxCostPerRun);
   if (input.timeoutMs !== undefined && (!Number.isInteger(input.timeoutMs) || input.timeoutMs < 1)) {

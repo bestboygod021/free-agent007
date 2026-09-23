@@ -188,6 +188,50 @@ describe('agent runtime', () => {
     expect(run.budget.maxCost).toBe(0);
   });
 
+  /**
+   * The ceiling was guarded and the floor was not, and the floor turned out
+   * to be the dangerous end. `exhaustedBudget` reads a non-positive
+   * `max_tokens` as "this mode has no token budget" -- correct for a mode,
+   * catastrophic for a caller-supplied value. Asking for *less* budget
+   * bought unlimited budget: measured, a run with maxTokens: -5 survived six
+   * steps of a million tokens each while the default stopped after two.
+   */
+  it('refuses a non-positive token ceiling instead of treating it as unlimited', () => {
+    expect(() => start({ maxTokens: -5 })).toThrow(/maxTokens must be a positive number/);
+    expect(() => start({ maxTokens: 0 })).toThrow(/maxTokens must be a positive number/);
+    expect(() => start({ maxTokens: Number.NaN })).toThrow(/maxTokens must be a positive number/);
+  });
+
+  it('refuses a negative cost ceiling', () => {
+    expect(() => start({ maxCost: -100 })).toThrow(/maxCost must be a non-negative number/);
+  });
+
+  it('still allows a zero cost ceiling, which is what free mode is', () => {
+    // Not symmetric with maxTokens on purpose: free mode's real budget is 0,
+    // so rejecting it would reject the default.
+    const run = start({ mode: 'free', maxCost: 0 });
+    expect(run.budget.maxCost).toBe(0);
+  });
+
+  it('honours a smaller token ceiling than the mode allows', () => {
+    const run = start({ maxTokens: 1000 });
+    expect(run.budget.maxTokens).toBe(1000);
+  });
+
+  /**
+   * The behavioural proof, not just the argument check: a run whose ceiling
+   * was accepted actually stops.
+   */
+  it('stops a run that exhausts a reduced token ceiling', () => {
+    const run = start({ maxTokens: 1000 });
+
+    const first = step({ runId: run.runId, event: 'needs_clarification', tokensUsed: 5000 });
+    expect(first.ok).toBe(true);
+
+    const second = step({ runId: run.runId, event: 'clarification_answered' });
+    expect(second.run.stopReason).toMatch(/token budget exhausted/);
+  });
+
   it('accepts nothing once terminal', () => {
     const run = start();
     cancelRun(run.runId);

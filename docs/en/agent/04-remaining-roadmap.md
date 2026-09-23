@@ -355,6 +355,30 @@ rename.
    **An assertion that cannot fail is not a test.** Mutation testing is what
    exposed all three: the mutant killed one test out of three.
 
+6. **A run budget could be turned off by asking for less of it.** Found by
+   grepping for request fields that reach a decision without validation, the
+   same pattern as item 5.
+
+   `createRun` clamped every ceiling with `Math.min(requested, allowed)`, so
+   nobody could ask for *more* than the mode permits. There was no floor.
+   `exhaustedBudget` reads `row.max_tokens > 0 && ...` — a non-positive
+   ceiling means "this mode has no token budget", which is right for a mode
+   and catastrophic for a caller-supplied value.
+
+   Measured, not argued: a run created with `maxTokens: -5` survived six
+   steps of a million tokens each, while the default stopped after two with
+   `token budget exhausted (1000000/400000)`. `maxTokens: 0` did the same.
+   **Asking for less bought unlimited.**
+
+   `maxTokens` now needs to be finite and ≥ 1; `maxCost` finite and ≥ 0 —
+   *not* symmetric, because free mode's genuine cost budget is `0` and
+   rejecting it would reject the default. Four mutants killed, including one
+   in the opposite direction: making the cost floor `< 1` too breaks free
+   mode, and a test catches that as well.
+
+   `maxSteps` already had its floor, which is why this was easy to miss: the
+   validation next to it looked like the validation for all of them.
+
 ---
 
 ## Phase 3 — Retrieval that survives real documents
