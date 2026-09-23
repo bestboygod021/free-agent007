@@ -299,6 +299,13 @@ accept knowingly.
 | 15–20. UX → advanced | ~41 | 155 |
 | **Total** | **~171** | **500** |
 
+> **Sequencing for the remaining ~330 lives in
+> [`04-remaining-roadmap.md`](./04-remaining-roadmap.md)**, which also reports a
+> measurement this table does not: of the 225 files in `agent/src/core`, only
+> **16 are imported by anything in production**. The other 209 — 28,541 lines —
+> are tested and unreachable. Much of the "remaining" work is therefore wiring
+> rather than design.
+
 **Roughly a quarter is real.** The quarter that is real is the hard,
 unglamorous quarter: multi-provider routing, failover, cost accounting,
 redaction, durability. Those are the parts that are painful to retrofit.
