@@ -198,9 +198,10 @@ route has a test that fails if the kernel call is removed.
 ## Phase 2 — Close the coding loop
 
 **~23 items (166–195).** The agent can read a repo, find where a symbol is
-declared *and* where it is used, apply a patch, commit, and now open a pull
-request. What it still cannot do is run any of that behind an isolation
-boundary, or rewrite a symbol across files in one atomic step.
+declared *and* where it is used, apply a patch, commit, run tests behind a
+real namespace boundary, and open a pull request. The one structural gap
+left in this phase is the *write* half of refactoring: an atomic multi-file
+rename.
 
 1. ~~**PR creation**~~ — **done.** `git.pull_request.create`, under a
    separate `AGENT_FORGE_TOKEN` that is never written to `.git/config`, so
@@ -227,13 +228,26 @@ boundary, or rewrite a symbol across files in one atomic step.
    than a confident wrong number. What remains is the *write* half: a
    rename that edits the code references and leaves the rest, which needs
    the multi-file atomic patch this codebase does not have yet.
-3. **Execution sandbox** — `sandbox.test` runs a test command; there is no
-   isolation boundary. No docker/podman/bwrap in this environment, so this
-   needs a real design decision, not just a library. **Now the largest
-   remaining item in this phase**, and the one most likely to be
-   under-costed: `agent-attestation.ts` can already prove *what was asked
-   for* at spawn time, but proving *what the process could reach* needs a
-   boundary that does not exist here.
+3. ~~**Execution sandbox**~~ — **done, and this document was wrong about
+   why it was hard.** The claim was that no docker/podman/bwrap means a
+   sandbox "needs a real design decision". True about the tools; false as a
+   conclusion. `unshare` is present and unprivileged user namespaces are
+   permitted, which is enough for `--user --mount --net --pid`, a read-only
+   `/` with the workspace bind-mounted back read-write, and a fresh `/proc`.
+   Verified by running six escape probes through the live tool before and
+   after: all six went from REACHED to blocked.
+
+   The general lesson, which cost three bugs to learn: **an isolation
+   boundary has to be probed, never assumed.** The pid namespace was
+   working while `/proc` was inherited and still listed 100 host processes.
+   `SIGKILL` to the `unshare` pid fired `exit` but never `close`, so the
+   timeout that was supposed to bound a run leaked the process instead.
+   Remounting the workspace read-write silently did nothing unless it was
+   bind-mounted to itself first.
+
+   Still not covered, and said out loud rather than buried: read access is
+   *reduced by masking, not eliminated* (no `pivot_root` here), and there
+   is no CPU or memory ceiling without cgroup delegation.
 
 ---
 
