@@ -11,6 +11,7 @@ import {
   clearTools,
   ToolError,
 } from '../../services/agent-tools.js';
+import { hashContent } from '../../services/atomic-write.js';
 import { registerBuiltinTools } from '../../services/agent-tools-builtin.js';
 
 /**
@@ -147,6 +148,122 @@ describe('agent tool registry', () => {
     });
     expect(res.ok).toBe(true);
     expect(await fs.readFile(path.join(workspace, 'notes/new.txt'), 'utf8')).toBe('hi');
+  });
+
+  describe('fs.file.write durability', () => {
+    const grantedScopes = ['repository:write'];
+
+    it('creates a file and reports it as created', async () => {
+      const res = await call({
+        tool: 'fs.file.write',
+        args: { path: 'fresh.txt', content: 'hello' },
+        grantedScopes,
+      });
+
+      expect(res.result).toMatchObject({ created: true, bytes: 5 });
+      expect(await fs.readFile(path.join(workspace, 'fresh.txt'), 'utf8')).toBe('hello');
+    });
+
+    it('reports an overwrite as not created', async () => {
+      await fs.writeFile(path.join(workspace, 'fresh.txt'), 'old', 'utf8');
+
+      const res = await call({
+        tool: 'fs.file.write',
+        args: { path: 'fresh.txt', content: 'new' },
+        grantedScopes,
+      });
+
+      expect(res.result).toMatchObject({ created: false });
+      expect(await fs.readFile(path.join(workspace, 'fresh.txt'), 'utf8')).toBe('new');
+    });
+
+    /**
+     * The reason this tool goes through the atomic path at all. A plain
+     * `writeFile` opens with O_TRUNC, so a failure after truncation leaves
+     * neither the old content nor the new. Here the rename never happens and
+     * the previous bytes are still on disk.
+     */
+    it('leaves the previous content intact when the write fails', async () => {
+      const target = path.join(workspace, 'important.txt');
+      await fs.writeFile(target, 'must survive', 'utf8');
+
+      const original = fs.rename.bind(fs);
+      (fs as unknown as { rename: unknown }).rename = async () => {
+        throw new Error('simulated failure');
+      };
+
+      let res;
+      try {
+        res = await call({
+          tool: 'fs.file.write',
+          args: { path: 'important.txt', content: 'replacement' },
+          grantedScopes,
+        });
+      } finally {
+        (fs as unknown as { rename: unknown }).rename = original;
+      }
+
+      expect(res!.outcome).toBe('error');
+      expect(await fs.readFile(target, 'utf8')).toBe('must survive');
+    });
+
+    it('leaves no temp file behind after a failed write', async () => {
+      await fs.writeFile(path.join(workspace, 'important.txt'), 'must survive', 'utf8');
+
+      const original = fs.rename.bind(fs);
+      (fs as unknown as { rename: unknown }).rename = async () => {
+        throw new Error('simulated failure');
+      };
+      try {
+        await call({
+          tool: 'fs.file.write',
+          args: { path: 'important.txt', content: 'replacement' },
+          grantedScopes,
+        });
+      } finally {
+        (fs as unknown as { rename: unknown }).rename = original;
+      }
+
+      const left = (await fs.readdir(workspace)).filter((f) => f.includes('.tmp'));
+      expect(left).toEqual([]);
+    });
+
+    it('refuses the write when the file changed since the caller read it', async () => {
+      const target = path.join(workspace, 'raced.txt');
+      await fs.writeFile(target, 'version one', 'utf8');
+
+      const res = await call({
+        tool: 'fs.file.write',
+        args: {
+          path: 'raced.txt',
+          content: 'version two',
+          expectedHash: hashContent('something the caller imagined'),
+        },
+        grantedScopes,
+      });
+
+      expect(res.outcome).toBe('error');
+      expect(String(res.reason)).toMatch(/changed since/);
+      expect(await fs.readFile(target, 'utf8')).toBe('version one');
+    });
+
+    it('accepts the write when the hash still matches', async () => {
+      const target = path.join(workspace, 'raced.txt');
+      await fs.writeFile(target, 'version one', 'utf8');
+
+      const res = await call({
+        tool: 'fs.file.write',
+        args: {
+          path: 'raced.txt',
+          content: 'version two',
+          expectedHash: hashContent('version one'),
+        },
+        grantedScopes,
+      });
+
+      expect(res.ok).toBe(true);
+      expect(await fs.readFile(target, 'utf8')).toBe('version two');
+    });
   });
 
   it('refuses a high-risk call with no approval', async () => {

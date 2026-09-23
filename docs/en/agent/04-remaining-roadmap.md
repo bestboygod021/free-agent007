@@ -278,9 +278,33 @@ rename.
      string, or rewritten a module path. **A writer is a much harsher test of
      a reader than the reader's own tests are.**
 
+   `fs.file.write` has since adopted the atomic path, which needed two
+   changes to the writer and exposed a third bug:
+
+   - **Creating a file and replacing one are different decisions.** The writer
+     refused anything it could not first read — the guard that stops a typo'd
+     path from quietly producing a plausible new file. `fs.file.write`
+     genuinely creates files, so creation became an explicit `allowCreate`
+     opt-in rather than the default softening for everyone.
+   - **A file that does not exist has no realpath**, so the *parent* is
+     resolved instead. Resolving only the string would have let a symlinked
+     parent directory place the write outside the workspace while the
+     confinement check looked at a path the write never used.
+   - **A TOCTOU that was already there:** phase 2 called `realpath` again
+     instead of reusing the target phase 1 had verified. A symlink swapped
+     between the two phases would be checked as one path and written as
+     another. Phase 1's resolved target is now carried forward.
+
+   And a mutant survived on the first attempt, the same trap as before: the
+   rollback test created a file that sorted *second*, so the simulated failure
+   happened before it was ever renamed in and there was nothing to undo.
+   Deleting the entire "remove the created file" branch kept the test green.
+   Renaming it to sort first killed the mutant. **When a mutant survives, the
+   fixture is usually wrong, not the assertion.**
+
    Still not covered, said out loud: phase 3 is a loop of atomic operations,
    not one atomic operation — a power loss mid-loop is not covered, and
-   `fs.file.write` has *not* yet adopted the atomic path.
+   `git.patch.file.write` still writes its patch file directly.
 
 ---
 

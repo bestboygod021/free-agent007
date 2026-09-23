@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { registerTool, ToolError, type ToolInvocationContext } from './agent-tools.js';
 import { isSensitivePath } from '@freellmapi/agent/core/redaction.js';
+import { writeFilesAtomically, AtomicWriteError } from './atomic-write.js';
 import { spawnIsolated, probeIsolation, describeIsolation } from './agent-sandbox.js';
 import {
   attestSpawn,
@@ -257,25 +258,50 @@ export function registerBuiltinTools(): void {
       properties: {
         path: { type: 'string', description: 'Path relative to the workspace root.' },
         content: { type: 'string', description: 'Full file content.' },
+        expectedHash: {
+          type: 'string',
+          description:
+            'Optional SHA-256 of the content this write was computed against. ' +
+            'When given, the write refuses if the file changed since it was read.',
+        },
       },
       required: ['path', 'content'],
       additionalProperties: false,
     },
     async handler(args, ctx) {
       const content = args.content as string;
+      const expectedHash = typeof args.expectedHash === 'string' ? args.expectedHash : undefined;
       if (Buffer.byteLength(content, 'utf8') > MAX_WRITE_BYTES) {
         throw new ToolError(`content exceeds ${MAX_WRITE_BYTES} bytes.`);
       }
       const file = await resolveInside(ctx.workspaceRoot, args.path);
       await fs.mkdir(path.dirname(file), { recursive: true });
 
-      const existed = await fs
-        .stat(file)
-        .then(() => true)
-        .catch(() => false);
-      await fs.writeFile(file, content, 'utf8');
-
-      return { path: args.path, bytes: Buffer.byteLength(content, 'utf8'), created: !existed };
+      // Goes through the atomic path rather than `fs.writeFile`, so a failed
+      // write leaves the previous file intact instead of a truncated one. A
+      // plain `writeFile` opens with O_TRUNC: if it fails after truncating,
+      // the old content is gone and the new content never arrived.
+      try {
+        const result = await writeFilesAtomically(
+          ctx.workspaceRoot,
+          [{ path: file, content, ...(expectedHash ? { expectedHash } : {}) }],
+          { allowCreate: true },
+        );
+        return {
+          path: args.path,
+          bytes: result.bytesWritten,
+          created: result.created.length > 0,
+        };
+      } catch (err) {
+        if (err instanceof AtomicWriteError) {
+          throw new ToolError(
+            err.rolledBack
+              ? err.message
+              : `${err.message}; UNRESTORED: ${err.unrestored.join(', ')}`,
+          );
+        }
+        throw err;
+      }
     },
   });
 

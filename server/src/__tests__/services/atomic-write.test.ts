@@ -341,4 +341,153 @@ describe('writeFilesAtomically', () => {
     expect(observed).toHaveLength(1);
     expect(path.dirname(observed[0]!)).toBe(path.dirname(deep));
   });
+
+  describe('creating new files', () => {
+    // The atomic writer deliberately does not create directories: making a
+    // path exist is a different decision from replacing its contents, and
+    // `fs.file.write` makes it explicitly with mkdir before calling in.
+    beforeEach(async () => {
+      await fs.mkdir(path.join(root, 'src'), { recursive: true });
+    });
+
+    /**
+     * The default has to stay "refuse": a caller that mistypes a path should
+     * get an error, not a plausible-looking new file next to the real one.
+     */
+    it('refuses a file that does not exist unless creation is allowed', async () => {
+      const missing = path.join(root, 'src/new.ts');
+
+      await expect(
+        writeFilesAtomically(root, [{ path: missing, content: 'x' }]),
+      ).rejects.toThrow(/cannot read/);
+
+      await expect(fs.stat(missing)).rejects.toThrow();
+    });
+
+    it('creates the file when creation is allowed', async () => {
+      const missing = path.join(root, 'src/new.ts');
+
+      const result = await writeFilesAtomically(
+        root,
+        [{ path: missing, content: 'fresh' }],
+        { allowCreate: true },
+      );
+
+      expect(await fs.readFile(missing, 'utf8')).toBe('fresh');
+      expect(result.created).toEqual([missing]);
+    });
+
+    it('does not report an existing file as created', async () => {
+      const existing = await write('src/old.ts', 'before');
+
+      const result = await writeFilesAtomically(
+        root,
+        [{ path: existing, content: 'after' }],
+        { allowCreate: true },
+      );
+
+      expect(result.created).toEqual([]);
+    });
+
+    /**
+     * An expectedHash for a file that is not there is not "create it" -- the
+     * caller previewed content that does not exist, so its whole edit set
+     * describes a repository that is no longer real.
+     */
+    it('refuses to create a file the caller expected to already have content', async () => {
+      const missing = path.join(root, 'src/new.ts');
+
+      await expect(
+        writeFilesAtomically(
+          root,
+          [{ path: missing, content: 'x', expectedHash: hashContent('something') }],
+          { allowCreate: true },
+        ),
+      ).rejects.toThrow(/does not exist but the edit expects existing content/);
+
+      await expect(fs.stat(missing)).rejects.toThrow();
+    });
+
+    it('deletes a newly created file when a later rename fails', async () => {
+      // Order matters, and getting it wrong makes this test pass with the
+      // delete branch removed: edits are applied sorted by path, so the new
+      // file must sort FIRST. If it renames second, the failure happens
+      // before it is ever swapped in and there is nothing to undo.
+      const fresh = path.join(root, 'src/a-new.ts');
+      const existing = await write('src/b.ts', 'original');
+
+      let calls = 0;
+      const original = fs.rename.bind(fs);
+      (fs as any).rename = async (from: string, to: string) => {
+        calls += 1;
+        if (calls === 2) throw new Error('simulated rename failure');
+        return original(from, to);
+      };
+
+      let error: AtomicWriteError | undefined;
+      try {
+        await writeFilesAtomically(
+          root,
+          [
+            { path: fresh, content: 'new file' },
+            { path: existing, content: 'changed' },
+          ],
+          { allowCreate: true },
+        );
+      } catch (err) {
+        error = err as AtomicWriteError;
+      } finally {
+        (fs as any).rename = original;
+      }
+
+      expect(error).toBeInstanceOf(AtomicWriteError);
+      expect(error!.rolledBack).toBe(true);
+      // The pre-existing file is back to its original bytes...
+      expect(await fs.readFile(existing, 'utf8')).toBe('original');
+      // ...and the file that did not exist before still does not.
+      await expect(fs.stat(fresh)).rejects.toThrow();
+    });
+
+    it('does not create missing directories', async () => {
+      await expect(
+        writeFilesAtomically(
+          root,
+          [{ path: path.join(root, 'nope/deep/a.ts'), content: 'x' }],
+          { allowCreate: true },
+        ),
+      ).rejects.toThrow(/cannot resolve the directory/);
+
+      await expect(fs.stat(path.join(root, 'nope'))).rejects.toThrow();
+    });
+
+    it('still refuses to create a file outside the workspace', async () => {
+      const outside = path.join(path.dirname(root), 'escaped.ts');
+
+      await expect(
+        writeFilesAtomically(root, [{ path: outside, content: 'x' }], { allowCreate: true }),
+      ).rejects.toThrow(/outside the workspace/);
+
+      await expect(fs.stat(outside)).rejects.toThrow();
+    });
+
+    /**
+     * A new file has no realpath, so the parent is resolved instead. Resolving
+     * only the string would let a symlinked parent point the write anywhere.
+     */
+    it('resolves a symlinked parent directory before checking confinement', async () => {
+      const outsideDir = await fs.mkdtemp(path.join(os.tmpdir(), 'outside-'));
+      await fs.symlink(outsideDir, path.join(root, 'link'));
+
+      await expect(
+        writeFilesAtomically(
+          root,
+          [{ path: path.join(root, 'link/new.ts'), content: 'x' }],
+          { allowCreate: true },
+        ),
+      ).rejects.toThrow(/outside the workspace/);
+
+      await expect(fs.stat(path.join(outsideDir, 'new.ts'))).rejects.toThrow();
+      await fs.rm(outsideDir, { recursive: true, force: true });
+    });
+  });
 });

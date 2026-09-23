@@ -205,7 +205,7 @@ tested code, not by a language model.
 
 ```bash
 npm run agent:test        # kernel tests
-npm test -w @freellmapi/server   # 4,020 server tests
+npm test -w @freellmapi/server   # 4,034 server tests
 npm run agent:typecheck   # strict tsc, zero @ts-ignore
 ```
 
@@ -217,7 +217,7 @@ test that fails if its guard is removed.
 
 | Area | Tools | Notes |
 |---|---|---|
-| Filesystem | `fs.read_file` `fs.list` `fs.search` `fs.file.write` | Confined to a workspace root the caller cannot choose; `realpath` checked, credential-shaped files refused |
+| Filesystem | `fs.read_file` `fs.list` `fs.search` `fs.file.write` | Confined to a workspace root the caller cannot choose; `realpath` checked, credential-shaped files refused. Writes go through the atomic path, so a failed write leaves the old file rather than a truncated one |
 | Code navigation | `code.symbol.search` `code.outline.read` `code.file.outline.read` `code.references.search` | Declarations *and* uses. Each reference is classified as code / string / comment / import / declaration |
 | Git | `git.status.read` `git.diff.read` `git.branch.create` `git.patch.file.write` `git.commit.create` | Protected branches cannot be evaded by omitting the ref — writes resolve their own target |
 | Forge | `git.pull_request.create` | Under a separate, revocable forge credential that is never written to `.git/config` |
@@ -417,7 +417,7 @@ The flag tracks reality — it is never hard-coded, and a test fails if it is.
 
 ```bash
 npm test                          # everything
-npm test -w @freellmapi/server    # 4,020 server tests, ~4 min
+npm test -w @freellmapi/server    # 4,034 server tests, ~4 min
 npm run agent:test                # kernel tests
 npm run lint && npm run build
 ```
@@ -616,12 +616,14 @@ successes is not useful:
   wall-clock timeout is the only resource bound. All of this is reported by
   `describeIsolation()` at runtime.
 - **The atomic write is atomic per file, not per commit.** `code.rename.apply`
-  writes every file through a temp-and-`rename` swap and rolls back from
-  in-memory originals if a later rename fails, so an interrupted refactor is
-  restored. It is a loop of atomic operations, not one atomic operation: a
-  power loss mid-loop is not covered, and a rollback that itself fails is
-  reported with the exact list of unrestored files rather than swallowed. The
-  design and its limits are in
+  and `fs.file.write` both write through a temp-and-`rename` swap and roll
+  back from in-memory originals if a later rename fails, so an interrupted
+  refactor is restored and a failed single write leaves the previous file
+  intact instead of a truncated one. Both accept an optional `expectedHash`
+  and refuse if the file changed since it was read. It is still a loop of
+  atomic operations, not one atomic operation: a power loss mid-loop is not
+  covered, and a rollback that itself fails is reported with the exact list of
+  unrestored files rather than swallowed. The design and its limits are in
   [docs/en/agent/05-atomic-refactor-design.md](docs/en/agent/05-atomic-refactor-design.md).
 - **Roughly 177 of 500 catalogued capabilities are implemented.** No browser
   automation, no PDF/DOCX parsing, no OpenTelemetry — those dependencies are

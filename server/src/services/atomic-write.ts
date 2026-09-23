@@ -66,8 +66,22 @@ export interface FileEdit {
   expectedHash?: string;
 }
 
+export interface AtomicWriteOptions {
+  /**
+   * Whether an edit may name a file that does not exist yet.
+   *
+   * Off by default, and deliberately so: refusing to write a file it cannot
+   * first read is what stops a typo'd path from quietly creating junk instead
+   * of failing. A caller that genuinely creates files (`fs.file.write`) opts
+   * in; a caller that edits existing ones (a rename) must not.
+   */
+  allowCreate?: boolean;
+}
+
 export interface AtomicWriteResult {
   written: string[];
+  /** Subset of `written` that did not exist before this call. */
+  created: string[];
   bytesWritten: number;
 }
 
@@ -113,6 +127,7 @@ async function syncPath(target: string, isDirectory: boolean): Promise<void> {
 export async function writeFilesAtomically(
   root: string,
   edits: readonly FileEdit[],
+  options: AtomicWriteOptions = {},
 ): Promise<AtomicWriteResult> {
   if (edits.length === 0) {
     // Not an error, but not a success either: a caller that reads "ok" from
@@ -128,6 +143,10 @@ export async function writeFilesAtomically(
   const ordered = [...edits].sort((a, b) => a.path.localeCompare(b.path));
 
   const originals = new Map<string, string>();
+  /** Targets that did not exist in phase 1; rolling these back means deleting. */
+  const creating = new Set<string>();
+  /** Phase-1 resolved target per edit, reused verbatim by later phases. */
+  const targets = new Map<FileEdit, string>();
   const temps: string[] = [];
   const renamed: string[] = [];
 
@@ -139,7 +158,25 @@ export async function writeFilesAtomically(
     // --- Phase 1: read and verify. Nothing is written in this phase. -------
     for (const edit of ordered) {
       const real = await fs.realpath(edit.path).catch(() => null);
-      const target = real ?? path.resolve(edit.path);
+
+      // For a file that does not exist there is nothing to resolve, so the
+      // *parent* is resolved instead. Falling back to `path.resolve` would
+      // leave a symlinked parent directory unresolved, and the confinement
+      // check below would then compare a path that is not where the write
+      // actually lands.
+      let target: string;
+      if (real !== null) {
+        target = real;
+      } else {
+        const parent = await fs.realpath(path.dirname(edit.path)).catch(() => null);
+        if (parent === null) {
+          throw new AtomicWriteError(
+            `cannot resolve the directory of ${edit.path}; refusing to write any file`,
+            true,
+          );
+        }
+        target = path.join(parent, path.basename(edit.path));
+      }
 
       const relative = path.relative(resolvedRoot, target);
       if (relative.startsWith('..') || path.isAbsolute(relative)) {
@@ -149,24 +186,40 @@ export async function writeFilesAtomically(
         );
       }
 
-      const current = await fs.readFile(target, 'utf8').catch(() => null);
+      const current = real === null ? null : await fs.readFile(target, 'utf8').catch(() => null);
       if (current === null) {
-        throw new AtomicWriteError(`cannot read ${edit.path}; refusing to write any file`, true);
-      }
-      if (edit.expectedHash !== undefined && hashContent(current) !== edit.expectedHash) {
+        if (!options.allowCreate) {
+          throw new AtomicWriteError(`cannot read ${edit.path}; refusing to write any file`, true);
+        }
+        if (edit.expectedHash !== undefined) {
+          // The caller previewed content for a file that is not there. Either
+          // the path is wrong or the file was deleted since; both mean the
+          // edit set describes a repository that no longer exists.
+          throw new AtomicWriteError(
+            `${relative} does not exist but the edit expects existing content; nothing was written`,
+            true,
+          );
+        }
+        creating.add(target);
+      } else if (edit.expectedHash !== undefined && hashContent(current) !== edit.expectedHash) {
         throw new AtomicWriteError(
           `${path.relative(resolvedRoot, target)} changed since the edit was computed; ` +
             'nothing was written',
           true,
         );
       }
-      originals.set(target, current);
+
+      if (current !== null) originals.set(target, current);
+      targets.set(edit, target);
     }
 
     // --- Phase 2: write temps beside their targets and fsync them. ---------
     const plan: { target: string; temp: string; content: string }[] = [];
     for (const edit of ordered) {
-      const target = await fs.realpath(edit.path);
+      // Reuses the phase-1 target rather than resolving again. Re-resolving
+      // reopened the check: a symlink swapped between the two phases would be
+      // verified as one path and written as another.
+      const target = targets.get(edit)!;
       const temp = path.join(
         path.dirname(target),
         `.${path.basename(target)}.${token}.tmp`,
@@ -192,12 +245,17 @@ export async function writeFilesAtomically(
         const unrestored: string[] = [];
         for (const done of renamed) {
           const original = originals.get(done);
-          if (original === undefined) {
-            unrestored.push(done);
-            continue;
-          }
           try {
-            await fs.writeFile(done, original, 'utf8');
+            if (original === undefined) {
+              // Nothing was there before, so restoring it means removing it.
+              if (!creating.has(done)) {
+                unrestored.push(done);
+                continue;
+              }
+              await fs.rm(done, { force: true });
+            } else {
+              await fs.writeFile(done, original, 'utf8');
+            }
           } catch {
             unrestored.push(done);
           }
@@ -213,6 +271,7 @@ export async function writeFilesAtomically(
 
     return {
       written: plan.map((p) => p.target),
+      created: plan.map((p) => p.target).filter((t) => creating.has(t)),
       bytesWritten: plan.reduce((sum, p) => sum + Buffer.byteLength(p.content, 'utf8'), 0),
     };
   } catch (err) {
