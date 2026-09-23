@@ -9,6 +9,12 @@ import {
   extractSymbols,
   type CodeSymbol,
 } from './code-index.js';
+import {
+  findReferences,
+  summariseReferences,
+  referencedFiles,
+  isValidSymbolName,
+} from './code-references.js';
 
 /**
  * Code navigation tools: finding a definition, and reading a repository's
@@ -49,6 +55,8 @@ const MAX_MATCHES = 25;
 /** Lines of surrounding source returned with a match. */
 const MAX_CONTEXT_LINES = 12;
 const MAX_OUTLINE_FILES = 300;
+/** References returned in one call. The totals are always for the full scan. */
+const MAX_REFERENCES = 200;
 
 export function registerCodeTools(): void {
   registerTool({
@@ -179,6 +187,85 @@ export function registerCodeTools(): void {
         path: normalised,
         symbols: extractSymbols(normalised, content),
         lines: content.split('\n').length,
+      };
+    },
+  });
+
+  /**
+   * The other half of `code.symbol.search`: not "where is this defined" but
+   * "what breaks if I change it".
+   *
+   * Named `code.references.search` because the policy engine classifies by
+   * the dotted suffix. Measured against the live engine, `code.symbol.references`
+   * and `code.usages.find` both fall to the restrictive default --
+   * `external_write`, `high`, approval required -- which would silently drop a
+   * read-only tool out of every autonomous phase. `.search` is read-classified
+   * by the same rule that covers `fs.search`. This is the mistake the header
+   * comment above describes, avoided by measuring first rather than by taste.
+   */
+  registerTool({
+    name: 'code.references.search',
+    description:
+      'Find every place a symbol is USED, classified as code, string, comment, import or ' +
+      'declaration. Use this before renaming or changing a signature: it answers what would ' +
+      'break. Only "code" references are safe to rewrite mechanically.',
+    schema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          minLength: 1,
+          description: 'Exact symbol name. Must be a valid identifier.',
+        },
+        path: {
+          type: 'string',
+          description: 'Subdirectory to search. Defaults to the workspace root.',
+        },
+        context: {
+          type: 'string',
+          enum: ['code', 'string', 'comment', 'import', 'declaration'],
+          description: 'Return only references of this kind.',
+        },
+      },
+      required: ['name'],
+      additionalProperties: false,
+    },
+    timeoutMs: 60_000,
+    async handler(args, ctx) {
+      const base = await resolveInside(ctx.workspaceRoot, (args.path as string) ?? '.');
+      const name = String(args.name);
+
+      // Refused here rather than returning an empty result, so a model that
+      // passes a pattern is told its input was wrong instead of concluding
+      // the symbol is unused -- which is the dangerous reading.
+      if (!isValidSymbolName(name)) {
+        throw new ToolError(
+          `"${name}" is not a valid identifier; this tool matches whole symbol names, not patterns.`,
+        );
+      }
+
+      // Declarations are resolved first so the declaration site is labelled as
+      // such rather than counted as one more call site.
+      const index = await buildCodeIndex(base);
+      const declarations = index.symbols.filter((sym) => sym.name === name);
+
+      const report = await findReferences(base, name, declarations);
+      const wanted = typeof args.context === 'string' ? args.context : null;
+      const references = wanted
+        ? report.references.filter((ref) => ref.context === wanted)
+        : report.references;
+
+      return {
+        symbol: name,
+        references: references.slice(0, MAX_REFERENCES),
+        totals: summariseReferences(report.references),
+        files: referencedFiles(report.references),
+        filesScanned: report.filesScanned,
+        // Stated rather than implied. A caller that reads a count without
+        // reading this may act on a number that is a floor, not a total.
+        truncated: report.truncated || references.length > MAX_REFERENCES,
+        confidence: report.confidence,
+        confidenceReason: report.confidenceReason,
       };
     },
   });

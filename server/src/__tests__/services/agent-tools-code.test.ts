@@ -77,6 +77,10 @@ describe('code navigation tools', () => {
     expect(safe).toContain('code.symbol.search');
     expect(safe).toContain('code.outline.read');
     expect(safe).toContain('code.file.outline.read');
+    // Same rule, same trap: `code.symbol.references` and `code.usages.find`
+    // were both measured against the live engine and both fell to
+    // external_write/high. `.search` is the suffix that keeps it read-only.
+    expect(safe).toContain('code.references.search');
   });
 
   it('finds a definition and not its call sites', async () => {
@@ -138,5 +142,78 @@ describe('code navigation tools', () => {
     const res = await call('code.symbol.search', { name: 'resolveScope', path: 'src/routes' });
     const { matches } = res.result as { matches: unknown[] };
     expect(matches).toEqual([]);
+  });
+
+  describe('code.references.search', () => {
+    it('finds call sites the definition search deliberately excludes', async () => {
+      const res = await call('code.references.search', { name: 'resolveScope' });
+      expect(res.ok).toBe(true);
+
+      const out = res.result as {
+        totals: Record<string, number>;
+        files: string[];
+      };
+
+      // One declaration in tenancy.ts; in api.ts the imported binding and the
+      // call. The module specifier is "../services/tenancy.js", which does not
+      // contain the symbol name, so there is no import-context reference here.
+      expect(out.totals.declaration).toBe(1);
+      expect(out.totals.code).toBe(2);
+      expect(out.totals.import).toBe(0);
+      expect(out.files).toEqual(['src/routes/api.ts', 'src/services/tenancy.ts']);
+    });
+
+    it('filters to one kind of reference when asked', async () => {
+      const res = await call('code.references.search', {
+        name: 'resolveScope',
+        context: 'code',
+      });
+
+      const { references } = res.result as { references: { context: string }[] };
+      expect(references.length).toBeGreaterThan(0);
+      expect(references.every((r) => r.context === 'code')).toBe(true);
+    });
+
+    /**
+     * A model that passes a pattern and receives an empty list concludes the
+     * symbol is unused, which is the dangerous reading. It is told instead.
+     */
+    it('refuses a pattern rather than reporting no references', async () => {
+      const res = await call('code.references.search', { name: 'resolve.*' });
+
+      expect(res.ok).toBe(false);
+      expect(String(res.reason)).toContain('not a valid identifier');
+    });
+
+    it('says when a name is too common to trust', async () => {
+      await write('src/util.ts', 'export function get() { return 1; }\nget();\n');
+
+      const res = await call('code.references.search', { name: 'get' });
+      const out = res.result as { confidence: string; confidenceReason: string };
+
+      expect(out.confidence).toBe('approximate');
+      expect(out.confidenceReason).toMatch(/common/i);
+    });
+
+    it('reports a distinctive name as exact', async () => {
+      const res = await call('code.references.search', { name: 'resolveScope' });
+      const out = res.result as { confidence: string };
+
+      expect(out.confidence).toBe('exact');
+    });
+
+    it('does not count a mention inside a comment as a call site', async () => {
+      await write(
+        'src/notes.ts',
+        '// resolveScope is called elsewhere\nconst x = 1;\n',
+      );
+
+      const res = await call('code.references.search', { name: 'resolveScope' });
+      const out = res.result as { totals: Record<string, number> };
+
+      expect(out.totals.comment).toBe(1);
+      // The comment did not inflate the number a refactor would act on.
+      expect(out.totals.code).toBe(2);
+    });
   });
 });
