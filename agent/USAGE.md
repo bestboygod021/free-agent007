@@ -434,6 +434,7 @@ data.csv.query           data.csv.schema.read  fs.file.write
 fs.list                  fs.read_file          fs.search
 git.branch.create        git.commit.create     git.diff.read
 git.patch.file.write     git.status.read       sandbox.test
+web.page.read            web.page.search
 ```
 
 ```bash
@@ -679,6 +680,61 @@ primitive wearing a SELECT's clothes. It is refused by keyword because the
 engine's own read-only enforcement does not cover it. That is the only
 keyword check here; a long blacklist would mean the defence was in the wrong
 layer.
+
+### Reading a page without handing over the network
+
+`web.page.read` fetches a URL and returns its text; `web.page.search` fetches
+one and returns only the lines matching a query. They are the first tools that
+reach outside the machine, and that changes what can go wrong: every earlier
+tool's worst case was a file, and this one's worst case is a request to an
+address the model chose.
+
+```bash
+curl -s -X POST http://localhost:3001/api/agent/tools/invoke \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"tool":"web.page.read","organizationId":"default","projectId":"default",
+       "args":{"url":"https://registry.npmjs.org/multer/2.4.0","maxChars":300}}'
+```
+
+The interesting output is the refusals. Run against a live server:
+
+```
+url                                            outcome  reason
+http://169.254.169.254/latest/meta-data/       error    resolves to a cloud metadata address
+http://2852039166/latest/meta-data/            error    resolves to a cloud metadata address
+http://127.0.0.1:3001/api/agent/runs           error    resolves to a private address (127.0.0.1)
+https://registry.npmjs.org/multer/2.4.0        ok       200 text/plain
+```
+
+Row two is the one worth dwelling on. `2852039166` is `169.254.169.254` written
+as a single decimal integer — a standard way of slipping a blocklist that
+compares strings. It is caught because the check classifies the *resolved
+address*, not the text of the URL.
+
+Row three matters for a different reason: the gateway's own API is on
+loopback. Without that rule, a tool reaching "the web" could read the server
+that is running it.
+
+Three properties are worth stating because they are easy to get wrong:
+
+- **The destination is re-checked on every redirect.** Following redirects with
+  `fetch`'s built-in handling would check the first URL and then let a `302`
+  send the request to `169.254.169.254` anyway. The loop is manual for that one
+  reason.
+- **Private addresses are blocked by default here**, unlike the provider path
+  where it is opt-in (`FREEAPI_BLOCK_PRIVATE_PROVIDER_URLS`). An operator may
+  legitimately point a provider at a model on their LAN; an agent following a
+  link it read in a document has no such excuse.
+- **`<script>` contents are removed, not just the tags.** Otherwise a page's
+  JavaScript source ends up in the text a model reads, and
+  `// ignore previous instructions` in a script body is indistinguishable from
+  prose.
+
+What they cannot do: **no JavaScript is executed**, so a page that renders
+client-side returns little or no text. `web.page.search` reports `pageHadText`
+precisely so "no matches" can be told apart from "nothing to match against".
+There is also no `POST` — a tool that can write to a third-party service is a
+different risk class and would need a different name.
 
 ### Credential files are refused, not redacted
 

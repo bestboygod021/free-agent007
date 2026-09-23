@@ -145,10 +145,10 @@ This is still the bulk of the list and the bulk of the work.
 | Area | Status | Reality |
 |---|---|---|
 | Coding (166–195) | **Partial** | Navigation is real: `services/code-index.ts` maps declarations and `code.symbol.search` / `code.outline.read` / `code.file.outline.read` are offered to every read-only phase. Patch application and commits exist via `agent-tools-git.ts`. Still absent: PR creation, a real execution sandbox, refactoring across files. `repository-context-runtime.ts` and `repository-intelligence-runtime.ts` remain unreachable pure logic. |
-| Browser (196–220) | **Absent** | No Playwright, no Puppeteer, no browser dependency of any kind. `browser-signal-runtime.ts` processes *hypothetical* browser signals. This is a from-scratch subsystem. |
+| Browser (196–220) | **Partial — 2 of 25** | `web.page.read` and `web.page.search` fetch a page and return its text, behind the DNS-resolving SSRF guard in `lib/url-guard.ts`, re-checked on every redirect hop. No JavaScript is executed, so items needing a rendered DOM (clicking, forms, screenshots) remain absent, as does Playwright/Puppeteer. `browser-signal-runtime.ts` still processes *hypothetical* signals. |
 | Business data (221–245) | **Partial** | `services/tabular-query.ts` loads a CSV into a private in-memory SQLite database and answers read-only SQL against it (`data.csv.query`, `data.csv.schema.read`). No Excel parser, and no CRM/email/calendar connectors. |
 
-**Verdict:** ~9 of 80.
+**Verdict:** ~11 of 80.
 
 A note on item 189 (secret scanning), which the previous pass scored as the
 one built capability here. `redaction.ts` was real but only half-connected:
@@ -172,7 +172,7 @@ Disproportionately strong, because the gateway had to solve these for itself.
 | 250–252 | URL allow/blocklist, SSRF | **Built** | `lib/url-guard.ts` |
 | 254–257 | PII and secret handling | **Built** | `redaction.ts`, `log-redaction.ts`, `error-redaction.ts` |
 | 260 | Output schema checks | **Built** | `structured-output.ts`, `output-contract.ts` |
-| 261 | Egress control | **Rules only** | `egress-policy-runtime.ts` |
+| 261 | Egress control | **Partial** | `lib/url-guard.ts` now enforces on the agent's own outbound path (`services/web-fetch.ts`): DNS resolved, address classified, re-checked per redirect. `egress-policy-runtime.ts` remains a *validator* — it takes `dnsPinned`/`tlsVerified`/`dlpPassed` as booleans from its caller and returns `allowed: true` for the AWS metadata endpoint if asked nicely, so it cannot be the enforcement point |
 | 262 | Tenant isolation | **Built** (agent surface) | `services/agent-tenancy.ts` — every scoped read and write resolves membership from the database; a body naming another tenant gets 404, not its data. Still agent-only: the gateway's own tables have no tenancy |
 | 263 | Global kill switch | **Partial** | `maintenance` setting |
 | 267 | Security decision log | **Built** | `server_logs`, `attempt-trace.ts` |
@@ -292,12 +292,12 @@ accept knowingly.
 | 1. Gateway/API | 14 | 15 |
 | 2. Providers | 17 | 20 |
 | 3–7. Agent, tools, memory, RAG, workflow | ~44 | 130 |
-| 8–10. Coding, browser, data | ~9 | 80 |
+| 8–10. Coding, browser, data | ~11 | 80 |
 | 11. Security | 16 | 25 |
 | 12. Identity | ~10 | 25 |
 | 13–14. Observability, cost | ~20 | 50 |
 | 15–20. UX → advanced | ~41 | 155 |
-| **Total** | **~171** | **500** |
+| **Total** | **~173** | **500** |
 
 > **Sequencing for the remaining ~330 lives in
 > [`04-remaining-roadmap.md`](./04-remaining-roadmap.md)**, which also reports a

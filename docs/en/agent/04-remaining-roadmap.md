@@ -94,10 +94,29 @@ consumer. The work is a table, a route, and a call — not a design.
 | `canary-trials` | A/B rollout of a model or prompt | 477–482 |
 | `human-feedback-runtime` | thumbs-up/down feeding scoring | 483–488 |
 | `evaluation-runtime` + `benchmark-runner` | golden sets, judges, regression gates | 309–320 |
-| `egress-policy-runtime` | enforce what `evaluateEgress` already decides | 261 |
+| ~~`egress-policy-runtime`~~ | see the note below — **not wirable as-is** | 261 |
 | `workflow-automation` + `task-dag` | actually execute the validated graph | 141–150 |
 | `repository-context-runtime` | repo-wide context for coding phases | 166–175 |
 | `session-auth`, `usage-ledger`, `platform-settings` | governance surface | 271–280 |
+
+**A correction to this phase's premise, found by attempting it.** I listed
+`egress-policy-runtime` as a wiring job. It is not, and the reason generalises
+to much of the 209. That module is a *validator*: `decideM190Egress` accepts
+`dnsPinned`, `tlsVerified` and `dlpPassed` as booleans **from its caller**.
+Handed a request for `http://169.254.169.254/latest/meta-data/` with every flag
+asserted true, it returns `allowed: true`. I ran that before writing any code.
+
+So "wire up the egress module" would have produced a guard that enforces
+nothing. What actually shipped for item 261 was `services/web-fetch.ts`, which
+*establishes* the facts — resolves DNS, classifies the address — using the
+existing `lib/url-guard.ts`, and is checked on every redirect hop.
+
+The general lesson for the rest of Phase 1: **a kernel module that takes its
+safety properties as parameters cannot be the enforcement point.** Before
+scheduling one as "wiring", check whether it decides anything or merely
+validates what it is told. The ones that decide (`policy-engine`,
+`state-machine`, `identity-access-contract`) are already wired — which is
+probably not a coincidence.
 
 Two cautions learned the hard way on this codebase:
 
@@ -192,10 +211,12 @@ project is that a capability is not claimed until it has been run.
 
 That argues for splitting the phase:
 
-- **6a — `web.page.read` / `web.page.search`:** HTTP fetch plus HTML-to-text
-  extraction, behind `lib/url-guard.ts` (SSRF protection already exists) and
-  the policy engine. No JavaScript execution, but fully runnable and
-  provable *here*, and it covers the most common real use — reading a page.
+- **6a — `web.page.read` / `web.page.search`** — **done.** HTTP fetch plus
+  HTML-to-text extraction behind `lib/url-guard.ts`, re-checked on every
+  redirect hop. Verified against a live server: the AWS metadata endpoint, its
+  decimal-encoded form `http://2852039166/`, and the gateway's own loopback API
+  are all refused; a real page fetches and parses. 50 tests, two mutations
+  killed.
 - **6b — CDP driver:** tools connect to a remote Chrome via an
   `AGENT_BROWSER_CDP_URL`. Real automation, but only testable against a fake
   CDP endpoint in this environment; the live path stays unproven until it runs
