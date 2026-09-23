@@ -205,7 +205,7 @@ tested code, not by a language model.
 
 ```bash
 npm run agent:test        # kernel tests
-npm test -w @freellmapi/server   # 4,036 server tests
+npm test -w @freellmapi/server   # 4,040 server tests
 npm run agent:typecheck   # strict tsc, zero @ts-ignore
 ```
 
@@ -417,7 +417,7 @@ The flag tracks reality — it is never hard-coded, and a test fails if it is.
 
 ```bash
 npm test                          # everything
-npm test -w @freellmapi/server    # 4,036 server tests, ~4 min
+npm test -w @freellmapi/server    # 4,040 server tests, ~4 min
 npm run agent:test                # kernel tests
 npm run lint && npm run build
 ```

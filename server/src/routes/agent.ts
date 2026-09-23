@@ -347,20 +347,35 @@ agentRouter.post('/policy/tool-call', (req: Request, res: Response) => {
     return;
   }
 
-  // The kernel refuses to guess: an absent field must fail closed, so the
-  // defaults here are the most restrictive ones (supervised autonomy, private
-  // work, `main` protected).
-  const ctx = {
-    autonomy: 'supervised',
-    privacyLevel: 'private',
-    workingBranch: 'agent/work',
-    protectedBranches: ['main'],
-    approverUserId: 'unknown',
-    ...(rawContext as Record<string, unknown>),
+  // Built exactly the way /tools/invoke builds it, and for the same reason.
+  //
+  // This endpoint used to spread the request's context over restrictive
+  // defaults, which meant a caller could answer its own question: sending
+  // `protectedBranches: []` turned a denied commit to `main` into an allowed
+  // one, and `approverUserId` could be set to anything. That made this a
+  // simulator of the policy rather than a preview of it, while the docs
+  // promised the driver obeys "exactly the rules /policy/tool-call reports".
+  //
+  // Authority fields (protected branches, working branch, the approver
+  // identity, the autonomy ceiling) come from configuration and the session.
+  // Non-authority fields the caller may legitimately vary -- privacy level,
+  // disabled capabilities -- are still honoured.
+  const sessionEmail = (req as Request & { user?: { email?: string } }).user?.email;
+  const ctx = buildPolicyContext({
+    sessionEmail,
+    requested: rawContext as Record<string, unknown>,
+  });
+
+  // Scopes too: asserting `repository:write` in the body must not make the
+  // preview say yes when the deployment does not hold that scope. A caller
+  // may narrow the set for a hypothetical call, never widen it.
+  const previewed = {
+    ...(call as Record<string, unknown>),
+    grantedScopes: resolveScopes(call.grantedScopes),
   };
 
   try {
-    res.json(evaluateToolCall(call as never, ctx as never));
+    res.json(evaluateToolCall(previewed as never, ctx as never));
   } catch (err) {
     badRequest(res, err instanceof Error ? err.message : 'policy evaluation failed');
   }

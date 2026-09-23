@@ -228,6 +228,90 @@ describe('/api/agent kernel surface', () => {
     expect(res.body.reasons.length).toBeGreaterThan(0);
   });
 
+  /**
+   * The point of this endpoint is to answer "would this be allowed?" the same
+   * way /tools/invoke would. It used to spread the caller's context over its
+   * defaults, so the caller could answer its own question -- sending an empty
+   * protectedBranches list turned a denied commit into an allowed one, while
+   * the real execution path still denied it. A preview that disagrees with
+   * the enforcement is worse than no preview: it is a confident wrong answer.
+   */
+  it('ignores a request that tries to un-protect a branch', async () => {
+    process.env.AGENT_GRANTED_SCOPES = 'repository:write';
+    try {
+      const res = await call(app, 'POST', '/api/agent/policy/tool-call', token, {
+        call: {
+          tool: 'git.commit.create',
+          grantedScopes: ['repository:write'],
+          targetRef: 'main',
+        },
+        context: { protectedBranches: [], approverUserId: 'user-1' },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.allowed).toBe(false);
+      expect(String(res.body.reasons)).toMatch(/protected/);
+    } finally {
+      delete process.env.AGENT_GRANTED_SCOPES;
+    }
+  });
+
+  /**
+   * `autonomy` widens what may run without approval, so the request must not
+   * be able to raise it. The assertion is on the *reason*, which names the
+   * ceiling actually used -- asserting only on `allowed` would pass against
+   * the broken version too, because an external_write tool needs approval
+   * either way and the verdict happens to be the same.
+   */
+  it('ignores a request that raises its own autonomy ceiling', async () => {
+    process.env.AGENT_GRANTED_SCOPES = 'pull_request:write';
+    try {
+      const res = await call(app, 'POST', '/api/agent/policy/tool-call', token, {
+        call: { tool: 'git.pull_request.create', grantedScopes: ['pull_request:write'] },
+        context: { autonomy: 'full' },
+      });
+
+      expect(res.status).toBe(200);
+      expect(String(res.body.reasons)).toContain('"supervised" autonomy ceiling');
+      expect(String(res.body.reasons)).not.toContain('"full"');
+    } finally {
+      delete process.env.AGENT_GRANTED_SCOPES;
+    }
+  });
+
+  it('does not let the request assert a scope the deployment lacks', async () => {
+    // AGENT_GRANTED_SCOPES is unset in tests, so no scope is actually held.
+    const res = await call(app, 'POST', '/api/agent/policy/tool-call', token, {
+      call: { tool: 'git.commit.create', grantedScopes: ['repository:write'] },
+      context: {},
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.allowed).toBe(false);
+    expect(String(res.body.reasons)).toMatch(/scope/i);
+  });
+
+  /**
+   * The preview and the enforcement must not disagree. This asserts they
+   * reach the same verdict for the same call rather than asserting a
+   * hard-coded expectation, so it keeps holding if the rules change.
+   */
+  it('agrees with what /tools/invoke actually does', async () => {
+    const preview = await call(app, 'POST', '/api/agent/policy/tool-call', token, {
+      call: { tool: 'git.commit.create', grantedScopes: ['repository:write'], targetRef: 'main' },
+      context: { protectedBranches: [], approverUserId: 'attacker@evil.test' },
+    });
+    const executed = await call(app, 'POST', '/api/agent/tools/invoke', token, {
+      tool: 'git.commit.create',
+      args: { message: 'test' },
+      grantedScopes: ['repository:write'],
+      approvedBy: 'attacker@evil.test',
+    });
+
+    expect(preview.body.allowed).toBe(false);
+    expect(executed.body.outcome).toBe('denied');
+  });
+
   it('forbids cloud egress in local mode regardless of consent', async () => {
     const res = await call(app, 'POST', '/api/agent/policy/egress', token, {
       privacyLevel: 'internal',

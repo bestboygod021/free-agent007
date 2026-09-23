@@ -322,6 +322,39 @@ rename.
    Still not covered, said out loud: phase 3 is a loop of atomic operations,
    not one atomic operation — a power loss mid-loop is not covered.
 
+5. ~~**The two policy advice endpoints were never audited**~~ — **done, and
+   one was wrong.** `/policy/tool-call` spread the caller's context over
+   restrictive defaults, so the caller could answer its own question:
+   `protectedBranches: []` turned a denied commit to `main` into
+   `allowed: true`, `approverUserId` could be set to anything, and
+   `grantedScopes` was taken from the body rather than from configuration.
+
+   The execution path was never affected — `/tools/invoke` has always built
+   its context with `buildPolicyContext` — so this was not a privilege
+   escalation. It was worse in a quieter way: the docs promise that a driver
+   "obeys exactly the rules `/policy/tool-call` reports", and an agent that
+   consults the preview before acting would have been told yes and then
+   denied. **A preview that disagrees with the enforcement is worse than no
+   preview: it is a confident wrong answer.** Both endpoints now build their
+   context the same way the executor does.
+
+   Writing the tests was the instructive part, and two of the first three
+   asserted nothing:
+
+   - The scope gate fires first, so a test about the *approver* on a call
+     without the scope is refused before it reaches the approval logic. It
+     passed against the broken code.
+   - `approverUserId` is not echoed in the response, so asserting the
+     attacker's address is absent passed no matter what. Deleted.
+   - `autonomy: 'autonomous'` is not a level at all — the levels are
+     `readonly`, `supervised`, `autonomous-branch`, `full` — so the invalid
+     value was discarded by both versions. The surviving test claims `full`
+     and asserts on the *reason string*, which names the ceiling actually
+     applied.
+
+   **An assertion that cannot fail is not a test.** Mutation testing is what
+   exposed all three: the mutant killed one test out of three.
+
 ---
 
 ## Phase 3 — Retrieval that survives real documents
