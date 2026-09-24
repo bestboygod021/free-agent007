@@ -108,6 +108,11 @@ import {
   resolveCitation,
   RagError,
 } from '../services/rag-store.js';
+import {
+  OfficeParseError,
+  readOfficeDocument,
+  type OfficeDocument,
+} from '../services/office-text.js';
 import { EmbeddingsError } from '../services/embeddings.js';
 
 /**
@@ -1032,6 +1037,15 @@ agentRouter.post('/organizations/:organizationId/projects', (req: Request, res: 
  * Embedding happens before any row is written, so a provider outage leaves no
  * half-ingested document behind.
  */
+/**
+ * Largest base64 payload accepted for an office document.
+ *
+ * The decoded archive gets its own, smaller ceiling inside the reader; this
+ * one exists so a gigabyte of base64 is rejected before it is decoded into a
+ * Buffer, not after.
+ */
+const MAX_DOCUMENT_BASE64_CHARS = 48 * 1024 * 1024;
+
 agentRouter.post('/documents', async (req: Request, res: Response) => {
   const body = req.body;
   if (!isPlainObject(body)) {
@@ -1048,17 +1062,81 @@ agentRouter.post('/documents', async (req: Request, res: Response) => {
     return;
   }
 
+  /*
+   * A DOCX or XLSX arrives as base64 in `contentBase64`. Accepting both it and
+   * `content` in one request would mean silently picking a winner, so that is
+   * an error instead: the caller finds out at the boundary rather than
+   * wondering later why their file was ignored.
+   */
+  let office: OfficeDocument | null = null;
+  if (body.contentBase64 !== undefined) {
+    if (typeof body.content === 'string' && body.content.trim() !== '') {
+      badRequest(res, 'send either "content" or "contentBase64", not both.');
+      return;
+    }
+    if (typeof body.contentBase64 !== 'string') {
+      badRequest(res, '"contentBase64" must be a base64-encoded string.');
+      return;
+    }
+    if (body.contentBase64.length > MAX_DOCUMENT_BASE64_CHARS) {
+      res.status(413).json({
+        error: {
+          message: `"contentBase64" is ${body.contentBase64.length} characters; the limit is ${MAX_DOCUMENT_BASE64_CHARS}.`,
+          type: 'invalid_request_error',
+        },
+      });
+      return;
+    }
+    // Node's base64 decoder skips anything it does not recognise rather than
+    // failing, so a typo would quietly become a shorter, corrupt archive.
+    // Re-encoding and comparing is the way to notice.
+    const bytes = Buffer.from(body.contentBase64, 'base64');
+    if (bytes.length === 0 || bytes.toString('base64').replace(/=+$/, '') !== body.contentBase64.replace(/[\s=]+$/g, '')) {
+      badRequest(res, '"contentBase64" is not valid base64.');
+      return;
+    }
+    try {
+      office = readOfficeDocument(bytes);
+    } catch (error) {
+      if (error instanceof OfficeParseError) {
+        badRequest(res, error.message);
+        return;
+      }
+      throw error;
+    }
+    if (office.text.trim() === '') {
+      badRequest(res, `the ${office.format} file contains no extractable text.`);
+      return;
+    }
+  }
+
   try {
     const result = await ingestDocument({
       organizationId: scope.organizationId,
       projectId: scope.projectId,
       title: typeof body.title === 'string' ? body.title : '',
-      content: typeof body.content === 'string' ? body.content : '',
+      content: office ? office.text : typeof body.content === 'string' ? body.content : '',
       ...(typeof body.sourceUri === 'string' ? { sourceUri: body.sourceUri } : {}),
       ...(typeof body.model === 'string' ? { model: body.model } : {}),
       ...(isPlainObject(body.chunking) ? { chunking: body.chunking as Record<string, number> } : {}),
     });
-    res.status(result.deduplicated ? 200 : 201).json(result);
+    // Report what was pulled out of the file. A caller who uploads a
+    // spreadsheet and gets back "3 chunks" has no way to tell whether the
+    // sheet they cared about was read at all.
+    res.status(result.deduplicated ? 200 : 201).json(
+      office
+        ? {
+            ...result,
+            office: {
+              format: office.format,
+              blocks: office.blocks,
+              sheets: office.sheets,
+              truncated: office.truncated,
+              characters: office.text.length,
+            },
+          }
+        : result,
+    );
   } catch (error) {
     sendRagError(res, error);
   }

@@ -1459,6 +1459,10 @@ describe('/api/agent documents and citations', () => {
     ownerToken = createSession(owner.userId);
     createOrganization({ organizationId: 'acme', name: 'Acme', ownerUserId: owner.userId });
     createProject({ organizationId: 'acme', projectId: 'web', name: 'Web' });
+    // Office uploads get their own project. The delete test below takes
+    // `documents[0]` and then asserts the whole project stops matching, which
+    // only holds while "web" has one document in it.
+    createProject({ organizationId: 'acme', projectId: 'files', name: 'Files' });
 
     const viewer = createUser('rag-viewer@example.com', 'password123');
     viewerToken = createSession(viewer.userId);
@@ -1495,6 +1499,104 @@ describe('/api/agent documents and citations', () => {
     expect(resolved.status).toBe(200);
     expect(resolved.body.text).toBe(citation.text);
     expect(resolved.body.matchesStoredChunk).toBe(true);
+  });
+
+  /**
+   * The end-to-end reason the DOCX reader exists. Word splits `resolveScope`
+   * across two runs in this fixture; if the reader joined runs with a space
+   * the identifier would be stored as "resolve Scope" and this search would
+   * come back empty. Asserting on the extracted string in a unit test does not
+   * prove the identifier survived as far as the index.
+   */
+  it('ingests a real .docx and finds an identifier Word split across runs', async () => {
+    const bytes = await fs.readFile(
+      path.join(import.meta.dirname, '../fixtures/office/word-document.docx'),
+    );
+    const ingested = await call(app, 'POST', '/api/agent/documents', ownerToken, {
+      organizationId: 'acme',
+      projectId: 'files',
+      title: 'Runbook',
+      sourceUri: 'docs/runbook.docx',
+      contentBase64: bytes.toString('base64'),
+    });
+    expect(ingested.status).toBe(201);
+    expect(ingested.body.office.format).toBe('docx');
+    expect(ingested.body.office.blocks).toBeGreaterThan(0);
+    expect(ingested.body.office.truncated).toBe(false);
+
+    const found = await call(app, 'POST', '/api/agent/documents/search', ownerToken, {
+      organizationId: 'acme', projectId: 'files', query: 'resolveScope', mode: 'keyword',
+    });
+    expect(found.status).toBe(200);
+    expect(found.body.citations.length).toBeGreaterThan(0);
+    expect(found.body.citations[0].text).toContain('resolveScope');
+
+    // The table came through as tab-separated rows, not one cell per line.
+    const table = await call(app, 'POST', '/api/agent/documents/search', ownerToken, {
+      organizationId: 'acme', projectId: 'files', query: 'ERR_QUOTA_7734', mode: 'keyword',
+    });
+    expect(table.body.citations[0].text).toContain('quota\tERR_QUOTA_7734\tops');
+  });
+
+  it('ingests a real .xlsx and reports the sheets it read', async () => {
+    const bytes = await fs.readFile(
+      path.join(import.meta.dirname, '../fixtures/office/excel-workbook.xlsx'),
+    );
+    const ingested = await call(app, 'POST', '/api/agent/documents', ownerToken, {
+      organizationId: 'acme',
+      projectId: 'files',
+      title: 'Error codes',
+      contentBase64: bytes.toString('base64'),
+    });
+    expect(ingested.status).toBe(201);
+    expect(ingested.body.office.format).toBe('xlsx');
+    expect(ingested.body.office.sheets).toEqual(['Errors', 'Notes']);
+  });
+
+  it('rejects a file that is not an office document', async () => {
+    const res = await call(app, 'POST', '/api/agent/documents', ownerToken, {
+      organizationId: 'acme', projectId: 'files', title: 'Nope',
+      contentBase64: Buffer.from('%PDF-1.7 not a zip at all').toString('base64'),
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toMatch(/docx|xlsx|not a/i);
+  });
+
+  it('refuses both "content" and "contentBase64" instead of picking one', async () => {
+    const bytes = await fs.readFile(
+      path.join(import.meta.dirname, '../fixtures/office/word-document.docx'),
+    );
+    const res = await call(app, 'POST', '/api/agent/documents', ownerToken, {
+      organizationId: 'acme', projectId: 'files', title: 'Both',
+      content: 'plain text', contentBase64: bytes.toString('base64'),
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('not both');
+  });
+
+  /**
+   * Node's base64 decoder drops characters it does not recognise rather than
+   * failing, so without an explicit check a corrupted upload would be read as
+   * a shorter, valid-looking archive.
+   */
+  it('rejects base64 that silently decodes to something shorter', async () => {
+    const res = await call(app, 'POST', '/api/agent/documents', ownerToken, {
+      organizationId: 'acme', projectId: 'files', title: 'Corrupt',
+      contentBase64: 'UEsDBBQ!!!!not base64!!!!',
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('not valid base64');
+  });
+
+  it('will not let a viewer upload an office document either', async () => {
+    const bytes = await fs.readFile(
+      path.join(import.meta.dirname, '../fixtures/office/word-document.docx'),
+    );
+    const res = await call(app, 'POST', '/api/agent/documents', viewerToken, {
+      organizationId: 'acme', projectId: 'files', title: 'Sneaky',
+      contentBase64: bytes.toString('base64'),
+    });
+    expect(res.status).toBe(403);
   });
 
   it('answers 200 rather than duplicating when the same content is re-sent', async () => {

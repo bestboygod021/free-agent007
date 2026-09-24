@@ -205,7 +205,7 @@ tested code, not by a language model.
 
 ```bash
 npm run agent:test        # kernel tests
-npm test -w @freellmapi/server   # 4,079 server tests
+npm test -w @freellmapi/server   # 4,120 server tests
 npm run agent:typecheck   # strict tsc, zero @ts-ignore
 ```
 
@@ -417,7 +417,7 @@ The flag tracks reality — it is never hard-coded, and a test fails if it is.
 
 ```bash
 npm test                          # everything
-npm test -w @freellmapi/server    # 4,079 server tests, ~4 min
+npm test -w @freellmapi/server    # 4,120 server tests, ~4 min
 npm run agent:test                # kernel tests
 npm run lint && npm run build
 ```
@@ -629,13 +629,24 @@ successes is not useful:
   (SQLite FTS5) with the cosine scan by Reciprocal Rank Fusion, because pure
   vector search could not find an identifier that was literally in the
   corpus — `ERR_QUOTA_7734` returned nothing at all. There is no reranking
-  model, camelCase is not split (`resolveScope` is findable, `scope` alone
-  does not find it), and there is still no PDF or DOCX parser. The vector
-  half remains a brute-force scan: measured at 149 ms per query over 10,000
-  chunks, which is less than the embedding call it waits on, so an ANN index
-  was deliberately not built.
-- **Roughly 180 of 500 catalogued capabilities are implemented.** No browser
-  automation, no PDF/DOCX parsing, no OpenTelemetry — those dependencies are
+  model and camelCase is not split (`resolveScope` is findable, `scope` alone
+  does not find it). The vector half remains a brute-force scan: measured at
+  149 ms per query over 10,000 chunks, which is less than the embedding call
+  it waits on, so an ANN index was deliberately not built.
+- **DOCX and XLSX ingest, PDF does not.** `POST /api/agent/documents` accepts
+  `contentBase64` and extracts text from Word and Excel files with no new
+  dependency — they are ZIP archives of XML and Node ships `zlib`. The format
+  is detected from the bytes, not the filename. Runs are joined with no
+  separator, because Word splits `resolveScope` across two runs and a space
+  would store it as `resolve Scope` and put it out of reach of search; table
+  rows come out tab-separated, and `<w:instrText>` field instructions are
+  dropped so a HYPERLINK target no reader ever saw does not enter the index.
+  PDF is **not** supported: it needs font and content-stream decoding that
+  `zlib` alone cannot do, so it was left out rather than half-built.
+  Archives are bounded at 32 MB in, 16 MB per entry and 48 MB total, checked
+  both against the declared size and against what was actually produced.
+- **Roughly 182 of 500 catalogued capabilities are implemented.** No browser
+  automation, no PDF parsing, no OpenTelemetry — those dependencies are
   absent from the lockfile, which is checked rather than assumed.
 
 ## Contributing

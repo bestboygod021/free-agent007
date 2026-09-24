@@ -296,7 +296,7 @@ not answerable by reading.
 
 ## 5. Capability gaps, honestly ranked
 
-From the 500-item review in `02-capability-audit.md`, now ~171 built. The gaps
+From the 500-item review in `02-capability-audit.md`, now ~182 built. The gaps
 that actually block real use, rather than the ones that are simply unticked:
 
 **Browser automation (196–220, 0 of 25).** No Playwright, no Puppeteer, no
@@ -305,28 +305,66 @@ a web UI — scraping, form filling, visual verification — is impossible, not
 merely awkward. It is also the most expensive to close, needing a new
 dependency, a browser binary, and a sandboxing story.
 
-**No PR creation (item ~180).** The agent can branch, patch and commit, and
-then stops. The last step of the workflow everyone actually wants is missing,
-and it is small: `gh` is already available.
+~~**No PR creation (item ~180).**~~ **Closed.** `agent-forge.ts` opens a pull
+request against exactly one repository named by `AGENT_FORGE_REPO`, and
+fails closed with an explanatory error when no credential is configured
+rather than silently doing nothing.
 
-**No execution sandbox.** `sandbox.test` runs the project's test command as the
-server user, with no container, namespace or seccomp. It is argv-form with no
-shell, and provider keys are stripped — both good — but an agent that can write
-a file and run the test command can run arbitrary code as the server. The
-policy engine gates *which tools* run, not *what a tool may do to the host*.
-Nothing here can fix that; it needs a real isolation boundary.
+~~**No execution sandbox.**~~ **Closed, within what this kernel can offer.**
+`sandbox.test` now runs under `unshare --user --map-root-user --mount --net
+--pid --fork`: a read-only root with the workspace bound read-write, a fresh
+`/proc`, tmpfs over the masked paths, and no network. Visible pids dropped
+from ~100 to 3. There is still no seccomp filter and no cgroup memory or CPU
+ceiling — the wall-clock timeout is the only resource bound — and
+`describeIsolation()` reports exactly which of these are active at runtime
+instead of letting the README claim them.
 
 **Connectors (231–245, 0 of 15).** No CRM, email or calendar integration. Less
 interesting than it sounds — these are mostly API-client work — but genuinely
 absent.
 
-**Excel.** `data.csv.query` handles CSV. `.xlsx` is a zip of XML and needs a
-parser; business users will ask for it immediately.
+**Excel — half closed.** `.xlsx` and `.docx` now ingest through
+`POST /api/agent/documents` with no new dependency, so their text is
+searchable. What is still missing is the *query* half: `data.csv.query`
+isolates a CSV into a private in-memory SQLite database, and a spreadsheet
+does not yet reach that sandbox, so you can search a workbook but not
+aggregate over it. **PDF remains absent and was deliberately not attempted** —
+it needs font maps and content-stream decoding beyond `zlib`, and a parser
+that works on the sample files it was written against fails silently on the
+next one.
 
 **Observability.** No OpenTelemetry in the lockfile. There is structured
 logging and request analytics, but no distributed tracing, so a slow agent run
 cannot be attributed to a phase or a provider call without reading logs by
 hand.
+
+---
+
+## 5b. What mutation testing said about the office parsers
+
+Worth recording because the unit tests looked fine and were not.
+
+Ten mutants were planted in `office-zip.ts` and `office-text.ts`. The five
+text-extraction mutants died immediately. **Four of the five security mutants
+survived**, and in every case the reason was the same: the test input never
+reached the guard it claimed to test.
+
+| Mutant | Why it survived | Fix |
+| --- | --- | --- |
+| Delete the measured total-budget check | Every entry declared its real size, so the cheap pre-allocation check fired first | Entries now declare ten bytes and deliver eight megabytes |
+| …and again, with lying sizes | The overflow landed mid-archive, so the *next* iteration's pre-check threw with the same message | Sizes rearranged so the overflow lands on the final entry |
+| Ignore the local extra-field length | Every fixture had a zero-length extra field | `buildArchive` grew a `localExtra` option; the central directory still gets none, which is the mismatch real archives have |
+| Delete the central-directory bounds check | The "truncated archive" test cut off the tail, removing the EOCD, so it failed earlier | An intact EOCD that points past the end of the file |
+
+One mutant still survives and is being left alone honestly: removing zlib's
+`maxOutputLength` changes no observable behaviour, because the check on the
+bytes actually produced catches the same bomb one step later. It is kept for
+the allocation it prevents, not for a result it changes, and that property is
+not covered by a test. The stored-entry case — where zlib is not involved at
+all, so the measured check is the only guard — *is* covered.
+
+The general lesson, again: a green security test proves nothing until you
+delete the guard and watch it go red.
 
 ---
 
@@ -379,8 +417,14 @@ Recorded so the next reviewer does not spend time here again.
    fail-closed, mutation-verified. See finding 2.
 3. ~~**Add `npm audit` to CI and patch the high advisories**~~ — **done.** Zero
    production advisories; gate added and verified to fail. See finding 3.
-4. **Add PR creation** — small, and completes the coding workflow. Now the top
-   open item.
-5. **Split `proxy.ts`** — pay down the cost before it compounds further.
-6. **Browser automation** — the largest capability gap, and a project rather
+4. ~~**Add PR creation**~~ — **done.** Single-repository forge credential,
+   fail-closed when unconfigured. See §5.
+5. ~~**Give the test runner a real isolation boundary**~~ — **done.** User,
+   mount, network and pid namespaces; no seccomp, no cgroup ceiling. See §5.
+6. **Split `proxy.ts`** — 2,975 lines, and now the top open item. Pay the cost
+   down before it compounds further.
+7. **Make spreadsheets queryable, not just searchable** — `.xlsx` text now
+   reaches the index; routing its cells into the existing `data.csv.query`
+   sandbox is the small remaining half.
+8. **Browser automation** — the largest capability gap, and a project rather
    than a task.

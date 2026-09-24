@@ -61,7 +61,7 @@ Counts are "not built", derived from the audit's per-category scores.
 | 3 | Agent runtime | ~16/25 | **9** | Graph execution, parallel sub-agents |
 | 4 | Tools | ~8/25 | **17** | Tool SDK, marketplace, dynamic discovery, scheduling, compensation |
 | 5 | Memory | 8/25 | **17** | Semantic search, summarisation, contradiction detection, encryption at rest |
-| 6 | RAG | ~6/30 | **24** | Document parsers, ANN index, reranking, hybrid search, connectors |
+| 6 | RAG | ~9/30 | **21** | ANN index, reranking, connectors, PDF (hybrid search and DOCX/XLSX parsing now built) |
 | 7 | Workflows | ~1/25 | **24** | Everything except DAG validation logic |
 | 8 | Coding | ~7/30 | **23** | PR creation, execution sandbox, cross-file refactoring |
 | 9 | Browser | 0/25 | **25** | Entire subsystem, no dependency present |
@@ -434,16 +434,49 @@ The phase opened by measuring all three, and the measurement reordered them.
    cheaper half. The keyword half is a real index already. Revisit when a
    corpus here actually passes ten thousand chunks; until then this is a
    speculative dependency.
-3. **Document parsers** — PDF and DOCX, still absent and now the top item.
-   Verified absent rather than assumed: `pdf-parse`, `pdfjs-dist`, `mammoth`,
-   `docx`, `xlsx`, `exceljs`, `unzipper`, `adm-zip` and `jszip` all fail to
-   resolve. DOCX and XLSX are zip-of-XML and Node ships `zlib`, so those two
-   are reachable without a dependency; PDF is not, and pretending otherwise
-   would produce a parser that works on the three files it was tested with.
+3. ~~**Document parsers**~~ — **DOCX and XLSX built; PDF deliberately not.**
+   `office-zip.ts` reads the archive and `office-text.ts` extracts the text,
+   with no new dependency: `pdf-parse`, `pdfjs-dist`, `mammoth`, `docx`,
+   `xlsx`, `exceljs`, `unzipper`, `adm-zip` and `jszip` all still fail to
+   resolve, and that is the point. `POST /api/agent/documents` takes
+   `contentBase64`, so the parser is reachable rather than a library sitting
+   in `services/`.
+
+   Four decisions worth keeping:
+
+   - **The central directory is the index, not a scan for local headers.**
+     The two disagree in real archives that use data descriptors, and a
+     tampered archive can hide an entry from a scan. Entry *data* is still
+     located through the local header, because its extra-field length
+     routinely differs from the central directory's.
+   - **Runs are joined with no separator.** Word splits `resolveScope` across
+     two `<w:r>` elements; a space would store `resolve Scope` and the
+     identifier would be unfindable by either half of hybrid search. Line
+     breaks come only from `<w:p>`, `<w:br/>`, `<w:tab/>` and cell
+     boundaries, and a table row comes out tab-separated rather than one line
+     per cell.
+   - **`<w:instrText>` is dropped.** It carries field instructions such as a
+     HYPERLINK target. Keeping it would index a URL no human reader ever saw.
+   - **PDF is out of reach and was not attempted.** It needs font maps and
+     content-stream decoding that `zlib` alone does not provide. A parser
+     that handles the three PDFs it was tested against is worse than none,
+     because it fails silently on the fourth.
+
+   The test fixtures are not written by this code. The DOCX and XLSX come
+   from `python-docx` and `openpyxl`, and the hazard fixture is a genuine
+   Word-authored template with a substituted `document.xml` — a parser
+   validated against its own writer proves only that the two agree.
+   Hand-built archives appear in the suite **only** for the malformed and
+   hostile cases a real library will not emit.
+
+   Still open here: `.doc`/`.xls` (the pre-2007 binary formats, a different
+   problem entirely), `.pptx`, and embedded images.
 
 Related and cheap: **Excel** (items 221–230). `tabular-query.ts` already
-isolates CSV into a private in-memory SQLite database; `.xlsx` is a zip of XML
-and reuses that entire sandbox once parsed.
+isolates CSV into a private in-memory SQLite database, and `extractSheetText`
+now gets the cells out of an `.xlsx`; wiring the two together so a spreadsheet
+is *queryable* rather than merely searchable is the next step and reuses that
+entire sandbox.
 
 ---
 
