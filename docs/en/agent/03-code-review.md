@@ -296,7 +296,7 @@ not answerable by reading.
 
 ## 5. Capability gaps, honestly ranked
 
-From the 500-item review in `02-capability-audit.md`, now ~182 built. The gaps
+From the 500-item review in `02-capability-audit.md`, now ~186 built. The gaps
 that actually block real use, rather than the ones that are simply unticked:
 
 **Browser automation (196–220, 0 of 25).** No Playwright, no Puppeteer, no
@@ -323,15 +323,13 @@ instead of letting the README claim them.
 interesting than it sounds — these are mostly API-client work — but genuinely
 absent.
 
-**Excel — half closed.** `.xlsx` and `.docx` now ingest through
-`POST /api/agent/documents` with no new dependency, so their text is
-searchable. What is still missing is the *query* half: `data.csv.query`
-isolates a CSV into a private in-memory SQLite database, and a spreadsheet
-does not yet reach that sandbox, so you can search a workbook but not
-aggregate over it. **PDF remains absent and was deliberately not attempted** —
-it needs font maps and content-stream decoding beyond `zlib`, and a parser
-that works on the sample files it was written against fails silently on the
-next one.
+~~**Excel.**~~ **Closed.** `.xlsx` and `.docx` ingest through
+`POST /api/agent/documents`, and `data.xlsx.query` loads a sheet into the
+same private SQLite sandbox `data.csv.query` uses, so a workbook can be
+aggregated over and not merely searched. **PDF remains absent and was
+deliberately not attempted** — it needs font maps and content-stream decoding
+beyond `zlib`, and a parser that works on the sample files it was written
+against fails silently on the next one.
 
 **Observability.** No OpenTelemetry in the lockfile. There is structured
 logging and request analytics, but no distributed tracing, so a slow agent run
@@ -365,6 +363,60 @@ all, so the measured check is the only guard — *is* covered.
 
 The general lesson, again: a green security test proves nothing until you
 delete the guard and watch it go red.
+
+---
+
+## 5c. Two bugs the office parser only revealed when asked for a table
+
+Both were in code that had shipped a day earlier with 35 passing tests, and
+neither was reachable from a fixture a spreadsheet library writes.
+
+**Columns were positional.** Excel omits an empty cell entirely: a four-column
+row with a gap in column B writes three `<c>` elements. Reading them in order
+puts C's value in B. In extracted text this is a misaligned tab that nobody
+notices; loaded as a SQL table it is `SUM(q2)` returning 9 instead of 16 — a
+wrong answer, returned confidently, with no error anywhere. Fixed by taking
+the column from each cell's `r="C2"` reference. `openpyxl` fills gaps when it
+writes, so the fixture had to be built to have them.
+
+**Sheets were positional too, and this one lied.** The worksheet part was
+guessed as `sheet{n+1}.xml` from the tab's position in `workbook.xml`. Excel
+does not renumber after a delete, so a workbook whose middle tab was removed
+holds `sheet1.xml` and `sheet3.xml` — and the guess read nothing for the
+second tab **while still listing its name in the response**. The caller is
+told the sheet was read. That is the failure mode this repository keeps
+running into and keeps having to name: a silent wrong answer is worse than a
+crash, and the thing that makes it silent is usually a success field that was
+computed separately from the work.
+
+The general point: the same parser was correct enough for search and wrong for
+a table. Text extraction forgives positional errors because a human reads
+around them. A query does not. Widening what a component is used for is not
+free even when no code changes.
+
+---
+
+## 5d. The README had drifted, and nothing was watching
+
+While adding the tools above I found the README claiming **"Nineteen tools"**
+in one paragraph and **"21 audited tools"** in three others, with 21 in the
+registry. Nobody wrote anything false; the number was updated wherever someone
+remembered, and the paragraph that spelled it out in words was never searched
+for.
+
+`tool-roster-drift.test.ts` now reads `README.md` and compares it to the live
+registry: every stated count must match, every registered tool must appear in
+the roster table, no tool may be documented that is not registered, and every
+`data.*` tool must be offered to the read-only phases in `agent-driver.ts`.
+Mutation-verified against all four failures.
+
+Two details worth keeping. The check is scoped to the roster table, because
+the naming section deliberately discusses `code.usages.find` as an example of
+a name that *would* be misclassified — matching backticked names across the
+whole document cannot tell a roster entry from a cautionary one. And the
+read-only check covers `data.*` only: that list is a curated offer, not
+everything readable, and `code.rename.preview.read` is absent from it on
+purpose.
 
 ---
 
@@ -423,8 +475,8 @@ Recorded so the next reviewer does not spend time here again.
    mount, network and pid namespaces; no seccomp, no cgroup ceiling. See §5.
 6. **Split `proxy.ts`** — 2,975 lines, and now the top open item. Pay the cost
    down before it compounds further.
-7. **Make spreadsheets queryable, not just searchable** — `.xlsx` text now
-   reaches the index; routing its cells into the existing `data.csv.query`
-   sandbox is the small remaining half.
+7. ~~**Make spreadsheets queryable**~~ — **done.** `data.xlsx.query` and
+   `data.xlsx.schema.read`, sharing the CSV sandbox. See §5c for the two bugs
+   it exposed.
 8. **Browser automation** — the largest capability gap, and a project rather
    than a task.

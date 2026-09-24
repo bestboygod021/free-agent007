@@ -12,7 +12,7 @@ or audio endpoint, behind a single `/v1` API. Keys stored encrypted. A router
 picks the best available model per request, fails over when one is
 rate-limited, and tracks per-key usage so you stay under every free-tier cap.
 
-**The agent** — the ForgePilot deterministic kernel, wired to 21 audited tools.
+**The agent** — the ForgePilot deterministic kernel, wired to 23 audited tools.
 It reads code, finds every use of a symbol, writes patches, commits, runs tests
 inside a real kernel namespace sandbox, and opens pull requests under a
 credential the model never sees. Every tool call passes six gates and lands in
@@ -187,7 +187,7 @@ Based on public documentation, July 2026 — corrections welcome.
 - **MCP server & interactive docs** — agents can introspect usable models, provider health, and routing strategy over `/mcp`; a dependency-free OpenAPI viewer lives at `/v1/docs`. [Coding agents →](docs/en/clients/01-agent-clients.md)
 - **Ops niceties** — opt-in response cache, encrypted DB backups, periodic key health checks, bulk key import/export, declarative startup config. [Install & deploy →](docs/en/install/01-install.md)
 - **Runs anywhere Node 20+ runs** — Windows, macOS, Linux servers, or a small ARM SBC (Raspberry Pi included). ~40 MB RSS at idle behind PM2 / systemd / whatever supervisor you prefer.
-- **ForgePilot agent kernel, wired to real tools** — a deterministic decision core for agent-driven delivery: compute modes (free/paid/local), tool-call and egress policy, a run state machine, task-DAG wave planning, secret redaction, evidence auditing, JSON Schema output contracts and a versioned prompt library. On top of it, 21 audited tools: filesystem, code navigation with reference classification, atomic cross-file rename, git, pull-request creation under a separate credential, egress-controlled web reading, SQL over CSV, and a test runner inside a real namespace sandbox. Served at `/api/agent`, with a dashboard at `/forgepilot`. [Details →](#the-agent-forgepilot-kernel--a-wired-toolchain)
+- **ForgePilot agent kernel, wired to real tools** — a deterministic decision core for agent-driven delivery: compute modes (free/paid/local), tool-call and egress policy, a run state machine, task-DAG wave planning, secret redaction, evidence auditing, JSON Schema output contracts and a versioned prompt library. On top of it, 23 audited tools: filesystem, code navigation with reference classification, atomic cross-file rename, git, pull-request creation under a separate credential, egress-controlled web reading, SQL over CSV and XLSX, and a test runner inside a real namespace sandbox. Served at `/api/agent`, with a dashboard at `/forgepilot`. [Details →](#the-agent-forgepilot-kernel--a-wired-toolchain)
 
 The scope is deliberately narrow — see [what's not supported yet](docs/en/architecture/00-high-level-index.md#not-yet-supported).
 
@@ -205,15 +205,17 @@ tested code, not by a language model.
 
 ```bash
 npm run agent:test        # kernel tests
-npm test -w @freellmapi/server   # 4,120 server tests
+npm test -w @freellmapi/server   # 4,149 server tests
 npm run agent:typecheck   # strict tsc, zero @ts-ignore
 ```
 
 ### What the agent can actually do
 
-Nineteen tools, each one registered, policy-classified and audited. Every one
-is reachable over HTTP at `POST /api/agent/tools/invoke` and every one has a
-test that fails if its guard is removed.
+23 tools, each one registered, policy-classified and audited. Every one is
+reachable over HTTP at `POST /api/agent/tools/invoke` and every one has a test
+that fails if its guard is removed. The count and the roster below are checked
+against the live registry by a test, because this paragraph said "Nineteen"
+while three other lines said 21 and nothing noticed.
 
 | Area | Tools | Notes |
 |---|---|---|
@@ -224,7 +226,7 @@ test that fails if its guard is removed.
 | Execution | `sandbox.test` | Runs inside a `user`/`mount`/`net`/`pid` namespace: read-only root, writable workspace only, no network |
 | Web | `web.page.read` `web.page.search` | Egress-controlled: cloud metadata IPs, private ranges and decimal-encoded addresses refused, re-checked on every redirect hop |
 | Refactoring | `code.rename.preview.read` `code.rename.apply` | Preview is a read; apply re-derives the preview, refuses a stale digest, and writes every file or none |
-| Data | `data.csv.query` `data.csv.schema.read` | SQL over a spreadsheet, in a sandbox that cannot reach the gateway's own database |
+| Data | `data.csv.query` `data.csv.schema.read` `data.xlsx.query` `data.xlsx.schema.read` | SQL over a spreadsheet, in a sandbox that cannot reach the gateway's own database. A sheet's columns come from each cell's `r="C2"` reference, because Excel omits empty cells and reading them in order files values under the wrong heading |
 
 ### Six gates every tool call passes
 
@@ -372,7 +374,7 @@ as not configured instead of failing halfway through a push.
 TOKEN=...   # from /api/auth/setup or /api/auth/login
 
 curl -s localhost:3001/api/agent/tools \
-  -H "Authorization: Bearer $TOKEN"        # list the 21 tools
+  -H "Authorization: Bearer $TOKEN"        # list the 23 tools
 
 curl -s -X POST localhost:3001/api/agent/tools/invoke \
   -H "Authorization: Bearer $TOKEN" \
@@ -417,7 +419,7 @@ The flag tracks reality — it is never hard-coded, and a test fails if it is.
 
 ```bash
 npm test                          # everything
-npm test -w @freellmapi/server    # 4,120 server tests, ~4 min
+npm test -w @freellmapi/server    # 4,149 server tests, ~4 min
 npm run agent:test                # kernel tests
 npm run lint && npm run build
 ```
@@ -633,6 +635,17 @@ successes is not useful:
   does not find it). The vector half remains a brute-force scan: measured at
   149 ms per query over 10,000 chunks, which is less than the embedding call
   it waits on, so an ANN index was deliberately not built.
+- **A spreadsheet is queryable, not just searchable.** `data.xlsx.query` loads
+  one sheet into the same private in-memory SQLite database `data.csv.query`
+  uses, so counting and summing happen in SQLite rather than in a model.
+  Columns come from each cell's `r="C2"` reference: Excel writes no element at
+  all for an empty cell, so reading cells in document order files every value
+  after a gap under the wrong heading — invisible in extracted text, and a
+  wrong answer in a table. Sheets are selected by name or tab index and never
+  merged. The sheet's part is found through `r:id` and the relationships file,
+  not by guessing `sheet{n+1}.xml`, which reads nothing for the second tab of
+  a workbook that has had a middle sheet deleted while still reporting its
+  name.
 - **DOCX and XLSX ingest, PDF does not.** `POST /api/agent/documents` accepts
   `contentBase64` and extracts text from Word and Excel files with no new
   dependency — they are ZIP archives of XML and Node ships `zlib`. The format
@@ -645,7 +658,7 @@ successes is not useful:
   `zlib` alone cannot do, so it was left out rather than half-built.
   Archives are bounded at 32 MB in, 16 MB per entry and 48 MB total, checked
   both against the declared size and against what was actually produced.
-- **Roughly 182 of 500 catalogued capabilities are implemented.** No browser
+- **Roughly 186 of 500 catalogued capabilities are implemented.** No browser
   automation, no PDF parsing, no OpenTelemetry — those dependencies are
   absent from the lockfile, which is checked rather than assumed.
 

@@ -2,7 +2,13 @@ import path from 'node:path';
 import { registerTool, ToolError } from './agent-tools.js';
 import { resolveInside } from './agent-tools-builtin.js';
 import { isSensitivePath } from '@freellmapi/agent/core/redaction.js';
-import { queryCsvFile, describeCsvFile, TabularError } from './tabular-query.js';
+import {
+  queryCsvFile,
+  describeCsvFile,
+  queryXlsxFile,
+  describeXlsxFile,
+  TabularError,
+} from './tabular-query.js';
 
 /**
  * Data tools: asking a spreadsheet a question in SQL.
@@ -142,6 +148,136 @@ export function registerDataTools(): void {
           truncated: info.truncated,
           // `original` is kept so a model can map a question phrased in the
           // spreadsheet's own words ("Total Amount") to the usable column name.
+          columns: info.columns,
+          sampleRows: sample.rows,
+        };
+      } catch (err) {
+        return asToolError(err);
+      }
+    },
+  });
+
+  registerTool({
+    name: 'data.xlsx.query',
+    description:
+      'Run a read-only SQL query against one sheet of an .xlsx workbook. The sheet is loaded ' +
+      'into a private in-memory table (default name "data"). Call data.xlsx.schema.read first ' +
+      'to see the sheet names and columns.',
+    schema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', minLength: 1, description: '.xlsx file relative to the workspace root.' },
+        sql: {
+          type: 'string',
+          minLength: 1,
+          description: 'A single SELECT statement, e.g. SELECT region, SUM(q1) FROM data GROUP BY region.',
+        },
+        sheet: {
+          type: ['string', 'integer'],
+          description:
+            'Sheet name, or 1-based tab index. Defaults to the first sheet. Sheets are not ' +
+            'merged: query one at a time.',
+        },
+        headerRow: {
+          type: 'integer',
+          minimum: 1,
+          description: 'Row holding the column names, 1-based. Defaults to 1.',
+        },
+        table: { type: 'string', description: 'Name the table is loaded as. Defaults to "data".' },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: MAX_ROW_LIMIT,
+          description: `Maximum rows to return (max ${MAX_ROW_LIMIT}).`,
+        },
+      },
+      required: ['path', 'sql'],
+      additionalProperties: false,
+    },
+    timeoutMs: 60_000,
+    async handler(args, ctx) {
+      assertReadableData(String(args.path));
+      const file = await resolveInside(ctx.workspaceRoot, args.path);
+      try {
+        const { info, result, sheet, sheets } = await queryXlsxFile(file, String(args.sql), {
+          ...(typeof args.sheet === 'string' || typeof args.sheet === 'number'
+            ? { sheet: args.sheet }
+            : {}),
+          ...(typeof args.headerRow === 'number' ? { headerRow: args.headerRow } : {}),
+          ...(typeof args.table === 'string' ? { table: args.table } : {}),
+          ...(typeof args.limit === 'number' ? { limit: args.limit } : {}),
+        });
+        return {
+          path: path.relative(ctx.workspaceRoot, file).split(path.sep).join('/'),
+          sheet,
+          // Every tab is reported, so a model that queried the wrong one can
+          // see that there was another and say so.
+          sheets,
+          table: info.table,
+          sourceRows: info.rowCount,
+          sourceTruncated: info.truncated,
+          columns: result.columns,
+          rows: result.rows,
+          rowCount: result.rowCount,
+          truncated: result.truncated,
+        };
+      } catch (err) {
+        return asToolError(err);
+      }
+    },
+  });
+
+  registerTool({
+    name: 'data.xlsx.schema.read',
+    description:
+      'List the sheets in an .xlsx workbook and describe one of them: column names, inferred ' +
+      'SQL types, row count and a few sample rows. Call this before data.xlsx.query.',
+    schema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', minLength: 1, description: '.xlsx file relative to the workspace root.' },
+        sheet: {
+          type: ['string', 'integer'],
+          description:
+            'Sheet name, or 1-based tab index. Defaults to the first sheet. Sheets are not ' +
+            'merged: query one at a time.',
+        },
+        headerRow: {
+          type: 'integer',
+          minimum: 1,
+          description: 'Row holding the column names, 1-based. Defaults to 1.',
+        },
+        table: { type: 'string', description: 'Name the table is loaded as. Defaults to "data".' },
+        sampleRows: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 50,
+          description: 'How many example rows to return. Defaults to 5.',
+        },
+      },
+      required: ['path'],
+      additionalProperties: false,
+    },
+    timeoutMs: 60_000,
+    async handler(args, ctx) {
+      assertReadableData(String(args.path));
+      const file = await resolveInside(ctx.workspaceRoot, args.path);
+      try {
+        const { info, sample, sheet, sheets } = await describeXlsxFile(file, {
+          ...(typeof args.sheet === 'string' || typeof args.sheet === 'number'
+            ? { sheet: args.sheet }
+            : {}),
+          ...(typeof args.headerRow === 'number' ? { headerRow: args.headerRow } : {}),
+          ...(typeof args.table === 'string' ? { table: args.table } : {}),
+          ...(typeof args.sampleRows === 'number' ? { sampleRows: args.sampleRows } : {}),
+        });
+        return {
+          path: path.relative(ctx.workspaceRoot, file).split(path.sep).join('/'),
+          sheet,
+          sheets,
+          table: info.table,
+          rowCount: info.rowCount,
+          truncated: info.truncated,
           columns: info.columns,
           sampleRows: sample.rows,
         };

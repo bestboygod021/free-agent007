@@ -16,3 +16,16 @@ from an implementation with no relationship to `office-zip.ts`.
 a word split across runs, `xml:space="preserve"`, `<w:br/>`, `<w:tab/>`, XML
 entities, non-ASCII and RTL text, a table, and a `<w:instrText>` field
 instruction whose target must not reach the extracted text.
+
+`sparse-columns.xlsx` has gaps: row 2 omits column B and row 4 omits A and C.
+Excel writes no `<c>` element at all for an empty cell, so reading cells in
+document order files each value under the wrong column. The gaps are what
+makes the `r="C2"` reference load-bearing.
+
+`renumbered-sheets.xlsx` is `openpyxl` output repacked so the second tab's
+part is `sheet3.xml` while the first is `sheet1.xml` — the state Excel leaves
+an archive in after a middle sheet is deleted. `openpyxl` renumbers on save
+and never produces this, which is exactly why the fixture had to be built by
+hand from a real one: the positional guess `sheet{n+1}.xml` passes every test
+a library-written file can provide. Verified against a real reader: `openpyxl`
+opens it and sees both `First` and `Third`.

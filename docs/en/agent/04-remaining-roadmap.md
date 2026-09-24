@@ -472,11 +472,37 @@ The phase opened by measuring all three, and the measurement reordered them.
    Still open here: `.doc`/`.xls` (the pre-2007 binary formats, a different
    problem entirely), `.pptx`, and embedded images.
 
-Related and cheap: **Excel** (items 221–230). `tabular-query.ts` already
-isolates CSV into a private in-memory SQLite database, and `extractSheetText`
-now gets the cells out of an `.xlsx`; wiring the two together so a spreadsheet
-is *queryable* rather than merely searchable is the next step and reuses that
-entire sandbox.
+~~Related and cheap: **Excel** (items 221–230).~~ **Done.** `data.xlsx.query`
+and `data.xlsx.schema.read` load one sheet into the same sandbox
+`data.csv.query` uses, through a shared `loadRows` so column normalisation,
+type inference and the read-only enforcement are one implementation rather
+than two that drift.
+
+Two bugs in the freshly shipped parser surfaced only because a table demands
+more of it than text does:
+
+- **Column identity.** Excel omits an empty cell entirely, so a four-column
+  row with a gap writes three `<c>` elements. Reading them in order files the
+  third column's value under the second. In extracted text that is a cosmetic
+  misalignment; in a table it is a wrong answer returned confidently. Columns
+  now come from the `r="C2"` reference, and filling those gaps needed its own
+  ceiling, because a single `r="XFD1"` otherwise decides how much memory every
+  row costs.
+- **Sheet identity.** The sheet's part was guessed as `sheet{n+1}.xml` from
+  the tab position. Excel leaves `sheet1.xml` and `sheet3.xml` behind after a
+  middle tab is deleted, so the guess read nothing for the second tab — while
+  still reporting its name, so a caller was told a sheet had been read that
+  had not. Resolution now goes through `r:id` and
+  `xl/_rels/workbook.xml.rels`.
+
+Neither was reachable from a fixture written by `openpyxl`, which renumbers
+parts on save and fills gaps. Both needed an archive built to be structurally
+real rather than conveniently generated.
+
+Still open in this area: `.xlsx` writing, merged cells (currently the value
+lands in the top-left and the rest read empty, which is what the file says but
+not what a human sees), and dates (a date is a serial number and the format
+that makes it a date lives in `styles.xml`, which is not read).
 
 ---
 

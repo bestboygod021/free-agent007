@@ -82,6 +82,8 @@ const READ_ONLY_TOOLS = [
   'code.file.outline.read',
   'data.csv.schema.read',
   'data.csv.query',
+  'data.xlsx.schema.read',
+  'data.xlsx.query',
   'fs.read_file',
   'fs.list',
   'fs.search',

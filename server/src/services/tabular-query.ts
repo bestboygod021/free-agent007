@@ -2,6 +2,14 @@ import { createRequire } from 'node:module';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import {
+  extractSharedStrings,
+  extractSheetGrid,
+  detectOfficeFormat,
+  resolveWorkbookSheets,
+  OfficeParseError,
+} from './office-text.js';
+import { readZipEntries, findZipEntry, readZipEntry, ZipError } from './office-zip.js';
+import {
   parseCsv,
   normaliseColumnName,
   inferColumnType,
@@ -135,17 +143,40 @@ export function loadCsvText(
   text: string,
   options: { table?: string; delimiter?: string } = {},
 ): { db: SqliteHandle; info: LoadedTable } {
-  const table = options.table ?? 'data';
-  if (!/^[a-z][a-z0-9_]{0,62}$/.test(table)) {
-    throw new TabularError('table name must be lowercase letters, digits and underscores.');
-  }
-
   let parsed;
   try {
     parsed = parseCsv(text, { delimiter: options.delimiter ?? ',', maxRows: MAX_ROWS });
   } catch (err) {
     throw new TabularError(err instanceof CsvError ? err.message : 'could not parse the CSV.');
   }
+
+  return loadRows(parsed.headers, parsed.rows, {
+    ...(options.table !== undefined ? { table: options.table } : {}),
+    truncated: parsed.truncated,
+  });
+}
+
+/**
+ * Build the sandbox from headers and rows that are already parsed.
+ *
+ * Shared by CSV and XLSX so a spreadsheet gets the same column normalisation,
+ * type inference and read-only enforcement rather than a second
+ * implementation that drifts from this one.
+ */
+export function loadRows(
+  headers: readonly string[],
+  dataRows: readonly (readonly string[])[],
+  options: { table?: string; truncated?: boolean } = {},
+): { db: SqliteHandle; info: LoadedTable } {
+  const table = options.table ?? 'data';
+  if (!/^[a-z][a-z0-9_]{0,62}$/.test(table)) {
+    throw new TabularError('table name must be lowercase letters, digits and underscores.');
+  }
+  const parsed = {
+    headers: [...headers],
+    rows: dataRows.map((row) => [...row]),
+    truncated: options.truncated ?? false,
+  };
 
   const taken = new Set<string>();
   const columns = parsed.headers.map((header, index) => ({
@@ -255,6 +286,183 @@ export function runReadOnlyQuery(
   }
 
   return { columns, rows, rowCount: rows.length, truncated };
+}
+
+/* ------------------------------------------------------------------ */
+/* Spreadsheets                                                        */
+/* ------------------------------------------------------------------ */
+
+export interface SheetSelection {
+  /** Sheet name, or 1-based tab index. Defaults to the first sheet. */
+  sheet?: string | number;
+  /** 1-based row holding the column names. Defaults to 1. */
+  headerRow?: number;
+  table?: string;
+}
+
+/**
+ * Load one sheet of an `.xlsx` into the same sandbox a CSV gets.
+ *
+ * The sheet is named or indexed rather than merged: two tabs with different
+ * columns are two tables, and concatenating them would invent rows that are
+ * in no spreadsheet. A caller that wants both asks twice.
+ */
+export async function loadXlsxFile(
+  filePath: string,
+  options: SheetSelection = {},
+): Promise<{ db: SqliteHandle; info: LoadedTable; sheet: string; sheets: string[] }> {
+  const stat = await fs.stat(filePath).catch(() => null);
+  if (!stat) throw new TabularError(`no such file: ${path.basename(filePath)}`, 404);
+  if (stat.isDirectory()) throw new TabularError('path is a directory, not a spreadsheet.');
+  if (stat.size > MAX_FILE_BYTES) {
+    throw new TabularError(
+      `file is ${(stat.size / 1048576).toFixed(1)}MB; the limit is ${MAX_FILE_BYTES / 1048576}MB.`,
+    );
+  }
+
+  const bytes = await fs.readFile(filePath);
+  return loadXlsxBytes(bytes, options);
+}
+
+export function loadXlsxBytes(
+  bytes: Buffer,
+  options: SheetSelection = {},
+): { db: SqliteHandle; info: LoadedTable; sheet: string; sheets: string[] } {
+  let entries;
+  try {
+    if (detectOfficeFormat(bytes) !== 'xlsx') {
+      throw new TabularError('this file is not an .xlsx workbook.');
+    }
+    entries = readZipEntries(bytes);
+  } catch (err) {
+    if (err instanceof TabularError) throw err;
+    throw new TabularError(
+      err instanceof ZipError ? err.message : 'could not read the workbook archive.',
+    );
+  }
+
+  const budget = { used: 0 };
+  const read = (name: string): string | null => {
+    const entry = findZipEntry(entries, name);
+    if (!entry) return null;
+    try {
+      return readZipEntry(bytes, entry, budget).toString('utf8');
+    } catch (err) {
+      throw new TabularError(err instanceof ZipError ? err.message : `cannot read ${name}`);
+    }
+  };
+
+  const workbook = read('xl/workbook.xml');
+  if (workbook === null) throw new TabularError('the archive has no xl/workbook.xml');
+
+  const refs = resolveWorkbookSheets(workbook, read('xl/_rels/workbook.xml.rels'));
+  const sheets = refs.map((ref) => ref.name);
+  if (refs.length === 0) throw new TabularError('the workbook has no sheets.');
+
+  const selected = selectSheet(refs, options.sheet);
+  const sheetXml = read(selected.path);
+  if (sheetXml === null) {
+    // The workbook names a sheet whose part is missing. Saying so beats
+    // returning an empty table that looks like an empty sheet.
+    throw new TabularError(
+      `the workbook lists sheet "${selected.name}" but the archive has no ${selected.path}.`,
+    );
+  }
+
+  const sharedStrings = (() => {
+    const xml = read('xl/sharedStrings.xml');
+    return xml === null ? [] : extractSharedStrings(xml);
+  })();
+
+  let grid;
+  try {
+    grid = extractSheetGrid(sheetXml, sharedStrings);
+  } catch (err) {
+    throw new TabularError(
+      err instanceof OfficeParseError ? err.message : 'could not read the sheet.',
+    );
+  }
+
+  const headerRow = options.headerRow ?? 1;
+  if (!Number.isInteger(headerRow) || headerRow < 1) {
+    throw new TabularError('headerRow must be a positive integer.');
+  }
+  if (grid.rows.length < headerRow) {
+    throw new TabularError(
+      `sheet "${selected.name}" has ${grid.rows.length} rows; headerRow ${headerRow} is past the end.`,
+    );
+  }
+
+  const headers = grid.rows[headerRow - 1] ?? [];
+  let body = grid.rows.slice(headerRow);
+  let truncated = grid.truncated;
+  if (body.length > MAX_ROWS) {
+    body = body.slice(0, MAX_ROWS);
+    truncated = true;
+  }
+
+  const loaded = loadRows(headers, body, {
+    ...(options.table !== undefined ? { table: options.table } : {}),
+    truncated,
+  });
+  return { ...loaded, sheet: selected.name, sheets };
+}
+
+/** Resolve a sheet name or 1-based tab index against the workbook. */
+function selectSheet(
+  refs: readonly { name: string; path: string }[],
+  wanted: string | number | undefined,
+): { name: string; path: string } {
+  if (wanted === undefined) return refs[0]!;
+
+  if (typeof wanted === 'number') {
+    if (!Number.isInteger(wanted) || wanted < 1 || wanted > refs.length) {
+      throw new TabularError(
+        `sheet index ${wanted} is out of range; the workbook has ${refs.length}.`,
+      );
+    }
+    return refs[wanted - 1]!;
+  }
+
+  const found = refs.find((ref) => ref.name === wanted);
+  if (!found) {
+    throw new TabularError(
+      `no sheet named "${wanted}". Available: ${refs.map((r) => r.name).join(', ')}.`,
+    );
+  }
+  return found;
+}
+
+/** Load one sheet, query it and dispose. */
+export async function queryXlsxFile(
+  filePath: string,
+  sql: string,
+  options: SheetSelection & { limit?: number } = {},
+): Promise<{ info: LoadedTable; result: QueryResult; sheet: string; sheets: string[] }> {
+  const { db, info, sheet, sheets } = await loadXlsxFile(filePath, options);
+  try {
+    return { info, sheet, sheets, result: runReadOnlyQuery(db, sql, options.limit ?? MAX_RESULT_ROWS) };
+  } finally {
+    db.close();
+  }
+}
+
+/** Describe one sheet without running a query. */
+export async function describeXlsxFile(
+  filePath: string,
+  options: SheetSelection & { sampleRows?: number } = {},
+): Promise<{ info: LoadedTable; sample: QueryResult; sheet: string; sheets: string[] }> {
+  const { db, info, sheet, sheets } = await loadXlsxFile(filePath, options);
+  try {
+    const sample = runReadOnlyQuery(
+      db,
+      `SELECT * FROM "${info.table}"`,
+      Math.max(1, Math.min(options.sampleRows ?? 5, 50)),
+    );
+    return { info, sample, sheet, sheets };
+  } finally {
+    db.close();
+  }
 }
 
 /** Load, query and dispose in one call. The sandbox never outlives the question. */
