@@ -386,11 +386,60 @@ rename.
 **~24 items (111–140).** `rag-store.ts` works, with three stated limits:
 text-only input, brute-force cosine scan, no reranking.
 
-1. **Document parsers** — PDF and DOCX. No parser dependency is present.
-   Highest user-visible value in this phase.
-2. **ANN index** — the current scan is O(n) per query; fine at demo scale,
-   not at corpus scale.
-3. **Hybrid keyword + vector search, then reranking.**
+The phase opened by measuring all three, and the measurement reordered them.
+
+1. ~~**Hybrid keyword + vector search**~~ — **done, and it was the urgent one,
+   not the third.** The measurement: a corpus containing the sentence
+   *"Error ERR_QUOTA_7734 means the provider rejected the request"*, asked for
+   `ERR_QUOTA_7734`, returned **nothing**. Every chunk scored 0.000 and the
+   default `minScore: 0.2` discarded them all. The identifier is outside the
+   embedding's vocabulary, so it contributes no signal, so the ranking is a
+   flat tie. A real model fails the same way for the same reason — a rare
+   identifier becomes subword fragments whose mean points nowhere — and
+   "find this identifier" is the query an agent reading code actually types.
+
+   `rag-keyword.ts` adds BM25 through SQLite's FTS5, which turned out to be
+   compiled into the better-sqlite3 already in the lockfile (checked by
+   running it, not by reading build flags), so this cost no new dependency.
+   Fusion is Reciprocal Rank Fusion: cosine lives in [-1, 1] and BM25 is
+   unbounded and negative, so normalising them onto one scale would mean
+   inventing a conversion that does the real work while looking like
+   arithmetic. Ranks are already comparable.
+
+   Three things worth more than the feature:
+
+   - **Raw query text reached `MATCH`, which is a query *language*.** Measured:
+     `v2.10.3` raised "syntax error near .", and `agent-tools` raised "no such
+     column: tools" because the hyphen reads as a column filter. A user
+     searching for a version number could error the query. Every term is now
+     extracted and quoted as a literal.
+   - **Hybrid degrades to keyword-only when the embedding provider is down,
+     and says so** via `vectorSearched: false`. Explicit `vector` mode still
+     throws, because there is no second half to fall back to. Returning
+     keyword results labelled as hybrid would be the dishonest version.
+   - **Two mutants survived the first pass, and both times the fixture was
+     wrong, not the assertion.** Reversing `ORDER BY bm25` changed nothing
+     because every test query matched exactly one chunk; a corpus with three
+     competing matches killed it. The orphan-row filter needed a chunk that
+     exists in the FTS index and not in the vector join — the state the
+     migration backfill actually produces.
+
+   Still not done here: no reranking model, and camelCase is not split, so
+   `resolveScope` is findable and `scope` alone does not find it.
+
+2. ~~**ANN index**~~ — **measured, and deliberately not built.** The brute
+   force scan costs 5 ms at 100 chunks, 13 ms at 1,000, 149 ms at 10,000 and
+   888 ms at 50,000. A single embedding API call for the query costs more than
+   the scan does below ~10,000 chunks, so an ANN index would optimise the
+   cheaper half. The keyword half is a real index already. Revisit when a
+   corpus here actually passes ten thousand chunks; until then this is a
+   speculative dependency.
+3. **Document parsers** — PDF and DOCX, still absent and now the top item.
+   Verified absent rather than assumed: `pdf-parse`, `pdfjs-dist`, `mammoth`,
+   `docx`, `xlsx`, `exceljs`, `unzipper`, `adm-zip` and `jszip` all fail to
+   resolve. DOCX and XLSX are zip-of-XML and Node ships `zlib`, so those two
+   are reachable without a dependency; PDF is not, and pretending otherwise
+   would produce a parser that works on the three files it was tested with.
 
 Related and cheap: **Excel** (items 221–230). `tabular-query.ts` already
 isolates CSV into a private in-memory SQLite database; `.xlsx` is a zip of XML

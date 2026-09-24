@@ -205,7 +205,7 @@ tested code, not by a language model.
 
 ```bash
 npm run agent:test        # kernel tests
-npm test -w @freellmapi/server   # 4,045 server tests
+npm test -w @freellmapi/server   # 4,079 server tests
 npm run agent:typecheck   # strict tsc, zero @ts-ignore
 ```
 
@@ -417,7 +417,7 @@ The flag tracks reality — it is never hard-coded, and a test fails if it is.
 
 ```bash
 npm test                          # everything
-npm test -w @freellmapi/server    # 4,045 server tests, ~4 min
+npm test -w @freellmapi/server    # 4,079 server tests, ~4 min
 npm run agent:test                # kernel tests
 npm run lint && npm run build
 ```
@@ -625,7 +625,16 @@ successes is not useful:
   covered, and a rollback that itself fails is reported with the exact list of
   unrestored files rather than swallowed. The design and its limits are in
   [docs/en/agent/05-atomic-refactor-design.md](docs/en/agent/05-atomic-refactor-design.md).
-- **Roughly 177 of 500 catalogued capabilities are implemented.** No browser
+- **Retrieval is hybrid, but not reranked.** `documents/search` fuses BM25
+  (SQLite FTS5) with the cosine scan by Reciprocal Rank Fusion, because pure
+  vector search could not find an identifier that was literally in the
+  corpus — `ERR_QUOTA_7734` returned nothing at all. There is no reranking
+  model, camelCase is not split (`resolveScope` is findable, `scope` alone
+  does not find it), and there is still no PDF or DOCX parser. The vector
+  half remains a brute-force scan: measured at 149 ms per query over 10,000
+  chunks, which is less than the embedding call it waits on, so an ANN index
+  was deliberately not built.
+- **Roughly 180 of 500 catalogued capabilities are implemented.** No browser
   automation, no PDF/DOCX parsing, no OpenTelemetry — those dependencies are
   absent from the lockfile, which is checked rather than assumed.
 

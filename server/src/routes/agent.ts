@@ -1124,6 +1124,10 @@ agentRouter.post('/documents/search', async (req: Request, res: Response) => {
       ...(typeof body.tokenBudget === 'number' ? { tokenBudget: body.tokenBudget } : {}),
       ...(typeof body.minScore === 'number' ? { minScore: body.minScore } : {}),
       ...(typeof body.model === 'string' ? { model: body.model } : {}),
+      // Passed through unvalidated on purpose: searchDocuments rejects an
+      // unknown mode with a RagError that becomes a 400, so validating here
+      // too would mean two places to keep in step and one of them would rot.
+      ...(body.mode === undefined ? {} : { mode: body.mode as 'vector' | 'keyword' | 'hybrid' }),
     });
     res.json(result);
   } catch (error) {

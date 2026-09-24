@@ -52,6 +52,19 @@ const {
 } = await import('../../services/rag-store.js');
 
 const SCOPE = { organizationId: 'acme', projectId: 'web' };
+
+/** Padding, so each paragraph becomes its own chunk. */
+const PAD = 'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod. '.repeat(20);
+
+/**
+ * The corpus that motivated hybrid retrieval. `ERR_QUOTA_7734` is not in the
+ * embedding's vocabulary -- exactly as a rare identifier is out of a real
+ * tokenizer's -- so it contributes nothing to any vector and every chunk ties.
+ */
+const IDENTIFIER_DOC =
+  `The request timeout is 30 seconds by default and the retry budget is three. ${PAD}\n\n` +
+  `Error ERR_QUOTA_7734 means the provider rejected the request for quota reasons. ${PAD}\n\n` +
+  `The cache uses sqlite for the vector database with embedding chunk support. ${PAD}`;
 const OTHER = { organizationId: 'zeta', projectId: 'web' };
 
 const TIMEOUT_DOC = `
@@ -241,6 +254,29 @@ describe('rag store', () => {
       expect((db.prepare('SELECT COUNT(*) AS n FROM rag_embeddings').get() as { n: number }).n).toBe(0);
     });
 
+    it('drops the keyword index rows too, so a deleted document stops matching', async () => {
+      const { documentId } = await ingestDocument({
+        ...SCOPE,
+        title: 'Runbook',
+        content: IDENTIFIER_DOC,
+      });
+      expect(
+        (await searchDocuments({ ...SCOPE, query: 'ERR_QUOTA_7734', mode: 'keyword' })).citations,
+      ).toHaveLength(1);
+
+      deleteDocument({ ...SCOPE, documentId });
+
+      // An FTS5 table cannot carry a foreign key, so the cascade that clears
+      // rag_chunks does not clear this. Getting it wrong leaves a deleted
+      // document answering searches: a retention bug, not a ranking one.
+      const after = await searchDocuments({ ...SCOPE, query: 'ERR_QUOTA_7734', mode: 'keyword' });
+      expect(after.citations).toEqual([]);
+      const db = getDb();
+      expect(
+        (db.prepare('SELECT COUNT(*) AS n FROM rag_chunks_fts').get() as { n: number }).n,
+      ).toBe(0);
+    });
+
     it('will not delete across tenants', async () => {
       const { documentId } = await ingestDocument({ ...SCOPE, title: 'Ops', content: TIMEOUT_DOC });
 
@@ -254,6 +290,165 @@ describe('rag store', () => {
       const chunkId = found.citations[0]!.chunkId;
 
       expect(resolveCitation({ ...OTHER, chunkId })).toBeNull();
+    });
+  });
+
+  describe('hybrid retrieval', () => {
+    /**
+     * The measurement this whole feature exists for. Before hybrid search,
+     * asking for a string that is *literally in the corpus* returned nothing:
+     * the identifier is out of vocabulary, so every chunk scores 0.000 and
+     * the default minScore of 0.2 discards all of them.
+     */
+    it('finds an exact identifier that vector search cannot see at all', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Runbook', content: IDENTIFIER_DOC });
+
+      const vector = await searchDocuments({ ...SCOPE, query: 'ERR_QUOTA_7734', mode: 'vector' });
+      expect(vector.citations).toEqual([]);
+
+      const hybrid = await searchDocuments({ ...SCOPE, query: 'ERR_QUOTA_7734', mode: 'hybrid' });
+      expect(hybrid.citations).toHaveLength(1);
+      // The chunk actually contains the term -- not merely a neighbour of it.
+      expect(hybrid.citations[0]!.text).toContain('ERR_QUOTA_7734');
+      expect(hybrid.citations[0]!.keywordRank).toBe(1);
+      expect(hybrid.citations[0]!.vectorRank).toBeNull();
+    });
+
+    it('still answers a semantic question that has no matching keyword', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Ops', content: TIMEOUT_DOC });
+
+      // "how long before giving up" shares no content word with the document,
+      // so only the vector half can find it. Hybrid must not regress it.
+      const hybrid = await searchDocuments({ ...SCOPE, query: 'timeout seconds' });
+      expect(hybrid.citations.length).toBeGreaterThan(0);
+      expect(hybrid.citations[0]!.vectorRank).toBe(1);
+    });
+
+    it('defaults to hybrid', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Runbook', content: IDENTIFIER_DOC });
+
+      const result = await searchDocuments({ ...SCOPE, query: 'ERR_QUOTA_7734' });
+      expect(result.mode).toBe('hybrid');
+      expect(result.citations).toHaveLength(1);
+    });
+
+    it('reports which rankers actually ran', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Runbook', content: IDENTIFIER_DOC });
+
+      const keyword = await searchDocuments({ ...SCOPE, query: 'timeout', mode: 'keyword' });
+      expect(keyword).toMatchObject({ vectorSearched: false, keywordSearched: true });
+
+      const vector = await searchDocuments({ ...SCOPE, query: 'timeout', mode: 'vector' });
+      expect(vector).toMatchObject({ vectorSearched: true, keywordSearched: false });
+    });
+
+    /**
+     * Raw text used to reach FTS5 MATCH, which reads it as a *query language*:
+     * `v2.10.3` raised "syntax error near .", `agent-tools` raised "no such
+     * column: tools". A user searching for a version number must not be able
+     * to error the query.
+     */
+    it('treats punctuation in a query as text, not as query syntax', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Runbook', content: IDENTIFIER_DOC });
+
+      for (const query of ['v2.10.3', 'agent-tools', 'body:secret', 'NOT timeout', '"', '*']) {
+        await expect(searchDocuments({ ...SCOPE, query, mode: 'hybrid' })).resolves.toBeDefined();
+      }
+    });
+
+    it('does not leak another tenant\'s chunks through the keyword index', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Runbook', content: IDENTIFIER_DOC });
+
+      const other = await searchDocuments({ ...OTHER, query: 'ERR_QUOTA_7734', mode: 'keyword' });
+      expect(other.citations).toEqual([]);
+    });
+
+    /**
+     * Ordering, which needs several keyword matches to be observable at all.
+     * With one match per query, reversing `ORDER BY bm25` changes nothing and
+     * the mutant survives -- the fixture was the weak part, not the check.
+     *
+     * BM25 rewards term frequency and penalises length, so the short chunk
+     * that is *about* the identifier must outrank the long one that merely
+     * mentions it once.
+     */
+    it('ranks the better keyword match first', async () => {
+      await ingestDocument({
+        ...SCOPE,
+        title: 'Runbook',
+        content:
+          `ERR_QUOTA_7734 ERR_QUOTA_7734 ERR_QUOTA_7734 is the quota error.\n\n` +
+          `A passing mention of ERR_QUOTA_7734 buried in prose. ${PAD}\n\n` +
+          `Another passing mention of ERR_QUOTA_7734 in more prose. ${PAD}`,
+      });
+
+      const result = await searchDocuments({
+        ...SCOPE,
+        query: 'ERR_QUOTA_7734',
+        mode: 'keyword',
+        limit: 3,
+      });
+
+      expect(result.citations.length).toBeGreaterThan(1);
+      expect(result.citations[0]!.text).toContain('is the quota error');
+      expect(result.citations[0]!.keywordRank).toBe(1);
+    });
+
+    /**
+     * The keyword index holds every chunk; the vector join holds only chunks
+     * embedded for the requested family. A chunk in the first and not the
+     * second has nothing to return, and an unfiltered fusion dereferences it.
+     */
+    it('ignores a keyword hit that has no vector row to resolve', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Runbook', content: IDENTIFIER_DOC });
+
+      // A chunk id the FTS index knows and rag_chunks does not: the state the
+      // migration backfill produces for a corpus embedded under another
+      // family, and the state a partial delete would leave.
+      getDb()
+        .prepare(
+          `INSERT INTO rag_chunks_fts (text, chunk_id, organization_id, project_id)
+           VALUES (?, ?, ?, ?)`,
+        )
+        .run('ERR_QUOTA_7734 orphaned row', 'chk_orphan', SCOPE.organizationId, SCOPE.projectId);
+
+      const result = await searchDocuments({ ...SCOPE, query: 'ERR_QUOTA_7734', mode: 'hybrid' });
+
+      expect(result.citations.map((c) => c.chunkId)).not.toContain('chk_orphan');
+      expect(result.citations).toHaveLength(1);
+    });
+
+    it('rejects an unknown mode rather than silently choosing one', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Runbook', content: IDENTIFIER_DOC });
+
+      await expect(
+        searchDocuments({ ...SCOPE, query: 'timeout', mode: 'semantic' as never }),
+      ).rejects.toThrow(RagError);
+    });
+
+    /**
+     * Hybrid mode degrades to keyword-only when the embedding provider is
+     * down, and says so. Returning keyword results labelled as hybrid would
+     * be the dishonest version of this.
+     */
+    it('falls back to keyword-only when the embedding provider fails', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Runbook', content: IDENTIFIER_DOC });
+      runEmbeddings.mockRejectedValueOnce(new Error('provider down'));
+
+      const result = await searchDocuments({ ...SCOPE, query: 'ERR_QUOTA_7734', mode: 'hybrid' });
+
+      expect(result.vectorSearched).toBe(false);
+      expect(result.keywordSearched).toBe(true);
+      expect(result.citations).toHaveLength(1);
+    });
+
+    it('fails rather than degrading when vector mode is asked for explicitly', async () => {
+      await ingestDocument({ ...SCOPE, title: 'Runbook', content: IDENTIFIER_DOC });
+      runEmbeddings.mockRejectedValueOnce(new Error('provider down'));
+
+      await expect(
+        searchDocuments({ ...SCOPE, query: 'timeout', mode: 'vector' }),
+      ).rejects.toThrow(/provider down/);
     });
   });
 });

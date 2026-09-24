@@ -43,6 +43,7 @@ import * as organizations from '../migrations/20260921_000004_organizations_and_
 import * as membershipInvites from '../migrations/20260921_000005_membership_invites.js';
 import * as ragDocuments from '../migrations/20260921_000006_rag_documents.js';
 import * as semanticCache from '../migrations/20260921_000007_semantic_cache.js';
+import * as ragKeywordIndex from '../migrations/20260924_000001_rag_keyword_index.js';
 
 export interface MigrationModule {
   up(db: Db): void;
@@ -98,6 +99,7 @@ export const ORGANIZATIONS_FILENAME = '20260921_000004_organizations_and_members
 export const MEMBERSHIP_INVITES_FILENAME = '20260921_000005_membership_invites.ts';
 export const RAG_DOCUMENTS_FILENAME = '20260921_000006_rag_documents.ts';
 export const SEMANTIC_CACHE_FILENAME = '20260921_000007_semantic_cache.ts';
+const RAG_KEYWORD_INDEX_FILENAME = '20260924_000001_rag_keyword_index.ts';
 
 export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: LEGACY_BASELINE_FILENAME, module: legacyBaseline },
@@ -144,4 +146,5 @@ export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: MEMBERSHIP_INVITES_FILENAME, module: membershipInvites },
   { filename: RAG_DOCUMENTS_FILENAME, module: ragDocuments },
   { filename: SEMANTIC_CACHE_FILENAME, module: semanticCache },
+  { filename: RAG_KEYWORD_INDEX_FILENAME, module: ragKeywordIndex },
 ];

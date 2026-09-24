@@ -25,6 +25,13 @@ import { packContext, type ContextItem } from '@freellmapi/agent/core/knowledge-
 import { getDb } from '../db/index.js';
 import { runEmbeddings, resolveFamily } from './embeddings.js';
 import { chunkText, estimateTokens, type ChunkOptions } from './rag-chunker.js';
+import {
+  keywordSearch,
+  fuseRankings,
+  indexChunkForKeywords,
+  removeDocumentFromKeywordIndex,
+  MAX_KEYWORD_CANDIDATES,
+} from './rag-keyword.js';
 
 /** Documents above this are refused rather than silently truncated: a
  *  half-ingested document retrieves confidently and cites nothing real. */
@@ -69,8 +76,19 @@ export interface Citation {
   startOffset: number;
   endOffset: number;
   text: string;
+  /**
+   * Cosine similarity, when the vector ranker scored this chunk. A
+   * keyword-only hit reports 0 rather than a made-up similarity; read
+   * `keywordRank` to tell "no vector opinion" from "scored zero".
+   */
   score: number;
+  /** 1-based position in the vector ranking, or null if it did not rank. */
+  vectorRank: number | null;
+  /** 1-based position in the BM25 ranking, or null if it did not rank. */
+  keywordRank: number | null;
 }
+
+export type SearchMode = 'vector' | 'keyword' | 'hybrid';
 
 export interface SearchResult {
   citations: Citation[];
@@ -78,6 +96,17 @@ export interface SearchResult {
   omitted: number;
   family: string;
   tokenEstimate: number;
+  /** Which rankers actually ran. */
+  mode: SearchMode;
+  /**
+   * Whether the vector half ran. False when the mode excluded it, and also
+   * when hybrid mode fell back after the embedding provider failed -- the
+   * caller is told which, rather than quietly receiving keyword-only results
+   * that look like hybrid ones.
+   */
+  vectorSearched: boolean;
+  /** Whether the keyword half ran and had an opinion. */
+  keywordSearched: boolean;
 }
 
 function sha256(value: string): string {
@@ -231,6 +260,15 @@ export async function ingestDocument(input: IngestInput): Promise<IngestResult> 
         now,
       );
       insertVector.run(chunkId, family, dimensions, vectorToBlob(vectors[i] ?? []), now);
+      // Same transaction as the chunk itself. An FTS5 table cannot hold a
+      // foreign key, so the only thing keeping the two in step is that they
+      // are written and rolled back together.
+      indexChunkForKeywords({
+        chunkId,
+        organizationId: input.organizationId,
+        projectId: input.projectId,
+        text: chunk.text,
+      });
     });
   })();
 
@@ -248,6 +286,15 @@ export interface SearchInput {
   /** Discard weak matches rather than padding the answer with noise. */
   minScore?: number;
   model?: string;
+  /**
+   * Which rankers to consult. Defaults to `hybrid`.
+   *
+   * `vector` is the historical behaviour and is kept because it is the only
+   * mode whose scores are comparable across calls. `keyword` needs no
+   * embedding provider at all, which makes it the mode that still works when
+   * every provider is down.
+   */
+  mode?: 'vector' | 'keyword' | 'hybrid';
 }
 
 /**
@@ -263,6 +310,14 @@ export async function searchDocuments(input: SearchInput): Promise<SearchResult>
   const query = typeof input.query === 'string' ? input.query.trim() : '';
   if (query === '') throw new RagError('"query" must be a non-empty string.');
 
+  const mode: SearchMode = input.mode ?? 'hybrid';
+  if (mode !== 'vector' && mode !== 'keyword' && mode !== 'hybrid') {
+    throw new RagError(`unknown search mode "${String(input.mode)}".`);
+  }
+
+  // Resolved even in keyword mode: the family names which embeddings a result
+  // relates to, and returning a stale or invented one would make the response
+  // shape lie. An unknown model is a caller error in every mode.
   const family = resolveFamily(input.model);
   if (!family) throw new RagError(`unknown embedding model "${input.model}".`);
 
@@ -299,69 +354,135 @@ export async function searchDocuments(input: SearchInput): Promise<SearchResult>
     dimensions: number;
   }>;
 
-  if (rows.length === 0) {
-    return { citations: [], omitted: 0, family, tokenEstimate: 0 };
+  const empty = (vectorSearched: boolean, keywordSearched: boolean): SearchResult => ({
+    citations: [],
+    omitted: 0,
+    family,
+    tokenEstimate: 0,
+    mode,
+    vectorSearched,
+    keywordSearched,
+  });
+
+  if (rows.length === 0) return empty(false, false);
+  const byChunkId = new Map(rows.map((row) => [row.chunkId, row]));
+
+  // --- keyword half ---------------------------------------------------------
+  const keywordHits =
+    mode === 'vector'
+      ? []
+      : keywordSearch({
+          organizationId: input.organizationId,
+          projectId: input.projectId,
+          query,
+          limit: MAX_KEYWORD_CANDIDATES,
+        })
+          // A chunk can be in the keyword index but have no vector for this
+          // family (ingested under a different embedding model). Dropping it
+          // keeps every returned citation resolvable.
+          .filter((hit) => byChunkId.has(hit.chunkId));
+
+  // --- vector half ----------------------------------------------------------
+  let vectorScores = new Map<string, number>();
+  let vectorRanked: Array<{ chunkId: string; rank: number }> = [];
+  let vectorSearched = false;
+
+  if (mode !== 'keyword') {
+    let queryTyped: Float32Array | null = null;
+    try {
+      const [queryVector] = await embedBatched(input.model, [query]);
+      if (queryVector) queryTyped = Float32Array.from(queryVector);
+    } catch (err) {
+      // In hybrid mode a dead embedding provider degrades to keyword-only
+      // rather than failing the search: half an answer beats none, and
+      // `vectorSearched: false` says which half. In vector mode there is no
+      // second half to fall back to, so the error is the honest result.
+      if (mode === 'vector') throw err;
+    }
+
+    if (queryTyped === null) {
+      if (mode === 'vector') throw new RagError('could not embed the query.', 502);
+    } else {
+      vectorSearched = true;
+      const typed = queryTyped;
+      const scored = rows
+        .map((row) => ({
+          row,
+          // A vector from a different-dimension model cannot be compared; skip
+          // it rather than returning a meaningless number.
+          score:
+            row.dimensions === typed.length
+              ? cosine(typed, blobToVector(row.vector, row.dimensions))
+              : Number.NEGATIVE_INFINITY,
+        }))
+        .filter((c) => c.score >= minScore)
+        .sort((a, b) => b.score - a.score);
+
+      vectorScores = new Map(scored.map((c) => [c.row.chunkId, c.score]));
+      vectorRanked = scored.map((c, index) => ({ chunkId: c.row.chunkId, rank: index + 1 }));
+    }
   }
 
-  const [queryVector] = await embedBatched(input.model, [query]);
-  if (!queryVector) throw new RagError('could not embed the query.', 502);
-  const queryTyped = Float32Array.from(queryVector);
+  // --- fuse -----------------------------------------------------------------
+  // In single-ranker modes the fusion is over one list, which reproduces that
+  // ranker's order exactly. Running it anyway means one code path decides the
+  // final order instead of two that can drift apart.
+  const fused = fuseRankings(vectorRanked, keywordHits).slice(0, limit);
+  if (fused.length === 0) return empty(vectorSearched, keywordHits.length > 0);
 
-  const scored = rows
-    .map((row) => ({
-      row,
-      // A vector from a different-dimension model cannot be compared; skip it
-      // rather than returning a meaningless number.
-      score: row.dimensions === queryTyped.length
-        ? cosine(queryTyped, blobToVector(row.vector, row.dimensions))
-        : Number.NEGATIVE_INFINITY,
-    }))
-    .filter((c) => c.score >= minScore)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
-
-  if (scored.length === 0) {
-    return { citations: [], omitted: 0, family, tokenEstimate: 0 };
-  }
-
-  const items: ContextItem[] = scored.map(({ row, score }) => ({
-    itemId: row.chunkId,
-    organizationId: input.organizationId,
-    projectId: input.projectId,
-    contentHash: sha256(row.text),
-    tokenEstimate: Math.max(1, row.tokenEstimate || estimateTokens(row.text)),
-    // packContext ranks on relevance; cosine can be negative, and a negative
-    // relevance would sort below items it should outrank.
-    relevance: Math.max(0, score),
-    trust: 'observed',
-    taint: 'clean',
-    allowedSubjectIds: [],
-    provenanceHash: sha256(`${row.documentId}:${row.startOffset}:${row.endOffset}`),
-    sourceRevision: row.documentId,
-  }));
+  const items: ContextItem[] = fused.map((hit) => {
+    const row = byChunkId.get(hit.chunkId)!;
+    return {
+      itemId: row.chunkId,
+      organizationId: input.organizationId,
+      projectId: input.projectId,
+      contentHash: sha256(row.text),
+      tokenEstimate: Math.max(1, row.tokenEstimate || estimateTokens(row.text)),
+      // packContext ranks on relevance, and the fused score is already a
+      // positive rank-based quantity, so no clamping is needed here.
+      relevance: hit.score,
+      trust: 'observed',
+      taint: 'clean',
+      allowedSubjectIds: [],
+      provenanceHash: sha256(`${row.documentId}:${row.startOffset}:${row.endOffset}`),
+      sourceRevision: row.documentId,
+    };
+  });
 
   const packed = packContext(items, tokenBudget);
   const selected = new Set(packed.selectedItemIds);
 
-  const citations = scored
-    .filter(({ row }) => selected.has(row.chunkId))
-    .map(({ row, score }) => ({
-      documentId: row.documentId,
-      title: row.title,
-      sourceUri: row.sourceUri,
-      chunkId: row.chunkId,
-      ordinal: row.ordinal,
-      startOffset: row.startOffset,
-      endOffset: row.endOffset,
-      text: row.text,
-      score,
-    }));
+  const citations = fused
+    .filter((hit) => selected.has(hit.chunkId))
+    .map((hit) => {
+      const row = byChunkId.get(hit.chunkId)!;
+      return {
+        documentId: row.documentId,
+        title: row.title,
+        sourceUri: row.sourceUri,
+        chunkId: row.chunkId,
+        ordinal: row.ordinal,
+        startOffset: row.startOffset,
+        endOffset: row.endOffset,
+        text: row.text,
+        // Kept as cosine when the vector ranker saw this chunk, because that
+        // is the number callers already interpret. A keyword-only hit has no
+        // cosine to report and says 0 rather than inventing one; `vectorRank`
+        // and `keywordRank` are where the fused truth lives.
+        score: vectorScores.get(hit.chunkId) ?? 0,
+        vectorRank: hit.vectorRank,
+        keywordRank: hit.keywordRank,
+      };
+    });
 
   return {
     citations,
-    omitted: scored.length - citations.length,
+    omitted: fused.length - citations.length,
     family,
     tokenEstimate: packed.tokenEstimate,
+    mode,
+    vectorSearched,
+    keywordSearched: keywordHits.length > 0,
   };
 }
 
@@ -442,10 +563,18 @@ export function deleteDocument(input: {
   projectId: string;
   documentId: string;
 }): boolean {
-  const result = getDb()
-    .prepare(
-      'DELETE FROM rag_documents WHERE document_id = ? AND organization_id = ? AND project_id = ?',
-    )
-    .run(input.documentId, input.organizationId, input.projectId);
-  return result.changes === 1;
+  const db = getDb();
+  return db.transaction(() => {
+    // Order matters: the keyword rows are found by joining rag_chunks, and
+    // deleting the document cascades those away. Doing this second would find
+    // nothing and silently leave a deleted document answering searches.
+    removeDocumentFromKeywordIndex(input);
+
+    const result = db
+      .prepare(
+        'DELETE FROM rag_documents WHERE document_id = ? AND organization_id = ? AND project_id = ?',
+      )
+      .run(input.documentId, input.organizationId, input.projectId);
+    return result.changes === 1;
+  })();
 }
