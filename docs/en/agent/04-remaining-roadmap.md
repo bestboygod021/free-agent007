@@ -499,10 +499,30 @@ Neither was reachable from a fixture written by `openpyxl`, which renumbers
 parts on save and fills gaps. Both needed an archive built to be structurally
 real rather than conveniently generated.
 
-Still open in this area: `.xlsx` writing, merged cells (currently the value
-lands in the top-left and the rest read empty, which is what the file says but
-not what a human sees), and dates (a date is a serial number and the format
-that makes it a date lives in `styles.xml`, which is not read).
+~~Still open: merged cells and dates.~~ **Both done**, and both were the same
+shape of bug as the two above: the file is not wrong, it just does not say
+what it means in the place you would look.
+
+- **A date is a number.** `2026-03-14` is `46095`; the only thing that makes
+  it a date is a number format reached through the cell's style index in
+  `styles.xml`. Two traps sit behind that, and both were checked against
+  `openpyxl` reading the same file rather than reasoned out: Excel believes
+  1900 was a leap year, so serials either side of its phantom 29 February
+  need different epochs — use one epoch for everything and *every* date in
+  the file is a day out — and a Mac-saved workbook may count from 1904
+  instead, which read as 1900 is four years early. Whether a time is shown is
+  decided by the format, not by the value, so a datetime column's midnight
+  rows do not render as bare dates and sort differently from their
+  neighbours.
+- **Merged cells.** The label is stored once in the top-left cell and the
+  rest of the block is absent, so a `GROUP BY` over a merged column loses
+  every row but the first. The block is now filled — but only over cells that
+  are empty, because a file that stores a value inside a merged range means
+  it, and ranges are clipped to the loaded grid so a `ref` cannot grow the
+  table.
+
+Still open in this area: `.xlsx` **writing**, charts, pivot caches, and
+`.doc`/`.xls` (the pre-2007 binary formats, a different problem entirely).
 
 ---
 

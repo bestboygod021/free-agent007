@@ -276,8 +276,13 @@ export function columnIndexFromRef(ref: string): number | null {
   return zeroBased >= 0 && zeroBased < MAX_SHEET_COLUMNS ? zeroBased : null;
 }
 
-/** Read one cell's value, resolving a shared-string index. */
-function cellValue(attributes: string, inner: string, sharedStrings: readonly string[]): string {
+/** Read one cell's value, resolving a shared-string index and any date format. */
+function cellValue(
+  attributes: string,
+  inner: string,
+  sharedStrings: readonly string[],
+  options: GridOptions,
+): string {
   const type = /\bt="([^"]*)"/.exec(attributes)?.[1] ?? 'n';
 
   if (type === 'inlineStr') {
@@ -301,7 +306,287 @@ function cellValue(attributes: string, inner: string, sharedStrings: readonly st
     // An out-of-range index is a corrupt file, not a crash.
     return sharedStrings[index] ?? '';
   }
+
+  // A number carrying a date format is a date. `t="n"` is the default and is
+  // also what a date has, so the type attribute cannot be used to tell them
+  // apart — only the style can.
+  if ((type === 'n' || type === '') && options.formats !== undefined) {
+    const styleIndex = Number.parseInt(/\bs="(\d+)"/.exec(attributes)?.[1] ?? '', 10);
+    const kind = Number.isInteger(styleIndex)
+      ? dateStyleKind(styleIndex, options.formats)
+      : null;
+    if (kind !== null) {
+      const iso = excelSerialToIso(Number(value), kind, options.date1904 ?? false);
+      // A style that says date over something that is not a number means the
+      // file is inconsistent; the raw value is the honest answer.
+      if (iso !== null) return iso;
+    }
+  }
+
   return value;
+}
+
+export interface GridOptions {
+  formats?: NumberFormats;
+  date1904?: boolean;
+  /**
+   * Ranges from `<mergeCells>`. When given, the top-left value is repeated
+   * across the block.
+   */
+  merges?: readonly MergedRange[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Number formats: telling a date from a number                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A date in a spreadsheet is a number. `2026-03-14` is stored as `46095`, and
+ * the only thing that makes it a date is a number format referenced through
+ * the cell's `s=` style index. Ignoring styles means a date column arrives as
+ * five-digit integers: not an error anywhere, just a wrong answer.
+ */
+export interface NumberFormats {
+  /** numFmtId per cellXfs index, in order. */
+  styleFormats: number[];
+  /** Custom format codes by id. Built-ins are not listed in the file. */
+  customCodes: Map<number, string>;
+}
+
+/**
+ * Built-in format ids that mean a date or a time.
+ *
+ * These are fixed by the spec and carry no `formatCode` in the file, so there
+ * is nothing to inspect — they have to be known. 14–17 are dates, 18–21 are
+ * times, 22 is a date and time, 45–47 are elapsed time.
+ */
+const BUILTIN_DATE_ONLY_IDS = new Set([14, 15, 16, 17]);
+const BUILTIN_TIME_ONLY_IDS = new Set([18, 19, 20, 21, 45, 46, 47]);
+const BUILTIN_DATETIME_IDS = new Set([22]);
+
+/** What a date format renders. */
+export type DateStyleKind = 'date' | 'time' | 'datetime';
+
+export function parseNumberFormats(stylesXml: string | null): NumberFormats {
+  const styleFormats: number[] = [];
+  const customCodes = new Map<number, string>();
+  if (stylesXml === null) return { styleFormats, customCodes };
+
+  const numFmts = /<numFmts\b[^>]*>([\s\S]*?)<\/numFmts>/.exec(stylesXml)?.[1];
+  if (numFmts !== undefined) {
+    const pattern = /<numFmt\b([^>]*?)\/?>/g;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(numFmts)) !== null) {
+      const attributes = match[1] ?? '';
+      const id = Number.parseInt(/\bnumFmtId="(\d+)"/.exec(attributes)?.[1] ?? '', 10);
+      const code = /\bformatCode="([^"]*)"/.exec(attributes)?.[1];
+      if (Number.isInteger(id) && code !== undefined) {
+        customCodes.set(id, decodeXmlEntities(code));
+      }
+    }
+  }
+
+  // Only `cellXfs` — `cellStyleXfs` appears first in the file and has the same
+  // element name, so matching `<xf>` document-wide indexes into the wrong
+  // table.
+  const cellXfs = /<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/.exec(stylesXml)?.[1];
+  if (cellXfs !== undefined) {
+    const pattern = /<xf\b([^>]*?)(?:\/>|>[\s\S]*?<\/xf>)/g;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(cellXfs)) !== null) {
+      const id = Number.parseInt(/\bnumFmtId="(\d+)"/.exec(match[1] ?? '')?.[1] ?? '', 10);
+      styleFormats.push(Number.isInteger(id) ? id : 0);
+    }
+  }
+
+  return { styleFormats, customCodes };
+}
+
+/**
+ * What a format code renders, or null if it is not a date or time at all.
+ *
+ * Literal text and bracketed sections are removed first. `0.00"m"` is metres
+ * and `[Red]#,##0` is a colour; both contain letters that would otherwise
+ * read as date tokens.
+ *
+ * The `m` token is ambiguous in the format language — it is minutes directly
+ * after `h` or before `s`, and months everywhere else. That ambiguity only
+ * matters for choosing between "date" and "time", so it is resolved the same
+ * way Excel resolves it rather than being ignored.
+ */
+export function dateFormatKind(code: string): DateStyleKind | null {
+  const stripped = (code
+    .replace(/\\./g, '')
+    .replace(/"[^"]*"/g, '')
+    .replace(/\[[^\]]*\]/g, '')
+    // Only the first section matters: the rest are the negative, zero and
+    // text variants of the same quantity.
+    .split(';')[0] ?? '')
+    .toLowerCase();
+
+  // AM/PM has to go before anything is tokenised, because it contains two
+  // `m` characters that are not minutes and not months. A regex that looks at
+  // what surrounds an `m` reads the one in "pm" as a month and turns every
+  // twelve-hour clock format into a date.
+  let hasTime = /am\/pm|a\/p/.test(stripped);
+  const cleaned = stripped.replace(/am\/pm|a\/p/g, ' ');
+
+  // Runs of format letters, with everything else treated as a separator.
+  const runs = cleaned.match(/[ymdhs]+/g) ?? [];
+  let hasDate = false;
+
+  runs.forEach((run, index) => {
+    const letter = run[0]!;
+    if (letter === 'y' || letter === 'd') {
+      hasDate = true;
+      return;
+    }
+    if (letter === 'h' || letter === 's') {
+      hasTime = true;
+      return;
+    }
+    // `m` is minutes when it follows an hour or precedes a second, and months
+    // everywhere else. This is Excel's own rule, and without it `mm:ss` is a
+    // date and `mmm yyyy` is a time.
+    const previous = runs[index - 1]?.[0];
+    const next = runs[index + 1]?.[0];
+    if (previous === 'h' || next === 's') hasTime = true;
+    else hasDate = true;
+  });
+
+  if (hasDate && hasTime) return 'datetime';
+  if (hasTime) return 'time';
+  if (hasDate) return 'date';
+  return null;
+}
+
+/** What kind of date this cell's style renders, or null if it is a plain number. */
+export function dateStyleKind(
+  styleIndex: number | null,
+  formats: NumberFormats,
+): DateStyleKind | null {
+  if (styleIndex === null) return null;
+  const id = formats.styleFormats[styleIndex];
+  if (id === undefined) return null;
+  if (BUILTIN_DATE_ONLY_IDS.has(id)) return 'date';
+  if (BUILTIN_TIME_ONLY_IDS.has(id)) return 'time';
+  if (BUILTIN_DATETIME_IDS.has(id)) return 'datetime';
+  const code = formats.customCodes.get(id);
+  return code === undefined ? null : dateFormatKind(code);
+}
+
+/**
+ * Turn an Excel serial number into an ISO 8601 string.
+ *
+ * Two traps, both verified against a real reader rather than recalled:
+ *
+ * 1. **1900 is not a leap year, and Excel thinks it is.** Serial 60 is
+ *    Excel's 29 February 1900, a day that never happened. Everything from 61
+ *    onwards is therefore one day ahead of a naive count, so serials below 60
+ *    and serials above it need different epochs. Getting this wrong shifts
+ *    every date before March 1900 by a day — or, if you use one epoch for
+ *    everything, shifts *every date in the file* by a day.
+ * 2. **There is a second calendar.** A workbook saved by Excel for Mac may
+ *    carry `date1904="1"`, where serial 1 is 2 January 1904 and the leap-year
+ *    bug does not exist. Assuming 1900 reads those files four years early.
+ *
+ * Serial 60 is returned as `1900-02-29`: that is what Excel displays, it is
+ * distinct from serial 59, and it is visibly not a real date. Clamping it to
+ * the 28th would merge two different cells into one value silently, which is
+ * the worse failure.
+ */
+export function excelSerialToIso(
+  serial: number,
+  kind: DateStyleKind = 'datetime',
+  date1904 = false,
+): string | null {
+  if (!Number.isFinite(serial) || serial < 0) return null;
+
+  const days = Math.floor(serial);
+  const fraction = serial - days;
+  const pad = (value: number, width = 2): string => String(value).padStart(width, '0');
+
+  // Rounded, not truncated: a stored 09:30 is 0.3958333... and truncating
+  // gives 09:29:59. A round that reaches the next day carries into it.
+  let seconds = Math.round(fraction * 86_400);
+  let dayOffset = 0;
+  if (seconds >= 86_400) {
+    seconds -= 86_400;
+    dayOffset = 1;
+  }
+  const time = `${pad(Math.floor(seconds / 3600))}:${pad(Math.floor(seconds / 60) % 60)}:${pad(seconds % 60)}`;
+
+  if (kind === 'time') return time;
+
+  let day: string;
+  if (!date1904 && days === 60 && dayOffset === 0) {
+    day = '1900-02-29';
+  } else {
+    const epochUtc = date1904
+      ? Date.UTC(1904, 0, 1)
+      : // Below the phantom day the count is honest; above it, one day must
+        // be given back.
+        days + dayOffset < 60
+        ? Date.UTC(1899, 11, 31)
+        : Date.UTC(1899, 11, 30);
+    const date = new Date(epochUtc + (days + dayOffset) * 86_400_000);
+    if (Number.isNaN(date.getTime())) return null;
+    day = `${pad(date.getUTCFullYear(), 4)}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+  }
+
+  // The format decides whether a time is shown, not the value. A datetime
+  // column whose midnight rows render as bare dates sorts and filters
+  // differently from its other rows, which is a trap laid for the caller.
+  return kind === 'date' ? day : `${day}T${time}`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Merged cells                                                        */
+/* ------------------------------------------------------------------ */
+
+export interface MergedRange {
+  firstRow: number;
+  lastRow: number;
+  firstColumn: number;
+  lastColumn: number;
+}
+
+/**
+ * Ranges from `<mergeCells>`, as zero-based row and column indices.
+ *
+ * A merged block stores its value in the top-left cell only; the rest are
+ * absent. A human sees one label spanning three rows, and a reader that does
+ * not expand the range produces two rows with an empty label — which then
+ * group and filter as if the label were missing.
+ */
+export function extractMergedRanges(sheetXml: string): MergedRange[] {
+  const block = /<mergeCells\b[^>]*>([\s\S]*?)<\/mergeCells>/.exec(sheetXml)?.[1];
+  if (block === undefined) return [];
+
+  const ranges: MergedRange[] = [];
+  const pattern = /<mergeCell\b[^>]*?\bref="([A-Z]+\d+):([A-Z]+\d+)"[^>]*?\/?>/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(block)) !== null) {
+    const from = parseCellRef(match[1] ?? '');
+    const to = parseCellRef(match[2] ?? '');
+    if (from === null || to === null) continue;
+    ranges.push({
+      firstRow: Math.min(from.row, to.row),
+      lastRow: Math.max(from.row, to.row),
+      firstColumn: Math.min(from.column, to.column),
+      lastColumn: Math.max(from.column, to.column),
+    });
+  }
+  return ranges;
+}
+
+function parseCellRef(ref: string): { row: number; column: number } | null {
+  const match = /^([A-Z]+)(\d+)$/.exec(ref);
+  if (!match) return null;
+  const column = columnIndexFromRef(`${match[1]}1`);
+  const row = Number.parseInt(match[2] ?? '', 10) - 1;
+  if (column === null || !Number.isInteger(row) || row < 0) return null;
+  return { row, column };
 }
 
 export interface SheetGrid {
@@ -327,6 +612,7 @@ export interface SheetGrid {
 export function extractSheetGrid(
   sheetXml: string,
   sharedStrings: readonly string[],
+  options: GridOptions = {},
 ): SheetGrid {
   const sparse: Map<number, string>[] = [];
   let widest = 0;
@@ -356,7 +642,7 @@ export function extractSheetGrid(
       // format permits.
       const column = (ref !== undefined ? columnIndexFromRef(ref) : null) ?? fallbackColumn;
       fallbackColumn = column + 1;
-      cells.set(column, cellValue(attributes, cell[2] ?? '', sharedStrings));
+      cells.set(column, cellValue(attributes, cell[2] ?? '', sharedStrings, options));
       if (column + 1 > widest) widest = column + 1;
     }
 
@@ -381,15 +667,42 @@ export function extractSheetGrid(
     rows.push(line);
   }
 
+  fillMergedRanges(rows, options.merges ?? []);
+
   return { rows, columns: widest, truncated };
 }
 
+/**
+ * Repeat a merged block's value across the cells it covers.
+ *
+ * Only over cells that are empty: if a file both merges a range and stores a
+ * value inside it, the stored value is what the file says and overwriting it
+ * would be this code inventing data. Ranges that reach past the loaded grid
+ * are clipped rather than extending it, so a `ref` cannot grow the table.
+ */
+function fillMergedRanges(rows: string[][], merges: readonly MergedRange[]): void {
+  for (const range of merges) {
+    const source = rows[range.firstRow]?.[range.firstColumn];
+    if (source === undefined || source === '') continue;
+
+    for (let r = range.firstRow; r <= range.lastRow; r += 1) {
+      const row = rows[r];
+      if (row === undefined) break;
+      for (let c = range.firstColumn; c <= range.lastColumn; c += 1) {
+        if (c >= row.length) break;
+        if (row[c] === '') row[c] = source;
+      }
+    }
+  }
+}
+
 /** One sheet as tab-separated rows. */
-export function extractSheetText(sheetXml: string, sharedStrings: readonly string[]): {
-  text: string;
-  rows: number;
-} {
-  const grid = extractSheetGrid(sheetXml, sharedStrings);
+export function extractSheetText(
+  sheetXml: string,
+  sharedStrings: readonly string[],
+  options: GridOptions = {},
+): { text: string; rows: number } {
+  const grid = extractSheetGrid(sheetXml, sharedStrings, options);
   // Trailing empties would add tabs that carry no information and make every
   // short row look padded in a search snippet.
   const lines = grid.rows.map((cells) => {
@@ -534,6 +847,11 @@ export function readOfficeDocument(bytes: Buffer): OfficeDocument {
     return xml === null ? [] : extractSharedStrings(xml);
   })();
 
+  const formats = parseNumberFormats(read('xl/styles.xml'));
+  // A Mac-saved workbook counts from 1904. Reading it as 1900 puts every date
+  // four years early, and nothing about the number says which it is.
+  const date1904 = /<workbookPr\b[^>]*\bdate1904="(1|true)"/.test(workbook);
+
   const sheetRefs = resolveWorkbookSheets(workbook, read('xl/_rels/workbook.xml.rels'));
   const names = sheetRefs.map((ref) => ref.name);
 
@@ -542,7 +860,11 @@ export function readOfficeDocument(bytes: Buffer): OfficeDocument {
   for (const ref of sheetRefs) {
     const xml = read(ref.path);
     if (xml === null) continue;
-    const extracted = extractSheetText(xml, sharedStrings);
+    const extracted = extractSheetText(xml, sharedStrings, {
+      formats,
+      date1904,
+      merges: extractMergedRanges(xml),
+    });
     if (extracted.rows === 0) continue;
     parts.push(`# ${ref.name}\n${extracted.text}`);
     rows += extracted.rows;

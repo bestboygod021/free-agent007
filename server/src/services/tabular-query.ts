@@ -4,6 +4,8 @@ import path from 'node:path';
 import {
   extractSharedStrings,
   extractSheetGrid,
+  extractMergedRanges,
+  parseNumberFormats,
   detectOfficeFormat,
   resolveWorkbookSheets,
   OfficeParseError,
@@ -376,7 +378,11 @@ export function loadXlsxBytes(
 
   let grid;
   try {
-    grid = extractSheetGrid(sheetXml, sharedStrings);
+    grid = extractSheetGrid(sheetXml, sharedStrings, {
+      formats: parseNumberFormats(read('xl/styles.xml')),
+      date1904: /<workbookPr\b[^>]*\bdate1904="(1|true)"/.test(workbook),
+      merges: extractMergedRanges(sheetXml),
+    });
   } catch (err) {
     throw new TabularError(
       err instanceof OfficeParseError ? err.message : 'could not read the sheet.',

@@ -205,7 +205,7 @@ tested code, not by a language model.
 
 ```bash
 npm run agent:test        # kernel tests
-npm test -w @freellmapi/server   # 4,149 server tests
+npm test -w @freellmapi/server   # 4,173 server tests
 npm run agent:typecheck   # strict tsc, zero @ts-ignore
 ```
 
@@ -419,7 +419,7 @@ The flag tracks reality — it is never hard-coded, and a test fails if it is.
 
 ```bash
 npm test                          # everything
-npm test -w @freellmapi/server    # 4,149 server tests, ~4 min
+npm test -w @freellmapi/server    # 4,173 server tests, ~4 min
 npm run agent:test                # kernel tests
 npm run lint && npm run build
 ```
@@ -646,6 +646,18 @@ successes is not useful:
   not by guessing `sheet{n+1}.xml`, which reads nothing for the second tab of
   a workbook that has had a middle sheet deleted while still reporting its
   name.
+- **A date is a number until `styles.xml` says otherwise.** `2026-03-14` is
+  stored as `46095`, and nothing in the cell marks it as a date — the number
+  format reached through the cell's style index does. Dates come out as ISO
+  text, so `WHERE opened >= '2025-01-01'` and `strftime('%Y', opened)` work.
+  Both calendars are handled (a Mac-saved workbook counts from 1904 and
+  reading it as 1900 is four years early), and so is Excel's belief that 1900
+  was a leap year: serial 60 is its 29 February 1900, a day that never
+  happened, so serials either side of it need different epochs. Serial 60 is
+  reported as `1900-02-29` rather than clamped onto the 28th, because merging
+  two distinct cells into one value silently is worse than a date that is
+  visibly impossible. Merged cells repeat their label across the block, so a
+  `GROUP BY` agrees with what a human sees.
 - **DOCX and XLSX ingest, PDF does not.** `POST /api/agent/documents` accepts
   `contentBase64` and extracts text from Word and Excel files with no new
   dependency — they are ZIP archives of XML and Node ships `zlib`. The format
@@ -658,7 +670,7 @@ successes is not useful:
   `zlib` alone cannot do, so it was left out rather than half-built.
   Archives are bounded at 32 MB in, 16 MB per entry and 48 MB total, checked
   both against the declared size and against what was actually produced.
-- **Roughly 186 of 500 catalogued capabilities are implemented.** No browser
+- **Roughly 188 of 500 catalogued capabilities are implemented.** No browser
   automation, no PDF parsing, no OpenTelemetry — those dependencies are
   absent from the lockfile, which is checked rather than assumed.
 

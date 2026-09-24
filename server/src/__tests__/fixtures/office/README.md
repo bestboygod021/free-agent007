@@ -29,3 +29,11 @@ and never produces this, which is exactly why the fixture had to be built by
 hand from a real one: the positional guess `sheet{n+1}.xml` passes every test
 a library-written file can provide. Verified against a real reader: `openpyxl`
 opens it and sees both `First` and `Third`.
+
+`dates-and-merges.xlsx` carries a date column, a datetime column, a plain
+number column and a merged label spanning two rows. The dates include serial
+61 (1 March 1900) because Excel believes 1900 was a leap year, so serials
+either side of its phantom 29 February need different epochs. Ground truth
+for every value is `openpyxl` reading this same file — the leap-year rule is
+easy to reconstruct wrongly and then enshrine in a test that agrees with the
+bug.

@@ -296,7 +296,7 @@ not answerable by reading.
 
 ## 5. Capability gaps, honestly ranked
 
-From the 500-item review in `02-capability-audit.md`, now ~186 built. The gaps
+From the 500-item review in `02-capability-audit.md`, now ~188 built. The gaps
 that actually block real use, rather than the ones that are simply unticked:
 
 **Browser automation (196–220, 0 of 25).** No Playwright, no Puppeteer, no
@@ -366,10 +366,11 @@ delete the guard and watch it go red.
 
 ---
 
-## 5c. Two bugs the office parser only revealed when asked for a table
+## 5c. Three bugs the office parser only revealed when asked for a table
 
-Both were in code that had shipped a day earlier with 35 passing tests, and
-neither was reachable from a fixture a spreadsheet library writes.
+All three were in code that had shipped a day earlier with 35 passing tests,
+and none was reachable from a fixture a spreadsheet library writes with
+default settings.
 
 **Columns were positional.** Excel omits an empty cell entirely: a four-column
 row with a gap in column B writes three `<c>` elements. Reading them in order
@@ -389,9 +390,32 @@ running into and keeps having to name: a silent wrong answer is worse than a
 crash, and the thing that makes it silent is usually a success field that was
 computed separately from the work.
 
+A third followed from the same audit, and it was the worst of the three
+because nothing about the file looks unusual: **a date is a number.**
+`2026-03-14` is stored as `46095`, and the only thing marking it as a date is
+a number format reached through the cell's style index in `styles.xml`, which
+was not being read. An incident log's `opened` column arrived as five-digit
+integers — no error, no warning, and any arithmetic over it silently
+meaningless.
+
+Two traps live behind that, and both were settled by running `openpyxl`
+against the same file rather than reasoning them out:
+
+- Excel believes 1900 was a leap year. Serial 60 is its 29 February 1900, a
+  day that never happened, so serials on either side need different epochs.
+  Use one epoch for everything — the usual shortcut — and *every* date in the
+  file is a day out. Serial 60 is reported as `1900-02-29` rather than clamped
+  to the 28th: two distinct cells silently becoming one value is the worse
+  failure.
+- A Mac-saved workbook may carry `date1904="1"`, where serial 1 is 2 January
+  1904. Read as 1900 those files are four years early, and nothing in the
+  number says which calendar it belongs to.
+
 The general point: the same parser was correct enough for search and wrong for
 a table. Text extraction forgives positional errors because a human reads
-around them. A query does not. Widening what a component is used for is not
+around them, and a serial number in a search index is merely useless rather
+than harmful. A query is neither forgiving nor merely useless — it returns a
+number that looks like an answer. Widening what a component is used for is not
 free even when no code changes.
 
 ---
