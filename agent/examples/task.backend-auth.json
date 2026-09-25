@@ -1,0 +1,31 @@
+{
+  "taskId": "task_backend_auth",
+  "title": "Implement authenticated project creation API",
+  "type": "backend",
+  "objective": "Allow an authenticated organization member to create a project inside their own organization, with input validation and tenant isolation enforced in the service layer.",
+  "context": {
+    "framework": "Next.js 15 App Router + tRPC",
+    "database": "PostgreSQL",
+    "orm": "Prisma"
+  },
+  "acceptanceCriteria": [
+    "Only authenticated users can create projects",
+    "The caller must be a member of the target organization",
+    "Project name is validated (1..80 chars, trimmed)",
+    "Duplicate project names are rejected per organization",
+    "The organizationId from the request body is ignored; it is derived from the session",
+    "Tests cover success, unauthenticated, cross-tenant and duplicate-name cases"
+  ],
+  "allowedPaths": ["apps/api/**", "packages/database/prisma/**", "tests/api/**"],
+  "forbiddenActions": [
+    "modify production secrets",
+    "push to main",
+    "deploy",
+    "add a new dependency without stating the reason in the completion report"
+  ],
+  "dependencies": ["task_repo_analysis", "task_database_project_model"],
+  "riskLevel": "medium",
+  "approvalRequired": false,
+  "definitionOfDone": ["lint", "typecheck", "test:unit", "secret-scan"],
+  "estimatedTokens": 24000
+}

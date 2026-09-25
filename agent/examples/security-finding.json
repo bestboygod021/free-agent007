@@ -1,0 +1,12 @@
+{
+  "severity": "high",
+  "category": "authz",
+  "location": "apps/api/src/modules/projects/list-projects.ts:34",
+  "description": "The list endpoint filters by organizationId taken from the query string instead of the session.",
+  "impact": "Any authenticated user can enumerate projects of any other organization.",
+  "evidence": "const organizationId = input.organizationId;",
+  "remediation": "Derive organizationId from the verified session and remove it from the input schema.",
+  "verification": "pnpm vitest run tests/api -t 'cross-tenant'",
+  "status": "open",
+  "cwe": "CWE-639"
+}

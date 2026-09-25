@@ -32,6 +32,7 @@ import { geminiRouter } from './routes/gemini.js';
 import { ollamaRouter } from './routes/ollama.js';
 import { urlTokenRouter } from './routes/url-tokens.js';
 import { updateRouter } from './routes/update.js';
+import { agentRouter } from './routes/agent.js';
 import { requireAuth } from './middleware/requireAuth.js';
 import { createProxyRateLimiter, createAdminRateLimiter } from './middleware/rateLimit.js';
 
@@ -262,6 +263,10 @@ export function createApp(config?: Config) {
   app.use('/api/cache', requireAuth, cacheRouter);
   app.use('/api/compression', requireAuth, compressionRouter);
   app.use('/api/update', requireAuth, updateRouter);
+  // ForgePilot deterministic agent kernel (compute modes, routing decisions,
+  // tool-call policy, run state machine, task DAG, redaction, evidence audit,
+  // output contracts and the prompt library).
+  app.use('/api/agent', requireAuth, agentRouter);
 
   // Health check — no auth required.
   app.get('/api/ping', (_req, res) => {

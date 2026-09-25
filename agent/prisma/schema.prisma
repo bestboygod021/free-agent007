@@ -1,0 +1,450 @@
+// ForgePilot data model
+//
+// Design rules enforced by this file:
+//   1. Every tenant-scoped table carries organizationId.
+//   2. No raw secret is ever stored; SecretReference points at a vault.
+//   3. Every state change is an immutable event; tables hold current state only.
+//   4. Approvals expire and record who granted them.
+//   5. Tool calls record the prompt version, so a run can be reproduced.
+//   6. Audit logs are append-only and not deletable by ordinary users.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum PrivacyLevel {
+  PUBLIC
+  INTERNAL
+  PRIVATE
+  CONFIDENTIAL
+}
+
+/// The single switch the user flips. Everything in a run is derived from it.
+enum ComputeMode {
+  FREE
+  PAID
+  LOCAL
+}
+
+enum AutonomyLevel {
+  READONLY
+  SUPERVISED
+  AUTONOMOUS_BRANCH
+  FULL
+}
+
+enum RunState {
+  INTAKE
+  CLARIFY
+  SPECIFY
+  PLAN
+  AWAITING_PLAN_APPROVAL
+  RECON
+  IMPLEMENT
+  TEST
+  REPAIR
+  SECURITY_REVIEW
+  PREVIEW
+  AWAITING_DEPLOY_APPROVAL
+  DEPLOY
+  VERIFY
+  FINALIZE
+  DONE
+  FAILED
+  CANCELLED
+  BLOCKED
+}
+
+enum TaskStatus {
+  PENDING
+  READY
+  RUNNING
+  BLOCKED
+  NEEDS_REPAIR
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum TaskType {
+  REPO_ANALYSIS
+  SCAFFOLD
+  DATABASE
+  BACKEND
+  FRONTEND
+  INTEGRATION
+  TEST
+  SECURITY
+  DEVOPS
+  DOCS
+  BROWSER
+}
+
+enum RiskLevel {
+  READ
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SideEffectClass {
+  NONE
+  LOCAL_WRITE
+  EXTERNAL_WRITE
+  DESTRUCTIVE
+  BILLING
+  CREDENTIAL
+  PRODUCTION
+}
+
+enum ConnectorStatus {
+  DISCONNECTED
+  CONNECTING
+  CONNECTED
+  EXPIRED
+  REVOKED
+  ERROR
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum ActorType {
+  USER
+  AGENT
+  SYSTEM
+  CONNECTOR
+}
+
+// ─── Identity and tenancy ────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  avatarUrl    String?
+  locale       String   @default("fa-IR")
+  timezone     String   @default("UTC")
+  mfaEnabled   Boolean  @default(false)
+  passwordHash String?  @map("password_hash") // argon2id; null when OAuth-only
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  memberships OrganizationMember[]
+  runs        AgentRun[]
+  approvals   Approval[]         @relation("ApprovalDecidedBy")
+
+  @@map("users")
+}
+
+model Organization {
+  id           String         @id @default(cuid())
+  name         String
+  slug         String         @unique
+  ownerId      String         @map("owner_id")
+  plan         String         @default("free")
+  privacyLevel PrivacyLevel   @default(PRIVATE)
+  autonomy     AutonomyLevel  @default(SUPERVISED)
+  computeMode  ComputeMode    @default(FREE) @map("compute_mode")
+  settings     Json           @default("{}")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  members    OrganizationMember[]
+  projects   Project[]
+  connectors Connector[]
+  secrets    SecretReference[]
+  approvals  Approval[]
+  toolCalls  ToolCall[]
+  auditLogs  AuditLog[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  organizationId String @map("organization_id")
+  userId         String @map("user_id")
+  role           Role   @default(MEMBER)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, userId])
+  @@map("organization_members")
+}
+
+// ─── Projects and runs ───────────────────────────────────────────────────────
+
+model Project {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  name           String
+  description    String?
+  stack          Json?
+  repositoryId   String?      @map("repository_id")
+  repositoryUrl  String?      @map("repository_url")
+  defaultBranch  String       @default("main") @map("default_branch")
+  privacyLevel   PrivacyLevel @default(PRIVATE) @map("privacy_level")
+  status         String       @default("active")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  runs         AgentRun[]
+
+  // A project name is unique per tenant, never globally.
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("projects")
+}
+
+model AgentRun {
+  id               String        @id @default(cuid())
+  organizationId   String        @map("organization_id") // denormalised: RLS needs it on the row
+  projectId        String        @map("project_id")
+  createdBy        String        @map("created_by")
+  userRequest      String        @map("user_request")
+  status           RunState      @default(INTAKE)
+  currentState     RunState      @default(INTAKE) @map("current_state")
+  workingBranch    String?       @map("working_branch")
+  modelPolicy      Json          @default("{}") @map("model_policy")
+  autonomyLevel    AutonomyLevel @default(SUPERVISED) @map("autonomy_level")
+  /// snapshot of the mode at run start, so a later workspace change cannot
+  /// silently reconfigure a run that is already in flight
+  computeMode      ComputeMode   @default(FREE) @map("compute_mode")
+  modeProfileHash  String?       @map("mode_profile_hash")
+  planHash         String?       @map("plan_hash") // approval is bound to this
+  repairAttempts   Int           @default(0) @map("repair_attempts")
+  maxRepairAttempts Int          @default(3) @map("max_repair_attempts")
+  tokensUsed       Int           @default(0) @map("tokens_used")
+  hardStopTokens   Int?          @map("hard_stop_tokens")
+  startedAt        DateTime      @default(now()) @map("started_at")
+  finishedAt       DateTime?     @map("finished_at")
+  failureReason    String?       @map("failure_reason")
+  blockReason      String?       @map("block_reason")
+
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator   User         @relation(fields: [createdBy], references: [id])
+  tasks     AgentTask[]
+  approvals Approval[]
+  toolCalls ToolCall[]
+  testRuns  TestRun[]
+  events    SystemEvent[]
+
+  @@index([projectId, status])
+  @@index([organizationId])
+  @@map("agent_runs")
+}
+
+model AgentTask {
+  id                 String     @id @default(cuid())
+  organizationId     String     @map("organization_id")
+  runId              String     @map("run_id")
+  externalTaskId     String     @map("external_task_id") // task_backend_auth
+  parentTaskId       String?    @map("parent_task_id")
+  type               TaskType
+  title              String
+  objective          String
+  acceptanceCriteria Json       @map("acceptance_criteria")
+  allowedPaths       Json       @map("allowed_paths")
+  lockedPaths        Json?      @map("locked_paths")
+  forbiddenActions   Json       @map("forbidden_actions")
+  definitionOfDone   Json?      @map("definition_of_done")
+  dependencies       Json       @default("[]")
+  status             TaskStatus @default(PENDING)
+  priority           Int        @default(0)
+  assignedAgent      String?    @map("assigned_agent")
+  riskLevel          RiskLevel  @default(LOW) @map("risk_level")
+  approvalRequired   Boolean    @default(false) @map("approval_required")
+  estimatedTokens    Int?       @map("estimated_tokens")
+  result             Json?
+  attempts           Int        @default(0)
+  startedAt          DateTime?  @map("started_at")
+  finishedAt         DateTime?  @map("finished_at")
+
+  run    AgentRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  parent AgentTask?   @relation("TaskTree", fields: [parentTaskId], references: [id])
+  children AgentTask[] @relation("TaskTree")
+
+  @@unique([runId, externalTaskId])
+  @@index([runId, status])
+  @@index([organizationId])
+  @@map("agent_tasks")
+}
+
+// ─── Integration ─────────────────────────────────────────────────────────────
+
+model Connector {
+  id             String          @id @default(cuid())
+  organizationId String          @map("organization_id")
+  provider       String          // github, gitlab, postgres, docker, browser
+  connectorVersion String        @map("connector_version")
+  authType       String          @map("auth_type")
+  scopes         Json
+  status         ConnectorStatus @default(DISCONNECTED)
+  installationId String?         @map("installation_id") // GitHub App installation
+  lastUsedAt     DateTime?       @map("last_used_at")
+  expiresAt      DateTime?       @map("expires_at")
+  riskLevel      RiskLevel       @default(MEDIUM) @map("risk_level")
+  commercialLicense String       @map("commercial_license")
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  secrets      SecretReference[]
+  toolCalls    ToolCall[]
+
+  @@unique([organizationId, provider])
+  @@map("connectors")
+}
+
+/// Points at a secret in the vault. The secret itself is never stored here.
+model SecretReference {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  connectorId    String?   @map("connector_id")
+  name           String
+  vaultPath      String    @map("vault_path")
+  keyVersion     String    @map("key_version")
+  expiresAt      DateTime? @map("expires_at")
+  rotatedAt      DateTime? @map("rotated_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connector    Connector?   @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name])
+  @@map("secret_references")
+}
+
+// ─── Approval and audit ──────────────────────────────────────────────────────
+
+model Approval {
+  id             String         @id @default(cuid())
+  organizationId String         @map("organization_id")
+  runId          String         @map("run_id")
+  action         String
+  riskLevel      RiskLevel      @default(MEDIUM) @map("risk_level")
+  requestedScope Json           @map("requested_scope")
+  payloadHash    String         @map("payload_hash") // what exactly was approved
+  status         ApprovalStatus @default(PENDING)
+  decidedBy      String?        @map("decided_by")
+  decidedAt      DateTime?      @map("decided_at")
+  expiresAt      DateTime?      @map("expires_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  run          AgentRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  decider      User?        @relation("ApprovalDecidedBy", fields: [decidedBy], references: [id])
+
+  @@index([runId, status])
+  @@map("approvals")
+}
+
+model ToolCall {
+  id              String          @id @default(cuid())
+  organizationId  String          @map("organization_id")
+  runId           String          @map("run_id")
+  connectorId     String?         @map("connector_id")
+  agentId         String          @map("agent_id")
+  promptVersion   String          @map("prompt_version") // reproducibility
+  toolName        String          @map("tool_name")
+  action          String
+  sideEffect      SideEffectClass @map("side_effect")
+  riskLevel       RiskLevel       @map("risk_level")
+  reversible      Boolean         @default(true)
+  inputHash       String          @map("input_hash")
+  outputHash      String?         @map("output_hash")
+  status          String          // proposed | denied | awaiting_approval | running | completed | failed
+  approvalId      String?         @map("approval_id")
+  idempotencyKey  String          @unique @map("idempotency_key")
+  denialReason    String?         @map("denial_reason")
+  durationMs      Int?            @map("duration_ms")
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  run          AgentRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  connector    Connector?   @relation(fields: [connectorId], references: [id])
+
+  @@index([runId, createdAt])
+  @@map("tool_calls")
+}
+
+/// Append-only. Ordinary users have no delete path on this table.
+model AuditLog {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  actorType      ActorType @map("actor_type")
+  actorId        String    @map("actor_id")
+  action         String
+  resourceType   String?   @map("resource_type")
+  resourceId     String?   @map("resource_id")
+  metadata       Json?
+  ipHash         String?   @map("ip_hash") // hashed, never the raw address
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@map("audit_logs")
+}
+
+// ─── Execution evidence ──────────────────────────────────────────────────────
+
+model TestRun {
+  id         String   @id @default(cuid())
+  organizationId String @map("organization_id")
+  runId      String   @map("run_id")
+  taskId     String?  @map("task_id")
+  command    String
+  status     String   // passed | failed | skipped | flaky
+  exitCode   Int      @map("exit_code")
+  durationMs Int?     @map("duration_ms")
+  logsRef    String?  @map("logs_ref")
+  summary    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  run AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([organizationId])
+  @@map("test_runs")
+}
+
+/// Immutable event stream. The UI is a projection of this table.
+model SystemEvent {
+  id            String   @id @default(cuid())
+  eventId       String   @unique @map("event_id")
+  schemaVersion Int      @default(1) @map("schema_version")
+  runId         String   @map("run_id")
+  tenantId      String   @map("tenant_id")
+  type          String
+  actorType     ActorType @default(SYSTEM) @map("actor_type")
+  actorId       String?  @map("actor_id")
+  parentEventId String?  @map("parent_event_id")
+  payload       Json
+  redacted      Boolean  @default(false)
+  timestamp     DateTime @default(now())
+
+  run AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, timestamp])
+  @@map("system_events")
+}

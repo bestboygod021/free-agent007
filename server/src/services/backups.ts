@@ -75,10 +75,49 @@ function isBackupableTable(name: string): boolean {
   return !isInternalTable(name) && !isExcludedTable(name);
 }
 
+/**
+ * Shadow tables belonging to a virtual table.
+ *
+ * FTS5 declares one virtual table and then creates five real ones beside it
+ * (`_data`, `_idx`, `_content`, `_docsize`, `_config`) holding the inverted
+ * index. They are derived state, and dumping them as ordinary tables both
+ * bloats the backup and risks restoring an index that disagrees with the
+ * content it indexes. The virtual table itself dumps and restores fine --
+ * `PRAGMA table_info` reports its declared columns and re-inserting the rows
+ * rebuilds the index -- so the shadows are redundant as well as dangerous.
+ *
+ * Derived from the live schema rather than from a list of known suffixes: a
+ * suffix list is a guess about SQLite's internals that goes stale silently.
+ */
+function shadowTables(db: Db): Set<string> {
+  const virtualTables = (
+    db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'",
+      )
+      .all() as { name: string }[]
+  ).map((row) => row.name);
+
+  const shadows = new Set<string>();
+  if (virtualTables.length === 0) return shadows;
+
+  const allTables = (
+    db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]
+  ).map((row) => row.name);
+
+  for (const owner of virtualTables) {
+    for (const candidate of allTables) {
+      if (candidate !== owner && candidate.startsWith(`${owner}_`)) shadows.add(candidate);
+    }
+  }
+  return shadows;
+}
+
 /** Every table a dump may contain, in a stable order. */
 export function listTables(db: Db = getDb()): string[] {
   const rows = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as { name: string }[];
-  return rows.map((row) => row.name).filter(isBackupableTable);
+  const shadows = shadowTables(db);
+  return rows.map((row) => row.name).filter((name) => isBackupableTable(name) && !shadows.has(name));
 }
 
 /* ------------------------------------------------------------------ */
@@ -240,7 +279,11 @@ function sqliteEscape(value: unknown): string {
 function sqliteCreateTable(db: Db, table: string): string | null {
   const row = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?").get(table) as { sql: string } | undefined;
   if (!row?.sql) return null;
-  return `${row.sql.replace(/^CREATE TABLE/i, 'CREATE TABLE IF NOT EXISTS')};`;
+  // `CREATE VIRTUAL TABLE` as well as `CREATE TABLE`. Anchoring on the latter
+  // alone left a virtual table without IF NOT EXISTS, so restoring into a
+  // migrated database failed with "table already exists" and rolled the whole
+  // restore back -- found by the full suite, not by the retrieval tests.
+  return `${row.sql.replace(/^CREATE\s+(VIRTUAL\s+)?TABLE/i, (m) => `${m} IF NOT EXISTS`)};`;
 }
 
 function sqliteDumpTable(db: Db, table: string): string {

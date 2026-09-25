@@ -1,0 +1,29 @@
+{
+  "id": "github",
+  "name": "GitHub",
+  "version": "1.0.0",
+  "category": "git",
+  "auth": {
+    "type": "github_app",
+    "scopes": ["repository:read", "repository:write", "pull_request:write", "issue:write", "workflow:read"],
+    "requiresPkce": true,
+    "tokenTtlSeconds": 3600
+  },
+  "capabilities": [
+    "repository.list",
+    "repository.read_file",
+    "repository.search_code",
+    "branch.create",
+    "commit.create",
+    "pull_request.create",
+    "pull_request.comment",
+    "workflow.dispatch",
+    "workflow.read_logs"
+  ],
+  "riskLevel": "medium",
+  "supportsMcp": true,
+  "commercialLicense": "MIT",
+  "rateLimits": { "rpm": 0, "rpd": 5000, "documentedAt": "2026-09-01" },
+  "dataResidency": ["us"],
+  "notes": "GitHub App is preferred over a personal access token: per-repository installation, short-lived tokens, precise permissions."
+}

@@ -1,10 +1,24 @@
 <div align="center">
 
-# FreeLLMAPI
+# free-agent007
 
-**7.4 billion tokens per month.  34 free LLM providers. 635 free model endpoints. One OpenAI-compatible endpoint.**
+**An LLM gateway with a deterministic agent built into it.**
 
-Aggregate free tiers from dozens of providers, plus custom OpenAI-compatible chat, embedding, image, and audio endpoints, behind a single `/v1` API. Keys are stored encrypted. A router picks the best available model for each request, falls over to the next provider when one is rate-limited, and tracks per-key usage so you stay under every free-tier cap.
+Two halves, merged into one process:
+
+**The gateway** — 7.4 billion tokens per month across 34 free providers and 635
+free model endpoints, plus any custom OpenAI-compatible chat, embedding, image
+or audio endpoint, behind a single `/v1` API. Keys stored encrypted. A router
+picks the best available model per request, fails over when one is
+rate-limited, and tracks per-key usage so you stay under every free-tier cap.
+
+**The agent** — the ForgePilot deterministic kernel, wired to 23 audited tools.
+It reads code, finds every use of a symbol, writes patches, commits, runs tests
+inside a real kernel namespace sandbox, and opens pull requests under a
+credential the model never sees. Every tool call passes six gates and lands in
+an audit table, including the refused ones.
+
+The rule underneath both: **the model proposes, the code decides.**
 
 [![CI](https://github.com/tashfeenahmed/freellmapi/actions/workflows/ci.yml/badge.svg)](https://github.com/tashfeenahmed/freellmapi/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/tashfeenahmed/freellmapi?style=flat&logo=github&color=yellow)](https://github.com/tashfeenahmed/freellmapi/stargazers)
@@ -42,7 +56,9 @@ Your router updates its own model catalog from a signed feed: new free models, q
 - [Compatible CLIs & coding agents](#compatible-clis--coding-agents)
 - [How it compares](#how-it-compares)
 - [Features](#features)
+- [The agent: ForgePilot kernel + a wired toolchain](#the-agent-forgepilot-kernel--a-wired-toolchain)
 - [Quick start](#quick-start)
+- [Running the agent](#running-the-agent)
 - [Desktop app](#desktop-app)
 - [Works with OpenAI-compatible clients](#works-with-openai-compatible-clients)
 - [Languages](#languages)
@@ -55,7 +71,7 @@ Your router updates its own model catalog from a signed feed: new free models, q
 - [Contributing](#contributing)
 - [Disclaimer](#disclaimer)
 
-**Guides:** [Install & deploy](docs/en/install/01-install.md) · [API reference](docs/en/api/01-rest-api.md) · [Clients & coding agents](docs/en/clients/01-agent-clients.md) · [Prompt compression](docs/en/compression/01-compression-pipeline.md) · [Architecture & internals](docs/en/architecture/00-high-level-index.md) · [Documentation index](docs/en/README.md) · [Contributor guide](CONTRIBUTING.md)
+**Guides:** [Agent guide](agent/USAGE.md) · [Install & deploy](docs/en/install/01-install.md) · [API reference](docs/en/api/01-rest-api.md) · [Clients & coding agents](docs/en/clients/01-agent-clients.md) · [Prompt compression](docs/en/compression/01-compression-pipeline.md) · [Architecture & internals](docs/en/architecture/00-high-level-index.md) · [Documentation index](docs/en/README.md) · [Contributor guide](CONTRIBUTING.md)
 
 ## Why this exists
 
@@ -171,8 +187,124 @@ Based on public documentation, July 2026 — corrections welcome.
 - **MCP server & interactive docs** — agents can introspect usable models, provider health, and routing strategy over `/mcp`; a dependency-free OpenAPI viewer lives at `/v1/docs`. [Coding agents →](docs/en/clients/01-agent-clients.md)
 - **Ops niceties** — opt-in response cache, encrypted DB backups, periodic key health checks, bulk key import/export, declarative startup config. [Install & deploy →](docs/en/install/01-install.md)
 - **Runs anywhere Node 20+ runs** — Windows, macOS, Linux servers, or a small ARM SBC (Raspberry Pi included). ~40 MB RSS at idle behind PM2 / systemd / whatever supervisor you prefer.
+- **ForgePilot agent kernel, wired to real tools** — a deterministic decision core for agent-driven delivery: compute modes (free/paid/local), tool-call and egress policy, a run state machine, task-DAG wave planning, secret redaction, evidence auditing, JSON Schema output contracts and a versioned prompt library. On top of it, 23 audited tools: filesystem, code navigation with reference classification, atomic cross-file rename, git, pull-request creation under a separate credential, egress-controlled web reading, SQL over CSV and XLSX, and a test runner inside a real namespace sandbox. Served at `/api/agent`, with a dashboard at `/forgepilot`. [Details →](#the-agent-forgepilot-kernel--a-wired-toolchain)
 
 The scope is deliberately narrow — see [what's not supported yet](docs/en/architecture/00-high-level-index.md#not-yet-supported).
+
+## The agent: ForgePilot kernel + a wired toolchain
+
+This fork merges the **ForgePilot deterministic agent kernel** into the
+gateway, and then does the part a merge does not do on its own: wires it to
+things that touch the real world. The gateway gives the agent models; the
+kernel gives it judgement; the tools give it hands.
+
+One rule runs through all of it: **the model proposes, the code decides.** Run
+state transitions, tool-call permission, provider choice, secret scrubbing,
+task ordering and whether a "task complete" claim is believed are decided by
+tested code, not by a language model.
+
+```bash
+npm run agent:test        # kernel tests
+npm test -w @freellmapi/server   # 4,173 server tests
+npm run agent:typecheck   # strict tsc, zero @ts-ignore
+```
+
+### What the agent can actually do
+
+23 tools, each one registered, policy-classified and audited. Every one is
+reachable over HTTP at `POST /api/agent/tools/invoke` and every one has a test
+that fails if its guard is removed. The count and the roster below are checked
+against the live registry by a test, because this paragraph said "Nineteen"
+while three other lines said 21 and nothing noticed.
+
+| Area | Tools | Notes |
+|---|---|---|
+| Filesystem | `fs.read_file` `fs.list` `fs.search` `fs.file.write` | Confined to a workspace root the caller cannot choose; `realpath` checked, credential-shaped files refused. Writes go through the atomic path, so a failed write leaves the old file rather than a truncated one |
+| Code navigation | `code.symbol.search` `code.outline.read` `code.file.outline.read` `code.references.search` | Declarations *and* uses. Each reference is classified as code / string / comment / import / declaration |
+| Git | `git.status.read` `git.diff.read` `git.branch.create` `git.patch.file.write` `git.commit.create` | Protected branches cannot be evaded by omitting the ref — writes resolve their own target |
+| Forge | `git.pull_request.create` | Under a separate, revocable forge credential that is never written to `.git/config` |
+| Execution | `sandbox.test` | Runs inside a `user`/`mount`/`net`/`pid` namespace: read-only root, writable workspace only, no network |
+| Web | `web.page.read` `web.page.search` | Egress-controlled: cloud metadata IPs, private ranges and decimal-encoded addresses refused, re-checked on every redirect hop |
+| Refactoring | `code.rename.preview.read` `code.rename.apply` | Preview is a read; apply re-derives the preview, refuses a stale digest, and writes every file or none |
+| Data | `data.csv.query` `data.csv.schema.read` `data.xlsx.query` `data.xlsx.schema.read` | SQL over a spreadsheet, in a sandbox that cannot reach the gateway's own database. A sheet's columns come from each cell's `r="C2"` reference, because Excel omits empty cells and reading them in order files values under the wrong heading |
+
+### Six gates every tool call passes
+
+```
+registration → JSON-Schema validation → policy engine → human approval
+             → timeout ceiling → audit row in agent_tool_calls
+```
+
+A refused call returns `outcome: 'denied'` with a reason. It does not throw,
+and it is still recorded — a denied attempt is exactly the thing you want in
+an audit trail.
+
+**Tool names are part of the security interface.** The policy engine
+classifies by dotted suffix: `*.read`, `*.search`, `*.list` are the read
+vocabulary. A tool named `code.usages.find` instead of `code.references.search`
+is silently classified `high` / `external_write` and dropped from every
+autonomous phase — registered, but never offered to a model. Every tool name
+here was verified against a live `evaluateToolCall` before being committed.
+
+### The execution sandbox is real, and its limits are stated
+
+`sandbox.test` spawns through `unshare` with user, mount, network and PID
+namespaces: `/` is remounted read-only, the workspace is bind-mounted back
+read-write, `/proc` is remounted fresh so the process cannot see the host's
+process table, and there is no network namespace to reach out from.
+
+Measured before and after, through the tool itself:
+
+| probe | before | after |
+|---|---|---|
+| write `/tmp/agent-escaped.txt` | reached (file confirmed on disk) | blocked |
+| write the gateway's source tree | reached | blocked |
+| read the host process table | reached (100 pids) | blocked (3 pids) |
+| resolve DNS | reached | blocked |
+| write inside the workspace | reached | still works |
+
+Not claimed: read access is *reduced by masking, not eliminated* — `pivot_root`
+is unavailable in this environment — and there is no CPU or memory ceiling
+without cgroup delegation. Both are reported to the caller by
+`describeIsolation()` rather than left for you to discover.
+
+### Compute modes
+
+One switch configures the rest:
+
+| | Free | Paid | Local |
+|---|---|---|---|
+| Paid cloud | ❌ | ✅ | ❌ |
+| Cost per run | 0 | up to your ceiling | 0 |
+| Data leaves the machine | with consent | with consent | **never** |
+| Repair attempts / parallel tasks | 2 / 2 | 3 / 4 | 3 / 1 |
+| Quality gates | 6 | 9 | 8 |
+
+### Honest status
+
+The kernel ships 225 modules in `agent/src/core`. **16 are wired to a
+production caller; 209 are not.** That is not a to-do list that shrinks by
+itself, and the reason is worth knowing before you plan around it: of 209
+unwired modules, **200 take safety facts as boolean inputs** — they validate a
+claim the caller makes rather than establishing it. Demonstrated live on one of
+them: the same plugin allows an execution when told `sandboxed: true,
+networkAllowed: false`, and denies it when told the truth. Same code, same
+inputs, different caller honesty.
+
+The 16 modules that *are* wired are precisely the ones that decide something
+without being told it — the policy engine, the state machine, the router, the
+redactor. Wiring the rest means building the measurement layer first, which is
+what `agent-attestation.ts` started: a claim carries *how it was established*
+(`measured` / `configured` / `derived`), and "never checked" is a different
+answer from "checked and false".
+
+Roughly **175 of the 500 catalogued capabilities** are implemented and
+reachable. The rest are sequenced into phases with costs attached.
+
+**[How to use it →](agent/USAGE.md)** · [What was merged →](agent/INTEGRATION.md) ·
+[Full guide →](docs/en/agent/01-agent-kernel.md) ·
+[Capability audit →](docs/en/agent/02-capability-audit.md) ·
+[Roadmap →](docs/en/agent/04-remaining-roadmap.md)
 
 ## Quick start
 
@@ -189,6 +321,108 @@ Open http://localhost:3001, add your provider keys on the **Keys** page, reorder
 On Windows, the easiest path is the desktop **[`.exe` installer from Releases](https://github.com/tashfeenahmed/freellmapi/releases/latest)** (below). On Android, see the experimental [Termux guide](docs/en/install/02-android-termux.md).
 
 Everything else — Docker Compose, local development, declarative startup config, production builds, LAN access, and backups — is in **[docs/en/install/01-install.md](docs/en/install/01-install.md)**.
+
+## Running the agent
+
+The gateway and the agent are the same process. Start the gateway and the
+agent API is at `/api/agent`, with a dashboard at `/forgepilot`.
+
+### From source
+
+```bash
+git clone https://github.com/bestboygod021/free-agent007.git
+cd free-agent007
+npm install
+npm run dev              # gateway on :3001, dashboard on :5173
+```
+
+First run only, create the owner account:
+
+```bash
+curl -X POST localhost:3001/api/auth/setup \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","password":"a-long-password"}'
+```
+
+That returns a bearer token. Every `/api/agent` route needs it — an
+unauthenticated request gets `401`, including health.
+
+### Configuration
+
+All of it is environment variables; nothing security-relevant is taken from
+the request body. That is deliberate — an earlier version accepted `workerId`
+and tool scopes from the body, and both were closed as vulnerabilities.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `AGENT_WORKSPACE_ROOT` | `./data/agent-workspace` | The only directory tools may touch. Defaults to a dedicated folder, **not** the gateway's own source, so a misconfigured deployment cannot hand the agent its own code |
+| `AGENT_GRANTED_SCOPES` | *(empty)* | Scopes the install grants, comma-separated. Empty means the agent has none. Intersected with the request's scopes, never unioned |
+| `AGENT_PROTECTED_BRANCHES` | `main` | Branches no tool may write, enforced on the ref the tool resolves for itself |
+| `AGENT_WORKING_BRANCH` | `agent/work` | Where the agent is allowed to commit |
+| `AGENT_AUTONOMY` | `supervised` | `supervised` requires human approval for anything with an external side effect |
+| `AGENT_WORKER_TOKENS` | *(empty)* | Credentials for job-queue workers. Without these the queue fails closed with `503` rather than trusting whoever calls it |
+| `AGENT_FORGE_TOKEN` | *(unset)* | Forge credential for opening pull requests. Read fresh on every call, so rotating it needs no restart |
+| `AGENT_FORGE_REPO` | *(unset)* | `owner/name`. The repository is configuration, not a tool argument — the model cannot aim a pull request somewhere else |
+| `AGENT_FORGE_HOST` | `api.github.com` | Bare hostname only. A URL is refused, so a credential cannot be sent to a collector |
+
+Leave `AGENT_FORGE_TOKEN` unset and `git.pull_request.create` reports itself
+as not configured instead of failing halfway through a push.
+
+### Calling a tool
+
+```bash
+TOKEN=...   # from /api/auth/setup or /api/auth/login
+
+curl -s localhost:3001/api/agent/tools \
+  -H "Authorization: Bearer $TOKEN"        # list the 23 tools
+
+curl -s -X POST localhost:3001/api/agent/tools/invoke \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"tool":"code.references.search","args":{"name":"resolveScope"}}'
+```
+
+A denied call is a normal response, not an error:
+
+```json
+{
+  "outcome": "denied",
+  "reason": "connector is missing required scopes: pull_request:write",
+  "riskLevel": "medium",
+  "sideEffect": "external_write"
+}
+```
+
+### Verifying the sandbox on your own machine
+
+The sandbox depends on unprivileged user namespaces, which some hosts disable.
+It probes rather than assumes, and tells you what it found:
+
+```bash
+curl -s -X POST localhost:3001/api/agent/tools/invoke \
+  -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+  -d '{"tool":"sandbox.test","args":{"command":"node -e console.log(1)"}}' \
+  | jq '{isolated, isolation}'
+```
+
+```json
+{
+  "isolated": true,
+  "isolation": "Isolated in user, mount, net, pid namespaces. Filesystem is read-only except the workspace; network is unavailable. ..."
+}
+```
+
+If your kernel refuses namespaces you get `isolated: false` with the reason.
+The flag tracks reality — it is never hard-coded, and a test fails if it is.
+
+### Tests
+
+```bash
+npm test                          # everything
+npm test -w @freellmapi/server    # 4,173 server tests, ~4 min
+npm run agent:test                # kernel tests
+npm run lint && npm run build
+```
 
 ## Desktop app
 
@@ -358,7 +592,87 @@ Longer answers, per install method: **[docs/en/install/01-install.md#faq-passwor
 
 ## Limitations
 
-Stacking free tiers has real trade-offs: no frontier models, variable latency, no SLA — and the effective intelligence of the endpoint dips late in the day as top models hit their daily caps, then resets at UTC midnight. Read the honest list in **[docs/en/architecture/00-high-level-index.md#limitations](docs/en/architecture/00-high-level-index.md#limitations)** before building anything real on this.
+**The gateway.** Stacking free tiers has real trade-offs: no frontier models,
+variable latency, no SLA — and the effective intelligence of the endpoint dips
+late in the day as top models hit their daily caps, then resets at UTC
+midnight. Read the honest list in
+**[docs/en/architecture/00-high-level-index.md#limitations](docs/en/architecture/00-high-level-index.md#limitations)**
+before building anything real on this.
+
+**The agent.** Stated plainly, because a capability list that only lists
+successes is not useful:
+
+- **209 of 225 kernel modules are not wired to anything.** They are tested,
+  correct, pure logic with no production caller. Of those 209, **200 take
+  safety facts as boolean parameters** — they check a claim rather than
+  establish one, so wiring them naively would produce guards that a dishonest
+  caller talks its way past. Fixing that is a measurement problem, not a
+  plumbing problem.
+- **Code navigation is lexical, not type-aware.** `code.references.search`
+  cannot tell two identically-named symbols apart. It says so: results carry
+  `confidence: approximate` for short or common names rather than a confident
+  wrong number.
+- **The sandbox reduces read access; it does not eliminate it.** `pivot_root`
+  is unavailable, so host paths are masked rather than replaced by a fresh
+  root, and there is no CPU or memory ceiling without cgroup delegation. The
+  wall-clock timeout is the only resource bound. All of this is reported by
+  `describeIsolation()` at runtime.
+- **The atomic write is atomic per file, not per commit.** `code.rename.apply`
+  and `fs.file.write` both write through a temp-and-`rename` swap and roll
+  back from in-memory originals if a later rename fails, so an interrupted
+  refactor is restored and a failed single write leaves the previous file
+  intact instead of a truncated one. Both accept an optional `expectedHash`
+  and refuse if the file changed since it was read. It is still a loop of
+  atomic operations, not one atomic operation: a power loss mid-loop is not
+  covered, and a rollback that itself fails is reported with the exact list of
+  unrestored files rather than swallowed. The design and its limits are in
+  [docs/en/agent/05-atomic-refactor-design.md](docs/en/agent/05-atomic-refactor-design.md).
+- **Retrieval is hybrid, but not reranked.** `documents/search` fuses BM25
+  (SQLite FTS5) with the cosine scan by Reciprocal Rank Fusion, because pure
+  vector search could not find an identifier that was literally in the
+  corpus — `ERR_QUOTA_7734` returned nothing at all. There is no reranking
+  model and camelCase is not split (`resolveScope` is findable, `scope` alone
+  does not find it). The vector half remains a brute-force scan: measured at
+  149 ms per query over 10,000 chunks, which is less than the embedding call
+  it waits on, so an ANN index was deliberately not built.
+- **A spreadsheet is queryable, not just searchable.** `data.xlsx.query` loads
+  one sheet into the same private in-memory SQLite database `data.csv.query`
+  uses, so counting and summing happen in SQLite rather than in a model.
+  Columns come from each cell's `r="C2"` reference: Excel writes no element at
+  all for an empty cell, so reading cells in document order files every value
+  after a gap under the wrong heading — invisible in extracted text, and a
+  wrong answer in a table. Sheets are selected by name or tab index and never
+  merged. The sheet's part is found through `r:id` and the relationships file,
+  not by guessing `sheet{n+1}.xml`, which reads nothing for the second tab of
+  a workbook that has had a middle sheet deleted while still reporting its
+  name.
+- **A date is a number until `styles.xml` says otherwise.** `2026-03-14` is
+  stored as `46095`, and nothing in the cell marks it as a date — the number
+  format reached through the cell's style index does. Dates come out as ISO
+  text, so `WHERE opened >= '2025-01-01'` and `strftime('%Y', opened)` work.
+  Both calendars are handled (a Mac-saved workbook counts from 1904 and
+  reading it as 1900 is four years early), and so is Excel's belief that 1900
+  was a leap year: serial 60 is its 29 February 1900, a day that never
+  happened, so serials either side of it need different epochs. Serial 60 is
+  reported as `1900-02-29` rather than clamped onto the 28th, because merging
+  two distinct cells into one value silently is worse than a date that is
+  visibly impossible. Merged cells repeat their label across the block, so a
+  `GROUP BY` agrees with what a human sees.
+- **DOCX and XLSX ingest, PDF does not.** `POST /api/agent/documents` accepts
+  `contentBase64` and extracts text from Word and Excel files with no new
+  dependency — they are ZIP archives of XML and Node ships `zlib`. The format
+  is detected from the bytes, not the filename. Runs are joined with no
+  separator, because Word splits `resolveScope` across two runs and a space
+  would store it as `resolve Scope` and put it out of reach of search; table
+  rows come out tab-separated, and `<w:instrText>` field instructions are
+  dropped so a HYPERLINK target no reader ever saw does not enter the index.
+  PDF is **not** supported: it needs font and content-stream decoding that
+  `zlib` alone cannot do, so it was left out rather than half-built.
+  Archives are bounded at 32 MB in, 16 MB per entry and 48 MB total, checked
+  both against the declared size and against what was actually produced.
+- **Roughly 188 of 500 catalogued capabilities are implemented.** No browser
+  automation, no PDF parsing, no OpenTelemetry — those dependencies are
+  absent from the lockfile, which is checked rather than assumed.
 
 ## Contributing
 

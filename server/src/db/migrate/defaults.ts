@@ -36,6 +36,14 @@ import * as responseCache from '../migrations/20260903_000002_response_cache.js'
 import * as keyMonthlyBudget from '../migrations/20260904_000001_key_monthly_budget.js';
 import * as keyMonthlyUsage from '../migrations/20260914_000001_key_monthly_usage.js';
 import * as quotaSnapshotFreshness from '../migrations/20260915_000001_quota_snapshot_freshness.js';
+import * as agentMemoryAndJobs from '../migrations/20260921_000001_agent_memory_and_jobs.js';
+import * as agentRuns from '../migrations/20260921_000002_agent_runs.js';
+import * as agentToolCalls from '../migrations/20260921_000003_agent_tool_calls.js';
+import * as organizations from '../migrations/20260921_000004_organizations_and_membership.js';
+import * as membershipInvites from '../migrations/20260921_000005_membership_invites.js';
+import * as ragDocuments from '../migrations/20260921_000006_rag_documents.js';
+import * as semanticCache from '../migrations/20260921_000007_semantic_cache.js';
+import * as ragKeywordIndex from '../migrations/20260924_000001_rag_keyword_index.js';
 
 export interface MigrationModule {
   up(db: Db): void;
@@ -84,6 +92,14 @@ export const RESPONSE_CACHE_FILENAME = '20260903_000002_response_cache.ts';
 export const KEY_MONTHLY_BUDGET_FILENAME = '20260904_000001_key_monthly_budget.ts';
 export const KEY_MONTHLY_USAGE_FILENAME = '20260914_000001_key_monthly_usage.ts';
 export const QUOTA_SNAPSHOT_FRESHNESS_FILENAME = '20260915_000001_quota_snapshot_freshness.ts';
+export const AGENT_MEMORY_AND_JOBS_FILENAME = '20260921_000001_agent_memory_and_jobs.ts';
+export const AGENT_RUNS_FILENAME = '20260921_000002_agent_runs.ts';
+export const AGENT_TOOL_CALLS_FILENAME = '20260921_000003_agent_tool_calls.ts';
+export const ORGANIZATIONS_FILENAME = '20260921_000004_organizations_and_membership.ts';
+export const MEMBERSHIP_INVITES_FILENAME = '20260921_000005_membership_invites.ts';
+export const RAG_DOCUMENTS_FILENAME = '20260921_000006_rag_documents.ts';
+export const SEMANTIC_CACHE_FILENAME = '20260921_000007_semantic_cache.ts';
+const RAG_KEYWORD_INDEX_FILENAME = '20260924_000001_rag_keyword_index.ts';
 
 export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: LEGACY_BASELINE_FILENAME, module: legacyBaseline },
@@ -123,4 +139,12 @@ export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: KEY_MONTHLY_BUDGET_FILENAME, module: keyMonthlyBudget },
   { filename: KEY_MONTHLY_USAGE_FILENAME, module: keyMonthlyUsage },
   { filename: QUOTA_SNAPSHOT_FRESHNESS_FILENAME, module: quotaSnapshotFreshness },
+  { filename: AGENT_MEMORY_AND_JOBS_FILENAME, module: agentMemoryAndJobs },
+  { filename: AGENT_RUNS_FILENAME, module: agentRuns },
+  { filename: AGENT_TOOL_CALLS_FILENAME, module: agentToolCalls },
+  { filename: ORGANIZATIONS_FILENAME, module: organizations },
+  { filename: MEMBERSHIP_INVITES_FILENAME, module: membershipInvites },
+  { filename: RAG_DOCUMENTS_FILENAME, module: ragDocuments },
+  { filename: SEMANTIC_CACHE_FILENAME, module: semanticCache },
+  { filename: RAG_KEYWORD_INDEX_FILENAME, module: ragKeywordIndex },
 ];

@@ -1,0 +1,12 @@
+{
+  "request": "یک فروشگاه چندزبانه با پنل مدیریت، پرداخت آزمایشی و مدیریت انبار بساز. کد پروژه محرمانه است و نباید از دستگاه من خارج شود.",
+  "computeMode": "local",
+  "privacyLevel": "confidential",
+  "autonomyLevel": "supervised",
+  "locale": "fa-IR",
+  "repository": { "provider": "github", "url": "https://github.com/acme/shop", "baseBranch": "main" },
+  "modelPreferences": { "localModel": "qwen2.5-coder:14b" },
+  "integrations": ["github"],
+  "targetPlatforms": ["web"],
+  "consents": { "cloudEgress": false, "providerMayTrainOnInput": false }
+}

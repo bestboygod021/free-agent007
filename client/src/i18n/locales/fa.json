@@ -16,7 +16,8 @@
     "modelsMenu": "انواع مدل ها را مرور کنید",
     "agents": "عامل ها",
     "logs": "لاگ‌ها",
-    "analyticsMenu": "صفحه‌های تجزیه و تحلیل"
+    "analyticsMenu": "صفحه‌های تجزیه و تحلیل",
+    "forgepilot": "فورج‌پایلوت"
   },
   "auth": {
     "createYourAccount": "حساب کاربری خود را ایجاد کنید",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
     "curatedHint": "New catalog models are not added to this chain automatically."
+  },
+  "forgepilot": {
+    "title": "هستهٔ ایجنت فورج‌پایلوت",
+    "description": "هستهٔ قطعی: مدل پیشنهاد می‌دهد، کد تصمیم می‌گیرد. حالت‌های محاسباتی، سیاست ارائه‌دهنده، حالت‌های اجرا و کتابخانهٔ پرامپت نسخه‌بندی‌شده.",
+    "providerPolicy": "سیاست ارائه‌دهنده",
+    "providerPolicyHint": "اینکه این حالت مجاز است از چه ارائه‌دهندگانی استفاده کند.",
+    "allowLocal": "مدل‌های محلی",
+    "allowFreeCloud": "لایه‌های رایگان ابری",
+    "allowPaidCloud": "ابر پولی",
+    "allowTraining": "امکان آموزش روی ورودی",
+    "cloudPrivacyCeiling": "سقف محرمانگی ابری",
+    "budget": "بودجه",
+    "budgetHint": "محدودیت توکن و هزینه که پیش از شروع اجرا اعمال می‌شود.",
+    "perRun": "هر اجرا",
+    "perDay": "روزانه / کاربر",
+    "hardStop": "توقف قطعی",
+    "maxCost": "حداکثر هزینهٔ هر اجرا",
+    "execution": "اجرا",
+    "executionHint": "هم‌زمانی، حد تعمیر و دروازه‌های کیفیتی که باید عبور کنند.",
+    "parallelTasks": "تسک‌های موازی",
+    "repairAttempts": "تلاش‌های تعمیر",
+    "sandboxTimeout": "مهلت سندباکس",
+    "qualityGates": "دروازه‌های کیفیت",
+    "disabledCapabilities": "قابلیت‌های غیرفعال",
+    "disabledHint": "توسط این حالت محاسباتی خاموش شده‌اند؛ موتور سیاست آن‌ها را رد می‌کند.",
+    "runStates": "حالت‌های اجرا",
+    "runStatesHint": "همهٔ حالت‌هایی که ماشین حالت اجرا می‌تواند داشته باشد. حالت‌های پایانی پرشده‌اند.",
+    "promptLibrary": "کتابخانهٔ پرامپت",
+    "promptLibraryHint": "{count} پرامپت ایجنت نسخه‌بندی‌شده، هرکدام متصل به یک قرارداد خروجی.",
+    "mode": {
+      "free": "رایگان",
+      "paid": "پولی",
+      "local": "لوکال"
+    }
   }
 }

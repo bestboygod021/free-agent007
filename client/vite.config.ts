@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      // Sandboxed/remote dev previews (e2b, Codespaces, gitpod…) serve the dev
+      // server through a generated hostname. Vite's host check rejects those by
+      // default, so allow them explicitly; the dev server is never the
+      // production surface.
+      allowedHosts: ['.e2b.app', '.app.github.dev', '.gitpod.io', 'localhost'],
       proxy: {
         // Force IPv4 — on Windows + Node 17+, `localhost` resolves to ::1 first,
         // which can collide with wslrelay / Docker Desktop listeners on the same port.

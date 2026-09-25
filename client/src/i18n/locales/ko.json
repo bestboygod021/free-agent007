@@ -16,7 +16,8 @@
     "modelsMenu": "모델 유형 찾아보기",
     "agents": "에이전트",
     "logs": "로그",
-    "analyticsMenu": "분석 페이지"
+    "analyticsMenu": "분석 페이지",
+    "forgepilot": "ForgePilot"
   },
   "auth": {
     "createYourAccount": "계정 만들기",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "모델 없이 체인을 만들고, 새로 추가되는 카탈로그 모델도 넣지 않습니다. 해제하면 기본 체인의 복사본으로 시작합니다.",
     "curated": "직접 관리",
     "curatedHint": "새 카탈로그 모델이 이 체인에 자동으로 추가되지 않습니다."
+  },
+  "forgepilot": {
+    "title": "ForgePilot agent kernel",
+    "description": "The deterministic core: the model proposes, the code decides. Compute modes, provider policy, run states and the versioned prompt library.",
+    "providerPolicy": "Provider policy",
+    "providerPolicyHint": "Which providers this mode may physically use.",
+    "allowLocal": "Local models",
+    "allowFreeCloud": "Free cloud tiers",
+    "allowPaidCloud": "Paid cloud",
+    "allowTraining": "May train on input",
+    "cloudPrivacyCeiling": "Cloud privacy ceiling",
+    "budget": "Budget",
+    "budgetHint": "Token and cost limits enforced before a run starts.",
+    "perRun": "Per run",
+    "perDay": "Per day / user",
+    "hardStop": "Hard stop",
+    "maxCost": "Max cost / run",
+    "execution": "Execution",
+    "executionHint": "Concurrency, repair limits and the quality gates that must pass.",
+    "parallelTasks": "Parallel tasks",
+    "repairAttempts": "Repair attempts",
+    "sandboxTimeout": "Sandbox timeout",
+    "qualityGates": "Quality gates",
+    "disabledCapabilities": "Disabled capabilities",
+    "disabledHint": "Switched off by this compute mode; the policy engine denies them.",
+    "runStates": "Run states",
+    "runStatesHint": "Every state the run state machine can occupy. Terminal states are filled.",
+    "promptLibrary": "Prompt library",
+    "promptLibraryHint": "{count} versioned agent prompts, each bound to an output contract.",
+    "mode": {
+      "free": "Free",
+      "paid": "Paid",
+      "local": "Local"
+    }
   }
 }

@@ -16,7 +16,8 @@
     "modelsMenu": "Explorar tipos de modelos",
     "agents": "Agentes",
     "logs": "Registros",
-    "analyticsMenu": "Páginas de analíticas"
+    "analyticsMenu": "Páginas de analíticas",
+    "forgepilot": "ForgePilot"
   },
   "auth": {
     "createYourAccount": "Crea tu cuenta",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "Crea la cadena sin modelos y mantén fuera los modelos nuevos del catálogo. Sin marcar, empieza como una copia de la cadena predeterminada.",
     "curated": "Curada",
     "curatedHint": "Los modelos nuevos del catálogo no se añaden a esta cadena automáticamente."
+  },
+  "forgepilot": {
+    "title": "Núcleo de agentes ForgePilot",
+    "description": "El núcleo determinista: el modelo propone, el código decide. Modos de cómputo, política de proveedores, estados de ejecución y biblioteca de prompts versionada.",
+    "providerPolicy": "Política de proveedores",
+    "providerPolicyHint": "Qué proveedores puede usar realmente este modo.",
+    "allowLocal": "Modelos locales",
+    "allowFreeCloud": "Capas gratuitas en la nube",
+    "allowPaidCloud": "Nube de pago",
+    "allowTraining": "Puede entrenar con la entrada",
+    "cloudPrivacyCeiling": "Límite de privacidad en la nube",
+    "budget": "Presupuesto",
+    "budgetHint": "Límites de tokens y coste aplicados antes de iniciar una ejecución.",
+    "perRun": "Por ejecución",
+    "perDay": "Por día / usuario",
+    "hardStop": "Parada absoluta",
+    "maxCost": "Coste máx. por ejecución",
+    "execution": "Ejecución",
+    "executionHint": "Concurrencia, límites de reparación y las puertas de calidad que deben pasar.",
+    "parallelTasks": "Tareas en paralelo",
+    "repairAttempts": "Intentos de reparación",
+    "sandboxTimeout": "Tiempo límite del sandbox",
+    "qualityGates": "Puertas de calidad",
+    "disabledCapabilities": "Capacidades desactivadas",
+    "disabledHint": "Desactivadas por este modo de cómputo; el motor de políticas las deniega.",
+    "runStates": "Estados de ejecución",
+    "runStatesHint": "Todos los estados que puede ocupar la máquina de estados. Los terminales están rellenos.",
+    "promptLibrary": "Biblioteca de prompts",
+    "promptLibraryHint": "{count} prompts de agente versionados, cada uno ligado a un contrato de salida.",
+    "mode": {
+      "free": "Gratis",
+      "paid": "De pago",
+      "local": "Local"
+    }
   }
 }

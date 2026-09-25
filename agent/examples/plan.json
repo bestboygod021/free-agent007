@@ -1,0 +1,306 @@
+{
+  "planId": "plan_shop_mvp",
+  "projectId": "prj_multilingual_shop",
+  "goal": "Deliver a multilingual e-commerce MVP with admin panel, card payments, inventory, authentication, automated tests and a preview deployment, ending in a reviewable pull request.",
+  "stack": [
+    {
+      "name": "Next.js",
+      "version": "15.x",
+      "role": "Application framework (SSR + API routes)",
+      "justification": "One deployable unit for web + API keeps the MVP simple and matches the modular-monolith decision.",
+      "license": "MIT",
+      "alternativesRejected": ["Remix (team less familiar)", "SvelteKit (weaker i18n ecosystem)"],
+      "freeTierAvailable": true
+    },
+    {
+      "name": "PostgreSQL",
+      "version": "16",
+      "role": "Primary database",
+      "justification": "Relational model fits catalog + orders + inventory; row-level security supports multi-tenant admin.",
+      "license": "PostgreSQL",
+      "freeTierAvailable": true
+    },
+    {
+      "name": "Prisma",
+      "version": "6.x",
+      "role": "ORM and migrations",
+      "justification": "Typed schema gives the coding agent a machine-checkable data model and reversible migrations.",
+      "license": "Apache-2.0",
+      "freeTierAvailable": true
+    },
+    {
+      "name": "Stripe (adapter behind interface)",
+      "version": "n/a",
+      "role": "Payment provider",
+      "justification": "Wrapped behind a PaymentProvider interface so the provider can be swapped without touching checkout code.",
+      "license": "MIT (SDK)",
+      "freeTierAvailable": true
+    },
+    {
+      "name": "Playwright",
+      "version": "1.x",
+      "role": "E2E and accessibility testing",
+      "justification": "Covers checkout happy path plus keyboard-only navigation checks.",
+      "license": "Apache-2.0",
+      "freeTierAvailable": true
+    }
+  ],
+  "milestones": [
+    {
+      "order": 1,
+      "name": "Bootstrap",
+      "exitCriteria": ["pnpm lint passes", "pnpm typecheck passes", "CI workflow runs green on the agent branch"]
+    },
+    {
+      "order": 2,
+      "name": "Auth and multi-tenancy",
+      "exitCriteria": ["Login and logout covered by tests", "Cross-tenant access attempt returns 403 in a test"]
+    },
+    {
+      "order": 3,
+      "name": "Catalog and inventory",
+      "exitCriteria": ["Product CRUD covered by tests", "Stock cannot go negative (test)"]
+    },
+    {
+      "order": 4,
+      "name": "Checkout and payment",
+      "exitCriteria": ["Test-mode payment completes", "Payment webhook signature verified (test)"]
+    },
+    {
+      "order": 5,
+      "name": "Admin panel",
+      "exitCriteria": ["Admin-only routes enforce role (test)", "WCAG 2.1 AA automated check passes"]
+    },
+    {
+      "order": 6,
+      "name": "Quality, security and preview",
+      "exitCriteria": ["No open critical/high finding", "Secret scan clean", "Preview URL responds 200 on /health"]
+    }
+  ],
+  "tasks": [
+    {
+      "taskId": "task_repo_analysis",
+      "title": "Analyse the target repository and runtime",
+      "type": "repo_analysis",
+      "objective": "Detect framework, package manager, Node version, test setup, CI config, existing conventions and security-sensitive files; produce a repository map and a conventions note. No file may be modified.",
+      "acceptanceCriteria": [
+        "Package manager and lockfile identified",
+        "Existing lint/type/test commands identified or explicitly marked missing",
+        "Sensitive files listed and excluded from cloud model context",
+        "No file is written during this task"
+      ],
+      "allowedPaths": [".forgepilot/recon/**"],
+      "forbiddenActions": ["modify any tracked file", "install dependencies"],
+      "dependencies": [],
+      "riskLevel": "read",
+      "approvalRequired": false,
+      "definitionOfDone": ["recon-report-written"]
+    },
+    {
+      "taskId": "task_scaffold",
+      "title": "Scaffold Next.js 15 + TypeScript + Tailwind workspace",
+      "type": "scaffold",
+      "objective": "Create the monorepo skeleton with lint, format, typecheck and test scripts wired into CI on the agent branch.",
+      "acceptanceCriteria": [
+        "pnpm install succeeds inside the sandbox",
+        "pnpm lint, pnpm typecheck and pnpm test all exit 0 on the empty skeleton",
+        "CI workflow file added and valid YAML"
+      ],
+      "allowedPaths": ["apps/web/**", "packages/config/**", ".github/workflows/**", "package.json", "pnpm-workspace.yaml"],
+      "forbiddenActions": ["push to main", "enable network beyond the registry allowlist"],
+      "dependencies": ["task_repo_analysis"],
+      "riskLevel": "medium",
+      "approvalRequired": false,
+      "definitionOfDone": ["lint", "typecheck", "build"]
+    },
+    {
+      "taskId": "task_database_schema",
+      "title": "Design Prisma schema for catalog, orders and inventory",
+      "type": "database",
+      "objective": "Define entities, relations, indexes and constraints, and generate a reversible migration.",
+      "acceptanceCriteria": [
+        "Stock is constrained to be non-negative",
+        "Order total is stored in minor currency units",
+        "Migration has a working down path",
+        "Every table that holds tenant data carries organizationId"
+      ],
+      "allowedPaths": ["packages/database/**", "tests/db/**"],
+      "forbiddenActions": ["apply migration to any non-sandbox database"],
+      "dependencies": ["task_scaffold"],
+      "riskLevel": "medium",
+      "approvalRequired": false,
+      "definitionOfDone": ["typecheck", "test:unit", "migration-dry-run"]
+    },
+    {
+      "taskId": "task_backend_auth",
+      "title": "Implement session authentication and admin roles",
+      "type": "backend",
+      "objective": "Add email+password and OAuth sign-in, session handling, role checks and authorization middleware.",
+      "acceptanceCriteria": [
+        "Passwords are hashed with argon2id",
+        "Session cookies are httpOnly, secure and sameSite=lax",
+        "Admin-only routes reject non-admin callers in a test",
+        "No raw secret is ever logged"
+      ],
+      "allowedPaths": ["packages/auth/**", "apps/api/**", "tests/api/**"],
+      "forbiddenActions": ["store raw passwords", "push to main"],
+      "dependencies": ["task_database_schema"],
+      "riskLevel": "high",
+      "approvalRequired": false,
+      "definitionOfDone": ["lint", "typecheck", "test:unit", "secret-scan"]
+    },
+    {
+      "taskId": "task_backend_catalog_api",
+      "title": "Implement catalog and inventory API",
+      "type": "backend",
+      "objective": "Expose product, variant and stock endpoints with validation and tenant scoping.",
+      "acceptanceCriteria": [
+        "All endpoints validate input at the boundary",
+        "Stock decrement is atomic under concurrent requests (test)",
+        "Pagination is bounded (max 100 per page)"
+      ],
+      "allowedPaths": ["apps/api/src/modules/catalog/**", "tests/api/**"],
+      "forbiddenActions": ["raw SQL string concatenation"],
+      "dependencies": ["task_backend_auth"],
+      "riskLevel": "medium",
+      "approvalRequired": false,
+      "definitionOfDone": ["lint", "typecheck", "test:unit"]
+    },
+    {
+      "taskId": "task_frontend_storefront",
+      "title": "Build the multilingual storefront UI",
+      "type": "frontend",
+      "objective": "Product listing, product detail, cart and checkout pages with fa-IR RTL support and full keyboard navigation.",
+      "acceptanceCriteria": [
+        "fa-IR renders RTL with no layout overflow",
+        "Every interactive element is reachable by keyboard",
+        "Colour contrast meets WCAG 2.1 AA (automated check)",
+        "Empty, loading and error states exist for each list"
+      ],
+      "allowedPaths": ["apps/web/app/**", "apps/web/components/**", "packages/ui/**", "tests/e2e/**"],
+      "forbiddenActions": ["inline styles that break theming"],
+      "dependencies": ["task_backend_catalog_api"],
+      "riskLevel": "medium",
+      "approvalRequired": false,
+      "definitionOfDone": ["lint", "typecheck", "test:e2e", "accessibility"]
+    },
+    {
+      "taskId": "task_integration_payment",
+      "title": "Integrate the payment provider behind an adapter",
+      "type": "integration",
+      "objective": "Implement the PaymentProvider interface with a test-mode adapter and webhook signature verification.",
+      "acceptanceCriteria": [
+        "No provider secret is read outside the adapter",
+        "Webhook signature is verified before any state change",
+        "A failed payment leaves the order in a consistent state (test)",
+        "Idempotency key prevents duplicate charges (test)"
+      ],
+      "allowedPaths": ["apps/api/src/modules/payments/**", "tests/api/**"],
+      "forbiddenActions": ["use live-mode keys", "log request bodies"],
+      "dependencies": ["task_backend_auth"],
+      "riskLevel": "high",
+      "approvalRequired": true,
+      "definitionOfDone": ["lint", "typecheck", "test:unit", "secret-scan"]
+    },
+    {
+      "taskId": "task_qa_suite",
+      "title": "Assemble the QA matrix and run it",
+      "type": "test",
+      "objective": "Produce a test matrix covering happy paths, invalid input, authorization, i18n and accessibility, then execute it.",
+      "acceptanceCriteria": [
+        "Every FR in the spec maps to at least one test",
+        "Flaky tests are reported separately, never silently retried into green",
+        "The report lists exact commands and exit codes"
+      ],
+      "allowedPaths": ["tests/**", ".forgepilot/reports/**"],
+      "forbiddenActions": ["delete failing tests to make the suite pass"],
+      "dependencies": ["task_frontend_storefront", "task_integration_payment"],
+      "riskLevel": "low",
+      "approvalRequired": false,
+      "definitionOfDone": ["test:unit", "test:e2e", "accessibility"]
+    },
+    {
+      "taskId": "task_security_review",
+      "title": "Run the security review gate",
+      "type": "security",
+      "objective": "Secret scan, dependency scan, static analysis and manual review of authz, SSRF, injection and tenant isolation.",
+      "acceptanceCriteria": [
+        "Secret scan reports zero findings",
+        "No open critical or high finding remains",
+        "Every finding carries a verification command"
+      ],
+      "allowedPaths": [".forgepilot/reports/**"],
+      "forbiddenActions": ["mark a finding accepted-risk without a human approver"],
+      "dependencies": ["task_qa_suite"],
+      "riskLevel": "low",
+      "approvalRequired": false,
+      "definitionOfDone": ["secret-scan", "dependency-scan", "static-analysis"]
+    },
+    {
+      "taskId": "task_devops_preview",
+      "title": "Containerise and publish a preview environment",
+      "type": "devops",
+      "objective": "Dockerfile, health endpoint and a preview deployment behind an explicit approval.",
+      "acceptanceCriteria": [
+        "Image builds with a non-root user and a read-only base layer",
+        "/health returns 200",
+        "Rollback command documented"
+      ],
+      "allowedPaths": ["infrastructure/docker/**", "apps/web/Dockerfile", ".forgepilot/runbooks/**"],
+      "forbiddenActions": ["deploy to production", "mount the docker socket"],
+      "dependencies": ["task_security_review"],
+      "riskLevel": "high",
+      "approvalRequired": true,
+      "definitionOfDone": ["build", "smoke-test"]
+    },
+    {
+      "taskId": "task_docs_delivery",
+      "title": "Write delivery documentation and the final report",
+      "type": "docs",
+      "objective": "README, environment variable list, migration and rollback instructions, plus the delivery report with evidence links.",
+      "acceptanceCriteria": [
+        "Every required environment variable is documented with its purpose",
+        "Rollback steps are reproducible from the document alone",
+        "The delivery report links every claim to a log, diff or test result"
+      ],
+      "allowedPaths": ["docs/**", ".forgepilot/reports/**", "README.md"],
+      "forbiddenActions": ["claim success without an evidence link"],
+      "dependencies": ["task_devops_preview"],
+      "riskLevel": "read",
+      "approvalRequired": false,
+      "definitionOfDone": ["docs-link-check"]
+    }
+  ],
+  "requiredPermissions": [
+    { "connector": "github", "scope": "repository:read", "purpose": "Read the existing code before changing it", "riskLevel": "read" },
+    { "connector": "github", "scope": "repository:write", "purpose": "Create the agent branch and commit changes", "riskLevel": "medium" },
+    { "connector": "github", "scope": "pull_request:write", "purpose": "Open the reviewable pull request", "riskLevel": "medium" },
+    { "connector": "payments", "scope": "test_mode_only", "purpose": "Run checkout against the sandbox payment provider", "riskLevel": "high" }
+  ],
+  "risks": [
+    { "risk": "The payment provider key is not available yet", "likelihood": "high", "mitigation": "Implement the adapter with a stub provider and gate live keys behind an approval." },
+    { "risk": "Free-tier cloud model quota runs out mid-run", "likelihood": "medium", "mitigation": "Model router falls back to the local model and pauses the run instead of failing silently." },
+    { "risk": "RTL layout regressions in fa-IR", "likelihood": "medium", "mitigation": "Playwright visual + axe-core checks run on every frontend task." }
+  ],
+  "qualityGates": {
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck",
+    "test": "pnpm vitest run",
+    "build": "pnpm build",
+    "secretScan": "gitleaks detect --no-banner",
+    "dependencyScan": "pnpm audit --audit-level=high",
+    "e2e": "pnpm playwright test",
+    "accessibility": "pnpm playwright test --grep @a11y"
+  },
+  "budget": {
+    "estimatedTokens": 1450000,
+    "estimatedSeconds": 5400,
+    "estimatedCost": 0,
+    "hardStopAtTokens": 3000000
+  },
+  "rollbackStrategy": "All work happens on the branch agent/plan_shop_mvp. Nothing is merged or deployed without approval. Rollback is 'git branch -D agent/plan_shop_mvp' plus dropping the preview environment; database migrations are reversible and were only applied inside the sandbox.",
+  "humanCheckpoints": [
+    { "at": "AWAITING_PLAN_APPROVAL", "reason": "No write happens before this plan is approved." },
+    { "at": "AWAITING_DEPLOY_APPROVAL", "reason": "Preview and production deployments are separate approvals." }
+  ]
+}

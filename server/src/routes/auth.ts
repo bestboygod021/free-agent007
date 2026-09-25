@@ -1,10 +1,13 @@
 import { Router } from 'express';
+import { ensureDefaultOrganization } from '../services/agent-tenancy.js';
+import { acceptInvite, previewInvite, isInviteFailure } from '../services/agent-invites.js';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import {
   userCount,
   createUser,
   verifyCredentials,
+  findUserByEmail,
   createSession,
   validateSession,
   deleteSession,
@@ -124,6 +127,9 @@ authRouter.post('/setup', (req: Request, res: Response) => {
     return;
   }
   const user = createUser(parsed.data.email, parsed.data.password);
+  // Agent data is scoped to an organisation and project, so the first account
+  // needs one or every agent call fails on a scope it has no way to create.
+  ensureDefaultOrganization(user.userId);
   clearSetupCode(); // one-time: the dashboard is now claimed
   const token = createSession(user.userId);
   res.status(201).json({ token, email: user.email });
@@ -287,4 +293,71 @@ authRouter.post('/reset-password', (req: Request, res: Response) => {
   }
   clearResetCode();
   res.json({ success: true });
+});
+
+/**
+ * POST /api/auth/accept-invite — redeem an invite and get an account.
+ *
+ * There is no open registration route, by design: an install is claimed once
+ * at setup. An invite is the only way a second account can exist, so this
+ * endpoint does double duty — it creates the user *and* joins them, in one
+ * transaction, because an account created without the membership it was issued
+ * for would be a stranded login on a single-user product.
+ *
+ * It is unauthenticated because the invitee has no account yet. The token is
+ * the authorisation, which is why it is single-use, expiring, bound to one
+ * email address, and stored only as a hash.
+ */
+authRouter.post('/accept-invite', (req: Request, res: Response) => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const token = typeof body.token === 'string' ? body.token.trim() : '';
+  if (token === '') {
+    res.status(400).json({ error: { message: '"token" is required', type: 'invalid_request_error' } });
+    return;
+  }
+
+  const preview = previewInvite(token);
+  if (preview === null) {
+    // One answer for wrong, used and expired, so this cannot probe tokens.
+    res.status(404).json({ error: { message: 'That invite is not valid', type: 'not_found' } });
+    return;
+  }
+
+  const existing = findUserByEmail(preview.email);
+  let userId: number;
+
+  if (existing) {
+    // The address already has an account, so joining requires proving it is
+    // theirs. Otherwise a leaked token would add an attacker's session to
+    // someone else's organisation.
+    const password = typeof body.password === 'string' ? body.password : '';
+    if (!verifyCredentials(preview.email, password)) {
+      res.status(403).json({
+        error: { message: 'That address already has an account — sign in to accept', type: 'authentication_error' },
+      });
+      return;
+    }
+    userId = existing.userId;
+  } else {
+    const parsed = z.object({ password: z.string().min(8, 'Password must be at least 8 characters') })
+      .safeParse(body);
+    if (!parsed.success) {
+      res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
+      return;
+    }
+    userId = createUser(preview.email, parsed.data.password).userId;
+  }
+
+  const result = acceptInvite({ token, userId, userEmail: preview.email });
+  if (isInviteFailure(result)) {
+    res.status(result.status).json({ error: { message: result.message, type: 'invalid_request_error' } });
+    return;
+  }
+
+  res.status(201).json({
+    token: createSession(userId),
+    email: preview.email,
+    organizationId: result.organizationId,
+    role: result.role,
+  });
 });

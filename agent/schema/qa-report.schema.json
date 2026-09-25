@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/qa-report.schema.json",
+  "title": "QaReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["overallStatus", "testCases", "accessibilityFindings"],
+  "properties": {
+    "overallStatus": { "type": "string", "enum": ["pass", "fail", "blocked"] },
+    "testCases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "kind", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unit",
+              "integration",
+              "e2e",
+              "contract",
+              "accessibility",
+              "performance",
+              "security",
+              "migration",
+              "idempotency"
+            ]
+          },
+          "status": { "type": "string", "enum": ["pass", "fail", "skipped", "flaky"] },
+          "evidenceRef": { "type": "string" }
+        }
+      }
+    },
+    "accessibilityFindings": {
+      "type": "array",
+      "items": { "$ref": "security-finding.schema.json" }
+    },
+    "performanceFindings": { "type": "array", "items": { "type": "string" } },
+    "securityRelevantFindings": {
+      "type": "array",
+      "items": { "$ref": "security-finding.schema.json" }
+    },
+    "flakyTests": { "type": "array", "items": { "type": "string" } },
+    "recommendedFixes": { "type": "array", "items": { "type": "string" } },
+    "commandsExecuted": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exitCode"],
+        "properties": {
+          "command": { "type": "string" },
+          "exitCode": { "type": "integer" },
+          "logsRef": { "type": "string" }
+        }
+      }
+    }
+  }
+}

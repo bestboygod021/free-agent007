@@ -41,6 +41,14 @@ const RESPONSE_CACHE_FILENAME = '20260903_000002_response_cache.ts';
 const KEY_MONTHLY_BUDGET_FILENAME = '20260904_000001_key_monthly_budget.ts';
 const KEY_MONTHLY_USAGE_FILENAME = '20260914_000001_key_monthly_usage.ts';
 const QUOTA_SNAPSHOT_FRESHNESS_FILENAME = '20260915_000001_quota_snapshot_freshness.ts';
+const AGENT_MEMORY_AND_JOBS_FILENAME = '20260921_000001_agent_memory_and_jobs.ts';
+const AGENT_RUNS_FILENAME = '20260921_000002_agent_runs.ts';
+const AGENT_TOOL_CALLS_FILENAME = '20260921_000003_agent_tool_calls.ts';
+const ORGANIZATIONS_FILENAME = '20260921_000004_organizations_and_membership.ts';
+const MEMBERSHIP_INVITES_FILENAME = '20260921_000005_membership_invites.ts';
+const RAG_DOCUMENTS_FILENAME = '20260921_000006_rag_documents.ts';
+const SEMANTIC_CACHE_FILENAME = '20260921_000007_semantic_cache.ts';
+const RAG_KEYWORD_INDEX_FILENAME = '20260924_000001_rag_keyword_index.ts';
 
 interface SchemaRow {
   type: string;
@@ -128,6 +136,14 @@ describe('migration round trip', () => {
         KEY_MONTHLY_BUDGET_FILENAME,
         KEY_MONTHLY_USAGE_FILENAME,
         QUOTA_SNAPSHOT_FRESHNESS_FILENAME,
+        AGENT_MEMORY_AND_JOBS_FILENAME,
+        AGENT_RUNS_FILENAME,
+        AGENT_TOOL_CALLS_FILENAME,
+        ORGANIZATIONS_FILENAME,
+        MEMBERSHIP_INVITES_FILENAME,
+        RAG_DOCUMENTS_FILENAME,
+        SEMANTIC_CACHE_FILENAME,
+        RAG_KEYWORD_INDEX_FILENAME,
       ]);
     } finally {
       db.close();

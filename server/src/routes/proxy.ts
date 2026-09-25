@@ -22,7 +22,15 @@ import { isFusionModel, runFusion, fusionConfigSchema, FusionError, FUSION_MODEL
 import { isRetryableError, isPaymentRequiredError, isModelNotFoundError, isModelAccessForbiddenError, isClientAbortError, newClientAbortError, newHedgeAbortError, isUpstreamClassificationOutput } from '../lib/error-classify.js';
 import { logRequest } from '../lib/request-log.js';
 import { observeServedModel } from '../lib/served-model.js';
-import { parseCacheDirective, cacheActive, isCacheableTemperature, computeCacheKey, getCachedResponse, storeCachedResponse, getCachedStreamResponse, storeCachedStreamResponse, STREAM_CACHE_MAX_BYTES } from '../services/cache.js';
+import { parseCacheDirective, cacheActive, isCacheableTemperature, computeCacheKey, getCachedResponse, storeCachedResponse, getCachedStreamResponse, storeCachedStreamResponse, STREAM_CACHE_MAX_BYTES, cacheTtlMs } from '../services/cache.js';
+import {
+  isSemanticCacheEnabled,
+  extractPromptText,
+  computeVariantKey,
+  findSemanticMatch,
+  rememberSemanticPrompt,
+  forgetSemanticPrompt,
+} from '../services/semantic-cache.js';
 import { normalizeIdempotencyKey, hashIdempotencyKey, computeIdempotencyFingerprint, lookupIdempotencyReplay, storeIdempotencyResult } from '../services/idempotency.js';
 import { runFallbackLoop, newFallbackState, fallbackRoutingTokens, recordUpstreamSuccess, exhaustedRetryError, setFallbackHeaders, exhaustionErrorPayload, setExhaustionHeaders, type AttemptRecord } from '../lib/fallback-loop.js';
 import { routedViaValue, safeHeaderValue } from '../lib/header-value.js';
@@ -1863,6 +1871,36 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
         compression: compressionResult.cacheKey,
       })
     : null;
+
+  // Semantic cache (services/semantic-cache.ts): the exact key above hashes
+  // the messages, so a reworded question misses. When enabled, the same
+  // request is also described as "prompt text" plus a `variantKey` covering
+  // everything that is NOT the text — so a near-match can only ever be served
+  // an answer produced under identical settings.
+  const semanticKeyInput = cacheKey
+    ? {
+        model: requestedModel, temperature, top_p, max_tokens, tools, tool_choice, stop,
+        response_format: req.body?.response_format ?? undefined,
+        n: req.body?.n ?? undefined,
+        seed: req.body?.seed ?? undefined,
+        presence_penalty: req.body?.presence_penalty ?? undefined,
+        frequency_penalty: req.body?.frequency_penalty ?? undefined,
+        logit_bias: req.body?.logit_bias ?? undefined,
+        logprobs: req.body?.logprobs ?? undefined,
+        top_logprobs: req.body?.top_logprobs ?? undefined,
+        reasoning_effort: samplingParams.reasoning_effort ?? undefined,
+        compression: compressionResult.cacheKey,
+      }
+    : null;
+  // Streaming is excluded: a semantic hit replays a JSON body, and the two
+  // stores hold structurally different artifacts.
+  const semanticPrompt = (cacheKey && !stream && isSemanticCacheEnabled())
+    ? extractPromptText(messages)
+    : null;
+  const semanticVariantKey = (semanticKeyInput && semanticPrompt)
+    ? computeVariantKey(semanticKeyInput)
+    : null;
+
   if (cacheKey) {
     if (stream) {
       // Streaming hit: replay the captured SSE frame sequence verbatim —
@@ -1890,6 +1928,33 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
         res.setHeader('X-FreeLLM-Cache', 'HIT');
         res.json(withExecutionId(hit.body, requestGroupId));
         return;
+      }
+
+      // Exact miss. If the wording differs but the question does not, an
+      // existing entry may still answer it. The match resolves to a real
+      // cache key and is read back through getCachedResponse, so TTL, LRU and
+      // hit counting all behave exactly as for an exact hit.
+      if (semanticPrompt && semanticVariantKey) {
+        const near = await findSemanticMatch({
+          promptText: semanticPrompt,
+          variantKey: semanticVariantKey,
+        });
+        if (near) {
+          const nearHit = getCachedResponse(near.cacheKey);
+          if (nearHit) {
+            res.setHeader('X-Routed-Via', 'cache');
+            // A distinct value: this answer was written for a differently
+            // worded question, and a caller debugging a surprising reply needs
+            // to be able to see that.
+            res.setHeader('X-FreeLLM-Cache', 'HIT-SEMANTIC');
+            res.setHeader('X-FreeLLM-Cache-Score', near.score.toFixed(4));
+            res.json(withExecutionId(nearHit.body, requestGroupId));
+            return;
+          }
+          // The vector outlived its answer (evicted by LRU). Drop it so the
+          // next request does not pay for the same dead lookup.
+          forgetSemanticPrompt(near.cacheKey);
+        }
       }
     }
   }
@@ -2836,6 +2901,18 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
             promptTokens,
             completionTokens,
           });
+
+          // Record the prompt's embedding against the same key and expiry, so
+          // a later rewording can find it. Fire-and-forget: the answer is
+          // already sent, and an embedding failure must never affect it.
+          if (semanticPrompt && semanticVariantKey) {
+            void rememberSemanticPrompt({
+              cacheKey,
+              variantKey: semanticVariantKey,
+              promptText: semanticPrompt,
+              expiresAtMs: Date.now() + cacheTtlMs(),
+            }).catch(() => { /* an optimisation that failed is not an error */ });
+          }
         }
 
         traceRouteEvent('Proxy', {

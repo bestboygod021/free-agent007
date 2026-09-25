@@ -16,7 +16,8 @@
     "modelsMenu": "Durchsuchen Sie Modelltypen",
     "agents": "Agenten",
     "logs": "Protokoll",
-    "analyticsMenu": "Analytik-Seiten"
+    "analyticsMenu": "Analytik-Seiten",
+    "forgepilot": "ForgePilot"
   },
   "auth": {
     "createYourAccount": "Erstellen Sie Ihr Konto",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "Legt die Kette ohne Modelle an und hält neue Katalogmodelle heraus. Ohne Haken startet sie als Kopie der Standardkette.",
     "curated": "Kuratiert",
     "curatedHint": "Neue Katalogmodelle werden dieser Kette nicht automatisch hinzugefügt."
+  },
+  "forgepilot": {
+    "title": "ForgePilot-Agentenkern",
+    "description": "Der deterministische Kern: Das Modell schlägt vor, der Code entscheidet. Rechenmodi, Anbieterrichtlinie, Laufzustände und versionierte Prompt-Bibliothek.",
+    "providerPolicy": "Anbieterrichtlinie",
+    "providerPolicyHint": "Welche Anbieter dieser Modus tatsächlich nutzen darf.",
+    "allowLocal": "Lokale Modelle",
+    "allowFreeCloud": "Kostenlose Cloud-Stufen",
+    "allowPaidCloud": "Kostenpflichtige Cloud",
+    "allowTraining": "Darf mit Eingaben trainieren",
+    "cloudPrivacyCeiling": "Cloud-Datenschutzgrenze",
+    "budget": "Budget",
+    "budgetHint": "Token- und Kostengrenzen, die vor dem Start eines Laufs greifen.",
+    "perRun": "Pro Lauf",
+    "perDay": "Pro Tag / Nutzer",
+    "hardStop": "Harter Stopp",
+    "maxCost": "Max. Kosten pro Lauf",
+    "execution": "Ausführung",
+    "executionHint": "Parallelität, Reparaturgrenzen und die zu bestehenden Qualitätstore.",
+    "parallelTasks": "Parallele Aufgaben",
+    "repairAttempts": "Reparaturversuche",
+    "sandboxTimeout": "Sandbox-Zeitlimit",
+    "qualityGates": "Qualitätstore",
+    "disabledCapabilities": "Deaktivierte Fähigkeiten",
+    "disabledHint": "Von diesem Rechenmodus abgeschaltet; die Policy-Engine verweigert sie.",
+    "runStates": "Laufzustände",
+    "runStatesHint": "Alle Zustände der Zustandsmaschine. Endzustände sind gefüllt.",
+    "promptLibrary": "Prompt-Bibliothek",
+    "promptLibraryHint": "{count} versionierte Agenten-Prompts, jeweils an einen Ausgabevertrag gebunden.",
+    "mode": {
+      "free": "Kostenlos",
+      "paid": "Kostenpflichtig",
+      "local": "Lokal"
+    }
   }
 }

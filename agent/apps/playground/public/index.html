@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ForgePilot — محیط آزمایش زنده</title>
+<link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="logo">⚙</span>
+    <div>
+      <h1>محیط آزمایش زنده</h1>
+      <p class="sub">تصمیم‌های واقعی هسته قطعی — نه شبیه‌سازی</p>
+    </div>
+  </div>
+  <div class="status">
+    <span id="conn" class="pill pill-off">در حال اتصال…</span>
+    <span id="hash" class="pill">settings: —</span>
+    <span id="chain" class="pill">audit: —</span>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="controls">
+    <h2>۱. طراحی مورد نظر</h2>
+
+    <div class="field">
+      <label for="mode">حالت محاسباتی</label>
+      <div class="seg" id="mode">
+        <button data-mode="free" class="on">رایگان</button>
+        <button data-mode="paid">پولی</button>
+        <button data-mode="local">لوکال</button>
+      </div>
+      <small>همه پیکربندی از همین یک انتخاب مشتق می‌شود.</small>
+    </div>
+
+    <div class="field">
+      <label for="privacy">سطح محرمانگی</label>
+      <select id="privacy">
+        <option value="public">public</option>
+        <option value="internal" selected>internal</option>
+        <option value="confidential">confidential</option>
+        <option value="private">private</option>
+      </select>
+    </div>
+
+    <p class="hint">
+      انتخاب مدل از روی <b>شواهد</b> انجام می‌شود: اندازه‌گیری داخلی در صدر،
+      سیگنال جمع‌شده از وب در انتها و با سقف نفوذ ۱۵٪.
+    </p>
+
+    <h3>سناریوهای حمله (اختیاری)</h3>
+    <label class="chk"><input type="checkbox" id="injectSecret" /> رمز واقعی در ورودی بگذار</label>
+    <label class="chk"><input type="checkbox" id="injectPromptInjection" /> حمله تزریق پرامپت در README</label>
+    <label class="chk"><input type="checkbox" id="claimWithoutEvidence" /> ادعای موفقیت بدون شواهد</label>
+    <label class="chk"><input type="checkbox" id="rateLimitProvider" /> ارائه‌دهنده را ۴۲۹ کن</label>
+
+    <div class="row">
+      <button id="start" class="primary">اجرای زنده</button>
+      <button id="reset">بازنشانی</button>
+    </div>
+    <p class="hint" id="goal">—</p>
+  </section>
+
+  <section class="panel wide" id="timeline-panel">
+    <h2>۲. چه اتفاقی دارد می‌افتد</h2>
+    <div id="timeline"></div>
+  </section>
+
+  <section class="panel" id="settings">
+    <h2>۳. تنظیمات پلتفرم</h2>
+    <p class="hint">
+      یک دامنه پایین‌تر می‌تواند تنظیمات ایمنی را <b>سخت‌تر</b> کند، اما هرگز
+      نمی‌تواند آن‌ها را شل کند.
+    </p>
+    <div class="field">
+      <label for="autonomy">سقف خودمختاری</label>
+      <select id="autonomy">
+        <option value="readonly">readonly</option>
+        <option value="supervised" selected>supervised</option>
+        <option value="autonomous-branch">autonomous-branch</option>
+        <option value="full">full</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="budget">سقف توکن هر اجرا</label>
+      <input id="budget" type="number" min="0" step="50000" value="400000" />
+    </div>
+    <div class="field">
+      <label for="strategy">استراتژی مسیریابی</label>
+      <select id="strategy">
+        <option value="most-reliable" selected>most-reliable</option>
+        <option value="cheapest">cheapest</option>
+        <option value="fastest">fastest</option>
+        <option value="most-capable">most-capable</option>
+        <option value="least-used">least-used</option>
+        <option value="round-robin">round-robin</option>
+      </select>
+    </div>
+    <label class="chk"><input type="checkbox" id="mfa" checked /> MFA برای تصویب</label>
+    <label class="chk"><input type="checkbox" id="deployApproval" checked /> تصویب استقرار</label>
+    <label class="chk"><input type="checkbox" id="rawPassword" /> اجازه رمز خام (باید رد شود)</label>
+    <div class="row">
+      <button id="applySettings" class="primary">اعمال</button>
+      <button id="loosenAll">تلاش برای شل کردن همه</button>
+    </div>
+    <div id="settingsResult"></div>
+  </section>
+
+  <section class="panel wide" id="security">
+    <h2>۴. امنیت</h2>
+    <div class="row">
+      <button data-probe="csrf">حمله CSRF</button>
+      <button data-probe="tenant">نفوذ بین tenant</button>
+      <button data-probe="lockout">حمله brute-force</button>
+      <button data-probe="audit">دستکاری لاگ ممیزی</button>
+    </div>
+    <div id="securityResult"></div>
+    <h3>ثبت تهدیدها (STRIDE)</h3>
+    <div id="threats"></div>
+  </section>
+</main>
+
+<div id="approval" class="modal hidden">
+  <div class="modal-box">
+    <h2>تصویب انسانی لازم است</h2>
+    <p id="approvalDetail">—</p>
+    <p class="hint">اجرا واقعاً متوقف شده و منتظر تصمیم شماست. ایجنت نمی‌تواند کار خودش را تصویب کند.</p>
+    <div class="row">
+      <button id="approve" class="primary">تأیید (با MFA تازه)</button>
+      <button id="reject">رد کردن</button>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "request": "یک API کوچک برای مدیریت وظایف با احراز هویت و تست بساز.",
+  "computeMode": "free",
+  "privacyLevel": "internal",
+  "autonomyLevel": "supervised",
+  "locale": "fa-IR",
+  "repository": { "provider": "github", "url": "https://github.com/acme/tasks-api", "baseBranch": "main" },
+  "modelPreferences": { "preferredProviders": ["groq"], "excludedProviders": ["freecloud"] },
+  "integrations": ["github"],
+  "targetPlatforms": ["web"],
+  "consents": { "cloudEgress": true, "providerMayTrainOnInput": false }
+}

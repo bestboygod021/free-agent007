@@ -16,7 +16,8 @@
     "modelsMenu": "Parcourir les types de modèles",
     "agents": "Agents",
     "logs": "Journaux",
-    "analyticsMenu": "Pages d'analytique"
+    "analyticsMenu": "Pages d'analytique",
+    "forgepilot": "ForgePilot"
   },
   "auth": {
     "createYourAccount": "Créez votre compte",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "Crée la chaîne sans aucun modèle et en tient les nouveaux modèles du catalogue à l'écart. Décoché, elle démarre comme une copie de la chaîne par défaut.",
     "curated": "Curatée",
     "curatedHint": "Les nouveaux modèles du catalogue ne sont pas ajoutés automatiquement à cette chaîne."
+  },
+  "forgepilot": {
+    "title": "Noyau d'agents ForgePilot",
+    "description": "Le noyau déterministe : le modèle propose, le code décide. Modes de calcul, politique des fournisseurs, états d'exécution et bibliothèque de prompts versionnée.",
+    "providerPolicy": "Politique des fournisseurs",
+    "providerPolicyHint": "Quels fournisseurs ce mode peut réellement utiliser.",
+    "allowLocal": "Modèles locaux",
+    "allowFreeCloud": "Paliers cloud gratuits",
+    "allowPaidCloud": "Cloud payant",
+    "allowTraining": "Peut s'entraîner sur l'entrée",
+    "cloudPrivacyCeiling": "Plafond de confidentialité cloud",
+    "budget": "Budget",
+    "budgetHint": "Limites de jetons et de coût appliquées avant le démarrage d'une exécution.",
+    "perRun": "Par exécution",
+    "perDay": "Par jour / utilisateur",
+    "hardStop": "Arrêt strict",
+    "maxCost": "Coût max. par exécution",
+    "execution": "Exécution",
+    "executionHint": "Concurrence, limites de réparation et portes de qualité à franchir.",
+    "parallelTasks": "Tâches parallèles",
+    "repairAttempts": "Tentatives de réparation",
+    "sandboxTimeout": "Délai du bac à sable",
+    "qualityGates": "Portes de qualité",
+    "disabledCapabilities": "Capacités désactivées",
+    "disabledHint": "Désactivées par ce mode de calcul ; le moteur de politiques les refuse.",
+    "runStates": "États d'exécution",
+    "runStatesHint": "Tous les états que la machine à états peut occuper. Les états terminaux sont pleins.",
+    "promptLibrary": "Bibliothèque de prompts",
+    "promptLibraryHint": "{count} prompts d'agent versionnés, chacun lié à un contrat de sortie.",
+    "mode": {
+      "free": "Gratuit",
+      "paid": "Payant",
+      "local": "Local"
+    }
   }
 }

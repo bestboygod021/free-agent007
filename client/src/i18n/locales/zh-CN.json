@@ -16,7 +16,8 @@
     "modelsMenu": "浏览模型类型",
     "agents": "智能体",
     "logs": "日志",
-    "analyticsMenu": "分析页面"
+    "analyticsMenu": "分析页面",
+    "forgepilot": "ForgePilot"
   },
   "auth": {
     "createYourAccount": "创建账号",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "创建时不放入任何模型，之后新增的目录模型也不会自动加入。不勾选则复制默认链。",
     "curated": "手动维护",
     "curatedHint": "新的目录模型不会自动加入这条链。"
+  },
+  "forgepilot": {
+    "title": "ForgePilot 智能体内核",
+    "description": "确定性内核：模型提出建议，代码做出决定。计算模式、提供方策略、运行状态与版本化提示词库。",
+    "providerPolicy": "提供方策略",
+    "providerPolicyHint": "此模式实际允许使用哪些提供方。",
+    "allowLocal": "本地模型",
+    "allowFreeCloud": "免费云端层级",
+    "allowPaidCloud": "付费云端",
+    "allowTraining": "可用输入训练",
+    "cloudPrivacyCeiling": "云端隐私上限",
+    "budget": "预算",
+    "budgetHint": "运行开始前强制执行的词元与成本上限。",
+    "perRun": "每次运行",
+    "perDay": "每日 / 用户",
+    "hardStop": "硬性停止",
+    "maxCost": "每次运行最高成本",
+    "execution": "执行",
+    "executionHint": "并发数、修复次数上限以及必须通过的质量门。",
+    "parallelTasks": "并行任务",
+    "repairAttempts": "修复尝试次数",
+    "sandboxTimeout": "沙箱超时",
+    "qualityGates": "质量门",
+    "disabledCapabilities": "已禁用能力",
+    "disabledHint": "被此计算模式关闭；策略引擎会拒绝它们。",
+    "runStates": "运行状态",
+    "runStatesHint": "运行状态机可处于的所有状态。终止状态为实心。",
+    "promptLibrary": "提示词库",
+    "promptLibraryHint": "{count} 个版本化智能体提示词，每个都绑定一份输出契约。",
+    "mode": {
+      "free": "免费",
+      "paid": "付费",
+      "local": "本地"
+    }
   }
 }

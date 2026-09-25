@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/plan.schema.json",
+  "title": "ProjectPlan",
+  "description": "The artifact the user approves before any write happens. Approval is bound to this exact hash.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "planId",
+    "projectId",
+    "goal",
+    "stack",
+    "milestones",
+    "tasks",
+    "requiredPermissions",
+    "risks",
+    "qualityGates",
+    "budget",
+    "rollbackStrategy"
+  ],
+  "properties": {
+    "planId": { "type": "string", "pattern": "^plan_[a-z0-9_]{1,64}$" },
+    "projectId": { "type": "string", "minLength": 1 },
+    "goal": { "type": "string", "minLength": 10 },
+    "stack": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "role", "justification", "license"],
+        "properties": {
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "role": { "type": "string" },
+          "justification": { "type": "string" },
+          "license": { "type": "string" },
+          "alternativesRejected": { "type": "array", "items": { "type": "string" } },
+          "freeTierAvailable": { "type": "boolean" }
+        }
+      }
+    },
+    "milestones": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["order", "name", "exitCriteria"],
+        "properties": {
+          "order": { "type": "integer", "minimum": 1 },
+          "name": { "type": "string" },
+          "exitCriteria": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+        }
+      }
+    },
+    "tasks": { "type": "array", "minItems": 1, "items": { "$ref": "task.schema.json" } },
+    "requiredPermissions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["connector", "scope", "purpose", "riskLevel"],
+        "properties": {
+          "connector": { "type": "string" },
+          "scope": { "type": "string" },
+          "purpose": { "type": "string" },
+          "riskLevel": { "$ref": "common.defs.json#/$defs/riskLevel" }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["risk", "mitigation"],
+        "properties": {
+          "risk": { "type": "string" },
+          "likelihood": { "type": "string", "enum": ["low", "medium", "high"] },
+          "mitigation": { "type": "string" }
+        }
+      }
+    },
+    "qualityGates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lint", "typecheck", "test", "build", "secretScan", "dependencyScan"],
+      "properties": {
+        "lint": { "type": "string" },
+        "typecheck": { "type": "string" },
+        "test": { "type": "string" },
+        "build": { "type": "string" },
+        "secretScan": { "type": "string" },
+        "dependencyScan": { "type": "string" },
+        "e2e": { "type": "string" },
+        "accessibility": { "type": "string" }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["estimatedTokens", "estimatedSeconds"],
+      "properties": {
+        "estimatedTokens": { "type": "integer", "minimum": 0 },
+        "estimatedSeconds": { "type": "integer", "minimum": 0 },
+        "estimatedCost": { "type": "number", "minimum": 0 },
+        "hardStopAtTokens": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "rollbackStrategy": { "type": "string", "minLength": 10 },
+    "humanCheckpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["at", "reason"],
+        "properties": {
+          "at": { "$ref": "common.defs.json#/$defs/runState" },
+          "reason": { "type": "string" }
+        }
+      }
+    }
+  }
+}

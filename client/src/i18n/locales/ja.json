@@ -16,7 +16,8 @@
     "modelsMenu": "モデルタイプを参照する",
     "agents": "エージェント",
     "logs": "ログ",
-    "analyticsMenu": "分析ページ"
+    "analyticsMenu": "分析ページ",
+    "forgepilot": "ForgePilot"
   },
   "auth": {
     "createYourAccount": "アカウントを作成する",
@@ -1192,5 +1193,39 @@
     "startEmptyHint": "モデルを入れずにチェーンを作り、新しいカタログモデルも自動では追加しません。チェックを外すと既定のチェーンの複製になります。",
     "curated": "手動管理",
     "curatedHint": "新しいカタログモデルはこのチェーンに自動追加されません。"
+  },
+  "forgepilot": {
+    "title": "ForgePilot エージェントカーネル",
+    "description": "決定論的なカーネル：モデルが提案し、コードが決定します。計算モード、プロバイダーポリシー、実行状態、バージョン管理されたプロンプトライブラリ。",
+    "providerPolicy": "プロバイダーポリシー",
+    "providerPolicyHint": "このモードが実際に使用できるプロバイダー。",
+    "allowLocal": "ローカルモデル",
+    "allowFreeCloud": "無料クラウド枠",
+    "allowPaidCloud": "有料クラウド",
+    "allowTraining": "入力で学習する可能性",
+    "cloudPrivacyCeiling": "クラウドのプライバシー上限",
+    "budget": "予算",
+    "budgetHint": "実行開始前に適用されるトークンとコストの上限。",
+    "perRun": "実行ごと",
+    "perDay": "1日 / ユーザー",
+    "hardStop": "強制停止",
+    "maxCost": "実行あたり最大コスト",
+    "execution": "実行",
+    "executionHint": "並列数、修復回数の上限、通過必須の品質ゲート。",
+    "parallelTasks": "並列タスク",
+    "repairAttempts": "修復試行回数",
+    "sandboxTimeout": "サンドボックスのタイムアウト",
+    "qualityGates": "品質ゲート",
+    "disabledCapabilities": "無効化された機能",
+    "disabledHint": "この計算モードで無効化され、ポリシーエンジンが拒否します。",
+    "runStates": "実行状態",
+    "runStatesHint": "状態マシンが取りうるすべての状態。終端状態は塗りつぶし表示です。",
+    "promptLibrary": "プロンプトライブラリ",
+    "promptLibraryHint": "{count} 個のバージョン管理されたエージェントプロンプト。各々が出力契約に紐づきます。",
+    "mode": {
+      "free": "無料",
+      "paid": "有料",
+      "local": "ローカル"
+    }
   }
 }
