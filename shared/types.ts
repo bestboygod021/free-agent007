@@ -1,8 +1,20 @@
 // ---- Platform & Model Types ----
 
+// ---- Shared API Contracts (from ./schemas.ts) ----
+// Type-only re-exports of the Zod-inferred types. They are erased at compile
+// time, so importing types.ts pulls no zod code into a runtime bundle; the
+// schemas themselves are validated against live responses by
+// server/src/__tests__/integration/contract.test.ts.
+
 /** How the global outbound proxy URL is interpreted. Per-key proxies always
  * use the traditional forward-proxy transport. */
-export type ProxyMode = 'forward' | 'fetch-relay';
+export type { ProxyMode } from './schemas';
+
+/** GET/PUT /api/settings/proxy response envelope. */
+export type { ProxySettings } from './schemas';
+
+/** GET /api/auth/status bootstrap payload. */
+export type { AuthStatus } from './schemas';
 
 /** A model declared beside a custom endpoint in an import file (#382). A
  *  capability flag is present only when the paste declared it via a trailing
@@ -501,14 +513,10 @@ export interface ChatCompletionChunk {
 
 // ---- Analytics Types ----
 
-export interface AnalyticsSummary {
-  totalRequests: number;
-  successRate: number;
-  totalInputTokens: number;
-  totalOutputTokens: number;
-  avgLatencyMs: number;
-  estimatedCostSavings: number;
-}
+/** GET /api/analytics/summary payload — the full 14-field shape emitted by
+ *  server/src/routes/analytics.ts (was a stale 6-field sketch before it moved
+ *  to the Zod contract in ./schemas.ts). */
+export type { AnalyticsSummary } from './schemas';
 
 export interface PlatformStats {
   platform: Platform;

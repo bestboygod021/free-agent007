@@ -43,6 +43,7 @@ import { sortRows, useTableSort, type SortValueFn } from '@/lib/table-sort'
 import { platformColors } from '@/lib/routing'
 import { categoryAxisProps, verticalCategoryAxisProps } from '@/lib/chart-axis'
 import { useI18n } from '@/i18n'
+import type { AnalyticsSummary as SummaryResponse } from '../../../shared/types'
 
 type TimeRange = '24h' | '7d' | '30d' | '90d'
 
@@ -125,25 +126,9 @@ const byKeyValue: SortValueFn<ByKeyRow, ByKeyCol> = (k, col) => {
   }
 }
 
-// Response shapes mirror the JSON emitted by server/src/routes/analytics.ts.
-// Latency percentiles and TTFT are null when the raw window is empty (pruned).
-interface SummaryResponse {
-  totalRequests: number
-  successRate: number
-  totalInputTokens: number
-  totalOutputTokens: number
-  avgLatencyMs: number
-  p50LatencyMs: number | null
-  p95LatencyMs: number | null
-  avgTtfbMs: number | null
-  requestTypeCounts: { chat: number; embedding: number }
-  estimatedCostSavings: number
-  pinnedRequests: number
-  pinHonoredRequests: number
-  firstRequestAt: string | null
-  lifetimeTotalRequests: number
-}
-
+// SummaryResponse is an alias of the shared Zod contract AnalyticsSummary
+// (shared/schemas.ts) — the authoritative 14-field shape of
+// server/src/routes/analytics.ts. Type-only import: zero bundle cost.
 interface CacheStatsResponse {
   enabled: boolean
   entries: number

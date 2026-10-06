@@ -9,17 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Globe } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { PLATFORMS, CUSTOM_GROUP } from './platform-data'
-import type { ApiKey } from '../../../../shared/types'
-import type { ProxyMode } from '../../../../shared/types'
-
-interface ProxySettings {
-  proxyUrl: string
-  proxyMode: ProxyMode
-  fetchRelayTokenConfigured: boolean
-  enabled: boolean
-  bypassPlatforms: string[]
-  active: boolean
-}
+import type { ApiKey, ProxyMode, ProxySettings } from '../../../../shared/types'
 
 /** Host of a probe target, for display. Falls back to the raw value so a
  *  malformed override still shows something rather than vanishing. */
