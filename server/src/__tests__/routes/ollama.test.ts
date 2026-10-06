@@ -250,7 +250,13 @@ describe('Ollama emulation', () => {
     const dashboard = await request(app, 'POST', '/api/embeddings', {}, {
       Authorization: `Bearer ${dashboardToken}`,
     });
-    expect(dashboard.status).toBe(404);
+    // The dashboard owns this path, and its router has no POST on the
+    // collection: the answer must come from the dashboard side (405 JSON,
+    // pointing at the surfaces that DO accept POST) — never Ollama's
+    // 'invalid request' verdict, and never Express's default HTML 404 from
+    // falling off every router.
+    expect(dashboard.status).toBe(405);
+    expect(dashboard.body.error.message).toContain('/v1/embeddings');
     expect(dashboard.text).not.toContain('invalid request');
   });
 });

@@ -1492,7 +1492,9 @@ keysRouter.patch('/platform/:platform', (req: Request, res: Response) => {
     return;
   }
 
-  const { enabled } = req.body;
+  // Express 5: req.body is undefined when no JSON body was parsed. Destructure
+  // defensively so a bodyless PATCH answers the 400 below instead of a 500.
+  const { enabled } = (req.body ?? {}) as { enabled?: unknown };
   if (typeof enabled !== 'boolean') {
     res.status(400).json({ error: { message: 'enabled must be a boolean' } });
     return;

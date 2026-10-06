@@ -430,7 +430,12 @@ function proxyUrlError(proxyUrl: string, proxyMode: ProxyMode): string | undefin
 
 // Set the proxy settings. Accepts partial updates.
 settingsRouter.put('/proxy', (req: Request, res: Response) => {
-  const { proxyUrl, proxyMode, fetchRelayToken, enabled, bypassPlatforms } = req.body as {
+  // Express 5 leaves req.body undefined when nothing was parsed (no JSON
+  // content-type, empty body); destructuring that crashed the handler with a
+  // 500. Treat an unparsed body as an empty patch — every field stays
+  // undefined, every block below skips, and the response reports the current
+  // settings, which is the same contract an all-undefined body already had.
+  const { proxyUrl, proxyMode, fetchRelayToken, enabled, bypassPlatforms } = (req.body ?? {}) as {
     proxyUrl?: string;
     proxyMode?: ProxyMode;
     fetchRelayToken?: string;

@@ -82,6 +82,25 @@ function decryptExistingKey(row: { encrypted_key: string; iv: string; auth_tag: 
   }
 }
 
+// POST on the collection is not the dashboard's: the dashboard GETs the list
+// and PUTs rows below. Ollama's legacy POST /api/embeddings falls through to
+// this router whenever the caller carries a valid dashboard session (see
+// ollama.ts) — and without a route here the fall-through ran off every router
+// and answered with Express's default HTML 404, the one shape an API surface
+// must never return. Answer honestly instead: 405 JSON pointing at the two
+// surfaces that DO accept POST.
+embeddingsRouter.post('/', (_req: Request, res: Response) => {
+  res.setHeader('Allow', 'GET, PUT');
+  res.status(405).json({
+    error: {
+      message:
+        'POST is not supported on the dashboard embeddings collection. ' +
+        'Use POST /v1/embeddings (OpenAI-compatible) or the Ollama emulation without a dashboard session.',
+      type: 'method_not_allowed_error',
+    },
+  });
+});
+
 embeddingsRouter.post('/custom', async (req: Request, res: Response) => {
   const parsed = customEmbeddingSchema.safeParse(req.body);
   if (!parsed.success) {
