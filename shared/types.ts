@@ -16,6 +16,31 @@ export type { ProxySettings } from './schemas';
 /** GET /api/auth/status bootstrap payload. */
 export type { AuthStatus } from './schemas';
 
+/** Response contracts for the rest of the dashboard surface — settings,
+ * fusion, fallback chain, cache stats, and the analytics endpoints. The
+ * stale sketch of FallbackEntry that used to live here was replaced by the
+ * real GET /api/fallback row shape. */
+export type {
+  ApiKeyResponse,
+  FusionMode,
+  FusionStrategy,
+  SavedFusionConfig,
+  FusionConfigResponse,
+  FallbackEntry,
+  CacheStatsResponse,
+  ByPlatformRow,
+  ByClientRow,
+  TimelineBucket,
+  ByModelRow,
+  ByKeyRow,
+  ErrorDistribution,
+  RecentErrorRow,
+  RecentCallRow,
+  RecentCallsResponse,
+  RequestAttempt,
+  RequestDetail,
+} from './schemas';
+
 /** A model declared beside a custom endpoint in an import file (#382). A
  *  capability flag is present only when the paste declared it via a trailing
  *  -TOOLS / -VISION suffix. */
@@ -339,20 +364,9 @@ export interface ApiKeyCreate {
 
 // ---- Fallback Config ----
 
-export interface FallbackEntry {
-  modelId: number;
-  platform: Platform;
-  displayName: string;
-  intelligenceRank: number;
-  speedRank: number;
-  priority: number;
-  enabled: boolean;
-  // Present when model unification is enabled — identifies the logical model
-  // this provider row belongs to so the dashboard can render grouped rows.
-  groupKey?: string;
-  canonicalId?: string;
-  groupLabel?: string;
-}
+// FallbackEntry now lives in ./schemas.ts as the full GET /api/fallback row
+// (the old sketch here typed modelId as the DB id and missed two thirds of
+// the fields the endpoint actually sends). Zero importers when replaced.
 
 // ---- Model Grouping (unify the same model across providers) ----
 // One logical model can be served by several providers (rows in the `models`

@@ -17,16 +17,10 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import toolCatalog from '@/data/agent-tools.json'
-
-interface ClientAnalytics {
-  clientAgent: string
-  requests: number
-  lastSeenAt: string | null
-}
-
-interface KeyResponse {
-  apiKey: string
-}
+// Subset views of the shared response contracts (shared/schemas.ts): the
+// by-client row AgentsPage renders is the SAME row AnalyticsPage charts, and
+// the api-key envelope is just { apiKey }.
+import type { ByClientRow as ClientAnalytics, ApiKeyResponse as KeyResponse } from '../../../shared/types'
 
 const analyticsIds: Record<string, string> = {
   claude: 'claude-code',

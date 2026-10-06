@@ -13,32 +13,13 @@ import { PageHeader } from '@/components/page-header'
 import { FloatingBar } from '@/components/floating-bar'
 import { ModelsTabs } from '@/components/models-tabs'
 import { useI18n } from '@/i18n'
-
-type Mode = 'auto' | 'explicit'
-type Strategy = 'synthesize' | 'best_of'
-
-interface SavedFusionConfig {
-  mode: Mode
-  models: string[]
-  judge: string | null
-  k: number
-  strategy: Strategy
-  expose_panel: boolean
-}
-
-interface FusionConfigResponse {
-  config: SavedFusionConfig
-  maxK: number
-}
-
-interface FallbackEntry {
-  modelDbId: number
-  platform: string
-  modelId: string
-  displayName: string
-  enabled: boolean
-  keyCount: number
-}
+import type {
+  FusionMode as Mode,
+  FusionStrategy as Strategy,
+  SavedFusionConfig,
+  FusionConfigResponse,
+  FallbackEntry,
+} from '../../../shared/types'
 
 const JUDGE_AUTO = '__auto__'
 const PROVIDER_ALL = '__all__'
