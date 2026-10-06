@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch, getToken } from '@/lib/api'
 import { toast } from '@/lib/toast'
@@ -297,13 +297,19 @@ function AutoBackupForm({ schedule, onSaved }: { schedule: BackupSchedule | null
   const [backupPath, setBackupPath] = useState('')
   const [savedFlash, setSavedFlash] = useState(false)
 
-  useEffect(() => {
-    if (!schedule) return
+  // Hydrate the form from the fetched schedule — a render-phase adjustment
+  // rather than an effect, so the server's values land before paint and a
+  // refetch that returns the same schedule object never resets edits in
+  // progress. `syncedSchedule` starts null so a schedule already cached on
+  // first render still hydrates the form.
+  const [syncedSchedule, setSyncedSchedule] = useState<BackupSchedule | null>(null)
+  if (schedule && schedule !== syncedSchedule) {
+    setSyncedSchedule(schedule)
     setEnabled(schedule.enabled)
     setTime(schedule.time)
     setIntervalDays(String(schedule.intervalDays))
     setBackupPath(schedule.backupPath ?? '')
-  }, [schedule])
+  }
 
   const save = useMutation({
     meta: { silenceToast: true },

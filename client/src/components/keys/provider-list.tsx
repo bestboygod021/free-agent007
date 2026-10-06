@@ -30,7 +30,7 @@ import {
   customModelDeletePath,
   statusDot,
   statusLabelKey,
-} from './shared'
+} from './platform-data'
 import type { HealthData } from './shared'
 import { DiscoverModelsDialog } from './discover-models-dialog'
 import { AddEndpointKeyDialog } from './add-endpoint-key-dialog'

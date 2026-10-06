@@ -18,10 +18,9 @@ import {
   SquareTerminal,
   Zap,
 } from 'lucide-react'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, apiBaseUrl } from '@/lib/api'
 import { copyText } from '@/lib/clipboard'
 import { toast } from '@/lib/toast'
-import { apiBaseUrl } from '@/components/api-usage'
 import { COMMAND_PALETTE_EVENT } from '@/components/command-palette-state'
 import { useI18n } from '@/i18n'
 import type { FallbackEntry } from '@/lib/routing'

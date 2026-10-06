@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Check, Layers, Search } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
@@ -89,16 +89,21 @@ export default function FusionPage() {
     [modelOptions, panelQuery, panelProvider],
   )
 
-  // Hydrate local state from the server once it loads.
-  useEffect(() => {
-    if (!data) return
+  // Hydrate local state from the server once it loads — a render-phase
+  // adjustment rather than an effect: the config lands before paint, and only
+  // when the fetched config's identity actually changes (structural sharing
+  // keeps an unchanged config reference, so an idle refetch doesn't reset
+  // edits in progress).
+  const [syncedConfig, setSyncedConfig] = useState<FusionConfigResponse | undefined>(undefined)
+  if (data && data !== syncedConfig) {
+    setSyncedConfig(data)
     setMode(data.config.mode)
     setModels(data.config.models)
     setJudge(data.config.judge ?? JUDGE_AUTO)
     setK(data.config.k)
     setStrategy(data.config.strategy)
     setExposePanel(data.config.expose_panel)
-  }, [data])
+  }
 
   const maxK = data?.maxK ?? 8
 

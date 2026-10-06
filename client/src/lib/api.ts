@@ -13,7 +13,16 @@ export function clearToken(): void {
   try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
 }
 
-export const UNAUTHORIZED_EVENT = 'freellmapi:unauthorized';
+export const UNAUTHORIZED_EVENT = 'freellmapi:unauthorized'
+
+// The /v1 base URL for ready-to-run snippets, derived the same way as the chat
+// model page + Keys page: the dev server port in DEV, the page origin in a
+// packaged/hosted build. Lives with the rest of the base-URL logic in lib/api.
+export function apiBaseUrl(): string {
+  return import.meta.env.DEV
+    ? `http://${window.location.hostname}:${__SERVER_PORT__}/v1`
+    : `${window.location.origin}/v1`
+};
 
 // Error thrown by apiFetch on a non-2xx response. Carries the HTTP status and
 // the server's machine-readable `error.type` so callers can branch on them.

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Globe } from 'lucide-react'
 import { useI18n } from '@/i18n'
-import { PLATFORMS, CUSTOM_GROUP } from './shared'
+import { PLATFORMS, CUSTOM_GROUP } from './platform-data'
 import type { ApiKey } from '../../../../shared/types'
 import type { ProxyMode } from '../../../../shared/types'
 
@@ -52,13 +52,18 @@ export function ProxySettingsSection() {
   })
 
   // Sync from server when the query refetches; keep the user's typed value
-  // in between (controlled input).
-  useEffect(() => {
-    if (data) {
-      setProxyUrl(data.proxyUrl)
-      setProxyMode(data.proxyMode)
-    }
-  }, [data?.proxyUrl, data?.proxyMode])
+  // in between (controlled input). Render-phase adjustment instead of an
+  // effect: the sync applies before paint (no flash of the stale value), only
+  // when the server's fields actually changed, and a refetch that returns the
+  // same URL/mode never clobbers what the user has typed.
+  const [syncedUrl, setSyncedUrl] = useState<string | undefined>(undefined)
+  const [syncedMode, setSyncedMode] = useState<ProxyMode | undefined>(undefined)
+  if (data && (data.proxyUrl !== syncedUrl || data.proxyMode !== syncedMode)) {
+    setSyncedUrl(data.proxyUrl)
+    setSyncedMode(data.proxyMode)
+    setProxyUrl(data.proxyUrl)
+    setProxyMode(data.proxyMode)
+  }
 
   const saveProxy = useMutation({
     meta: { silenceToast: true },

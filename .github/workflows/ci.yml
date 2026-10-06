@@ -40,8 +40,8 @@ jobs:
           COVERAGE: ${{ matrix.node-version == '22' && '1' || '' }}
         run: npm test
 
-      # server + cli only; the client has its own backlog of ESLint violations
-      # and is brought in under a separate change.
+      # server + cli + client — the client backlog is cleared, so it is held to
+      # the same gate as the rest of the repo.
       - name: Lint
         run: npm run lint
 

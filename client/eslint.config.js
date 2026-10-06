@@ -19,5 +19,18 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // shadcn's generated components ship with their variant factory in the
+      // same file (`export { Button, buttonVariants }`) — that pairing is the
+      // library's public API and is imported as such across the app. Allow
+      // exactly those two names rather than splitting generated code or
+      // disabling the rule; every other mixed export is still an error.
+      // `allowConstantExport` is carried over from the vite preset (this
+      // rules block replaces the preset's options wholesale).
+      'react-refresh/only-export-components': ['error', {
+        allowConstantExport: true,
+        allowExportNames: ['badgeVariants', 'buttonVariants'],
+      }],
+    },
   },
 ])

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft, Merge, Save, Split, Trash2 } from 'lucide-react'
@@ -211,7 +211,7 @@ export default function ModelDetailPage() {
   // the full overrides list (see lib/alias-merge) — the visible rows are only
   // this group's slice, so editing by row position would hit other groups.
   const merges = useMemo(() => unify?.overrides.merges ?? [], [unify])
-  const groupAliases = useMemo(() => aliasesFor(merges, label), [merges, label])
+  const groupAliases = aliasesFor(merges, label)
   const submitAlias = () => {
     if (!aliasInput.trim()) return
     mergeMutation.mutate(addAlias(merges, label, aliasInput))
@@ -411,7 +411,17 @@ function ProviderSettingsRow({
     tpmLimit, tpdLimit, supportsVision, supportsTools, enabled])
 
   const [form, setForm] = useState(() => modelSettingsForm(source))
-  useEffect(() => setForm(modelSettingsForm(source)), [modelDbId, source])
+  // Re-hydrate the form when the server's model (or its effective settings)
+  // changes — a render-phase adjustment instead of an effect, so a model
+  // switch or a refetched catalog value lands before paint instead of one
+  // frame stale. The user's edits survive until the source actually changes.
+  const [syncedSource, setSyncedSource] = useState(source)
+  const [syncedModelDbId, setSyncedModelDbId] = useState(modelDbId)
+  if (source !== syncedSource || modelDbId !== syncedModelDbId) {
+    setSyncedSource(source)
+    setSyncedModelDbId(modelDbId)
+    setForm(modelSettingsForm(source))
+  }
   const setField = <K extends keyof typeof form>(key: K, value: typeof form[K]) =>
     setForm(current => ({ ...current, [key]: value }))
 

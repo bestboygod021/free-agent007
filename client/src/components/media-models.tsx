@@ -48,7 +48,9 @@ export interface MediaGroup {
 // Consolidate media rows into logical models — the same idea the chat Models page
 // uses (one logical model, several providers underneath). Group by displayName so
 // e.g. "FLUX.1 [schnell]" served by nvidia + cloudflare + siliconflow is one row.
-export function groupMedia(models: MediaModel[]): MediaGroup[] {
+// Module-private (only MediaModelsView uses it) so the file exports components
+// and types only, which keeps Fast Refresh intact.
+function groupMedia(models: MediaModel[]): MediaGroup[] {
   const map = new Map<string, MediaModel[]>()
   for (const m of models) {
     const arr = map.get(m.displayName)

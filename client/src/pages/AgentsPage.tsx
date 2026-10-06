@@ -60,13 +60,17 @@ export default function AgentsPage() {
     queryKey: ['api-key'],
     queryFn: () => apiFetch('/api/settings/api-key'),
   })
-  const { data: byClient = [] } = useQuery<ClientAnalytics[]>({
+  const { data: byClient = [], dataUpdatedAt } = useQuery<ClientAnalytics[]>({
     queryKey: ['analytics', 'by-client', '30d'],
     queryFn: () => apiFetch('/api/analytics/by-client?range=30d'),
   })
   // "Seen recently" means traffic within the last 7 days, not merely any row
-  // in the fetched 30-day window.
-  const seenCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000
+  // in the fetched 30-day window. Anchored to the fetch time (dataUpdatedAt)
+  // instead of Date.now(): the clock read would be impure during render, and
+  // the fetched-at moment is the more honest reference for fetched data anyway.
+  // Before the first fetch dataUpdatedAt is 0 and byClient is empty, so the
+  // cutoff's value cannot surface a row.
+  const seenCutoff = dataUpdatedAt - 7 * 24 * 60 * 60 * 1000
   const seen = new Map(byClient
     .filter(row => row.lastSeenAt && Date.parse(row.lastSeenAt) >= seenCutoff)
     .map(row => [row.clientAgent, row]))

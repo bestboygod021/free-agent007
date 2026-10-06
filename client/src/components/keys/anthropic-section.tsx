@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -40,7 +40,16 @@ export function AnthropicSection() {
   })
 
   const [draft, setDraft] = useState<AnthropicMap | null>(null)
-  useEffect(() => { if (mapData?.map) setDraft(mapData.map) }, [mapData])
+  // Hydrate the editor from the server — a render-phase adjustment rather than
+  // an effect: the draft adopts the fetched map before paint and re-adopts only
+  // when the fetched map's identity changes (react-query structural sharing
+  // keeps an unchanged map reference, so an idle refetch never wipes edits).
+  const serverMap = mapData?.map
+  const [syncedMap, setSyncedMap] = useState<AnthropicMap | null>(null)
+  if (serverMap && serverMap !== syncedMap) {
+    setSyncedMap(serverMap)
+    setDraft(serverMap)
+  }
 
   const save = useMutation({
     mutationFn: (map: AnthropicMap) => apiFetch('/api/settings/anthropic-map', { method: 'PUT', body: JSON.stringify(map) }),

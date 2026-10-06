@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { X } from 'lucide-react'
 import type { ApiKey } from '../../../../shared/types'
 import { useI18n } from '@/i18n'
-import { PLATFORMS } from './shared'
+import { PLATFORMS } from './platform-data'
 
 type UpdateBody = {
   label?: string

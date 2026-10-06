@@ -84,6 +84,23 @@ interface FallbackEntry {
 // the transcript is persisted, so its shape is shared with the storage layer
 // rather than owned by this component.
 
+// One parsed SSE frame from the fusion stream, as the server emits it: either
+// a panel/judge event under `_fusion`, an `error` object, or an OpenAI-shaped
+// `choices` delta. Typed at the boundary so the frame loop below doesn't need
+// `any` — JSON.parse is the trust point, the shape is asserted there.
+interface FusionSseFrame {
+  _fusion?: {
+    event?: string
+    platform: string
+    model: string
+    status?: 'ok' | 'failed'
+    content?: string
+    error?: string
+  }
+  error?: { message: string }
+  choices?: { delta?: { content?: string } }[]
+}
+
 // Render a fusion panel/judge entry as "platform/model", but avoid doubling
 // the provider when the model id already carries it (e.g. openrouter/owl-alpha,
 // groq/compound) — those would otherwise read "openrouter/openrouter/owl-alpha".
@@ -629,8 +646,8 @@ export default function PlaygroundPage() {
         if (!tl.startsWith('data:')) continue
         const d = tl.slice(5).trim()
         if (d === '[DONE]') continue
-        let obj: any
-        try { obj = JSON.parse(d) } catch { continue }
+        let obj: FusionSseFrame
+        try { obj = JSON.parse(d) as FusionSseFrame } catch { continue }
         if (obj._fusion) {
           if (obj._fusion.event === 'panel') {
             panel.push({ platform: obj._fusion.platform, model: obj._fusion.model, status: obj._fusion.status, content: obj._fusion.content, error: obj._fusion.error })
@@ -783,7 +800,7 @@ export default function PlaygroundPage() {
 
       const isFusion = selectedModel === 'fusion'
       const sysPrompt = systemPrompt.trim()
-      const body: any = {
+      const body: Record<string, unknown> = {
         messages: [
           ...(sysPrompt ? [{ role: 'system', content: sysPrompt }] : []),
           ...newMessages.map(m => ({ role: m.role, content: toMessageContent(m.content, m.images) })),
@@ -872,15 +889,15 @@ export default function PlaygroundPage() {
       }]
       setMessages(answered)
       await persistConversation(answered)
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Clearing the chat (or leaving the page) aborts the stream on purpose —
       // that is not a failure to report, and the transcript it belonged to is
       // already gone.
-      if (err?.name === 'AbortError') return
+      if (err instanceof Error && err.name === 'AbortError') return
       const failed: ChatMessage[] = [...newMessages, {
         role: 'assistant',
         isError: true,
-        content: err.message,
+        content: err instanceof Error ? err.message : String(err),
       }]
       setMessages(failed)
       await persistConversation(failed)
