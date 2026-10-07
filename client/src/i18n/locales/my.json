@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "သော့များ",
     "pageDescription": "ပံ့ပိုးသူအတည်ပြုချက်များနှင့် သင့်အက်ပ်များ ချိတ်ဆက်ထားသော API သော့ချက်။",
     "tabProviders": "ပံ့ပိုးသူများ",

@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Mga Susi",
     "pageDescription": "Mga kredensyal ng provider at ang pinag-isang API key na konektado sa iyong mga app.",
     "tabProviders": "Mga Tagapagbigay",

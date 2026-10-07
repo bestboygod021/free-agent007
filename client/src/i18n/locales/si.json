@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "යතුරු",
     "pageDescription": "සපයන්නාගේ අක්තපත්‍ර සහ ඒකාබද්ධ API යතුර ඔබගේ යෙදුම් සම්බන්ධ වේ.",
     "tabProviders": "සපයන්නන්",

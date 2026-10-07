@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "라우팅 성능 저하: {total}개 제공자 중 {healthy}개 정상 ({since} 이후)",
+    "noProvider": "제공자 없음",
+    "enabledCount": "{count}개 활성",
     "pageTitle": "열쇠",
     "pageDescription": "앱이 연결되는 공급자 자격 증명 및 통합 API 키.",
     "tabProviders": "공급자",

@@ -31,7 +31,7 @@ import {
   statusDot,
   statusLabelKey,
 } from './platform-data'
-import type { HealthData } from './shared'
+import type { HealthData, HealthKeyRow } from './shared'
 import { DiscoverModelsDialog } from './discover-models-dialog'
 import { AddEndpointKeyDialog } from './add-endpoint-key-dialog'
 import { CopyKeyDialog } from './copy-key-dialog'
@@ -250,7 +250,7 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
     })
   }
 
-  const healthKeyMap = new Map<number, { status: string; lastCheckedAt: string | null; lastHealthError: string | null }>()
+  const healthKeyMap = new Map<number, HealthKeyRow>()
   for (const k of healthData?.keys ?? []) healthKeyMap.set(k.id, k)
   const statusOf = (k: ApiKey) => healthKeyMap.get(k.id)?.status ?? k.status
 
@@ -359,6 +359,12 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
             const expanded = isGroupExpanded(group)
             const healthyCount = group.keys.filter(k => statusOf(k) === 'healthy').length
             const issueCount = group.keys.filter(k => statusOf(k) !== 'healthy').length
+            // Platform-level lanes from GET /api/health: the enabled count is
+            // the server's truth (a sweep can differ from what the row shows),
+            // and hasProvider=false means keys exist for a platform this build
+            // cannot actually route through.
+            const platformHealth = healthData?.platforms.find(pl => pl.platform === group.value)
+            const enabledCount = platformHealth?.enabledKeys ?? group.keys.filter(k => k.enabled).length
             // #787: once a selection exists in this group the checkboxes stay
             // visible, so the rest of the selection can be built without hunting.
             const groupHasSelection = group.keys.some(k => selectedKeyIds.has(k.id))
@@ -393,7 +399,14 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
                           {t(issueCount === 1 ? 'keys.summaryIssueOne' : 'keys.summaryIssueOther', { count: issueCount })}
                         </span>
                       )}
+                      <span className="inline-flex items-center gap-1">
+                        <span className="size-1.5 rounded-full bg-sky-500" />
+                        {t('keys.enabledCount', { count: enabledCount })}
+                      </span>
                     </span>
+                    {platformHealth && !platformHealth.hasProvider && (
+                      <Badge variant="destructive" className="text-[10px]">{t('keys.noProvider')}</Badge>
+                    )}
                   </button>
                   <DropdownMenu>
                       <DropdownMenuTrigger
@@ -577,7 +590,12 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
                             )}
                             <div className="flex-1" />
                             {lastChecked && (
-                              <span className="text-[11px] text-muted-foreground tabular-nums">
+                              <span
+                                className="text-[11px] text-muted-foreground tabular-nums"
+                                title={health?.createdAt
+                                  ? `${t('keys.keyAdded')}: ${formatSqliteUtcToLocalTime(health.createdAt, { dateStyle: 'medium', timeStyle: 'short' })}`
+                                  : undefined}
+                              >
                                 {formatSqliteUtcToLocalTime(lastChecked, { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             )}

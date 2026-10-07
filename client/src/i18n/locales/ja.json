@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "ルーティング劣化: {total} 中 {healthy} プロバイダーが正常（{since} から）",
+    "noProvider": "プロバイダーなし",
+    "enabledCount": "{count} 件有効",
     "pageTitle": "キー",
     "pageDescription": "プロバイダーの資格情報と、アプリが接続する統合 API キー。",
     "tabProviders": "プロバイダー",

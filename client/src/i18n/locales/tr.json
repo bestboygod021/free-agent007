@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Yönlendirme bozuldu: {total} sağlayıcının {healthy} tanesi sağlıklı ({since} itibarıyla)",
+    "noProvider": "Sağlayıcı yok",
+    "enabledCount": "{count} etkin",
     "pageTitle": "Anahtarlar",
     "pageDescription": "Sağlayıcı kimlik bilgileri ve uygulamalarınızın bağlandığı birleşik API anahtarı.",
     "tabProviders": "Sağlayıcılar",

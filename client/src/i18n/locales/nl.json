@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routering aangetast: {healthy} van {total} providers gezond (sinds {since})",
+    "noProvider": "Geen provider",
+    "enabledCount": "{count} ingeschakeld",
     "pageTitle": "Sleutels",
     "pageDescription": "Providergegevens en de unified API sleutel waarmee je apps verbinding maken.",
     "tabProviders": "Aanbieders",

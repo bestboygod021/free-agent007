@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing terdegradasi: {healthy} dari {total} penyedia sehat (sejak {since})",
+    "noProvider": "Tanpa penyedia",
+    "enabledCount": "{count} aktif",
     "pageTitle": "Kunci",
     "pageDescription": "Kredensial penyedia dan kunci API terpadu yang terhubung dengan aplikasi Anda.",
     "tabProviders": "Penyedia",

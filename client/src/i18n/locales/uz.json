@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Kalitlar",
     "pageDescription": "Provayder hisob ma'lumotlari va ilovalaringiz ulanadigan yagona API kaliti.",
     "tabProviders": "Provayderlar",

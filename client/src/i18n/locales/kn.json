@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "ಕೀಲಿಗಳು",
     "pageDescription": "ಒದಗಿಸುವವರ ರುಜುವಾತುಗಳು ಮತ್ತು ಏಕೀಕೃತ API ಕೀ ನಿಮ್ಮ ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಸಂಪರ್ಕಿಸುತ್ತದೆ.",
     "tabProviders": "ಪೂರೈಕೆದಾರರು",

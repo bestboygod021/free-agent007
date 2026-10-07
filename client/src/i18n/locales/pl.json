@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing uszkodzony: {healthy} z {total} dostawców sprawnych (od {since})",
+    "noProvider": "Brak dostawcy",
+    "enabledCount": "{count} włączonych",
     "pageTitle": "Klucze",
     "pageDescription": "Poświadczenia dostawcy i ujednolicony klucz API, z którym łączą się Twoje aplikacje.",
     "tabProviders": "Dostawcy",

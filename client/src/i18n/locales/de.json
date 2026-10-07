@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing gedrosselt: {healthy} von {total} Anbietern gesund (seit {since})",
+    "noProvider": "Kein Anbieter",
+    "enabledCount": "{count} aktiv",
     "pageTitle": "Schlüssel",
     "pageDescription": "Anbieteranmeldeinformationen und der einheitliche API-Schlüssel, mit dem Ihre Apps eine Verbindung herstellen.",
     "tabProviders": "Anbieter",

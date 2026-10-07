@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Encaminhamento degradado: {healthy} de {total} fornecedores saudáveis (desde {since})",
+    "noProvider": "Sem fornecedor",
+    "enabledCount": "{count} ativos",
     "pageTitle": "Chaves",
     "pageDescription": "Credenciais do fornecedor e a chave unificada de API com que as suas aplicações se ligam.",
     "tabProviders": "Fornecedores",

@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "कळा",
     "pageDescription": "प्रदाता क्रेडेंशियल आणि युनिफाइड API की तुमचे ॲप्स कनेक्ट करतात.",
     "tabProviders": "प्रदाते",

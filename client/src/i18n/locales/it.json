@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Instradamento degradato: {healthy} su {total} provider sani (dal {since})",
+    "noProvider": "Nessun provider",
+    "enabledCount": "{count} attivi",
     "pageTitle": "Chiavi",
     "pageDescription": "Credenziali dei fornitori e la chiave API unificata con cui si connettono le tue app.",
     "tabProviders": "Fornitori",

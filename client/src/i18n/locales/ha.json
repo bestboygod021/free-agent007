@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Maɓallai",
     "pageDescription": "Takaddun shaida na mai bayarwa da maɓalli na API na haɗin kai kayan aikinku suna haɗi da su.",
     "tabProviders": "Masu bayarwa",

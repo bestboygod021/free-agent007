@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Ключове",
     "pageDescription": "Идентификационните данни на доставчика и унифицираният API ключ, с който се свързват вашите приложения.",
     "tabProviders": "Доставчици",

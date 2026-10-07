@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Kunci",
     "pageDescription": "Kelayakan penyedia dan kunci API bersatu yang aplikasi anda sambungkan.",
     "tabProviders": "Penyedia",

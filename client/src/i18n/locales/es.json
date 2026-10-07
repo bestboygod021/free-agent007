@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Enrutamiento degradado: {healthy} de {total} proveedores sanos (desde {since})",
+    "noProvider": "Sin proveedor",
+    "enabledCount": "{count} activos",
     "pageTitle": "Claves",
     "pageDescription": "Las credenciales de los proveedores y la clave API unificada con la que se conectan tus aplicaciones.",
     "tabProviders": "Proveedores",

@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Raktai",
     "pageDescription": "Tiekėjų prisijungimo duomenys ir vieningas API raktas, su kuriuo jungiasi jūsų programėlės.",
     "tabProviders": "Tiekėjai",

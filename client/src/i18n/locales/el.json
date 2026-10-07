@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Κλειδιά",
     "pageDescription": "Διαπιστευτήρια παρόχου και το ενοποιημένο κλειδί API με το οποίο συνδέονται οι εφαρμογές σας.",
     "tabProviders": "Πάροχοι",

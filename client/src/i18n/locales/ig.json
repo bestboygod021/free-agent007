@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Igodo",
     "pageDescription": "Asambodo onye na-eweta yana igodo API jikọtara ọnụ na ngwa gị jikọtara.",
     "tabProviders": "Ndị na-enye ihe",

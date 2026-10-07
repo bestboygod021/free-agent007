@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Маршрутизація деградувала: {healthy} із {total} провайдерів справні (з {since})",
+    "noProvider": "Немає провайдера",
+    "enabledCount": "{count} увімкнено",
     "pageTitle": "Ключі",
     "pageDescription": "Облікові дані постачальника та уніфікований ключ API, з яким підключаються ваші програми.",
     "tabProviders": "Провайдери",

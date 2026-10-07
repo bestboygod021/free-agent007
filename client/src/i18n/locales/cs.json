@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Klíče",
     "pageDescription": "Přihlašovací údaje poskytovatele a jednotný klíč API se kterými se vaše aplikace připojují.",
     "tabProviders": "Poskytovatelé",

@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "路由降級：{total} 個提供者中 {healthy} 個健康（自 {since} 起）",
+    "noProvider": "無提供者",
+    "enabledCount": "{count} 個已啟用",
     "pageTitle": "金鑰",
     "pageDescription": "各提供者的憑證，以及供您的應用程式連線的統一 API 金鑰。",
     "tabProviders": "提供者",

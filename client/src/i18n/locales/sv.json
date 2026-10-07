@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "Nycklar",
     "pageDescription": "Leverantörsuppgifter och den enhetliga API-nyckeln som dina appar ansluter till.",
     "tabProviders": "Leverantörer",

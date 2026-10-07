@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "চাবি",
     "pageDescription": "প্রদানকারীর শংসাপত্র এবং ইউনিফাইড API কী যেটির সাথে আপনার অ্যাপগুলি সংযোগ করে৷",
     "tabProviders": "প্রদানকারী",

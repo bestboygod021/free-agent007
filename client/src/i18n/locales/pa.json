@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "ਕੁੰਜੀਆਂ",
     "pageDescription": "ਪ੍ਰਦਾਤਾ ਪ੍ਰਮਾਣ ਪੱਤਰ ਅਤੇ ਯੂਨੀਫਾਈਡ API ਕੁੰਜੀ ਜਿਸ ਨਾਲ ਤੁਹਾਡੀਆਂ ਐਪਾਂ ਜੁੜਦੀਆਂ ਹਨ।",
     "tabProviders": "ਪ੍ਰਦਾਤਾ",

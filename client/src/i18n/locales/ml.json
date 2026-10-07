@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "കീകൾ",
     "pageDescription": "ദാതാവിൻ്റെ ക്രെഡൻഷ്യലുകളും ഏകീകൃത API കീയും നിങ്ങളുടെ ആപ്പുകൾ ബന്ധിപ്പിക്കുന്നു.",
     "tabProviders": "ദാതാക്കൾ",

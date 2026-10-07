@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routage dégradé : {healthy} sur {total} fournisseurs sains (depuis {since})",
+    "noProvider": "Aucun fournisseur",
+    "enabledCount": "{count} activés",
     "pageTitle": "Clés",
     "pageDescription": "Les identifiants des fournisseurs et la clé API unifiée à laquelle vos applications se connectent.",
     "tabProviders": "Fournisseurs",

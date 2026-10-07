@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "გასაღებები",
     "pageDescription": "პროვაიდერის სერთიფიკატები და ერთიანი API გასაღები, რომელთანაც დაკავშირებულია თქვენი აპები.",
     "tabProviders": "პროვაიდერები",

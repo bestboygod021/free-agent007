@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "விசைகள்",
     "pageDescription": "வழங்குநரின் நற்சான்றிதழ்கள் மற்றும் ஒருங்கிணைந்த API விசை உங்கள் பயன்பாடுகளுடன் இணைக்கப்பட்டுள்ளது.",
     "tabProviders": "வழங்குபவர்கள்",

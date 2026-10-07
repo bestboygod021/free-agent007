@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "કીઓ",
     "pageDescription": "પ્રદાતા ઓળખપત્રો અને એકીકૃત API કી જેની સાથે તમારી એપ્લિકેશનો કનેક્ટ થાય છે.",
     "tabProviders": "પ્રદાતાઓ",

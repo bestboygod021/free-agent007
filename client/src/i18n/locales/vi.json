@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Lộ trình suy giảm: {healthy}/{total} nhà cung cấp khỏe mạnh (từ {since})",
+    "noProvider": "Không có nhà cung cấp",
+    "enabledCount": "{count} đang bật",
     "pageTitle": "Phím",
     "pageDescription": "Thông tin đăng nhập của nhà cung cấp và khóa API hợp nhất mà ứng dụng của bạn kết nối.",
     "tabProviders": "Nhà cung cấp",

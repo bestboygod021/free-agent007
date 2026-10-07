@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "مسیریابی تخریب شده: {healthy} از {total} ارائه‌دهنده سالم هستند (از {since})",
+    "noProvider": "بدون ارائه‌دهنده",
+    "enabledCount": "{count} فعال",
     "pageTitle": "کلیدها",
     "pageDescription": "اعتبار ارائه دهنده و کلید یکپارچه API برنامه های شما با آن متصل می شوند.",
     "tabProviders": "ارائه دهندگان",

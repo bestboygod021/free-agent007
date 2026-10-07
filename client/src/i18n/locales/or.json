@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "ଚାବି",
     "pageDescription": "ପ୍ରଦାନକାରୀ ପରିଚୟ ପତ୍ର ଏବଂ ଆପଣଙ୍କ ଆପ୍ଲିକେସନଗୁଡିକ ସହ ସଂଯୋଗ ହୋଇଥିବା ୟୁନିଫାଏଡ୍ API କୀ।",
     "tabProviders": "ପ୍ରଦାନକାରୀ",

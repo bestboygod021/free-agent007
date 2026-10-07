@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
+    "noProvider": "No provider",
+    "enabledCount": "{count} enabled",
     "pageTitle": "សោ",
     "pageDescription": "ព័ត៌មានសម្ងាត់អ្នកផ្តល់សេវា និងកូនសោ API ដែលកម្មវិធីរបស់អ្នកភ្ជាប់ជាមួយ។",
     "tabProviders": "អ្នកផ្តល់សេវា",

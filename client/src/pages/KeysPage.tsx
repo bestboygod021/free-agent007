@@ -8,6 +8,7 @@ import type { ApiKey, Platform } from '../../../shared/types'
 import { Plus, Download } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import type { HealthData } from '@/components/keys/shared'
+import { DegradationBanner } from '@/components/keys/shared'
 import { QuotaSignalsSection } from '@/components/keys/quota-signals-section'
 import { UnifiedKeySection } from '@/components/keys/unified-key-section'
 import { ClientProfilesSection } from '@/components/keys/client-profiles-section'
@@ -100,6 +101,7 @@ export default function KeysPage() {
       />
 
       <div className="space-y-8">
+        <DegradationBanner status={healthData?.degradation} />
         {tab === 'apiKey' && (
           <>
             <UnifiedKeySection />

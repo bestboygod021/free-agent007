@@ -364,6 +364,9 @@
     }
   },
   "keys": {
+    "degradedBanner": "تم خفض التوجيه: {healthy} من {total} مزودين بصحة جيدة (منذ {since})",
+    "noProvider": "بدون مزود",
+    "enabledCount": "{count} مفعّل",
     "pageTitle": "مفاتيح",
     "pageDescription": "بيانات اعتماد الموفر ومفتاح API الموحد الذي تتصل به تطبيقاتك.",
     "tabProviders": "مقدمي الخدمات",
