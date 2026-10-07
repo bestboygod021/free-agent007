@@ -1226,3 +1226,82 @@ export const logQuerySchema = z.object({
 export type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
 export type ConversationPatch = z.infer<typeof conversationPatchSchema>;
 export type LogQueryParams = z.infer<typeof logQuerySchema>;
+
+
+// ═════════════════════ Auth bodies (POST /api/auth/setup|login) ═════════════════════
+// Registration validates a real address and an 8-char floor. Messages are the
+// contract — the dual-sample tests below pin them on both sides.
+export const signupInputSchema = z.object({
+  email: z.string().email('A valid email is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+// Login is a LOOKUP, not a registration: the address is matched rather than
+// format-validated (the seeded desktop@localhost account must keep signing in —
+// #807), so only presence is enforced here. Format checks would reject accounts
+// that predate them.
+export const loginInputSchema = z.object({
+  email: z.string().min(1, 'Email is required'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+// ═════════════════════ API-key bodies (POST /api/keys, PATCH /api/keys/:id) ═════════════════════
+// The platform enum mirrors routes/keys.ts PLATFORMS exactly — a contract test
+// asserts the two lists are identical, so a new platform cannot land on one
+// side only.
+export const apiKeyPlatformSchema = z.enum([
+  'google', 'groq', 'cerebras', 'sail', 'electronhub', 'experiential', 'router9', 'septor', 'clod', 'speechify', 'blaze', 'lucidity', 'airforce', 'dreamprompting', 'waterfall', 'logfare', 'bai', 'radeon', 'nvidia', 'mistral',
+  'openrouter', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama',
+  'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode', 'ovh', 'agnes', 'reka', 'siliconflow',
+  'routeway', 'bazaarlink', 'ainative', 'aion', 'anyapi', 'requesty', 'navy', 'nara', 'sealion', 'orcarouter', 'unorouter', 'xkiro', 'modelscope',
+  'qianfan', 'volcengine', 'longcat', 'xfyun', 'aihorde', 'custom',
+]);
+
+const KEY_PROXY_SCHEMES = ['http:', 'https:', 'socks4:', 'socks4a:', 'socks5:', 'socks5h:'];
+// Mirrors lib/key-proxy.ts (message, cap, and accept/reject rules) — '' clears
+// the override, otherwise a dispatchable scheme on a real host.
+export const keyProxyUrlSchema = z
+  .string()
+  .max(2048)
+  .refine(url => {
+    const trimmed = url.trim();
+    if (!trimmed) return true;
+    if (trimmed.length > 2048) return false;
+    let parsed: URL;
+    try {
+      parsed = new URL(trimmed);
+    } catch {
+      return false;
+    }
+    if (!KEY_PROXY_SCHEMES.includes(parsed.protocol)) return false;
+    return parsed.hostname !== '';
+  }, {
+    message: "proxyUrl must be a valid proxy URL using http, https, socks4, socks4a, socks5 or socks5h (e.g. socks5://user:pass@host:1080), or '' to clear it",
+  });
+
+// `key` stays optional so keyless providers (Kilo's anonymous gateway) can be
+// added without one; a non-keyless platform with no key is rejected by the
+// handler, not the schema — that split is pinned by the dual-sample tests.
+export const addApiKeySchema = z.object({
+  platform: apiKeyPlatformSchema,
+  key: z.string().optional(),
+  label: z.string().optional(),
+  proxyUrl: keyProxyUrlSchema.optional(),
+});
+
+export const updateApiKeySchema = z.object({
+  enabled: z.boolean().optional(),
+  label: z.string().optional(),
+  modelScope: z.array(z.string().trim().min(1).max(200)).max(100).nullable().optional(),
+  proxyUrl: keyProxyUrlSchema.optional(),
+  monthlyRequestCap: z.number().int().min(0).max(1_000_000_000).optional(),
+  monthlyTokenCap: z.number().int().min(0).max(1_000_000_000_000).optional(),
+  key: z.string().trim().min(1).optional(),
+}).refine(data => data.enabled !== undefined || data.label !== undefined || data.modelScope !== undefined || data.proxyUrl !== undefined || data.key !== undefined || data.monthlyRequestCap !== undefined || data.monthlyTokenCap !== undefined, {
+  message: 'At least one of enabled, label, modelScope, proxyUrl, key, monthlyRequestCap or monthlyTokenCap must be provided',
+});
+
+export type SignupInput = z.infer<typeof signupInputSchema>;
+export type LoginInput = z.infer<typeof loginInputSchema>;
+export type AddApiKeyInput = z.infer<typeof addApiKeySchema>;
+export type UpdateApiKeyInput = z.infer<typeof updateApiKeySchema>;

@@ -4,6 +4,7 @@ import type { Express } from 'express';
 import { createApp } from '../../app.js';
 import { initDb, getDb } from '../../db/index.js';
 import { mintDashboardToken } from '../helpers/auth.js';
+import { PLATFORMS as SERVER_PLATFORMS } from '../../routes/keys.js';
 import {
   proxySettingsSchema,
   analyticsSummarySchema,
@@ -69,6 +70,11 @@ import {
   profileUpdateSchema,
   conversationPatchSchema,
   logQuerySchema,
+  signupInputSchema,
+  loginInputSchema,
+  apiKeyPlatformSchema,
+  addApiKeySchema,
+  updateApiKeySchema,
 } from '@freellmapi/shared/schemas.js';
 
 // Contract test: the shared Zod schemas (shared/schemas.ts) must parse the
@@ -802,4 +808,110 @@ describe('input contracts: profiles PUT, conversation PATCH, logs query', () => 
     expect(logQuerySchema.safeParse({ limit: 'abc' }).success).toBe(true);
   });
 });
+
+  // ═════════════════════ Turn 10: auth and key body contracts ═════════════════════
+  // Ordering: the key/login samples run against the seeded database (session,
+  // key id 1); the setup samples unclaim it first, because mintDashboardToken
+  // already created a user and setup is a 409 while anyone exists.
+  describe('input contracts: auth and key bodies', () => {
+    it('login: presence-only lookup contract (#807), both sides', async () => {
+      const emptyEmail = { email: '', password: 'x' };
+      const s1 = await req(app, 'POST', '/api/auth/login', emptyEmail);
+      expect(s1.status).toBe(400);
+      expect(errorResponseSchema.parse(s1.body).error.message).toContain('Email is required');
+      expect(loginInputSchema.safeParse(emptyEmail).success).toBe(false);
+
+      const emptyPw = { email: 'someone@local.dev', password: '' };
+      const s2 = await req(app, 'POST', '/api/auth/login', emptyPw);
+      expect(s2.status).toBe(400);
+      expect(errorResponseSchema.parse(s2.body).error.message).toContain('Password is required');
+      expect(loginInputSchema.safeParse(emptyPw).success).toBe(false);
+
+      // Well-formed address + password passes the schema (login never
+      // validates format) and fails only at credentials → 401, not 400.
+      const unknown = { email: 'nobody-ten@local.dev', password: 'whatever1' };
+      expect(loginInputSchema.safeParse(unknown).success).toBe(true);
+      const s3 = await req(app, 'POST', '/api/auth/login', unknown);
+      expect(s3.status).toBe(401);
+    });
+
+    it('POST /api/keys: platform list parity plus schema/handler split, both sides', async () => {
+      // Drift-proofing: the shared enum and the server PLATFORMS are the same
+      // set — a platform added on one side only fails right here.
+      expect(new Set(SERVER_PLATFORMS)).toEqual(new Set(apiKeyPlatformSchema.options));
+
+      const bad = { platform: 'not-a-platform', key: 'x' };
+      const s1 = await req(app, 'POST', '/api/keys', bad);
+      expect(s1.status).toBe(400);
+      expect(errorResponseSchema.parse(s1.body).error.message).toContain('Invalid enum value');
+      expect(addApiKeySchema.safeParse(bad).success).toBe(false);
+
+      // Schema-level `key` is optional (keyless providers), so a missing key
+      // for a keyed platform clears validation and is caught by the handler —
+      // the two-layer split, sampled on both sides.
+      const missingKey = { platform: 'groq' };
+      expect(addApiKeySchema.safeParse(missingKey).success).toBe(true);
+      const s2 = await req(app, 'POST', '/api/keys', missingKey);
+      expect(s2.status).toBe(400);
+      expect(errorResponseSchema.parse(s2.body).error.message).toContain('key is required');
+
+      const valid = { platform: 'groq', key: 'gsk_contract_key_ten', label: 'Contract v10' };
+      expect(addApiKeySchema.safeParse(valid).success).toBe(true);
+      const s3 = await req(app, 'POST', '/api/keys', valid);
+      expect(s3.status).toBe(201);
+    });
+
+    it('add key proxyUrl: same accept/reject rules on both sides', async () => {
+      const bad = { platform: 'groq', key: 'gsk_x', proxyUrl: 'javascript://host' };
+      const s1 = await req(app, 'POST', '/api/keys', bad);
+      expect(s1.status).toBe(400);
+      expect(errorResponseSchema.parse(s1.body).error.message).toContain('proxyUrl must be a valid proxy URL');
+      expect(addApiKeySchema.safeParse(bad).success).toBe(false);
+
+      // '' clears, and a dispatchable scheme on a real host passes — shared
+      // side only here; the HTTP accept path lives in keys.test.ts.
+      expect(addApiKeySchema.safeParse({ platform: 'groq', key: 'k', proxyUrl: '' }).success).toBe(true);
+      expect(addApiKeySchema.safeParse({ platform: 'groq', key: 'k', proxyUrl: 'socks5://user:pass@host:1080' }).success).toBe(true);
+    });
+
+    it('PATCH /api/keys/:id: at-least-one rule, both sides', async () => {
+      const empty = {};
+      const s1 = await req(app, 'PATCH', '/api/keys/1', empty);
+      expect(s1.status).toBe(400);
+      expect(errorResponseSchema.parse(s1.body).error.message).toContain('At least one of enabled, label, modelScope, proxyUrl, key, monthlyRequestCap or monthlyTokenCap must be provided');
+      expect(updateApiKeySchema.safeParse(empty).success).toBe(false);
+
+      const ok = { label: 'Renamed by contract' };
+      expect(updateApiKeySchema.safeParse(ok).success).toBe(true);
+      const s2 = await req(app, 'PATCH', '/api/keys/1', ok);
+      expect(s2.status).toBe(200);
+    });
+
+    it('setup/signup: email format and 8-char floor, both sides', async () => {
+      // Unclaim the dashboard first: setup 409s while any user exists, which
+      // would outrank body validation. Everything authenticated ran above.
+      getDb().prepare('DELETE FROM sessions').run();
+      getDb().prepare('DELETE FROM users').run();
+
+      const badEmail = { email: 'not-an-email', password: 'longenough1' };
+      const s1 = await req(app, 'POST', '/api/auth/setup', badEmail);
+      expect(s1.status).toBe(400);
+      expect(errorResponseSchema.parse(s1.body).error.message).toContain('A valid email is required');
+      expect(signupInputSchema.safeParse(badEmail).success).toBe(false);
+
+      const shortPw = { email: 'contract-ten@local.dev', password: 'short' };
+      const s2 = await req(app, 'POST', '/api/auth/setup', shortPw);
+      expect(s2.status).toBe(400);
+      expect(errorResponseSchema.parse(s2.body).error.message).toContain('Password must be at least 8 characters');
+      expect(signupInputSchema.safeParse(shortPw).success).toBe(false);
+
+      // A valid body reaches the handler and claims the dashboard — this
+      // sample runs LAST: setup can only complete once per database.
+      const valid = { email: 'contract-ten@local.dev', password: 'longenough1' };
+      expect(signupInputSchema.safeParse(valid).success).toBe(true);
+      const s3 = await req(app, 'POST', '/api/auth/setup', valid);
+      expect(s3.status).toBe(201);
+    });
+  });
+
 });
