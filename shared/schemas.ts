@@ -1681,3 +1681,450 @@ export const settingsTaskWeightShareSchema = z.object({
   share: z.number().min(0).max(1).nullable().optional(),
 });
 
+// ── Provider passthrough contracts ───────────────────────────────────────────
+// Request-body contracts for the upstream-shaped relay surfaces (/v1 OpenAI,
+// /v1 Responses, /v1 Anthropic, Ollama-native). The relay handlers validate
+// with these and forward near-verbatim, so the shapes track the upstream
+// wire formats. Shared helpers the bodies close over live above them.
+
+// Sampling parameters accepted by the relays — spread into the chat-completion
+// and Responses request bodies. Lives here so the shared schemas that spread it
+// resolve without reaching into server code.
+export const samplingParamSchemaFields = {
+  top_k: z.number().int().min(1).nullable().optional(),
+  min_p: z.number().min(0).max(1).nullable().optional(),
+  seed: z.number().int().nullable().optional(),
+  presence_penalty: z.number().min(-2).max(2).nullable().optional(),
+  frequency_penalty: z.number().min(-2).max(2).nullable().optional(),
+  repetition_penalty: z.number().positive().nullable().optional(),
+  logit_bias: z.record(z.string(), z.number()).nullable().optional(),
+  logprobs: z.boolean().nullable().optional(),
+  top_logprobs: z.number().int().min(0).max(20).nullable().optional(),
+  response_format: z.object({
+    type: z.enum(['text', 'json_object', 'json_schema']),
+    json_schema: z.object({
+      name: z.string().optional(),
+      strict: z.boolean().nullable().optional(),
+      schema: z.record(z.string(), z.unknown()).optional(),
+    }).passthrough().optional(),
+  }).passthrough().nullable().optional(),
+  // Accepted as free-form and normalized by pickSamplingParams rather than
+  // validated against the enum: clients invent effort values ('max', 'xhigh')
+  // and rejecting them made an advisory knob fatal (#619).
+  reasoning_effort: z.unknown().optional(),
+  // Object-form alias some clients send (OpenRouter-style chat clients, and
+  // the Responses API's native shape): `reasoning: { effort }`. Resolved into
+  // reasoning_effort by pickSamplingParams; the wrapper object itself is never
+  // forwarded. Extra keys (summary, max_tokens…) are tolerated and ignored.
+  reasoning: z.object({
+    effort: z.unknown().optional(),
+  }).passthrough().nullable().optional(),
+  // OpenAI's newer alias for max_tokens; surfaces resolve it into max_tokens
+  // themselves (it is not a forwarded param of its own).
+  max_completion_tokens: z.number().int().nullable().optional(),
+} as const;
+
+// Fusion panel config — inline object under `fusion` in the relay bodies.
+export const fusionConfigSchema = z.object({
+  // Explicit panel: the exact model ids the client wants to fuse. Any unknown
+  // / disabled ids are dropped (and reported in x_fusion) rather than failing
+  // the whole request — a panel is robust to missing members by design.
+  models: z.array(z.string().min(1)).optional(),
+  // Auto-panel size when `models` is omitted. Clamped to [1, fusion_max_k].
+  k: z.number().int().positive().optional(),
+  // Judge/synthesizer model id. Omit → the top-ranked available model.
+  judge: z.string().min(1).optional(),
+  // 'synthesize' (default): one blended answer. 'best_of': skip the judge,
+  // return the longest single panel answer (cheaper; no +1 judge call).
+  strategy: z.enum(['synthesize', 'best_of']).optional(),
+  // Attach the per-model panel answers + judge metadata under `x_fusion`.
+  expose_panel: z.boolean().optional(),
+});
+
+// ── OpenAI-compatible relay (/v1) ──  POST /chat/completions · /embeddings · /images/generations · /videos/generations · /audio/speech · /completions
+export const openaiToolCallSchema = z.object({
+  id: z.string().optional(),
+  type: z.literal('function').optional(),
+  function: z.object({
+    name: z.string().min(1),
+    arguments: z.union([z.string(), z.record(z.string(), z.unknown())]),
+  }),
+  thought_signature: z.string().optional(),
+});
+
+export const openaiContentBlockSchema = z.union([z.string(), z.record(z.string(), z.unknown())]);
+
+export const openaiContentSchema = z.union([z.string(), z.array(openaiContentBlockSchema)]);
+
+export const openaiSystemMessageSchema = z.object({
+  role: z.literal('system'),
+  content: openaiContentSchema,
+  name: z.string().optional(),
+});
+
+export const openaiDeveloperMessageSchema = z.object({
+  role: z.literal('developer'),
+  content: openaiContentSchema,
+  name: z.string().optional(),
+});
+
+export const openaiUserMessageSchema = z.object({
+  role: z.literal('user'),
+  content: openaiContentSchema,
+  name: z.string().optional(),
+});
+
+export const openaiAssistantMessageSchema = z.object({
+  role: z.literal('assistant'),
+  content: z.union([openaiContentSchema, z.null()]).optional(),
+  name: z.string().optional(),
+  // tool_calls: null (not just missing) is what several agents replay for
+  // no-tool assistant turns — aionrs (AionUI's engine) writes it into every
+  // session-resumed assistant echo. Treated as absent. (#200)
+  tool_calls: z.array(openaiToolCallSchema).nullable().optional(),
+  // Thinking trace echoed back by a client. DeepSeek thinking models on
+  // OpenCode Zen 400 ("reasoning_content in thinking mode must be passed back")
+  // unless the prior turn's reasoning_content is replayed, so keep it through
+  // validation instead of stripping it. See issue #255.
+  reasoning_content: z.string().nullable().optional(),
+  // Moonshot's "partial" prefill flag. A plain z.object (no .passthrough())
+  // would silently strip it; keep it through validation so it can be forwarded
+  // to Moonshot/Kimi models, which document it. See issue #1038.
+  partial: z.boolean().optional(),
+});
+
+export const openaiToolMessageSchema = z.object({
+  role: z.literal('tool'),
+  content: z.union([openaiContentSchema, z.null()]).optional(),
+  tool_call_id: z.string().optional(),
+  name: z.string().optional(),
+});
+
+export const openaiFunctionMessageSchema = z.object({
+  role: z.literal('function'),
+  name: z.string().min(1),
+  content: z.union([openaiContentSchema, z.null()]).optional(),
+});
+
+export const openaiToolDefinitionSchema = z.object({
+  // Some agents omit `type` on tool definitions; re-defaulted to 'function'
+  // on forward. (#200)
+  type: z.literal('function').optional(),
+  function: z.object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    parameters: z.record(z.string(), z.unknown()).optional(),
+    strict: z.boolean().optional(),
+  }),
+});
+
+export const openaiToolChoiceSchema = z.union([
+  // 'any' is the Mistral/Gemini wording for OpenAI's 'required'; mapped on
+  // forward. (#200)
+  z.enum(['none', 'auto', 'required', 'any']),
+  z.object({
+    type: z.literal('function'),
+    function: z.object({
+      name: z.string().min(1),
+    }),
+  }),
+]);
+
+export const openaiStopSchema = z.union([z.string(), z.array(z.string()).min(1).max(64)]);
+
+export const openaiChatCompletionSchema = z.object({
+  messages: z.array(z.union([
+    openaiSystemMessageSchema,
+    openaiDeveloperMessageSchema,
+    openaiUserMessageSchema,
+    openaiAssistantMessageSchema,
+    openaiToolMessageSchema,
+    openaiFunctionMessageSchema,
+  ])).min(1),
+  model: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  // Some clients send max_tokens <= 0 (or -1) to mean "no limit"; accepted and
+  // treated as unset on forward. (#200)
+  max_tokens: z.number().int().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  stop: openaiStopSchema.optional(),
+  stream: z.boolean().optional(),
+  stream_options: z.object({
+    include_usage: z.boolean().optional(),
+  }).optional(),
+  // Top-level tool knobs may arrive as explicit nulls from clients that
+  // serialize every field of their request struct; all treated as absent
+  // and never forwarded as null. (#200)
+  tools: z.array(openaiToolDefinitionSchema).nullable().optional(),
+  tool_choice: openaiToolChoiceSchema.nullable().optional(),
+  parallel_tool_calls: z.boolean().nullable().optional(),
+  // Fusion config — only meaningful when `model` is the virtual "fusion" id.
+  // Ignored for every other model. See services/fusion.ts.
+  fusion: fusionConfigSchema.optional(),
+  // Extended sampling + structured-output params (top_k, seed, penalties,
+  // logit_bias, logprobs, response_format, max_completion_tokens…), forwarded
+  // per the platform policy in lib/sampling-params.ts.
+  ...samplingParamSchemaFields,
+});
+
+export const openaiEmbeddingsBodySchema = z.object({
+  model: z.string().optional(),
+  input: z.union([z.string(), z.array(z.string())]),
+  // Optional output-dimension override forwarded to providers that support MRL
+  // truncation (NVIDIA NeMo NIM, Google Gemini Embedding, OpenAI v3). Validation
+  // only — bounds checking happens upstream (the provider rejects out-of-range
+  // values with a clear 400).
+  dimensions: z.number().int().positive().optional(),
+});
+
+export const openaiImageBodySchema = z.object({
+  model: z.string().optional(),
+  prompt: z.string().min(1),
+  n: z.number().int().positive().max(4).optional(),
+  size: z.string().optional(),
+  response_format: z.enum(['url', 'b64_json']).optional(),
+});
+
+export const openaiVideoBodySchema = z.object({
+  model: z.string().optional(),
+  prompt: z.string().min(1),
+  duration: z.number().int().min(1).max(120).optional(),
+  aspect_ratio: z.enum(['16:9', '9:16']).optional(),
+  image: z.string().url().optional(),
+  seed: z.number().int().min(-1).max(2_147_483_647).optional(),
+  audio: z.boolean().optional(),
+});
+
+export const openaiSpeechBodySchema = z.object({
+  model: z.string().optional(),
+  input: z.string().min(1),
+  voice: z.string().optional(),
+  response_format: z.string().optional(),
+});
+
+export const openaiCompletionBodySchema = z.object({
+  model: z.string().optional(),
+  prompt: z.string(),
+  suffix: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  max_tokens: z.number().int().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  stop: openaiStopSchema.optional(),
+  stream: z.boolean().optional(),
+});
+
+// ── Responses API relay ──  POST /v1/responses
+export const responsesContentPartSchema = z.object({ type: z.string() }).passthrough();
+
+export const responsesMessageItemSchema = z.object({
+  type: z.literal('message').optional(),
+  role: z.enum(['system', 'developer', 'user', 'assistant']),
+  content: z.union([z.string(), z.array(responsesContentPartSchema)]),
+});
+
+export const responsesFunctionCallItemSchema = z.object({
+  type: z.literal('function_call'),
+  call_id: z.string(),
+  name: z.string(),
+  arguments: z.string(),
+  id: z.string().optional(),
+});
+
+export const responsesFunctionCallOutputItemSchema = z.object({
+  type: z.literal('function_call_output'),
+  call_id: z.string(),
+  output: z.union([z.string(), z.array(responsesContentPartSchema), z.record(z.string(), z.unknown())]),
+});
+
+export const responsesComputerCallItemSchema = z.object({
+  type: z.literal('computer_call'),
+  call_id: z.string(),
+  action: z.record(z.string(), z.unknown()).optional(),
+  id: z.string().optional(),
+}).passthrough();
+
+export const responsesComputerCallOutputItemSchema = z.object({
+  type: z.literal('computer_call_output'),
+  call_id: z.string(),
+  output: z.union([
+    z.string(),
+    z.array(responsesContentPartSchema),
+    z.record(z.string(), z.unknown()),
+  ]).optional(),
+  id: z.string().optional(),
+}).passthrough();
+
+export const responsesReasoningItemSchema = z.object({
+  type: z.literal('reasoning'),
+  summary: z.union([z.string(), z.array(responsesContentPartSchema)]).optional(),
+  content: z.union([z.string(), z.array(responsesContentPartSchema)]).optional(),
+  id: z.string().optional(),
+}).passthrough();
+
+export const responsesLocalShellCallItemSchema = z.object({
+  type: z.literal('local_shell_call'),
+  call_id: z.string().optional(),
+  action: z.record(z.string(), z.unknown()).optional(),
+  id: z.string().optional(),
+}).passthrough();
+
+export const responsesAdditionalToolsItemSchema = z.object({
+  type: z.literal('additional_tools'),
+  id: z.string().optional(),
+  role: z.string().optional(),
+  tools: z.array(z.record(z.string(), z.unknown())).optional(),
+}).passthrough();
+
+export const responsesOtherKnownItemSchema = z.object({
+  type: z.enum([
+    'web_search_call', 'file_search_call', 'code_interpreter_call',
+    'image_generation_call', 'mcp_call', 'mcp_list_tools',
+    'mcp_approval_request', 'mcp_approval_response', 'item_reference',
+  ]),
+  id: z.string().optional(),
+}).passthrough();
+
+export const responsesInputItemSchema = z.union([
+  responsesFunctionCallItemSchema,
+  responsesFunctionCallOutputItemSchema,
+  responsesComputerCallItemSchema,
+  responsesComputerCallOutputItemSchema,
+  responsesReasoningItemSchema,
+  responsesLocalShellCallItemSchema,
+  responsesAdditionalToolsItemSchema,
+  responsesOtherKnownItemSchema,
+  responsesMessageItemSchema,
+]);
+
+export const responsesToolSchema = z.object({
+  type: z.string(),
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
+  parameters: z.record(z.string(), z.unknown()).nullable().optional(),
+  strict: z.boolean().nullable().optional(),
+}).passthrough();
+
+export const responsesRequestSchema = z.object({
+  model: z.string().optional(),
+  instructions: z.string().nullable().optional(),
+  input: z.union([z.string(), z.array(responsesInputItemSchema)]),
+  stream: z.boolean().optional(),
+  temperature: z.number().min(0).max(2).nullable().optional(),
+  top_p: z.number().min(0).max(1).nullable().optional(),
+  max_output_tokens: z.number().int().positive().nullable().optional(),
+  tools: z.array(responsesToolSchema).optional(),
+  // The virtual Fusion model fans the translated conversation out to a
+  // diverse panel, then optionally synthesizes the survivors. Keep the
+  // Responses surface in parity with /v1/chat/completions.
+  fusion: fusionConfigSchema.optional(),
+  tool_choice: z.union([
+    z.enum(['none', 'auto', 'required']),
+    z.object({ type: z.literal('function'), name: z.string() }).passthrough(),
+  ]).optional(),
+  parallel_tool_calls: z.boolean().nullable().optional(),
+  // Extended sampling params, validated the same way as /chat/completions.
+  // Responses clients express structured output as `text.format` rather than
+  // `response_format` — mapped where completionOpts is built.
+  ...samplingParamSchemaFields,
+  text: z.object({
+    format: z.object({
+      type: z.enum(['text', 'json_object', 'json_schema']),
+      name: z.string().optional(),
+      strict: z.boolean().nullable().optional(),
+      schema: z.record(z.string(), z.unknown()).optional(),
+    }).passthrough().optional(),
+  }).passthrough().nullable().optional(),
+}).passthrough();
+
+// ── Anthropic Messages relay ──  POST /v1/messages · /v1/messages/count_tokens
+export const anthropicContentBlockSchema = z.object({ type: z.string() }).passthrough();
+
+export const anthropicMessageSchema = z.object({
+  // Anthropic's own API only allows user/assistant here, but real clients
+  // (Claude Code, routers) sometimes inline a `system` turn in the messages
+  // array. Accept it and fold it into the system context rather than 400-ing —
+  // same tolerance philosophy as the OpenAI route's developer/function roles.
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.union([z.string(), z.array(anthropicContentBlockSchema)]),
+}).passthrough();
+
+export const anthropicToolSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  input_schema: z.record(z.string(), z.unknown()).optional(),
+}).passthrough();
+
+export const anthropicToolChoiceSchema = z.object({
+  type: z.enum(['auto', 'any', 'tool', 'none']),
+  name: z.string().optional(),
+}).passthrough();
+
+export const anthropicMessagesSchema = z.object({
+  model: z.string().optional(),
+  // Anthropic mandates max_tokens; accept omission and clamp non-positive
+  // values to the default rather than 400-ing (some clients send 0).
+  max_tokens: z.number().int().optional(),
+  messages: z.array(anthropicMessageSchema).min(1),
+  system: z.union([z.string(), z.array(anthropicContentBlockSchema)]).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  // Anthropic's native top_k — forwarded to providers that support it via the
+  // platform policy in lib/sampling-params.ts.
+  top_k: z.number().int().min(1).nullable().optional(),
+  stream: z.boolean().optional(),
+  stop_sequences: z.array(z.string()).optional(),
+  tools: z.array(anthropicToolSchema).optional(),
+  tool_choice: anthropicToolChoiceSchema.optional(),
+  // Anthropic's native extended-thinking knob. Mapped onto the internal
+  // reasoning_effort (see effortFromAnthropicThinking) so providers with
+  // request-side reasoning control receive it; platforms without support have
+  // it stripped by the policy in lib/sampling-params.ts.
+  // `type` is a free string, not the enabled/disabled enum: Anthropic keeps
+  // adding modes (Claude Code sends 'adaptive') and validating the enum here
+  // turned a knob we only use as a hint into a hard 400 (#632).
+  thinking: z.object({
+    type: z.string().optional(),
+    budget_tokens: z.number().int().optional(),
+  }).passthrough().nullable().optional(),
+}).passthrough();
+
+// ── Ollama-native relay ──  POST /api/chat · /api/generate · /api/show · /api/embed
+export const ollamaShowSchema = z.object({ model: z.string().optional(), name: z.string().optional() }).passthrough();
+
+export const ollamaMessageSchema = z.object({
+  role: z.enum(['system', 'user', 'assistant', 'tool']),
+  content: z.union([z.string(), z.array(z.object({}).passthrough())]).optional(),
+  tool_name: z.string().optional(),
+  tool_calls: z.array(z.object({}).passthrough()).optional(),
+}).passthrough();
+
+export const ollamaChatSchema = z.object({
+  model: z.string().optional(),
+  // Empty messages is a documented Ollama load/unload probe, not an error.
+  messages: z.array(ollamaMessageSchema).default([]),
+  stream: z.boolean().optional(),
+  tools: z.array(z.object({}).passthrough()).optional(),
+  options: z.object({}).passthrough().optional(),
+  format: z.union([z.literal('json'), z.record(z.string(), z.unknown())]).optional(),
+}).passthrough();
+
+export const ollamaGenerateSchema = z.object({
+  model: z.string().optional(),
+  prompt: z.string().default(''),
+  system: z.string().optional(),
+  suffix: z.string().optional(),
+  stream: z.boolean().optional(),
+  options: z.object({}).passthrough().optional(),
+  format: z.union([z.literal('json'), z.record(z.string(), z.unknown())]).optional(),
+}).passthrough();
+
+export const ollamaEmbedSchema = z.object({
+  model: z.string().optional(),
+  // /api/embed sends `input`; the legacy /api/embeddings body — the whole
+  // reason that endpoint exists — sends `prompt`.
+  input: z.union([z.string(), z.array(z.string())]).optional(),
+  prompt: z.string().optional(),
+  dimensions: z.number().int().positive().optional(),
+}).passthrough().refine(data => data.input != null || data.prompt != null, {
+  message: 'input is required',
+});

@@ -21,7 +21,6 @@
 // provider-invalid request and shows up in the attempt trail — and its
 // droplist entry is one line to add.
 
-import { z } from 'zod';
 import type { Platform } from '@freellmapi/shared/types.js';
 import { getSetting } from '../db/index.js';
 
@@ -86,40 +85,6 @@ function clampEffortTo(effort: ReasoningEffort, supported: readonly ReasoningEff
 // Every field is `.nullable()` because real clients serialize their whole
 // request struct and send explicit nulls for unset knobs (#200); null is
 // treated as absent and never forwarded.
-export const samplingParamSchemaFields = {
-  top_k: z.number().int().min(1).nullable().optional(),
-  min_p: z.number().min(0).max(1).nullable().optional(),
-  seed: z.number().int().nullable().optional(),
-  presence_penalty: z.number().min(-2).max(2).nullable().optional(),
-  frequency_penalty: z.number().min(-2).max(2).nullable().optional(),
-  repetition_penalty: z.number().positive().nullable().optional(),
-  logit_bias: z.record(z.string(), z.number()).nullable().optional(),
-  logprobs: z.boolean().nullable().optional(),
-  top_logprobs: z.number().int().min(0).max(20).nullable().optional(),
-  response_format: z.object({
-    type: z.enum(['text', 'json_object', 'json_schema']),
-    json_schema: z.object({
-      name: z.string().optional(),
-      strict: z.boolean().nullable().optional(),
-      schema: z.record(z.string(), z.unknown()).optional(),
-    }).passthrough().optional(),
-  }).passthrough().nullable().optional(),
-  // Accepted as free-form and normalized by pickSamplingParams rather than
-  // validated against the enum: clients invent effort values ('max', 'xhigh')
-  // and rejecting them made an advisory knob fatal (#619).
-  reasoning_effort: z.unknown().optional(),
-  // Object-form alias some clients send (OpenRouter-style chat clients, and
-  // the Responses API's native shape): `reasoning: { effort }`. Resolved into
-  // reasoning_effort by pickSamplingParams; the wrapper object itself is never
-  // forwarded. Extra keys (summary, max_tokens…) are tolerated and ignored.
-  reasoning: z.object({
-    effort: z.unknown().optional(),
-  }).passthrough().nullable().optional(),
-  // OpenAI's newer alias for max_tokens; surfaces resolve it into max_tokens
-  // themselves (it is not a forwarded param of its own).
-  max_completion_tokens: z.number().int().nullable().optional(),
-} as const;
-
 export interface ResponseFormat {
   type: 'json_object' | 'json_schema';
   json_schema?: {

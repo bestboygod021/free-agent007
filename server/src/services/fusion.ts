@@ -18,6 +18,7 @@ import { contentToString, stripImagesFromMessages } from '../lib/content.js';
 import { sanitizeProviderErrorMessage } from '../lib/error-redaction.js';
 import { getSetting, setSetting } from '../db/index.js';
 import type { CompletionOptions } from '../providers/base.js';
+import { fusionConfigSchema } from '@freellmapi/shared/schemas.js';
 
 // The virtual model id that triggers multi-model synthesis. Mirrors how
 // `auto` is a virtual id the router intercepts (see routes/proxy.ts).
@@ -101,22 +102,9 @@ function panelMaxK(): number {
   return Math.min(intSetting('fusion_max_k', HARD_MAX_PANEL_K), HARD_MAX_PANEL_K);
 }
 
-export const fusionConfigSchema = z.object({
-  // Explicit panel: the exact model ids the client wants to fuse. Any unknown
-  // / disabled ids are dropped (and reported in x_fusion) rather than failing
-  // the whole request — a panel is robust to missing members by design.
-  models: z.array(z.string().min(1)).optional(),
-  // Auto-panel size when `models` is omitted. Clamped to [1, fusion_max_k].
-  k: z.number().int().positive().optional(),
-  // Judge/synthesizer model id. Omit → the top-ranked available model.
-  judge: z.string().min(1).optional(),
-  // 'synthesize' (default): one blended answer. 'best_of': skip the judge,
-  // return the longest single panel answer (cheaper; no +1 judge call).
-  strategy: z.enum(['synthesize', 'best_of']).optional(),
-  // Attach the per-model panel answers + judge metadata under `x_fusion`.
-  expose_panel: z.boolean().optional(),
-});
 
+
+export { fusionConfigSchema };
 export type FusionConfig = z.infer<typeof fusionConfigSchema>;
 
 export function getFusionMaxK(): number {
