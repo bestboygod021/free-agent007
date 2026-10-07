@@ -47,7 +47,7 @@ const ALIASES: Record<string, string> = {
   md: 'markdown', yml: 'yaml', golang: 'go', rs: 'rust',
 }
 
-export interface Highlighted {
+export type Highlighted = {
   /** Escaped HTML with `hljs-*` spans — safe to inject as innerHTML. */
   html: string
   /** The grammar that was applied, or null when the code is plain escaped text. */

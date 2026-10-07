@@ -21,7 +21,7 @@
 import type { FallbackEntry } from './routing'
 
 /** One row of the picker: a catalog model this key could be scoped to. */
-export interface ScopeCandidate {
+export type ScopeCandidate = {
   /** The provider-side model id — what `modelScope` actually stores. */
   modelId: string
   displayName: string

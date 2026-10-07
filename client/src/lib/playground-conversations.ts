@@ -10,7 +10,7 @@
 // vitest config, which does not carry the app's path aliases.
 import { apiFetch } from './api'
 
-export interface FusionPanelEntry {
+export type FusionPanelEntry = {
   platform: string
   model: string
   status?: 'ok' | 'failed'
@@ -24,7 +24,7 @@ export interface FusionPanelEntry {
  * identically to the live one: routing meta, reasoning and image thumbnails
  * included.
  */
-export interface ChatMessage {
+export type ChatMessage = {
   role: 'user' | 'assistant'
   content: string
   // Data URIs of the images attached to this turn: rendered as thumbnails in
@@ -55,7 +55,7 @@ export interface ChatMessage {
 }
 
 /** Sidebar row: enough to list a conversation, never its transcript. */
-export interface ConversationSummary {
+export type ConversationSummary = {
   id: number
   title: string
   model: string | null
@@ -65,12 +65,12 @@ export interface ConversationSummary {
 }
 
 /** A conversation with its transcript, as returned by GET /:id. */
-export interface Conversation extends Omit<ConversationSummary, 'messageCount'> {
+export type Conversation = Omit<ConversationSummary, 'messageCount'> & {
   messages: ChatMessage[]
   systemPrompt: string | null
 }
 
-export interface ConversationPatch {
+export type ConversationPatch = {
   title?: string
   messages?: ChatMessage[]
   model?: string | null

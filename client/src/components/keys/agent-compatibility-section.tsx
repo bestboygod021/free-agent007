@@ -12,18 +12,18 @@ type GeminiFamily = 'default' | 'pro' | 'flash' | 'flashLite'
 type GeminiMap = Record<GeminiFamily, string>
 type OllamaMode = 'off' | 'open-loopback' | 'key-required'
 
-interface Compatibility {
+type Compatibility = {
   ollamaEmulation: OllamaMode
   exposeClaudeDiscoveryAliases: boolean
 }
 
-interface MappableModel {
+type MappableModel = {
   modelId: string
   displayName: string
   enabled: boolean
 }
 
-interface UrlToken {
+type UrlToken = {
   id: number
   label: string
   tokenPrefix: string

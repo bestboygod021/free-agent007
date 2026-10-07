@@ -12,7 +12,7 @@ import { formatTokens, platformColors } from '@/lib/routing'
 // one a quota at all. So the bar shows how spend is *distributed* across
 // providers (which is real), the total is what was actually spent, and each
 // provider's quota label is printed verbatim for the reader to judge.
-export interface UsageRow {
+export type UsageRow = {
   /** Family name for embeddings, model display name for media. */
   label: string
   platform: string | null

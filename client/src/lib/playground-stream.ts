@@ -12,13 +12,13 @@
 // without a component or a live provider.
 
 /** Token accounting from the trailing usage frame (shape passed through as-is). */
-export interface ChatStreamUsage {
+export type ChatStreamUsage = {
   prompt_tokens?: number
   completion_tokens?: number
   total_tokens?: number
 }
 
-export interface ChatStreamResult {
+export type ChatStreamResult = {
   /** Everything accumulated from `choices[0].delta.content`. */
   content: string
   /** Everything accumulated from `choices[0].delta.reasoning_content`. */
@@ -33,7 +33,7 @@ export interface ChatStreamResult {
   done: boolean
 }
 
-export interface ChatStreamHandlers {
+export type ChatStreamHandlers = {
   /** A visible answer delta. Called once per frame that carries content. */
   onDelta?: (text: string) => void
   /** A reasoning/thinking delta, kept separate from the answer. */
@@ -44,7 +44,7 @@ export interface ChatStreamHandlers {
   onDone?: (result: ChatStreamResult) => void
 }
 
-interface ChunkChoice {
+type ChunkChoice = {
   delta?: {
     content?: unknown
     reasoning_content?: unknown

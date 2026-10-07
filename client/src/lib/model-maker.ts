@@ -8,7 +8,7 @@ export type ModelMakerId =
   | 'nvidia' | 'moonshot' | 'zhipu' | 'minimax' | 'baidu' | 'perplexity' | 'cohere'
   | 'microsoft' | 'xai' | 'tencent' | 'ibm' | 'ai21' | 'thinkingmachines'
 
-export interface ModelMaker {
+export type ModelMaker = {
   id: ModelMakerId
   name: string
 }

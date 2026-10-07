@@ -11,35 +11,11 @@ import { ModelsTabs } from '@/components/models-tabs'
 import { UsageSummaryCard } from '@/components/usage-summary-card'
 import { useI18n } from '@/i18n'
 
-export interface MediaModel {
-  id: number
-  platform: string
-  modelId: string
-  displayName: string
-  modality: 'image' | 'video' | 'audio' | 'transcription'
-  enabled: boolean
-  quotaLabel: string
-  keyCount: number
-  isCustom?: boolean
-}
-interface MediaData { models: MediaModel[] }
-
-interface MediaUsage {
-  modality: 'image' | 'video' | 'audio' | 'transcription'
-  models: {
-    id: number
-    platform: string
-    modelId: string
-    displayName: string
-    quotaLabel: string | null
-    requestsToday: number
-    requestsMonth: number
-  }[]
-  totalRequestsToday: number
-  totalRequestsMonth: number
-}
-
-export interface MediaGroup {
+// MediaModel / MediaData / MediaUsage are the shared contracts; MediaGroup is
+// a client-derived view built by groupMedia() below, so it stays local.
+import type { MediaModel, MediaData, MediaUsage } from '../../../shared/types'
+export type { MediaModel, MediaData, MediaUsage }
+type MediaGroup = {
   label: string
   slug: string
   members: MediaModel[]

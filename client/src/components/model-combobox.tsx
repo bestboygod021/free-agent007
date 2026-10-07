@@ -8,7 +8,7 @@ import { useI18n } from '@/i18n'
 // selection in the dashboard can use the same control. Substring match over
 // name, provider names, and id; arrow keys + Enter select. The Add key dialog
 // reuses it for its provider list too (#707), hence `header`/`triggerPlaceholder`.
-export interface ModelComboOption {
+export type ModelComboOption = {
   value: string
   label: string
   /** Right-aligned hint: provider name or "N providers". */

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 
-export interface LicenseStatus {
+export type LicenseStatus = {
   valid: boolean
   plan: 'annual' | 'lifetime' | null
   status: string | null
@@ -11,7 +11,7 @@ export interface LicenseStatus {
   checkedAtMs: number
 }
 
-export interface CatalogSyncState {
+export type CatalogSyncState = {
   baseUrl: string
   appliedVersion: string | null
   appliedTier: string | null
@@ -19,7 +19,7 @@ export interface CatalogSyncState {
   lastError: string | null
 }
 
-export interface PremiumStatus {
+export type PremiumStatus = {
   hasKey: boolean
   maskedKey: string | null
   license: LicenseStatus | null

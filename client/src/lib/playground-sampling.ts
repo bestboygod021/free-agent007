@@ -19,19 +19,19 @@
 /** localStorage key holding the Playground's sampling settings. */
 export const SAMPLING_KEY = 'playground.sampling'
 
-export interface SamplingRange {
+export type SamplingRange = {
   min: number
   max: number
   step: number
 }
 
 /** One knob: whether it is sent at all, and the value it would be sent with. */
-export interface SamplingControl {
+export type SamplingControl = {
   enabled: boolean
   value: number
 }
 
-export interface SamplingSettings {
+export type SamplingSettings = {
   temperature: SamplingControl
   topP: SamplingControl
   maxTokens: SamplingControl
@@ -70,7 +70,7 @@ export const DEFAULT_SAMPLING: SamplingSettings = {
 export const SAMPLING_FIELDS: SamplingField[] = ['temperature', 'topP', 'maxTokens']
 
 /** The request fragment for a set of settings — only the enabled knobs. */
-export interface SamplingRequestParams {
+export type SamplingRequestParams = {
   temperature?: number
   top_p?: number
   max_tokens?: number

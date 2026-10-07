@@ -2,59 +2,10 @@
 // FallbackPage so the Models page, the per-model detail page, and the command
 // palette share one module instead of importing from a page component.
 
-export interface FallbackEntry {
-  modelDbId: number
-  priority: number
-  effectivePriority: number
-  penalty: number
-  rateLimitHits: number
-  enabled: boolean
-  platform: string
-  modelId: string
-  displayName: string
-  intelligenceRank: number
-  speedRank: number
-  sizeLabel: string
-  rpmLimit: number | null
-  rpdLimit: number | null
-  tpmLimit?: number | null
-  tpdLimit?: number | null
-  monthlyTokenBudget: string
-  // Parsed token count from the server (single source of truth — see
-  // server/src/lib/budget.ts). Optional only because the dev mock omits it.
-  monthlyTokenBudgetTokens?: number
-  // Max context length in tokens (catalog value), or null when unrecorded.
-  // Drives the catalog context-window filter on the Models page.
-  contextWindow?: number | null
-  supportsVision: boolean
-  supportsTools: boolean
-  source?: 'catalog' | 'custom'
-  keyId?: number | null
-  keyLabel?: string | null
-  // Which custom endpoint this row belongs to (its base URL), and the model id
-  // that names this endpoint's copy on its own. Null for catalog models only:
-  // EVERY custom row bound to an endpoint carries both, including the single
-  // relay of a one-endpoint install. Neither may be rendered directly —
-  // go through memberProviderLabel / providerPinId / memberEndpointTitle, which
-  // reveal them only once two endpoints actually collide (#651).
-  endpointScope?: string | null
-  qualifiedModelId?: string | null
-  hasOverrides?: boolean
-  // Which fields a local override replaces, so the model page can mark the
-  // individual inputs that no longer show the catalog default (#551).
-  overrideFields?: string[]
-  // The provider reported this model as permanently gone (410 / end of life),
-  // so the gateway disabled it by itself — distinct from a switch the user
-  // flipped off. `retiredReason` is the upstream wording. See #634.
-  retiredUpstream?: boolean
-  retiredReason?: string | null
-  keyCount: number
-  // Logical-model grouping (sent by the server when unify is relevant). Absent
-  // for ungrouped rows; the UI falls back to a per-row "solo" group then.
-  groupKey?: string
-  canonicalId?: string
-  groupLabel?: string
-}
+// The full GET /api/fallback row now lives in shared/schemas.ts; imported
+// for local use (Row below) and re-exported so importers keep one import site.
+import type { FallbackEntry } from '../../../shared/types'
+export type { FallbackEntry }
 
 export type RoutingStrategy = 'priority' | 'balanced' | 'smartest' | 'fastest' | 'reliable' | 'custom'
 
@@ -71,7 +22,7 @@ export type RoutingWeights = { reliability: number; speed: number; intelligence:
  *  PEAK_EXEMPT_STRATEGIES in server/src/services/scoring.ts. */
 export const PEAK_EXEMPT_STRATEGIES: RoutingStrategy[] = ['fastest', 'reliable']
 
-export interface RoutingScore {
+export type RoutingScore = {
   modelDbId: number
   reliability: number
   speed: number
@@ -82,7 +33,7 @@ export interface RoutingScore {
   totalRequests: number
 }
 
-export interface RoutingData {
+export type RoutingData = {
   strategy: RoutingStrategy
   weights: RoutingWeights | null
   customWeights: RoutingWeights
@@ -112,7 +63,7 @@ export interface RoutingData {
 // A merged row: fallback-chain metadata + live bandit scores.
 export type Row = FallbackEntry & Partial<RoutingScore>
 
-export interface TokenUsageData {
+export type TokenUsageData = {
   totalBudget: number
   totalUsed: number
   /** Served smartest-first (intelligenceRank 1 = smartest); the bar and its
@@ -315,12 +266,12 @@ export function groupQuotaBadge(
 // router would pick next for that model (the routable key with the most
 // headroom), so the client only has to aggregate across a group's members.
 
-export interface RateLimitWindow {
+export type RateLimitWindow = {
   used: number
   limit: number
 }
 
-export interface RateLimitUsageRow {
+export type RateLimitUsageRow = {
   modelDbId: number
   platform: string
   modelId: string
@@ -329,7 +280,7 @@ export interface RateLimitUsageRow {
   tpm: RateLimitWindow | null
 }
 
-export interface RateLimitUsageData {
+export type RateLimitUsageData = {
   generatedAtMs: number
   rows: RateLimitUsageRow[]
 }
@@ -451,7 +402,7 @@ export const platformColors: Record<string, string> = {
 
 // ── Grouped (unified) rendering ──────────────────────────────────────────────
 // One logical model and the provider rows that serve it.
-export interface ModelGroupRow {
+export type ModelGroupRow = {
   key: string
   label: string
   members: Row[]

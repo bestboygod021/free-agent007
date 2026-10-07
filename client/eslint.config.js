@@ -48,4 +48,19 @@ export default defineConfig([
       }],
     },
   },
+  {
+    // Same policy for components/lib/hooks, with one carve-out: interfaces
+    // whose names end in Props/State are React component contracts and stay
+    // local. Everything else that used to be a hand-written interface is
+    // either a migrated API contract (import from shared/types) or a local
+    // shape expressed as a `type` alias — so a new interface here is always
+    // an accident waiting to drift from the server.
+    files: ['src/components/**/*.{ts,tsx}', 'src/lib/**/*.{ts,tsx}', 'src/hooks/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': ['error', {
+        selector: 'TSInterfaceDeclaration:not([id.name=/.*(?:Props|State)$/])',
+        message: 'API/response shapes live in shared/schemas.ts — import the type from shared/types. Other local shapes use a `type` alias; only *Props/*State component contracts stay interfaces.',
+      }],
+    },
+  },
 ])

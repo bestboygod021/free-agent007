@@ -34,6 +34,14 @@ import { Tooltip } from '@/components/tooltip'
 import { SUPPORTED_LOCALES, type Locale, useI18n } from '@/i18n'
 import { type Theme, useTheme } from '@/theme-context'
 import { apiFetch } from '@/lib/api'
+// Compression/update contracts live in shared/schemas.ts (type-only).
+import type {
+  CompressionMode,
+  CompressionConfig,
+  CompressionStats,
+  UpdateStatusInfo,
+  UpdateCheckInfo,
+} from '../../../shared/types'
 
 // Small info affordance used next to labels a first-time user can't be expected
 // to understand. It's a real <button> so it reaches the tooltip by keyboard
@@ -250,28 +258,7 @@ const themeIcons = {
   dark: Moon,
 } satisfies Record<Theme, typeof Monitor>
 
-type CompressionMode = 'off' | 'lossless' | 'standard' | 'aggressive'
 
-interface CompressionEngineConfig {
-  enabled: boolean
-  [key: string]: unknown
-}
-
-interface CompressionConfig {
-  mode: CompressionMode
-  engines: Record<string, CompressionEngineConfig>
-  autoTriggerEstTokens?: number | null
-  targetTokens?: number | null
-  trustProjectFilters: boolean
-  prefixFreeze: boolean
-}
-
-interface CompressionStats {
-  requests: number
-  compressedRequests: number
-  estSavedTokens: number
-  savingsPercent: number
-}
 
 // Engine ids as registered on the server (server/src/services/compression/engines),
 // in pipeline priority order. `lossless` mirrors each engine's own flag so the
@@ -587,34 +574,7 @@ function GeneralSection({ active }: { active: boolean }) {
   )
 }
 
-type UpdateStatus = 'idle' | 'current' | 'available' | 'ahead' | 'diverged' | 'unknown' | 'unsupported' | 'disabled'
-type CheckedUpdateStatus = Exclude<UpdateStatus, 'idle'>
-type Installation = 'source' | 'docker' | 'desktop' | 'unknown'
 
-interface UpdateStatusInfo {
-  status: UpdateStatus
-  installation: Installation
-  localSha: string | null
-  lastChecked: string | null
-  /** The release this build is, or null when it cannot be established honestly. */
-  version: string | null
-}
-
-interface UpdateCheckInfo {
-  status: CheckedUpdateStatus
-  installation: Installation
-  localSha: string | null
-  checkedAt: string
-  version: string | null
-  remoteSha?: string
-  remoteDate?: string
-  remoteMessage?: string
-  changes?: Array<{
-    sha: string
-    message: string
-    date?: string
-  }>
-}
 
 function formatDateTime(value: string | null | undefined, locale: Locale) {
   if (!value) return null

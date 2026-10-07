@@ -24,7 +24,7 @@ export const LOG_POLL_MS = 3000
 export const LOG_MESSAGE_CLAMP = 400
 
 /** One row as served by GET /api/logs. */
-export interface LogEntry {
+export type LogEntry = {
   id: number
   /** ISO-8601 timestamp. */
   ts: string
@@ -38,7 +38,7 @@ export interface LogEntry {
 }
 
 /** Ring-wide totals per level — NOT filtered by the current query. */
-export interface LogCounts {
+export type LogCounts = {
   debug: number
   info: number
   warn: number
@@ -47,14 +47,14 @@ export interface LogCounts {
 
 export const EMPTY_LOG_COUNTS: LogCounts = { debug: 0, info: 0, warn: 0, error: 0 }
 
-export interface LogsResponse {
+export type LogsResponse = {
   entries: LogEntry[]
   /** Highest id the ring holds — the cursor for the next poll, even when `entries` is empty. */
   nextId: number
   counts: LogCounts
 }
 
-export interface LogQuery {
+export type LogQuery = {
   levels: readonly LogLevel[]
   /** Free-text search; blank means "no q param". */
   q?: string

@@ -26,7 +26,7 @@ export function apiBaseUrl(): string {
 
 // Error thrown by apiFetch on a non-2xx response. Carries the HTTP status and
 // the server's machine-readable `error.type` so callers can branch on them.
-export interface ApiError extends Error {
+export type ApiError = Error & {
   status?: number;
   code?: string;
 }

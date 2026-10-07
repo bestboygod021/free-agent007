@@ -28,8 +28,9 @@ function entry(platform: string, modelId: string, extra: Partial<FallbackEntry> 
     supportsVision: false,
     supportsTools: true,
     keyCount: 1,
+    source: 'catalog',
     ...extra,
-  }
+  } as FallbackEntry
 }
 
 function candidates(...ids: string[]): ScopeCandidate[] {

@@ -26,7 +26,7 @@ import { useI18n } from '@/i18n'
 import type { FallbackEntry } from '@/lib/routing'
 import { useTheme } from '@/theme-context'
 
-interface Command {
+type Command = {
   id: string
   group: 'pages' | 'actions' | 'models'
   label: string

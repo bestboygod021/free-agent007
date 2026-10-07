@@ -18,7 +18,7 @@ import { PLATFORMS } from './platform-data'
 /** A key that just landed, plus the models the picker should offer for it.
  *  Only produced when the picker is actually worth showing (#657) — otherwise
  *  the add stays as silent as it has always been. */
-export interface AddedKeyScopeOffer {
+export type AddedKeyScopeOffer = {
   keyId: number
   platformLabel: string
   candidates: ScopeCandidate[]

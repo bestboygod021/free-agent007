@@ -11,7 +11,7 @@ import { ConfirmButton } from '@/components/confirm-button'
 import { Archive, ChevronDown, Download, Trash2 } from 'lucide-react'
 import { useI18n } from '@/i18n'
 
-interface BackupMeta {
+type BackupMeta = {
   id: number
   filename: string
   filesize: number
@@ -21,7 +21,7 @@ interface BackupMeta {
   tables: string[]
 }
 
-interface BackupSchedule {
+type BackupSchedule = {
   enabled: boolean
   time: string
   intervalDays: number

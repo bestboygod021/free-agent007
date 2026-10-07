@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { isEmail } from '@/lib/validate'
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
+import type { AuthStatus } from '../../../shared/types'
 
 // Matches the server rule (routes/auth.ts zod schema).
 const PASSWORD_MIN = 8
@@ -30,11 +31,6 @@ function desktopSessionBridge(): (() => Promise<string>) | null {
     : null
 }
 
-interface AuthStatus {
-  needsSetup: boolean
-  authenticated: boolean
-  email: string | null
-}
 
 function Centered({ children }: { children: ReactNode }) {
   // dvh, not vh: on mobile the collapsing URL bar and the software keyboard both

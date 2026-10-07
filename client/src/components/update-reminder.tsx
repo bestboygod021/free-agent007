@@ -24,17 +24,11 @@ const STORAGE_KEY = 'freellmapi.update_reminder'
  *  disappears there and then instead of on the next reload. */
 export const UPDATE_CHECK_CHANGED_EVENT = 'freellmapi:update-check-changed'
 
-/** The server's mapped shape (GET /api/update/release). */
-interface LatestRelease {
-  tagName: string
-  body: string | null
-  htmlUrl: string
-  publishedAt: string | null
-}
+// LatestRelease / UpdateRelease are the shared contracts for
+// GET /api/update/release; StoredCheck is this page's localStorage cache shape.
+import type { LatestRelease, UpdateRelease as ReleaseResponse } from '../../../shared/types'
 
-type ReleaseResponse = LatestRelease | { disabled: true }
-
-interface StoredCheck {
+type StoredCheck = {
   checkedAt: number
   release: LatestRelease | null
   dismissedTag: string | null

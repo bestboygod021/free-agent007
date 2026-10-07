@@ -21,7 +21,7 @@ function isKnownTimezone(name: string): boolean {
   }
 }
 
-export interface PeakHoursPatch {
+export type PeakHoursPatch = {
   peakHoursAdjust?: boolean
   peakStartHour?: number
   peakEndHour?: number

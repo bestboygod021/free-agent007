@@ -19,7 +19,7 @@ export function GetKeyLink({ url }: { url: string }) {
   )
 }
 
-export interface HealthPlatform {
+export type HealthPlatform = {
   platform: string
   totalKeys: number
   healthyKeys: number
@@ -29,7 +29,7 @@ export interface HealthPlatform {
   unknownKeys: number
 }
 
-export interface HealthData {
+export type HealthData = {
   platforms: HealthPlatform[]
   keys: { id: number; platform: string; status: string; lastCheckedAt: string | null; lastHealthError: string | null }[]
   quotaStates: ProviderQuotaState[]

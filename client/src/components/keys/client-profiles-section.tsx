@@ -11,7 +11,7 @@ import { ConfirmButton } from '@/components/confirm-button'
 import { ChevronRight, RotateCw, Trash2 } from 'lucide-react'
 import { useI18n } from '@/i18n'
 
-interface ClientProfile {
+type ClientProfile = {
   id: number
   name: string
   maskedKey: string

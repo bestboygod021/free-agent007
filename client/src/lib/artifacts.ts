@@ -6,7 +6,7 @@
 
 export type ArtifactKind = 'html' | 'svg'
 
-export interface Artifact {
+export type Artifact = {
   /** Stable within a message: `${messageIndex}:${blockIndex}`. */
   id: string
   kind: ArtifactKind

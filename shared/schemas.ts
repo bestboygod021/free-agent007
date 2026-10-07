@@ -529,3 +529,230 @@ export type AgentModesResponse = z.infer<typeof agentModesResponseSchema>;
 export type AgentStatesResponse = z.infer<typeof agentStatesResponseSchema>;
 export type AgentPromptsResponse = z.infer<typeof agentPromptsResponseSchema>;
 export type FusionSseFrame = z.infer<typeof fusionSseFrameSchema>;
+
+// ── Settings: compression ────────────────────────────────────────────────────
+
+export const compressionModeSchema = z.enum(['off', 'lossless', 'standard', 'aggressive']);
+
+/** Per-engine config block (GET /api/settings/compression). Every engine at
+ *  least carries `enabled`; the remaining keys are engine-private tuning
+ *  (minBlockChars, intensity, …) the dashboard reads opaquely, hence catchall. */
+export const compressionEngineConfigSchema = z
+  .object({ enabled: z.boolean() })
+  .catchall(z.unknown());
+
+/** GET/PUT /api/settings/compression — mirror of server CompressionConfig.
+ *  autoTriggerEstTokens/targetTokens are omitted when unset (and historically
+ *  typed as nullable by the client), so they are optional-and-nullable. */
+export const compressionConfigSchema = z.object({
+  mode: compressionModeSchema,
+  engines: z.record(compressionEngineConfigSchema),
+  autoTriggerEstTokens: z.number().nullable().optional(),
+  targetTokens: z.number().nullable().optional(),
+  trustProjectFilters: z.boolean(),
+  prefixFreeze: z.boolean(),
+});
+
+/** GET /api/compression/stats — the config snapshot plus the process-lifetime
+ *  counters. `byMode`/`engines` are server-owned breakdown records; the
+ *  dialog only reads the headline numbers, so their innards stay opaque. */
+export const compressionStatsSchema = z.object({
+  config: compressionConfigSchema,
+  requests: z.number(),
+  compressedRequests: z.number(),
+  originalChars: z.number(),
+  compressedChars: z.number(),
+  estSavedTokens: z.number(),
+  savingsPercent: z.number(),
+  avgDurationMs: z.number(),
+  byMode: z.record(z.unknown()),
+  engines: z.record(z.unknown()),
+});
+
+// ── Settings: update ─────────────────────────────────────────────────────────
+
+export const updateInstallationSchema = z.enum(['source', 'docker', 'desktop', 'unknown']);
+/** `idle` exists only on /status (nothing checked yet); /check never returns it. */
+export const updateStatusValueSchema = z.enum([
+  'idle', 'current', 'available', 'ahead', 'diverged', 'unknown', 'unsupported', 'disabled',
+]);
+export const updateCheckedStatusSchema = z.enum([
+  'current', 'available', 'ahead', 'diverged', 'unknown', 'unsupported', 'disabled',
+]);
+
+/** GET /api/update/status (UpdateStatusInfo). */
+export const updateStatusSchema = z.object({
+  status: updateStatusValueSchema,
+  installation: updateInstallationSchema,
+  localSha: z.string().nullable(),
+  lastChecked: z.string().nullable(),
+  version: z.string().nullable(),
+});
+
+/** GET /api/update/check (CheckResult) — remote* lanes appear only after a
+ *  successful upstream comparison. */
+export const updateCheckSchema = z.object({
+  status: updateCheckedStatusSchema,
+  installation: updateInstallationSchema,
+  localSha: z.string().nullable(),
+  checkedAt: z.string(),
+  version: z.string().nullable(),
+  remoteSha: z.string().optional(),
+  remoteMessage: z.string().optional(),
+  remoteDate: z.string().optional(),
+  changes: z
+    .array(z.object({ sha: z.string(), message: z.string(), date: z.string().optional() }))
+    .optional(),
+});
+
+/** GET /api/update/release — the mapped release, or the opt-out envelope. */
+export const latestReleaseSchema = z.object({
+  tagName: z.string(),
+  body: z.string().nullable(),
+  htmlUrl: z.string(),
+  publishedAt: z.string().nullable(),
+});
+export const updateReleaseSchema = z.union([
+  latestReleaseSchema,
+  z.object({ disabled: z.literal(true) }),
+]);
+
+// ── Penalty inspector ────────────────────────────────────────────────────────
+
+export const inspectorReasonSchema = z.enum(['penalty', 'cooldown', 'recent_errors']);
+
+/** Row of GET /api/fallback/penalty-inspector — mirror of the server's
+ *  InspectorRow (services/penalty-inspector.ts). */
+export const penaltyInspectorRowSchema = z.object({
+  modelDbId: z.number().nullable(),
+  platform: z.string(),
+  modelId: z.string(),
+  displayName: z.string(),
+  enabled: z.boolean(),
+  fallbackEnabled: z.boolean(),
+  priority: z.number().nullable(),
+  penalty: z.object({
+    hits: z.number(),
+    value: z.number(),
+    rateLimitFactor: z.number(),
+  }),
+  cooldowns: z.array(
+    z.object({
+      keyId: z.number(),
+      keyLabel: z.string().nullable(),
+      keyStatus: z.string().nullable(),
+      expiresAtMs: z.number(),
+      expiresInMs: z.number(),
+    })
+  ),
+  recentErrors: z.array(
+    z.object({
+      id: z.number(),
+      keyId: z.number().nullable(),
+      keyLabel: z.string().nullable(),
+      error: z.string(),
+      latencyMs: z.number(),
+      createdAt: z.string(),
+    })
+  ),
+  recentErrorCount: z.number(),
+  reasons: z.array(inspectorReasonSchema),
+});
+
+/** GET /api/fallback/penalty-inspector envelope. */
+export const penaltyInspectorSchema = z.object({
+  generatedAtMs: z.number(),
+  lookbackMinutes: z.number(),
+  rows: z.array(penaltyInspectorRowSchema),
+});
+
+// ── Media management ─────────────────────────────────────────────────────────
+
+export const mediaModalitySchema = z.enum(['image', 'video', 'audio', 'transcription']);
+
+/** Row of GET /api/media — quotaLabel is NOT NULL in media_models. */
+export const mediaModelSchema = z.object({
+  id: z.number(),
+  platform: z.string(),
+  modelId: z.string(),
+  displayName: z.string(),
+  modality: mediaModalitySchema,
+  enabled: z.boolean(),
+  quotaLabel: z.string(),
+  keyCount: z.number(),
+  isCustom: z.boolean(),
+});
+
+/** GET /api/media envelope. */
+export const mediaDataSchema = z.object({
+  models: z.array(mediaModelSchema),
+});
+
+/** GET /api/media/usage?modality=… — per-model request counts (media is
+ *  metered per request, never per token), with the family's quota label. */
+export const mediaUsageSchema = z.object({
+  modality: mediaModalitySchema,
+  models: z.array(
+    z.object({
+      id: z.number(),
+      platform: z.string(),
+      modelId: z.string(),
+      displayName: z.string(),
+      quotaLabel: z.string().nullable(),
+      requestsToday: z.number(),
+      requestsMonth: z.number(),
+    })
+  ),
+  totalRequestsToday: z.number(),
+  totalRequestsMonth: z.number(),
+});
+
+// ── Custom endpoint discovery ────────────────────────────────────────────────
+
+export const discoveredModelKindSchema = z.enum([
+  'embedding', 'image', 'audio', 'transcription', 'video',
+]);
+
+/** Row of POST /api/keys/custom/discover-models — the upstream model plus the
+ *  route's `registered` verdict (models already bound to THIS endpoint). The
+ *  optional lanes exist only when the upstream advertises them (#685/#1051). */
+export const discoveredModelSchema = z.object({
+  id: z.string(),
+  ownedBy: z.string().nullable(),
+  registered: z.boolean(),
+  contextWindow: z.number().optional(),
+  priceNote: z.string().optional(),
+  isFree: z.boolean().optional(),
+  vision: z.boolean().optional(),
+  kind: discoveredModelKindSchema.optional(),
+});
+
+/** Discovery envelope: which endpoint was probed plus what came back. */
+export const discoverResponseSchema = z.object({
+  baseUrl: z.string(),
+  keyId: z.number().nullable(),
+  models: z.array(discoveredModelSchema),
+  total: z.number(),
+  registeredCount: z.number(),
+});
+
+export type CompressionMode = z.infer<typeof compressionModeSchema>;
+export type CompressionEngineConfig = z.infer<typeof compressionEngineConfigSchema>;
+export type CompressionConfig = z.infer<typeof compressionConfigSchema>;
+export type CompressionStats = z.infer<typeof compressionStatsSchema>;
+export type Installation = z.infer<typeof updateInstallationSchema>;
+export type UpdateStatus = z.infer<typeof updateStatusValueSchema>;
+export type CheckedUpdateStatus = z.infer<typeof updateCheckedStatusSchema>;
+export type UpdateStatusInfo = z.infer<typeof updateStatusSchema>;
+export type UpdateCheckInfo = z.infer<typeof updateCheckSchema>;
+export type LatestRelease = z.infer<typeof latestReleaseSchema>;
+export type UpdateRelease = z.infer<typeof updateReleaseSchema>;
+export type InspectorReason = z.infer<typeof inspectorReasonSchema>;
+export type PenaltyInspectorRow = z.infer<typeof penaltyInspectorRowSchema>;
+export type PenaltyInspectorData = z.infer<typeof penaltyInspectorSchema>;
+export type MediaModality = z.infer<typeof mediaModalitySchema>;
+export type MediaModel = z.infer<typeof mediaModelSchema>;
+export type MediaData = z.infer<typeof mediaDataSchema>;
+export type MediaUsage = z.infer<typeof mediaUsageSchema>;
+export type DiscoveredModel = z.infer<typeof discoveredModelSchema>;
+export type DiscoverResponse = z.infer<typeof discoverResponseSchema>;

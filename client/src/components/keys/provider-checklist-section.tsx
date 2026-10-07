@@ -7,7 +7,7 @@ import { useI18n } from '@/i18n'
 
 // Shape of GET /api/keys/providers (#543). Declared inline: the backend owns
 // the contract (server/src/routes/keys.ts) and this is the only consumer.
-interface ProviderChecklistEntry {
+type ProviderChecklistEntry = {
   platform: string
   name: string
   keyless: boolean
@@ -15,7 +15,7 @@ interface ProviderChecklistEntry {
   keyCount: number
   enabledKeyCount: number
 }
-interface ProvidersChecklist {
+type ProvidersChecklist = {
   providers: ProviderChecklistEntry[]
   summary: { total: number; configured: number; unconfigured: number }
 }

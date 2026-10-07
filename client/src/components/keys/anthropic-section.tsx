@@ -10,7 +10,7 @@ import { useI18n } from '@/i18n'
 // a pinned catalog model. Mirrors services/anthropic-map.ts on the server.
 type ClaudeFamily = 'default' | 'opus' | 'sonnet' | 'haiku'
 type AnthropicMap = Record<ClaudeFamily, string>
-interface MappableModel { modelId: string; displayName: string; enabled: boolean }
+type MappableModel = { modelId: string; displayName: string; enabled: boolean }
 const FAMILY_ORDER: { key: ClaudeFamily; labelKey: string }[] = [
   { key: 'default', labelKey: 'keys.familyDefault' },
   { key: 'opus', labelKey: 'keys.familyOpus' },

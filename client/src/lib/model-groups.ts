@@ -6,7 +6,7 @@
 // before. FallbackPage does its own richer grouping (it needs the members to
 // render expandable rows) — this helper is just for the flat picker case.
 
-export interface PickerEntry {
+export type PickerEntry = {
   modelDbId: number
   modelId: string
   displayName: string
@@ -18,7 +18,7 @@ export interface PickerEntry {
   sizeLabel?: string
 }
 
-export interface ModelOption {
+export type ModelOption = {
   value: string        // what to send as `model`: canonicalId (ON) or model_id (OFF)
   label: string
   platform: string     // meaningful when providerCount === 1

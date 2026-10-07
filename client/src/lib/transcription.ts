@@ -5,7 +5,7 @@ import type { ModelComboOption } from '@/components/model-combobox'
 // testable without a browser or a MediaRecorder.
 
 /** The slice of GET /api/media the mic needs. */
-export interface TranscriptionModelRow {
+export type TranscriptionModelRow = {
   id: number
   platform: string
   modelId: string

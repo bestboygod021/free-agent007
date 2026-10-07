@@ -7,7 +7,7 @@
 // whatever unrelated entry happens to sit at that position. Pure functions so
 // that mapping is unit-testable away from the page.
 
-export interface AliasMerge {
+export type AliasMerge = {
   into: string
   keys: string[]
 }

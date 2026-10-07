@@ -30,6 +30,13 @@ import {
   agentStatesResponseSchema,
   agentRunContextSchema,
   agentPromptsResponseSchema,
+  compressionConfigSchema,
+  compressionStatsSchema,
+  updateStatusSchema,
+  updateReleaseSchema,
+  penaltyInspectorSchema,
+  mediaDataSchema,
+  mediaUsageSchema,
 } from '@freellmapi/shared/schemas.js';
 
 // Contract test: the shared Zod schemas (shared/schemas.ts) must parse the
@@ -72,6 +79,17 @@ const sortedKeys = (o: object) => Object.keys(o).sort();
 
 function expectExactKeys(value: object, shape: Record<string, unknown>) {
   expect(sortedKeys(value)).toEqual(Object.keys(shape).sort());
+}
+
+/** For envelopes with optional lanes: no unknown keys, no missing required
+ *  keys — absent optionals (compression's autoTriggerEstTokens/targetTokens)
+ *  are legitimate, extra ones are not. */
+function expectConfigKeys(value: object, shape: Record<string, { isOptional?: () => boolean }>) {
+  const all = Object.keys(shape);
+  const required = all.filter(k => !shape[k].isOptional?.());
+  const keys = Object.keys(value);
+  expect(keys.filter(k => !all.includes(k))).toEqual([]);
+  expect(required.filter(k => !keys.includes(k))).toEqual([]);
 }
 
 /** Row-shape check for array endpoints: parse row 0 and require its keys to
@@ -119,6 +137,12 @@ describe('Shared API contracts (zod schemas vs live responses)', () => {
                                     key_label, outcome, start_offset_ms, duration_ms, error_summary)
       VALUES (?, 0, 'groq', 'contract-model', 0, 'Contract Test', 'error', 0, 250, '429 rate limit exceeded')
     `).run(successRequestId);
+    // A media model so /api/media and /api/media/usage return row shapes,
+    // not just empty arrays (the fresh catalog ships no media rows).
+    getDb().prepare(`
+      INSERT INTO media_models (platform, model_id, display_name, modality)
+      VALUES ('groq', 'contract-media', 'Contract Media', 'image')
+    `).run();
   });
 
   it('GET /api/settings/proxy matches proxySettingsSchema exactly', async () => {
@@ -389,5 +413,82 @@ describe('Shared API contracts (zod schemas vs live responses)', () => {
     if (parsed.data.prompts.length > 0) {
       expectExactKeys(parsed.data.prompts[0], agentPromptsResponseSchema.shape.prompts.element.shape);
     }
+  });
+
+  it('GET /api/settings/compression matches compressionConfigSchema keys', async () => {
+    const { status, body } = await req(app, 'GET', '/api/settings/compression');
+    expect(status).toBe(200);
+    const parsed = compressionConfigSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`compression config drifted: ${parsed.error.message}`);
+    expectConfigKeys(body as object, compressionConfigSchema.shape);
+    expect(Object.keys(parsed.data.engines).length).toBeGreaterThanOrEqual(1);
+    // Every engine block at least carries `enabled` (catchall keeps the
+    // engine-private tuning keys opaque but present-tolerant).
+    for (const engine of Object.values(parsed.data.engines)) {
+      expect(typeof engine.enabled).toBe('boolean');
+    }
+  });
+
+  it('GET /api/compression/stats matches compressionStatsSchema exactly', async () => {
+    const { status, body } = await req(app, 'GET', '/api/compression/stats');
+    expect(status).toBe(200);
+    const parsed = compressionStatsSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`compression stats drifted: ${parsed.error.message}`);
+    expectExactKeys(body as object, compressionStatsSchema.shape);
+    // The stats envelope embeds the config snapshot — same sub-contract.
+    expectConfigKeys(parsed.data.config as object, compressionConfigSchema.shape);
+  });
+
+  it('GET /api/update/status matches updateStatusSchema exactly', async () => {
+    const { status, body } = await req(app, 'GET', '/api/update/status');
+    expect(status).toBe(200);
+    const parsed = updateStatusSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`update status drifted: ${parsed.error.message}`);
+    expectExactKeys(body as object, updateStatusSchema.shape);
+  });
+
+  it('GET /api/update/release matches updateReleaseSchema', async () => {
+    const { status, body } = await req(app, 'GET', '/api/update/release');
+    expect(status).toBe(200);
+    // Union contract: either the mapped release or the { disabled: true }
+    // opt-out envelope. (Upstream-dependent /check is deliberately not
+    // asserted here — the sandbox and CI cannot reach the release feed.)
+    const parsed = updateReleaseSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`update release drifted: ${parsed.error.message}`);
+    if ('disabled' in parsed.data) expect(parsed.data.disabled).toBe(true);
+    else expect(parsed.data.tagName.length).toBeGreaterThan(0);
+  });
+
+  it('GET /api/fallback/penalty-inspector matches penaltyInspectorSchema exactly', async () => {
+    const { status, body } = await req(app, 'GET', '/api/fallback/penalty-inspector');
+    expect(status).toBe(200);
+    const parsed = penaltyInspectorSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`penalty inspector drifted: ${parsed.error.message}`);
+    expectExactKeys(body as object, penaltyInspectorSchema.shape);
+    // Fresh installs have no penalties/cooldowns, so rows is legitimately
+    // empty; the row schema mirrors the server's InspectorRow field-for-field
+    // (source-verified) and is exercised whenever a penalty exists.
+    expect(Array.isArray(parsed.data.rows)).toBe(true);
+  });
+
+  it('GET /api/media matches mediaDataSchema exactly (seeded row)', async () => {
+    const { status, body } = await req(app, 'GET', '/api/media');
+    expect(status).toBe(200);
+    const parsed = mediaDataSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`media data drifted: ${parsed.error.message}`);
+    expectExactKeys(body as object, mediaDataSchema.shape);
+    expect(parsed.data.models.length).toBeGreaterThanOrEqual(1);
+    expectExactKeys(parsed.data.models[0], mediaDataSchema.shape.models.element.shape);
+  });
+
+  it('GET /api/media/usage matches mediaUsageSchema exactly (seeded row)', async () => {
+    const { status, body } = await req(app, 'GET', '/api/media/usage?modality=image');
+    expect(status).toBe(200);
+    const parsed = mediaUsageSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`media usage drifted: ${parsed.error.message}`);
+    expectExactKeys(body as object, mediaUsageSchema.shape);
+    expect(parsed.data.models.length).toBeGreaterThanOrEqual(1);
+    expectExactKeys(parsed.data.models[0], mediaUsageSchema.shape.models.element.shape);
+    expect(parsed.data.modality).toBe('image');
   });
 });

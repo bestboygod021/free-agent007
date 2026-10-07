@@ -12,7 +12,7 @@ import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
 import { CUSTOM_GROUP, PLATFORMS } from './platform-data'
 
-interface ImportRow extends PreviewKey {
+type ImportRow = PreviewKey & {
   selected: boolean
   platform: Platform | ''
   visible: boolean

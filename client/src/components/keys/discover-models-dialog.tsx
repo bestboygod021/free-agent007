@@ -12,35 +12,14 @@ import { formatContext } from '@/lib/routing'
 // often. Ask the endpoint instead, tick the ones to keep, register them in one
 // call. Reads only the user's OWN endpoint with the user's OWN key.
 
-export interface DiscoveredModel {
-  id: string
-  ownedBy: string | null
-  registered: boolean
-  /** Approximate context window in tokens when the upstream advertises one. */
-  contextWindow?: number
-  /** Human-readable price hint ("free", "$1.25/M in $2/M out") when present (#685). */
-  priceNote?: string
-  /** The server's verdict on whether the note means free — the only thing this
-   *  picker badges green, so "$10/M in" can never read as free. */
-  isFree?: boolean
-  /** True when the upstream advertises image input. */
-  vision?: boolean
-  /** Present only when the model is discernibly NOT a chat model (#1051). The
-   *  server routes it to the matching table on register; video is skipped. */
-  kind?: 'embedding' | 'image' | 'audio' | 'transcription' | 'video'
-}
-
-interface DiscoverResponse {
-  baseUrl: string
-  keyId: number | null
-  models: DiscoveredModel[]
-  total: number
-  registeredCount: number
-}
+export type { DiscoveredModel, DiscoverResponse } from '../../../../shared/types'
+import type { DiscoverResponse } from '../../../../shared/types'
 
 /** How the endpoint is named to the server: a saved key row, or a base URL the
  *  user is still typing (with the key they typed alongside it). */
-export interface EndpointRef {
+// How the endpoint is named to the server (request body discriminator) —
+// an input shape, not a response contract, so it stays a local type.
+export type EndpointRef = {
   keyId?: number
   baseUrl?: string
   apiKey?: string

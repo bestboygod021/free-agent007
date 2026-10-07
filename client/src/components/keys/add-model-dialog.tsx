@@ -32,7 +32,7 @@ export function AddModelDialog(props: AddModelDialogProps) {
   return <AddModelForm key={formKey} {...props} />
 }
 
-interface CreateModelPayload {
+type CreateModelPayload = {
   platform: string
   modelId: string
   displayName?: string

@@ -11,14 +11,14 @@ import type { TokenUsageData } from './routing'
 
 export type LegendModel = TokenUsageData['models'][number]
 
-export interface LegendRow extends LegendModel {
+export type LegendRow = LegendModel & {
   usedTokens: number
   remainingTokens: number
   /** Share of the whole budget this model's remaining allowance is. */
   widthPct: number
 }
 
-export interface BudgetLegend {
+export type BudgetLegend = {
   /** Rows with a budget to show, smartest first. */
   rows: LegendRow[]
   /** Rows with no published quota, folded into the "+N" summary line. */
