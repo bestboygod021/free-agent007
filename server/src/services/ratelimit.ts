@@ -3,6 +3,7 @@
 import { getDb, getSetting, setSetting } from '../db/index.js';
 import { isLoopbackOrPrivateUrl } from '../lib/url-guard.js';
 import { parseModelScope, scopeAllows } from '../lib/model-scope.js';
+import { MIN_COOLDOWN_CEILING_MS, MAX_COOLDOWN_CEILING_MS } from '@freellmapi/shared/schemas.js';
 
 interface Window {
   timestamps: number[];
@@ -885,8 +886,6 @@ const COOLDOWN_DURATIONS = [
 // provider that told us when to come back would only burn quota. Unset =
 // unchanged behaviour (the ladder tops out at a day).
 export const COOLDOWN_CEILING_KEY = 'routing_cooldown_ceiling_ms';
-export const MIN_COOLDOWN_CEILING_MS = MINUTE;
-export const MAX_COOLDOWN_CEILING_MS = DAY;
 
 /** The configured ceiling in ms, or null when unset/invalid (no cap). Read
  *  through a try/catch like every other DB touch in this module so a failure
