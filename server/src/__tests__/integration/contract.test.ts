@@ -23,6 +23,13 @@ import {
   recentCallsResponseSchema,
   requestDetailSchema,
   requestAttemptSchema,
+  embeddingsDataSchema,
+  embeddingsUsageSchema,
+  agentModesResponseSchema,
+  agentModeProfileSchema,
+  agentStatesResponseSchema,
+  agentRunContextSchema,
+  agentPromptsResponseSchema,
 } from '@freellmapi/shared/schemas.js';
 
 // Contract test: the shared Zod schemas (shared/schemas.ts) must parse the
@@ -307,5 +314,80 @@ describe('Shared API contracts (zod schemas vs live responses)', () => {
     expectExactKeys(body as object, requestDetailSchema.shape);
     expect(parsed.data.attempts.length).toBeGreaterThanOrEqual(1);
     expectExactKeys(parsed.data.attempts[0], requestAttemptSchema.shape);
+  });
+
+  it('GET /api/embeddings matches embeddingsDataSchema exactly', async () => {
+    const { status, body } = await req(app, 'GET', '/api/embeddings');
+    expect(status).toBe(200);
+    const parsed = embeddingsDataSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`embeddings data drifted: ${parsed.error.message}`);
+    expectExactKeys(body as object, embeddingsDataSchema.shape);
+    expect(parsed.data.families.length).toBeGreaterThanOrEqual(1);
+    const family = parsed.data.families[0];
+    expectExactKeys(family as object, embeddingsDataSchema.shape.families.element.shape);
+    expect(family.providers.length).toBeGreaterThanOrEqual(1);
+    // isCustom must be PRESENT (the two page-local copies disagreed: one
+    // optional, one absent) — exact keys fail if the server ever drops it.
+    expectExactKeys(family.providers[0], embeddingsDataSchema.shape.families.element.shape.providers.element.shape);
+  });
+
+  it('GET /api/embeddings/usage matches embeddingsUsageSchema exactly', async () => {
+    const { status, body } = await req(app, 'GET', '/api/embeddings/usage');
+    expect(status).toBe(200);
+    const parsed = embeddingsUsageSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`embeddings usage drifted: ${parsed.error.message}`);
+    expectExactKeys(body as object, embeddingsUsageSchema.shape);
+    expect(parsed.data.families.length).toBeGreaterThanOrEqual(1);
+    const row = parsed.data.families[0];
+    expectExactKeys(row as object, embeddingsUsageSchema.shape.families.element.shape);
+    // platform/quotaLabel are always present (nullable), not optional as the
+    // old client interface claimed.
+    expect(row.platform === null || typeof row.platform === 'string').toBe(true);
+  });
+
+  it('GET /api/agent/modes matches agentModesResponseSchema exactly', async () => {
+    const { status, body } = await req(app, 'GET', '/api/agent/modes');
+    expect(status).toBe(200);
+    const parsed = agentModesResponseSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`agent modes drifted: ${parsed.error.message}`);
+    expectExactKeys(body as object, agentModesResponseSchema.shape);
+    expect(parsed.data.modes.length).toBeGreaterThanOrEqual(1);
+    const entry = parsed.data.modes[0];
+    expectExactKeys(entry as object, agentModesResponseSchema.shape.modes.element.shape);
+    // Deep profile contract: fallbackOrder / routing / upgradeHintFa exist
+    // server-side even though the page's old local type omitted them.
+    expectExactKeys(entry.profile, agentModeProfileSchema.shape);
+    expectExactKeys(entry.profile.providerPolicy, agentModeProfileSchema.shape.providerPolicy.shape);
+    expectExactKeys(entry.profile.budget, agentModeProfileSchema.shape.budget.shape);
+    expectExactKeys(entry.profile.execution, agentModeProfileSchema.shape.execution.shape);
+    expect(entry.profile.fallbackOrder.length).toBeGreaterThanOrEqual(1);
+    expect(Object.keys(entry.profile.routing).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('GET /api/agent/states matches agentStatesResponseSchema exactly', async () => {
+    const { status, body } = await req(app, 'GET', '/api/agent/states');
+    expect(status).toBe(200);
+    const parsed = agentStatesResponseSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`agent states drifted: ${parsed.error.message}`);
+    // initialContext is part of the contract even though older client
+    // typings omitted it entirely.
+    expectExactKeys(body as object, agentStatesResponseSchema.shape);
+    expect(parsed.data.states.length).toBeGreaterThanOrEqual(1);
+    expect(parsed.data.terminal.length).toBeGreaterThanOrEqual(1);
+    // blockReason is optional (unset until a transition blocks) — no
+    // exact-keys on the context object, presence of the lane is enough.
+    agentRunContextSchema.parse(parsed.data.initialContext);
+  });
+
+  it('GET /api/agent/prompts matches agentPromptsResponseSchema exactly', async () => {
+    const { status, body } = await req(app, 'GET', '/api/agent/prompts');
+    expect(status).toBe(200);
+    const parsed = agentPromptsResponseSchema.safeParse(body);
+    if (!parsed.success) throw new Error(`agent prompts drifted: ${parsed.error.message}`);
+    expectExactKeys(body as object, agentPromptsResponseSchema.shape);
+    expect(parsed.data.count).toBe(parsed.data.prompts.length);
+    if (parsed.data.prompts.length > 0) {
+      expectExactKeys(parsed.data.prompts[0], agentPromptsResponseSchema.shape.prompts.element.shape);
+    }
   });
 });

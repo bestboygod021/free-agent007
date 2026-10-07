@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ShieldCheck, ShieldAlert, Cpu, Cloud, Lock } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+// Kernel contracts from shared/schemas.ts — the profile's fallbackOrder /
+// routing / upgradeHintFa lanes exist server-side even though this page
+// only renders providerPolicy / budget / execution today.
+import type {
+  AgentModesResponse as ModesResponse,
+  AgentStatesResponse as StatesResponse,
+  AgentPromptsResponse as PromptsResponse,
+} from '../../../shared/types'
 import { useI18n } from '@/i18n'
 import { PageHeader } from '@/components/page-header'
 import { Badge } from '@/components/ui/badge'
@@ -23,53 +31,6 @@ import {
  */
 
 type ComputeMode = 'free' | 'paid' | 'local'
-
-interface ModeProfile {
-  mode: ComputeMode
-  labelFa: string
-  summaryFa: string
-  providerPolicy: {
-    allowLocal: boolean
-    allowCloudFreeTier: boolean
-    allowPaidCloud: boolean
-    maxRelativeCost: number
-    allowTrainOnInput: boolean
-    maxCloudPrivacyLevel: string
-    requiresCloudConsent: boolean
-    requiresByok: boolean
-  }
-  budget: {
-    perRunTokens: number
-    perDayTokensPerUser: number
-    hardStopTokens: number
-    maxCostPerRun: number
-  }
-  execution: {
-    maxRepairAttempts: number
-    maxParallelTasks: number
-    sandboxTimeoutSeconds: number
-    qualityGates: readonly string[]
-    allowPreview: boolean
-    allowBrowserAutomation: boolean
-  }
-  disabledCapabilities: readonly string[]
-  warningsFa: readonly string[]
-}
-
-interface ModesResponse {
-  modes: Array<{ mode: ComputeMode; profile: ModeProfile; descriptionFa: string }>
-}
-
-interface StatesResponse {
-  states: string[]
-  terminal: string[]
-  initialState: string
-}
-
-interface PromptsResponse {
-  count: number
-  prompts: Array<{ file: string; meta: Record<string, unknown> }>
-}
 
 const MODE_ICON: Record<ComputeMode, typeof Cpu> = {
   free: Cloud,

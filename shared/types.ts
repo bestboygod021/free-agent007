@@ -39,6 +39,15 @@ export type {
   RecentCallsResponse,
   RequestAttempt,
   RequestDetail,
+  EmbeddingsProviderEntry,
+  EmbeddingsFamily,
+  EmbeddingsData,
+  EmbeddingsUsage,
+  AgentModeProfile,
+  AgentModesResponse,
+  AgentStatesResponse,
+  AgentPromptsResponse,
+  FusionSseFrame,
 } from './schemas';
 
 /** A model declared beside a custom endpoint in an import file (#382). A

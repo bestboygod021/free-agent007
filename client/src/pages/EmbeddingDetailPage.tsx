@@ -3,29 +3,11 @@ import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { apiFetch, apiBaseUrl } from '@/lib/api'
+import type { EmbeddingsData, ApiKeyResponse } from '../../../shared/types'
 import { CopyButton } from '@/components/copy-button'
 import { PageHeader } from '@/components/page-header'
 import { ModelsTabs } from '@/components/models-tabs'
 import { ApiUsageBlock } from '@/components/api-usage'
-
-interface ProviderEntry {
-  id: number
-  platform: string
-  modelId: string
-  displayName: string
-  priority: number
-  enabled: boolean
-  quotaLabel: string
-  keyCount: number
-}
-interface Family {
-  family: string
-  dimensions: number
-  maxInputTokens: number | null
-  isDefault: boolean
-  providers: ProviderEntry[]
-}
-interface EmbeddingsData { defaultFamily: string; families: Family[] }
 
 // One embedding family's page: the providers serving it (failover routes across
 // them, same vector space) + a ready-to-run snippet. The family list / routing
@@ -39,7 +21,7 @@ export default function EmbeddingDetailPage() {
     queryKey: ['embeddings'],
     queryFn: () => apiFetch('/api/embeddings'),
   })
-  const { data: keyData } = useQuery<{ apiKey: string }>({
+  const { data: keyData } = useQuery<ApiKeyResponse>({
     queryKey: ['unified-key'],
     queryFn: () => apiFetch('/api/settings/api-key'),
   })

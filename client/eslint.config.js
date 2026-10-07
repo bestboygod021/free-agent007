@@ -33,4 +33,19 @@ export default defineConfig([
       }],
     },
   },
+  {
+    // API/response DTOs may not be hand-written in page modules any more: the
+    // Zod contracts in shared/schemas.ts are the single source of truth and
+    // pages import their inferred types from shared/types (type-only, zero
+    // bundle cost). The server contract test validates those schemas against
+    // live responses, so a locally re-declared shape can silently drift. UI
+    // types that are not API contracts stay allowed as `type` aliases.
+    files: ['src/pages/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': ['error', {
+        selector: 'TSInterfaceDeclaration',
+        message: 'API/response shapes live in shared/schemas.ts — import the type from shared/types instead of declaring a local interface. Pure UI shapes use a `type` alias.',
+      }],
+    },
+  },
 ])

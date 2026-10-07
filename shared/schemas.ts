@@ -345,3 +345,187 @@ export type RecentCallRow = z.infer<typeof recentCallRowSchema>;
 export type RecentCallsResponse = z.infer<typeof recentCallsResponseSchema>;
 export type RequestAttempt = z.infer<typeof requestAttemptSchema>;
 export type RequestDetail = z.infer<typeof requestDetailSchema>;
+
+// ── Embeddings management ────────────────────────────────────────────────────
+
+/** One provider row of GET /api/embeddings. `isCustom` is always sent (true
+ * for a custom embedding endpoint) — an older client interface marked it
+ * optional and a second copy dropped it entirely. */
+export const embeddingsProviderSchema = z.object({
+  id: z.number(),
+  platform: z.string(),
+  modelId: z.string(),
+  displayName: z.string(),
+  priority: z.number(),
+  enabled: z.boolean(),
+  quotaLabel: z.string().nullable(),
+  keyCount: z.number(),
+  isCustom: z.boolean(),
+});
+
+/** One embedding family of GET /api/embeddings (failover routes across its
+ * providers — same vector space). */
+export const embeddingsFamilySchema = z.object({
+  family: z.string(),
+  dimensions: z.number(),
+  maxInputTokens: z.number().nullable(),
+  isDefault: z.boolean(),
+  providers: z.array(embeddingsProviderSchema),
+});
+
+/** GET /api/embeddings envelope. */
+export const embeddingsDataSchema = z.object({
+  defaultFamily: z.string(),
+  families: z.array(embeddingsFamilySchema),
+});
+
+/** GET /api/embeddings/usage. platform/quotaLabel describe the family's
+ * highest-priority enabled provider (the legend row) and are always present,
+ * null when no enabled provider is left; the two totals are always sent. */
+export const embeddingsUsageSchema = z.object({
+  families: z.array(
+    z.object({
+      family: z.string(),
+      requestsToday: z.number(),
+      tokensMonth: z.number(),
+      platform: z.string().nullable(),
+      quotaLabel: z.string().nullable(),
+    })
+  ),
+  totalTokensMonth: z.number(),
+  totalRequestsToday: z.number(),
+});
+
+// ── Agent kernel (ForgePilot page) ───────────────────────────────────────────
+
+export const privacyLevelSchema = z.enum(['public', 'internal', 'private', 'confidential']);
+export const providerClassSchema = z.enum(['local', 'cloud_free', 'cloud_paid']);
+
+/** Per-task routing preference inside a mode profile — mirror of
+ * agent/src/core/compute-mode.ts TaskRoutingRule. */
+export const taskRoutingRuleSchema = z.object({
+  taskType: z.string(),
+  preferredLocality: z.enum(['local', 'cloud']),
+  maxCost: z.number(),
+  requiresToolCalling: z.boolean(),
+  requiresStructuredOutput: z.boolean(),
+  contextTokens: z.number(),
+  maxLatencyMs: z.number(),
+});
+
+/** One resolved mode profile (GET /api/agent/modes[].profile) — mirror of
+ * agent/src/core/compute-mode.ts ModeProfile. fallbackOrder/routing/
+ * upgradeHintFa are server-owned lanes the dashboard does not render yet;
+ * they are still pinned here so adding or dropping one is contract drift. */
+export const agentModeProfileSchema = z.object({
+  mode: z.enum(['free', 'paid', 'local']),
+  labelFa: z.string(),
+  summaryFa: z.string(),
+  providerPolicy: z.object({
+    allowLocal: z.boolean(),
+    allowCloudFreeTier: z.boolean(),
+    allowPaidCloud: z.boolean(),
+    maxRelativeCost: z.number(),
+    allowTrainOnInput: z.boolean(),
+    maxCloudPrivacyLevel: privacyLevelSchema,
+    requiresCloudConsent: z.boolean(),
+    requiresByok: z.boolean(),
+  }),
+  fallbackOrder: z.array(providerClassSchema),
+  routing: z.record(z.string(), taskRoutingRuleSchema),
+  budget: z.object({
+    perRunTokens: z.number(),
+    perDayTokensPerUser: z.number(),
+    hardStopTokens: z.number(),
+    maxCostPerRun: z.number(),
+  }),
+  execution: z.object({
+    maxRepairAttempts: z.number(),
+    maxParallelTasks: z.number(),
+    sandboxTimeoutSeconds: z.number(),
+    qualityGates: z.array(z.string()),
+    allowPreview: z.boolean(),
+    allowBrowserAutomation: z.boolean(),
+  }),
+  disabledCapabilities: z.array(z.string()),
+  warningsFa: z.array(z.string()),
+  upgradeHintFa: z.string(),
+});
+
+/** GET /api/agent/modes envelope. */
+export const agentModesResponseSchema = z.object({
+  modes: z.array(
+    z.object({
+      mode: z.enum(['free', 'paid', 'local']),
+      profile: agentModeProfileSchema,
+      descriptionFa: z.string(),
+    })
+  ),
+});
+
+/** GET /api/agent/states initialContext — mirror of agent state-machine
+ * RunContext. blockReason is set only when a transition was blocked. */
+export const agentRunContextSchema = z.object({
+  repairAttempts: z.number(),
+  maxRepairAttempts: z.number(),
+  planApproved: z.boolean(),
+  deployApproved: z.boolean(),
+  securityGatePassed: z.boolean(),
+  verifyPassed: z.boolean(),
+  blockReason: z.string().optional(),
+});
+
+/** GET /api/agent/states envelope — initialContext rides along even though
+ * older client typings omitted it. */
+export const agentStatesResponseSchema = z.object({
+  states: z.array(z.string()),
+  terminal: z.array(z.string()),
+  initialState: z.string(),
+  initialContext: agentRunContextSchema,
+});
+
+/** GET /api/agent/prompts envelope. meta is free-form front matter. */
+export const agentPromptsResponseSchema = z.object({
+  count: z.number(),
+  prompts: z.array(
+    z.object({
+      file: z.string(),
+      meta: z.record(z.unknown()),
+    })
+  ),
+});
+
+// ── Fusion SSE frame ─────────────────────────────────────────────────────────
+
+/** One parsed frame of the fusion stream (server/src/routes/proxy.ts writes
+ * `data: {json}` frames): an additive `_fusion` panel/judge event (no
+ * `choices`, so standard OpenAI clients skip it), an `error` object, or an
+ * OpenAI-shaped `choices` delta. Only the lanes the Playground parses are
+ * modeled — base chunk fields (id/object/created/model, finish_reason, …) are
+ * ignored on purpose. Exercised end-to-end by the SSE stream probe. */
+export const fusionSseFrameSchema = z.object({
+  _fusion: z
+    .object({
+      event: z.string().optional(),
+      platform: z.string(),
+      model: z.string(),
+      status: z.enum(['ok', 'failed']).optional(),
+      content: z.string().optional(),
+      error: z.string().optional(),
+    })
+    .optional(),
+  error: z.object({ message: z.string() }).optional(),
+  choices: z
+    .array(z.object({ delta: z.object({ content: z.string().optional() }).optional() }))
+    .optional(),
+});
+
+export type EmbeddingsProviderEntry = z.infer<typeof embeddingsProviderSchema>;
+export type EmbeddingsFamily = z.infer<typeof embeddingsFamilySchema>;
+export type EmbeddingsData = z.infer<typeof embeddingsDataSchema>;
+export type EmbeddingsUsage = z.infer<typeof embeddingsUsageSchema>;
+export type AgentModeProfile = z.infer<typeof agentModeProfileSchema>;
+export type AgentModesResponse = z.infer<typeof agentModesResponseSchema>;
+export type AgentStatesResponse = z.infer<typeof agentStatesResponseSchema>;
+export type AgentPromptsResponse = z.infer<typeof agentPromptsResponseSchema>;
+export type FusionSseFrame = z.infer<typeof fusionSseFrameSchema>;

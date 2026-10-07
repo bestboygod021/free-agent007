@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft, Merge, Save, Split, Trash2 } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { apiFetch } from '@/lib/api'
+import type { UnifyOverrides } from '../../../shared/types'
 import { addAlias, aliasesFor, removeAlias } from '@/lib/alias-merge'
 import { Button } from '@/components/ui/button'
 import { ConfirmButton } from '@/components/confirm-button'
@@ -42,11 +43,6 @@ import {
 
 // The persisted unify overrides (see server model-groups.ts). `splits` forces a
 // "platform:model_id" member out of its computed group into its own entry.
-type UnifyOverrides = {
-  merges: { into: string; keys: string[] }[]
-  splits: { member: string; groupKey?: string }[]
-}
-
 // What the per-provider split control should do for one member row.
 export type SplitAction = {
   kind: 'split' | 'undo'

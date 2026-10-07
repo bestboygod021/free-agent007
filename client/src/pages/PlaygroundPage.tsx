@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, CircleAlert, FileText, X } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import type { ApiKeyResponse, FallbackEntry, FusionSseFrame } from '../../../shared/types'
 import { buildModelOptions } from '@/lib/model-groups'
 import type { Chain } from '@/components/chain-manager'
 import { Markdown } from '@/components/markdown'
@@ -66,20 +67,6 @@ import {
 } from '@/lib/playground-conversations'
 import { useI18n } from '@/i18n'
 
-interface FallbackEntry {
-  modelDbId: number
-  priority: number
-  enabled: boolean
-  platform: string
-  modelId: string
-  canonicalId?: string
-  displayName: string
-  sizeLabel: string
-  intelligenceRank: number
-  supportsVision: boolean
-  keyCount: number
-}
-
 // ChatMessage / FusionPanelEntry now live in lib/playground-conversations.ts:
 // the transcript is persisted, so its shape is shared with the storage layer
 // rather than owned by this component.
@@ -88,19 +75,6 @@ interface FallbackEntry {
 // a panel/judge event under `_fusion`, an `error` object, or an OpenAI-shaped
 // `choices` delta. Typed at the boundary so the frame loop below doesn't need
 // `any` — JSON.parse is the trust point, the shape is asserted there.
-interface FusionSseFrame {
-  _fusion?: {
-    event?: string
-    platform: string
-    model: string
-    status?: 'ok' | 'failed'
-    content?: string
-    error?: string
-  }
-  error?: { message: string }
-  choices?: { delta?: { content?: string } }[]
-}
-
 // Render a fusion panel/judge entry as "platform/model", but avoid doubling
 // the provider when the model id already carries it (e.g. openrouter/owl-alpha,
 // groq/compound) — those would otherwise read "openrouter/openrouter/owl-alpha".
@@ -280,7 +254,7 @@ export default function PlaygroundPage() {
     queryClient.invalidateQueries({ queryKey: ['playground-conversations'] })
   }
 
-  const { data: keyData } = useQuery<{ apiKey: string }>({
+  const { data: keyData } = useQuery<ApiKeyResponse>({
     queryKey: ['unified-key'],
     queryFn: () => apiFetch('/api/settings/api-key'),
   })
