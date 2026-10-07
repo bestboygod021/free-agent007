@@ -8,7 +8,12 @@
 // Login deliberately checks presence only: the server MATCHES addresses rather
 // than validating their format (the seeded desktop@localhost account has no
 // TLD — #807/#1250), so the form must not block what the API accepts.
-import { signupInputSchema } from '../../../shared/schemas'
+import {
+  changeEmailInputSchema,
+  changePasswordInputSchema,
+  resetPasswordInputSchema,
+  signupInputSchema,
+} from '../../../shared/schemas'
 
 export type AuthMode = 'setup' | 'login'
 export type AuthFieldErrorCode = 'required' | 'invalidEmail' | 'passwordTooShort' | null
@@ -37,4 +42,35 @@ export function authErrors(mode: AuthMode, email: string, password: string): Aut
       : null
 
   return { email: emailCode, password: passwordCode }
+}
+
+export type CredentialMode = 'password' | 'email'
+
+export type CredentialFieldErrors = {
+  current: AuthFieldErrorCode
+  value: AuthFieldErrorCode
+}
+
+/**
+ * Field codes for the change-credentials modal — same contract-first approach
+ * as authErrors(): the password floor and the email shape come from the shared
+ * changePasswordInputSchema/changeEmailInputSchema, not from hand-rolled
+ * checks beside them. The reset flow shares the floor via
+ * resetPasswordInputSchema (asserted in the tests).
+ */
+export function credentialErrors(mode: CredentialMode, currentPassword: string, value: string): CredentialFieldErrors {
+  const current = !currentPassword ? 'required' : null
+
+  const valueCode = !value.trim()
+    ? 'required'
+    : mode === 'password'
+      ? (!changePasswordInputSchema.shape.newPassword.safeParse(value).success ? 'passwordTooShort' : null)
+      : (!changeEmailInputSchema.shape.newEmail.safeParse(value).success ? 'invalidEmail' : null)
+
+  return { current, value: valueCode }
+}
+
+/** The reset form's floor, straight from the shared reset contract. */
+export function resetPasswordTooShort(newPassword: string): boolean {
+  return !resetPasswordInputSchema.shape.newPassword.safeParse(newPassword).success
 }

@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { isEmail } from '@/lib/validate'
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
 import type { AuthStatus } from '../../../shared/types'
 import { PASSWORD_MIN_LENGTH, type LoginInput, type SignupInput } from '../../../shared/schemas'
-import { authErrors } from '@/lib/auth-validation'
+import { authErrors, credentialErrors, resetPasswordTooShort } from '@/lib/auth-validation'
 
 // One floor for every password form in this file, taken from the shared
 // contract (signupInputSchema) instead of being hand-matched to the server.
@@ -215,7 +214,7 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
 
   const passwordError = !newPassword
     ? t('validation.required')
-    : newPassword.length < PASSWORD_MIN
+    : resetPasswordTooShort(newPassword)
       ? t('validation.passwordMin', { min: PASSWORD_MIN })
       : null
   const codeError = !resetCode.trim() ? t('validation.required') : null
@@ -343,14 +342,16 @@ export function ChangeCredentialsModal({ mode, onClose }: ChangeCredentialsModal
 
   const isPassword = mode === 'password'
 
-  const newValueError = !newValue.trim()
+  // Rules from the shared credential contracts; wording stays localized.
+  const { current: currentCode, value: valueCode } = credentialErrors(isPassword ? 'password' : 'email', currentPassword, newValue)
+  const newValueError = valueCode === 'required'
     ? t('validation.required')
-    : isPassword && newValue.length < PASSWORD_MIN
+    : valueCode === 'passwordTooShort'
       ? t('validation.passwordMin', { min: PASSWORD_MIN })
-      : !isPassword && !isEmail(newValue)
+      : valueCode === 'invalidEmail'
         ? t('validation.email')
         : null
-  const currentPwError = !currentPassword ? t('validation.required') : null
+  const currentPwError = currentCode === 'required' ? t('validation.required') : null
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()

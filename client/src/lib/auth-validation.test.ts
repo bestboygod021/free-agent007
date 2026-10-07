@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { PASSWORD_MIN_LENGTH, loginInputSchema, signupInputSchema } from '../../../shared/schemas'
-import { authErrors } from './auth-validation'
+import {
+  PASSWORD_MIN_LENGTH,
+  changeEmailInputSchema,
+  changePasswordInputSchema,
+  loginInputSchema,
+  resetPasswordInputSchema,
+  signupInputSchema,
+} from '../../../shared/schemas'
+import { authErrors, credentialErrors, resetPasswordTooShort } from './auth-validation'
 
 describe('authErrors (shared-contract-driven form rules)', () => {
   it('setup: rejects a malformed email and a short password, field by field', () => {
@@ -53,5 +60,39 @@ describe('authErrors (shared-contract-driven form rules)', () => {
       const schemaBlocks = !signupInputSchema.shape.email.safeParse(email).success
       expect(formBlocks, `email ${JSON.stringify(email)}: form=${formBlocks} schema=${schemaBlocks}`).toBe(schemaBlocks)
     }
+  })
+})
+
+describe('credentialErrors (change-credentials modal, shared contract)', () => {
+  it('password mode: current required, floor identical to changePasswordInputSchema', () => {
+    expect(credentialErrors('password', '', 'longenough1').current).toBe('required')
+    expect(credentialErrors('password', 'password123', '').value).toBe('required')
+
+    const exact = 'a'.repeat(PASSWORD_MIN_LENGTH)
+    expect(credentialErrors('password', 'password123', exact).value).toBeNull()
+    expect(credentialErrors('password', 'password123', 'a'.repeat(PASSWORD_MIN_LENGTH - 1)).value).toBe('passwordTooShort')
+    expect(changePasswordInputSchema.safeParse({ currentPassword: 'password123', newPassword: exact }).success).toBe(true)
+    expect(changePasswordInputSchema.safeParse({ currentPassword: 'password123', newPassword: 'a'.repeat(PASSWORD_MIN_LENGTH - 1) }).success).toBe(false)
+  })
+
+  it('email mode: format identical to changeEmailInputSchema', () => {
+    expect(credentialErrors('email', 'password123', 'ok@example.com').value).toBeNull()
+    expect(credentialErrors('email', 'password123', 'not-an-email').value).toBe('invalidEmail')
+    expect(credentialErrors('email', 'password123', '   ').value).toBe('required')
+    expect(changeEmailInputSchema.safeParse({ currentPassword: 'password123', newEmail: 'ok@example.com' }).success).toBe(true)
+    expect(changeEmailInputSchema.safeParse({ currentPassword: 'password123', newEmail: 'not-an-email' }).success).toBe(false)
+  })
+})
+
+describe('resetPasswordTooShort (forgot/reset form, shared contract)', () => {
+  it('floor matches resetPasswordInputSchema exactly, including the boundary', () => {
+    const exact = 'a'.repeat(PASSWORD_MIN_LENGTH)
+    expect(resetPasswordTooShort(exact)).toBe(false)
+    expect(resetPasswordTooShort('a'.repeat(PASSWORD_MIN_LENGTH - 1))).toBe(true)
+    expect(resetPasswordTooShort('')).toBe(true) // the schema rejects empty as well; the form reports "required" first
+
+    expect(resetPasswordInputSchema.safeParse({ resetCode: 'x', newPassword: exact }).success).toBe(true)
+    expect(resetPasswordInputSchema.safeParse({ resetCode: 'x', newPassword: 'a'.repeat(PASSWORD_MIN_LENGTH - 1) }).success).toBe(false)
+    expect(resetPasswordInputSchema.safeParse({ resetCode: '', newPassword: exact }).success).toBe(false)
   })
 })

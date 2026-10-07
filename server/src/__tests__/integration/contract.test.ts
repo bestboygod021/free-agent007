@@ -75,6 +75,10 @@ import {
   apiKeyPlatformSchema,
   addApiKeySchema,
   updateApiKeySchema,
+  importKeysRequestSchema,
+  changePasswordInputSchema,
+  changeEmailInputSchema,
+  resetPasswordInputSchema,
 } from '@freellmapi/shared/schemas.js';
 
 // Contract test: the shared Zod schemas (shared/schemas.ts) must parse the
@@ -809,6 +813,98 @@ describe('input contracts: profiles PUT, conversation PATCH, logs query', () => 
   });
 });
 
+  // ═══════════════════ Turn 12: credential and import bodies ═══════════════════
+  // Placed BEFORE the turn-10 block on purpose: that block unclaims the
+  // database (DELETE sessions/users) to reach /setup, so every gated sample
+  // must run while the seeded session and key id 1 still exist.
+  describe('input contracts: credential and import bodies', () => {
+    it('change-password: field floors first, then credentials (403), both sides', async () => {
+      const noCurrent = { currentPassword: '', newPassword: 'longenough1' };
+      const s1 = await req(app, 'POST', '/api/auth/change-password', noCurrent);
+      expect(s1.status).toBe(400);
+      expect(errorResponseSchema.parse(s1.body).error.message).toContain('Current password is required');
+      expect(changePasswordInputSchema.safeParse(noCurrent).success).toBe(false);
+
+      const shortNew = { currentPassword: 'password123', newPassword: 'short' };
+      const s2 = await req(app, 'POST', '/api/auth/change-password', shortNew);
+      expect(s2.status).toBe(400);
+      expect(errorResponseSchema.parse(s2.body).error.message).toContain('Password must be at least 8 characters');
+      expect(changePasswordInputSchema.safeParse(shortNew).success).toBe(false);
+
+      // Schema passes → the handler reaches the credential check and says no
+      // with 403 (never 400). One wrong attempt per endpoint stays below the
+      // 3-strike session revoke.
+      const wrongPw = { currentPassword: 'definitely-not-it', newPassword: 'longenough1' };
+      expect(changePasswordInputSchema.safeParse(wrongPw).success).toBe(true);
+      const s3 = await req(app, 'POST', '/api/auth/change-password', wrongPw);
+      expect(s3.status).toBe(403);
+      expect(errorResponseSchema.parse(s3.body).error.message).toContain('Current password is incorrect');
+    });
+
+    it('change-email: presence + format first, then credentials (403), both sides', async () => {
+      const noCurrent = { currentPassword: '', newEmail: 'fresh@local.dev' };
+      const s1 = await req(app, 'POST', '/api/auth/change-email', noCurrent);
+      expect(s1.status).toBe(400);
+      expect(errorResponseSchema.parse(s1.body).error.message).toContain('Current password is required');
+      expect(changeEmailInputSchema.safeParse(noCurrent).success).toBe(false);
+
+      const badEmail = { currentPassword: 'password123', newEmail: 'not-an-email' };
+      const s2 = await req(app, 'POST', '/api/auth/change-email', badEmail);
+      expect(s2.status).toBe(400);
+      expect(errorResponseSchema.parse(s2.body).error.message).toContain('A valid email is required');
+      expect(changeEmailInputSchema.safeParse(badEmail).success).toBe(false);
+
+      const wrongPw = { currentPassword: 'definitely-not-it', newEmail: 'fresh@local.dev' };
+      expect(changeEmailInputSchema.safeParse(wrongPw).success).toBe(true);
+      const s3 = await req(app, 'POST', '/api/auth/change-email', wrongPw);
+      expect(s3.status).toBe(403);
+    });
+
+    it('reset-password: presence + floor first, then code lookup (403), both sides', async () => {
+      const noCode = { resetCode: '', newPassword: 'longenough1' };
+      const s1 = await req(app, 'POST', '/api/auth/reset-password', noCode);
+      expect(s1.status).toBe(400);
+      expect(errorResponseSchema.parse(s1.body).error.message).toContain('Reset code is required');
+      expect(resetPasswordInputSchema.safeParse(noCode).success).toBe(false);
+
+      const shortNew = { resetCode: 'whatever', newPassword: 'short' };
+      const s2 = await req(app, 'POST', '/api/auth/reset-password', shortNew);
+      expect(s2.status).toBe(400);
+      expect(errorResponseSchema.parse(s2.body).error.message).toContain('Password must be at least 8 characters');
+      expect(resetPasswordInputSchema.safeParse(shortNew).success).toBe(false);
+
+      // Body valid → the handler moves on to the (failing) code check: 403, not 400.
+      const badCode = { resetCode: 'not-a-real-code', newPassword: 'longenough1' };
+      expect(resetPasswordInputSchema.safeParse(badCode).success).toBe(true);
+      const s3 = await req(app, 'POST', '/api/auth/reset-password', badCode);
+      expect(s3.status).toBe(403);
+      expect(errorResponseSchema.parse(s3.body).error.message).toContain('Invalid or expired reset code');
+    });
+
+    it('POST /api/keys/import-selected: single-key contract in its request wrapper', async () => {
+      const badPlatform = { keys: [{ platform: 'not-a-platform', keyValue: 'x' }] };
+      const s1 = await req(app, 'POST', '/api/keys/import-selected', badPlatform);
+      expect(s1.status).toBe(400);
+      expect(errorResponseSchema.parse(s1.body).error.message).toContain('Invalid enum value');
+      expect(importKeysRequestSchema.safeParse(badPlatform).success).toBe(false);
+
+      const emptyValue = { keys: [{ platform: 'groq', keyValue: '' }] };
+      const s2 = await req(app, 'POST', '/api/keys/import-selected', emptyValue);
+      expect(s2.status).toBe(400);
+      expect(errorResponseSchema.parse(s2.body).error.message).toContain('String must contain at least 1 character(s)');
+      expect(importKeysRequestSchema.safeParse(emptyValue).success).toBe(false);
+
+      const tooMany = { keys: Array.from({ length: 101 }, (_, i) => ({ platform: 'groq', keyValue: `k${i}` })) };
+      const s3 = await req(app, 'POST', '/api/keys/import-selected', tooMany);
+      expect(s3.status).toBe(400);
+      expect(importKeysRequestSchema.safeParse(tooMany).success).toBe(false);
+
+      const valid = { keys: [{ platform: 'groq', keyValue: 'gsk_import_contract_twelve', keyName: 'Contract Import' }] };
+      expect(importKeysRequestSchema.safeParse(valid).success).toBe(true);
+      const s4 = await req(app, 'POST', '/api/keys/import-selected', valid);
+      expect(s4.status).toBe(200);
+    });
+  });
   // ═════════════════════ Turn 10: auth and key body contracts ═════════════════════
   // Ordering: the key/login samples run against the seeded database (session,
   // key id 1); the setup samples unclaim it first, because mintDashboardToken

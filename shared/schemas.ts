@@ -1310,3 +1310,45 @@ export type SignupInput = z.infer<typeof signupInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;
 export type AddApiKeyInput = z.infer<typeof addApiKeySchema>;
 export type UpdateApiKeyInput = z.infer<typeof updateApiKeySchema>;
+
+// ═════════════════════ Import body (POST /api/keys/import-selected) ═════════════════════
+// Mirrors routes/keys.ts: the route wraps `importKeySchema` in a max-100 array.
+// `keyValue` is a presence floor only — the endpoint deals in already-decided
+// credentials, not in shaping them.
+export const importApiKeySchema = z.object({
+  keyName: z.string().optional(),
+  keyValue: z.string().min(1),
+  platform: apiKeyPlatformSchema,
+  baseUrl: z.string().optional(),
+  models: z.array(z.object({
+    id: z.string().min(1),
+    supportsTools: z.boolean().optional(),
+    supportsVision: z.boolean().optional(),
+  })).max(200).optional(),
+});
+
+export const importKeysRequestSchema = z.object({
+  keys: z.array(importApiKeySchema).max(100),
+});
+
+// ═════════════════════ Credential bodies (change/reset password, change email) ═════════════════════
+export const changePasswordInputSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`),
+});
+
+export const changeEmailInputSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newEmail: z.string().email('A valid email is required'),
+});
+
+export const resetPasswordInputSchema = z.object({
+  resetCode: z.string().min(1, 'Reset code is required'),
+  newPassword: z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`),
+});
+
+export type ImportApiKeyInput = z.infer<typeof importApiKeySchema>;
+export type ImportKeysRequest = z.infer<typeof importKeysRequestSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
+export type ChangeEmailInput = z.infer<typeof changeEmailInputSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordInputSchema>;
