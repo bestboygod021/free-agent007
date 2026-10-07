@@ -1,5 +1,6 @@
-import { lazy, Suspense, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
+import { prefetchHandlers, prefetchRoute, prefetchRoutes, prefetchWhenIdle, registerRouteLoaders } from '@/lib/route-prefetch'
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ChevronDown, KeyRound, Loader2, LogOut, Menu, MoreHorizontal, Search, Settings, Sparkles } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
@@ -30,23 +31,68 @@ import { ThemeProvider } from '@/theme'
 // so the entry bundle is the shell (nav, providers, dialogs, i18n runtime) and
 // heavy page graphs follow their route — recharts rides with AnalyticsPage's
 // chunk only, never the first paint.
-const KeysPage = lazy(() => import('@/pages/KeysPage'))
-const PlaygroundPage = lazy(() => import('@/pages/PlaygroundPage'))
-const FallbackPage = lazy(() => import('@/pages/FallbackPage'))
-const ModelDetailPage = lazy(() => import('@/pages/ModelDetailPage'))
-const FusionPage = lazy(() => import('@/pages/FusionPage'))
-const EmbeddingsPage = lazy(() => import('@/pages/EmbeddingsPage'))
-const ImagePage = lazy(() => import('@/pages/ImagePage'))
-const VideoPage = lazy(() => import('@/pages/VideoPage'))
-const AudioPage = lazy(() => import('@/pages/AudioPage'))
-const MediaDetailPage = lazy(() => import('@/pages/MediaDetailPage'))
-const EmbeddingDetailPage = lazy(() => import('@/pages/EmbeddingDetailPage'))
-const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'))
-const LogsPage = lazy(() => import('@/pages/LogsPage'))
-const PremiumPage = lazy(() => import('@/pages/PremiumPage'))
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
-const AgentsPage = lazy(() => import('@/pages/AgentsPage'))
-const ForgePilotPage = lazy(() => import('@/pages/ForgePilotPage'))
+// One loader per page. React.lazy consumes it directly, and the SAME function
+// is registered with lib/route-prefetch so a nav hover can warm the chunk before
+// the click lands — the module map caches the import, so nothing is fetched twice.
+const loadKeysPage = () => import('@/pages/KeysPage')
+const loadPlaygroundPage = () => import('@/pages/PlaygroundPage')
+const loadFallbackPage = () => import('@/pages/FallbackPage')
+const loadModelDetailPage = () => import('@/pages/ModelDetailPage')
+const loadFusionPage = () => import('@/pages/FusionPage')
+const loadEmbeddingsPage = () => import('@/pages/EmbeddingsPage')
+const loadImagePage = () => import('@/pages/ImagePage')
+const loadVideoPage = () => import('@/pages/VideoPage')
+const loadAudioPage = () => import('@/pages/AudioPage')
+const loadMediaDetailPage = () => import('@/pages/MediaDetailPage')
+const loadEmbeddingDetailPage = () => import('@/pages/EmbeddingDetailPage')
+const loadAnalyticsPage = () => import('@/pages/AnalyticsPage')
+const loadLogsPage = () => import('@/pages/LogsPage')
+const loadPremiumPage = () => import('@/pages/PremiumPage')
+const loadNotFoundPage = () => import('@/pages/NotFoundPage')
+const loadAgentsPage = () => import('@/pages/AgentsPage')
+const loadForgePilotPage = () => import('@/pages/ForgePilotPage')
+
+const KeysPage = lazy(loadKeysPage)
+const PlaygroundPage = lazy(loadPlaygroundPage)
+const FallbackPage = lazy(loadFallbackPage)
+const ModelDetailPage = lazy(loadModelDetailPage)
+const FusionPage = lazy(loadFusionPage)
+const EmbeddingsPage = lazy(loadEmbeddingsPage)
+const ImagePage = lazy(loadImagePage)
+const VideoPage = lazy(loadVideoPage)
+const AudioPage = lazy(loadAudioPage)
+const MediaDetailPage = lazy(loadMediaDetailPage)
+const EmbeddingDetailPage = lazy(loadEmbeddingDetailPage)
+const AnalyticsPage = lazy(loadAnalyticsPage)
+const LogsPage = lazy(loadLogsPage)
+const PremiumPage = lazy(loadPremiumPage)
+const NotFoundPage = lazy(loadNotFoundPage)
+const AgentsPage = lazy(loadAgentsPage)
+const ForgePilotPage = lazy(loadForgePilotPage)
+
+// Nav destinations -> their chunk loader. Detail pages (/:id) are reached from
+// list rows, never from the nav, so they are deliberately not registered.
+registerRouteLoaders({
+  '/models': loadFallbackPage,
+  '/models/chat': loadFallbackPage,
+  '/models/embeddings': loadEmbeddingsPage,
+  '/models/image': loadImagePage,
+  '/models/video': loadVideoPage,
+  '/models/audio': loadAudioPage,
+  '/models/fusion': loadFusionPage,
+  '/playground': loadPlaygroundPage,
+  '/keys': loadKeysPage,
+  '/agents': loadAgentsPage,
+  '/forgepilot': loadForgePilotPage,
+  '/analytics': loadAnalyticsPage,
+  '/logs': loadLogsPage,
+  '/premium': loadPremiumPage,
+})
+
+// The heavy chunks, warmed once the browser is idle after first paint: Analytics
+// is ~400 kB (recharts+d3) and Keys/Playground ~110-120 kB each, which is exactly
+// the first-click stall this removes. Light pages load on demand as before.
+const IDLE_WARM_ROUTES = ['/analytics', '/keys', '/playground'] as const
 
 // Every failed mutation surfaces as an error toast, so no action fails
 // silently. A page that already shows the failure inline can opt out with
@@ -134,6 +180,7 @@ function NavItem({ to, children }: { to: string; children: React.ReactNode }) {
   return (
     <NavLink
       to={to}
+      {...prefetchHandlers(to)}
       className={({ isActive }) =>
         `relative text-sm px-1 py-4 transition-colors ${
           isActive
@@ -278,13 +325,18 @@ function Navbar() {
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       aria-label={t(menu.ariaKey)}
+                      onMouseEnter={() => prefetchRoutes(menu.items.map((entry) => entry.to))}
                       className="rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <ChevronDown className="size-3.5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-44">
                       {menu.items.map((entry) => (
-                        <DropdownMenuItem key={entry.to} onClick={() => navigate(entry.to)}>
+                        <DropdownMenuItem
+                          key={entry.to}
+                          onClick={() => navigate(entry.to)}
+                          onMouseEnter={() => prefetchRoute(entry.to)}
+                        >
                           {t(entry.labelKey)}
                         </DropdownMenuItem>
                       ))}
@@ -349,13 +401,18 @@ function Navbar() {
                     return menu ? (
                       <DropdownMenuSub key={item.to}>
                         <DropdownMenuSubTrigger
+                          onMouseEnter={() => prefetchRoutes(menu.items.map((entry) => entry.to))}
                           className={menu.isActive(location.pathname) ? 'bg-accent text-accent-foreground font-medium' : undefined}
                         >
                           {t(item.labelKey)}
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           {menu.items.map((entry) => (
-                            <DropdownMenuItem key={entry.to} onClick={() => navigate(entry.to)}>
+                            <DropdownMenuItem
+                              key={entry.to}
+                              onClick={() => navigate(entry.to)}
+                              onMouseEnter={() => prefetchRoute(entry.to)}
+                            >
                               {t(entry.labelKey)}
                             </DropdownMenuItem>
                           ))}
@@ -365,6 +422,7 @@ function Navbar() {
                       <DropdownMenuItem
                         key={item.to}
                         onClick={() => navigate(item.to)}
+                        onMouseEnter={() => prefetchRoute(item.to)}
                         className={location.pathname === item.to ? 'bg-accent text-accent-foreground font-medium' : undefined}
                       >
                         {t(item.labelKey)}
@@ -463,6 +521,10 @@ function RouteFallback() {
 }
 
 function App() {
+  useEffect(() => {
+    prefetchWhenIdle(IDLE_WARM_ROUTES)
+  }, [])
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
