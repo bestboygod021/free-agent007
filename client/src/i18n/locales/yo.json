@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Opoponago iye — gbìyànjú lẹ́yìn {n}s",
+    "countdownMin": "Opoponago iye — gbìyànjú lẹ́yìn {m}m",
+    "countdownMinSec": "Opoponago iye — gbìyànjú lẹ́yìn {m}m {s}s",
+    "ready": "Opoponago iye — gbìyànjú báyì",
+    "retryNow": "Gbìyànjú báyì",
+    "retried": "A ti gbìyànjú àtúnṣe — aṣeyọrí ni ìfẹ́"
   }
 }

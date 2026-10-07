@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Batas laju — coba lagi dalam {n}d",
+    "countdownMin": "Batas laju — coba lagi dalam {m}m",
+    "countdownMinSec": "Batas laju — coba lagi dalam {m}m {s}d",
+    "ready": "Batas laju — coba sekarang",
+    "retryNow": "Coba sekarang",
+    "retried": "Dicoba ulang — permintaan berhasil"
   }
 }

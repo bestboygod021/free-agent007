@@ -1230,5 +1230,13 @@
       "paid": "Kostenpflichtig",
       "local": "Lokal"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Ratenlimit — in {n}s erneut versuchen",
+    "countdownMin": "Ratenlimit — in {m}m erneut versuchen",
+    "countdownMinSec": "Ratenlimit — in {m}m {s}s erneut versuchen",
+    "ready": "Ratenlimit — jetzt erneut versuchen",
+    "retryNow": "Jetzt erneut versuchen",
+    "retried": "Erneut versucht — Anfrage erfolgreich"
   }
 }

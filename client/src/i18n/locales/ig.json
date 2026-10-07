@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Oke oge — nwalee ọzọ {n}s",
+    "countdownMin": "Oke oge — nwalee ọzọ {m}m",
+    "countdownMinSec": "Oke oge — nwalee ọzọ {m}m {s}s",
+    "ready": "Oke oge — nwalee ugbu a",
+    "retryNow": "Nwalee ugbu a",
+    "retried": "E nwala ọzọ — arụrụọ nọrọ mma"
   }
 }

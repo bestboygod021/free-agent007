@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Tezlik chegarasi — {n} soniyadan keyin qayta urinish",
+    "countdownMin": "Tezlik chegarasi — {m} daqiqadan keyin qayta urinish",
+    "countdownMinSec": "Tezlik chegarasi — {m} daqiqa {s} soniyadan keyin qayta urinish",
+    "ready": "Tezlik chegarasi — hozir qayta urinish",
+    "retryNow": "Hozir qayta urinish",
+    "retried": "Qayta urinildi — so'rov muvaffaqiyatli"
   }
 }

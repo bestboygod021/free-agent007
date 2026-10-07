@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "הגבלת קצב — נסה שוב בעוד {n}שנ",
+    "countdownMin": "הגבלת קצב — נסה שוב בעוד {m}דק",
+    "countdownMinSec": "הגבלת קצב — נסה שוב בעוד {m}דק {s}שנ",
+    "ready": "הגבלת קצב — נסה שוב עכשיו",
+    "retryNow": "נסה שוב עכשיו",
+    "retried": "נסה שוב — הבקשה הצליחה"
   }
 }

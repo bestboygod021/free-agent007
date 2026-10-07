@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Sebességkorlát — újrapróbálás {n} múlva",
+    "countdownMin": "Sebességkorlát — újrapróbálás {m} múlva",
+    "countdownMinSec": "Sebességkorlát — újrapróbálás {m} múlva {s} mp múlva",
+    "ready": "Sebességkorlát — újrapróbálás most",
+    "retryNow": "Újrapróbálás most",
+    "retried": "Újrapróbálva — a kérés sikeres"
   }
 }

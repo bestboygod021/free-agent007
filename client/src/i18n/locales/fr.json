@@ -1230,5 +1230,13 @@
       "paid": "Payant",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Limite de débit — réessayer dans {n}s",
+    "countdownMin": "Limite de débit — réessayer dans {m}m",
+    "countdownMinSec": "Limite de débit — réessayer dans {m}m {s}s",
+    "ready": "Limite de débit — réessayer maintenant",
+    "retryNow": "Réessayer maintenant",
+    "retried": "Réessai effectué — requête réussie"
   }
 }

@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Kikomo cha muda — jaribu tena baada ya {n}s",
+    "countdownMin": "Kikomo cha muda — jaribu tena baada ya {m}m",
+    "countdownMinSec": "Kikomo cha muda — jaribu tena baada ya {m}m {s}s",
+    "ready": "Kikomo cha muda — jaribu sasa",
+    "retryNow": "Jaribu sasa",
+    "retried": "Imajaribiwa tena — ombi limefanikiwa"
   }
 }

@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Limite di richieste — riprova tra {n}s",
+    "countdownMin": "Limite di richieste — riprova tra {m}m",
+    "countdownMinSec": "Limite di richieste — riprova tra {m}m {s}s",
+    "ready": "Limite di richieste — riprova ora",
+    "retryNow": "Riprova ora",
+    "retried": "Riprovato — richiesta riuscita"
   }
 }

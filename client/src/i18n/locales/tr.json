@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Hız sınırı — {n} sn içinde tekrar dene",
+    "countdownMin": "Hız sınırı — {m} dk içinde tekrar dene",
+    "countdownMinSec": "Hız sınırı — {m} dk {s} sn içinde tekrar dene",
+    "ready": "Hız sınırı — şimdi tekrar dene",
+    "retryNow": "Şimdi tekrar dene",
+    "retried": "Tekrar denendi — istek başarılı"
   }
 }

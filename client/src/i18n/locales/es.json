@@ -1230,5 +1230,13 @@
       "paid": "De pago",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Límite de tasa — reintentar en {n}s",
+    "countdownMin": "Límite de tasa — reintentar en {m}m",
+    "countdownMinSec": "Límite de tasa — reintentar en {m}m {s}s",
+    "ready": "Límite de tasa — reintentar ahora",
+    "retryNow": "Reintentar ahora",
+    "retried": "Reintentado — solicitud exitosa"
   }
 }

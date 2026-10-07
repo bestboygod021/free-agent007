@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Snelheidslimiet — opnieuw proberen over {n}s",
+    "countdownMin": "Snelheidslimiet — opnieuw proberen over {m}m",
+    "countdownMinSec": "Snelheidslimiet — opnieuw proberen over {m}m {s}s",
+    "ready": "Snelheidslimiet — nu opnieuw proberen",
+    "retryNow": "Nu opnieuw proberen",
+    "retried": "Opnieuw geprobeerd — verzoek geslaagd"
   }
 }

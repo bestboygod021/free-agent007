@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Iyakar hawa — sake gwadawa bayan {n}s",
+    "countdownMin": "Iyakar hawa — sake gwadawa bayan {m}m",
+    "countdownMinSec": "Iyakar hawa — sake gwadawa bayan {m}m {s}s",
+    "ready": "Iyakar hawa — sake gwadawa yanzu",
+    "retryNow": "Sake gwadawa yanzu",
+    "retried": "An sake gwadawa — an sami nasara"
   }
 }

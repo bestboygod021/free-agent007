@@ -15,6 +15,7 @@ import {
 
 import en from './locales/en.json'
 import { I18nContext, type I18nContextValue } from './context'
+import { syncRuntimeLocale } from './translate'
 import {
   DEFAULT_LOCALE,
   RTL_LOCALES,
@@ -123,6 +124,13 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
     document.documentElement.lang = locale
     document.documentElement.dir = RTL_LOCALES.has(locale) ? 'rtl' : 'ltr'
   }, [locale])
+
+  // Mirror the active locale + dictionary into the non-React translate surface
+  // so library code outside the tree (the 429 countdown in api.ts) renders the
+  // same words and digits as the UI.
+  useEffect(() => {
+    syncRuntimeLocale(locale, dictionary)
+  }, [locale, dictionary])
 
   useEffect(() => {
     const load = localeLoaders[locale]

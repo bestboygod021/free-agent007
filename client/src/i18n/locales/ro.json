@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Limită de rată — reîncearcă în {n}s",
+    "countdownMin": "Limită de rată — reîncearcă în {m}m",
+    "countdownMinSec": "Limită de rată — reîncearcă în {m}m {s}s",
+    "ready": "Limită de rată — reîncearcă acum",
+    "retryNow": "Reîncearcă acum",
+    "retried": "Reîncercat — cererea a reușit"
   }
 }

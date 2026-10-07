@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Hastighedsgrænse — prøv igen om {n}s",
+    "countdownMin": "Hastighedsgrænse — prøv igen om {m}m",
+    "countdownMinSec": "Hastighedsgrænse — prøv igen om {m}m {s}s",
+    "ready": "Hastighedsgrænse — prøv igen nu",
+    "retryNow": "Prøv igen nu",
+    "retried": "Prøvet igen — anmodningen lykkedes"
   }
 }

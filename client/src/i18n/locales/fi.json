@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Nopeusraja — yritä uudelleen {n} s kuluttua",
+    "countdownMin": "Nopeusraja — yritä uudelleen {m} min kuluttua",
+    "countdownMinSec": "Nopeusraja — yritä uudelleen {m} min {s} s kuluttua",
+    "ready": "Nopeusraja — yritä nyt",
+    "retryNow": "Yritä uudelleen",
+    "retried": "Yritetty uudelleen — pyyntö onnistui"
   }
 }

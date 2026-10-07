@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Limit rychlosti — zkusit znovu za {n}s",
+    "countdownMin": "Limit rychlosti — zkusit znovu za {m}m",
+    "countdownMinSec": "Limit rychlosti — zkusit znovu za {m}m {s}s",
+    "ready": "Limit rychlosti — zkusit nyní",
+    "retryNow": "Zkusit znovu",
+    "retried": "Zkoušeno znovu — požadavek úspěšný"
   }
 }

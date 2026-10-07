@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Had kadar — cuba lagi dalam {n}s",
+    "countdownMin": "Had kadar — cuba lagi dalam {m}m",
+    "countdownMinSec": "Had kadar — cuba lagi dalam {m}m {s}s",
+    "ready": "Had kadar — cuba sekarang",
+    "retryNow": "Cuba sekarang",
+    "retried": "Dicuba semula — permintaan berjaya"
   }
 }

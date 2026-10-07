@@ -1230,5 +1230,13 @@
       "paid": "有料",
       "local": "ローカル"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "レート制限 — {n}秒後に再試行",
+    "countdownMin": "レート制限 — {m}分後に再試行",
+    "countdownMinSec": "レート制限 — {m}分{s}秒後に再試行",
+    "ready": "レート制限 — 今すぐ再試行",
+    "retryNow": "今すぐ再試行",
+    "retried": "再試行しました — リクエスト成功"
   }
 }

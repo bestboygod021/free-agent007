@@ -1,5 +1,6 @@
 import type { ErrorResponse } from '../../../shared/types'
-import { getToasts, toast, updateToast } from './toast'
+import { getToasts, toast, updateToast, type ToastAction } from './toast'
+import { formatCount, translate } from '../i18n/translate'
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 const TOKEN_KEY = 'freellmapi_dashboard_token';
@@ -50,22 +51,62 @@ export function parseRetryAfter(value: string | null, now: number = Date.now()):
   return Math.max(1, Math.ceil((at - now) / 1000));
 }
 
+// The label is fully localized: the dictionary carries the phrasing per locale
+// and formatCount renders the digits the locale expects (۷ in fa, ٧ in ar, …).
 const retryWaitLabel = (seconds: number): string => {
-  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 60) return translate('rateLimit.countdownSec', { n: formatCount(seconds) });
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;
-  return rest === 0 ? `${minutes}m` : `${minutes}m ${rest}s`;
+  return rest === 0
+    ? translate('rateLimit.countdownMin', { m: formatCount(minutes) })
+    : translate('rateLimit.countdownMinSec', { m: formatCount(minutes), s: formatCount(rest) });
 };
+
+/** Extra seconds the finished countdown stays on screen so the now-enabled
+ *  "Retry now" button has a usable window before the toast auto-dismisses. */
+const READY_GRACE_SEC = 10;
+
+/** Dispatched after the toast's retry button successfully re-runs the request
+ *  that hit the 429 — App listens and refetches so the UI shows the data the
+ *  opened window just allowed through. */
+export const RETRY_SUCCEEDED_EVENT = 'freellmapi:retry-succeeded';
+
+async function runRetry(retry: () => Promise<unknown>): Promise<void> {
+  try {
+    await retry();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(RETRY_SUCCEEDED_EVENT));
+    }
+    toast.success(translate('rateLimit.retried'));
+  } catch (e) {
+    const err = e as ApiError;
+    // A fresh 429 already started its own countdown (or, without Retry-After,
+    // surfaced as a plain error toast elsewhere) — do not double-report.
+    if (err?.status === 429) return;
+    toast.error(e instanceof Error ? e.message : String(e));
+  }
+}
 
 // One live countdown at a time: further 429s while it ticks are ignored, so a
 // polling query can't stack a new toast every interval.
 let countdown: { id: number; timer: ReturnType<typeof setInterval> } | null = null;
 
-function startRetryCountdown(seconds: number): void {
+function startRetryCountdown(seconds: number, retry?: () => Promise<unknown>): void {
   if (countdown && getToasts().some(t => t.id === countdown!.id)) return;
   if (countdown) clearInterval(countdown.timer);
   let remaining = seconds;
-  const id = toast.info(`Rate limited — retry in ${retryWaitLabel(remaining)}`, seconds * 1000);
+  // The action is born disabled: retrying before the window opens is a
+  // guaranteed second 429. At zero the tick below flips it live.
+  const action: ToastAction | undefined = retry
+    ? {
+        label: translate('rateLimit.retryNow'),
+        disabled: true,
+        onClick: () => void runRetry(retry),
+      }
+    : undefined;
+  // retryWaitLabel already renders the full localized sentence (the dictionary
+  // carries the "Rate limited —" phrasing), so it is the message verbatim.
+  const id = toast.info(retryWaitLabel(remaining), (seconds + READY_GRACE_SEC) * 1000, action);
   const stop = () => {
     clearInterval(timer);
     if (countdown?.timer === timer) countdown = null;
@@ -74,13 +115,17 @@ function startRetryCountdown(seconds: number): void {
     if (!getToasts().some(t => t.id === id)) return stop(); // user dismissed
     remaining -= 1;
     if (remaining <= 0) {
-      // The Toaster's own duration timer dismisses at the same wall-clock
-      // moment (and pauses on hover, like every other toast); this line just
-      // keeps the text honest while that timer is suspended.
-      updateToast(id, 'Rate limited — retry now');
+      // The Toaster's own duration timer keeps running (with the READY_GRACE_SEC
+      // headroom, pausing on hover like every toast); this line flips the copy
+      // to the ready state and arms the retry button.
+      updateToast(
+        id,
+        translate('rateLimit.ready'),
+        action ? { ...action, disabled: false } : undefined,
+      );
       return stop();
     }
-    updateToast(id, `Rate limited — retry in ${retryWaitLabel(remaining)}`);
+    updateToast(id, retryWaitLabel(remaining));
   }, 1000);
   countdown = { id, timer };
 }
@@ -131,7 +176,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
       const retryAfterSec = parseRetryAfter(res.headers.get('Retry-After'));
       if (retryAfterSec !== null) {
         err.retryAfterSec = retryAfterSec;
-        startRetryCountdown(retryAfterSec);
+        startRetryCountdown(retryAfterSec, () => apiFetch(path, options));
       }
     }
     throw err;

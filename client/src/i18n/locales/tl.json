@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Limit ng rate — subukan muli sa {n}s",
+    "countdownMin": "Limit ng rate — subukan muli sa {m}m",
+    "countdownMinSec": "Limit ng rate — subukan muli sa {m}m {s}s",
+    "ready": "Limit ng rate — subukan ngayon",
+    "retryNow": "Subukan ngayon",
+    "retried": "Na-subukan muli — matagumpay ang request"
   }
 }

@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Sürət limiti — {n} saniyə sonra yenidən cəhd edin",
+    "countdownMin": "Sürət limiti — {m} dəqiqə sonra yenidən cəhd edin",
+    "countdownMinSec": "Sürət limiti — {m} dəqiqə {s} saniyə sonra yenidən cəhd edin",
+    "ready": "Sürət limiti — indi yenidən cəhd edin",
+    "retryNow": "İndi yenidən cəhd edin",
+    "retried": "Yenidən cəhd edildi — sorğu uğurlu oldu"
   }
 }

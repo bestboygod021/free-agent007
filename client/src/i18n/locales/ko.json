@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "속도 제한 — {n}초 후 재시도",
+    "countdownMin": "속도 제한 — {m}분 후 재시도",
+    "countdownMinSec": "속도 제한 — {m}분 {s}초 후 재시도",
+    "ready": "속도 제한 — 지금 재시도",
+    "retryNow": "지금 재시도",
+    "retried": "재시도됨 — 요청 성공"
   }
 }

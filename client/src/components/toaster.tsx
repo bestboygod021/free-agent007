@@ -70,6 +70,21 @@ function Toast({ toast }: { toast: ToastItem }) {
     >
       <Icon className={`mt-0.5 size-4 shrink-0 ${ICON_CLASS[toast.kind]}`} />
       <p className="min-w-0 flex-1 break-words text-sm leading-snug">{toast.message}</p>
+      {toast.action && (
+        <button
+          type="button"
+          disabled={toast.action.disabled}
+          onClick={() => {
+            const action = toast.action
+            if (!action || action.disabled) return
+            dismissToast(toast.id)
+            action.onClick()
+          }}
+          className="shrink-0 self-center whitespace-nowrap rounded-md border px-2 py-1 text-xs font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {toast.action.label}
+        </button>
+      )}
       <button
         type="button"
         aria-label={t('common.dismiss')}

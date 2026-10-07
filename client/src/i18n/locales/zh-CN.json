@@ -1230,5 +1230,13 @@
       "paid": "付费",
       "local": "本地"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "已限流 — {n} 秒后重试",
+    "countdownMin": "已限流 — {m} 分钟后重试",
+    "countdownMinSec": "已限流 — {m} 分 {s} 秒后重试",
+    "ready": "已限流 — 现在重试",
+    "retryNow": "立即重试",
+    "retried": "已重新尝试 — 请求成功"
   }
 }

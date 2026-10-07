@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Greičio riba — bandykite dar kartą po {n}sek",
+    "countdownMin": "Greičio riba — bandykite dar kartą po {m}min",
+    "countdownMinSec": "Greičio riba — bandykite dar kartą po {m}min {s}sek",
+    "ready": "Greičio riba — bandykite dabar",
+    "retryNow": "Bandykite dar kartą",
+    "retried": "Bandyta dar kartą — užklausa sėkminga"
   }
 }

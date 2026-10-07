@@ -1230,5 +1230,13 @@
       "paid": "Paid",
       "local": "Local"
     }
+  },
+  "rateLimit": {
+    "countdownSec": "Giới hạn tốc độ — thử lại sau {n}giây",
+    "countdownMin": "Giới hạn tốc độ — thử lại sau {m}phút",
+    "countdownMinSec": "Giới hạn tốc độ — thử lại sau {m}phút {s}giây",
+    "ready": "Giới hạn tốc độ — thử lại ngay",
+    "retryNow": "Thử lại ngay",
+    "retried": "Đã thử lại — yêu cầu thành công"
   }
 }

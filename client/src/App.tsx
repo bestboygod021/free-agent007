@@ -24,7 +24,7 @@ import { Toaster } from '@/components/toaster'
 import { UpdateReminder } from '@/components/update-reminder'
 import { usePremium } from '@/hooks/use-premium'
 import { I18nProvider, useI18n } from '@/i18n'
-import { hasRetryCountdown, logout } from '@/lib/api'
+import { hasRetryCountdown, logout, RETRY_SUCCEEDED_EVENT } from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { ThemeProvider } from '@/theme'
 // Route-level code split: every page loads on navigation instead of at boot,
@@ -523,6 +523,17 @@ function RouteFallback() {
 function App() {
   useEffect(() => {
     prefetchWhenIdle(IDLE_WARM_ROUTES)
+  }, [])
+
+  // The rate-limit toast's retry button re-runs the request that hit the 429;
+  // once it succeeds, every active query refetches so the dashboard immediately
+  // shows what the opened window just allowed through.
+  useEffect(() => {
+    const onRetried = () => {
+      void queryClient.invalidateQueries()
+    }
+    window.addEventListener(RETRY_SUCCEEDED_EVENT, onRetried)
+    return () => window.removeEventListener(RETRY_SUCCEEDED_EVENT, onRetried)
   }, [])
 
   return (
