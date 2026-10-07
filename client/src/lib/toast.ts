@@ -55,6 +55,14 @@ export function dismissToast(id: number) {
   emit()
 }
 
+/** Rewrite a toast's text in place (same id, timer untouched) — used by the
+ *  429 countdown so seconds tick without stacking a new toast every second. */
+export function updateToast(id: number, message: string): void {
+  if (!items.some(t => t.id === id)) return
+  items = items.map(t => (t.id === id ? { ...t, message } : t))
+  emit()
+}
+
 function push(kind: ToastKind, message: string, duration?: number): number {
   const id = nextId++
   // Replace an identical pending toast instead of stacking duplicates (a

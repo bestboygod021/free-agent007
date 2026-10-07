@@ -23,7 +23,7 @@ import { Toaster } from '@/components/toaster'
 import { UpdateReminder } from '@/components/update-reminder'
 import { usePremium } from '@/hooks/use-premium'
 import { I18nProvider, useI18n } from '@/i18n'
-import { logout } from '@/lib/api'
+import { hasRetryCountdown, logout } from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { ThemeProvider } from '@/theme'
 // Route-level code split: every page loads on navigation instead of at boot,
@@ -60,10 +60,20 @@ const queryClient = new QueryClient({
   // whether a background refetch follows. Thirty seconds is shorter than any
   // poller here (refetchInterval still fires on its own clock), and mutations
   // invalidate explicitly, so nothing user-visible goes stale.
-  defaultOptions: { queries: { staleTime: 30_000 } },
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      // A 429 already wears a live countdown toast from apiFetch; retrying it
+      // would just re-hit the closed window. Other errors keep the usual 3 tries.
+      retry: (failureCount, error) => (hasRetryCountdown(error) ? false : failureCount < 3),
+    },
+  },
   mutationCache: new MutationCache({
     onError: (error, _variables, _context, mutation) => {
       if (mutation.meta?.silenceToast) return
+      // apiFetch already shows the ticking countdown for a 429 with
+      // Retry-After — a second toast with a frozen second-count would fight it.
+      if (hasRetryCountdown(error)) return
       toast.error(error instanceof Error ? error.message : String(error))
     },
   }),

@@ -44,6 +44,13 @@ function isLockedOut(email: string): boolean {
   const a = attempts.get(email.toLowerCase());
   return !!a && a.lockedUntil > Date.now();
 }
+/** Seconds left on the per-email lockout — published as Retry-After so the
+ *  dashboard can count the wait down instead of showing a frozen message. */
+function lockoutRemainingSec(email: string): number {
+  const a = attempts.get(email.toLowerCase());
+  if (!a || a.lockedUntil <= Date.now()) return 1;
+  return Math.max(1, Math.ceil((a.lockedUntil - Date.now()) / 1000));
+}
 function recordFailure(email: string): void {
   const key = email.toLowerCase();
   const a = attempts.get(key) ?? { count: 0, lockedUntil: 0 };
@@ -132,6 +139,7 @@ authRouter.post('/login', (req: Request, res: Response) => {
   const { email, password } = parsed.data;
 
   if (isLockedOut(email)) {
+    res.setHeader('Retry-After', String(lockoutRemainingSec(email)));
     res.status(429).json({ error: { message: 'Too many attempts. Wait 15 minutes or restart the app.', type: 'rate_limit_error' } });
     return;
   }
@@ -238,6 +246,8 @@ authRouter.post('/forgot-password', (_req: Request, res: Response) => {
   }
   const now = Date.now();
   if (now - lastResetCodeAt < RESET_CODE_MIN_INTERVAL_MS) {
+    const waitSec = Math.max(1, Math.ceil((lastResetCodeAt + RESET_CODE_MIN_INTERVAL_MS - now) / 1000));
+    res.setHeader('Retry-After', String(waitSec));
     res.status(429).json({ error: { message: 'Too many reset-code requests. Try again later.', type: 'rate_limit_error' } });
     return;
   }

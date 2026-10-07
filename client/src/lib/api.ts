@@ -1,4 +1,5 @@
 import type { ErrorResponse } from '../../../shared/types'
+import { getToasts, toast, updateToast } from './toast'
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 const TOKEN_KEY = 'freellmapi_dashboard_token';
@@ -31,6 +32,64 @@ export function apiBaseUrl(): string {
 export type ApiError = Error & {
   status?: number;
   code?: string;
+  /** Whole seconds from a 429's Retry-After header, when present. */
+  retryAfterSec?: number;
+}
+
+/**
+ * Retry-After: delta-seconds per RFC 9110, or an HTTP-date. Returns whole
+ * seconds (at least 1) or null when the header is absent/unparseable.
+ */
+export function parseRetryAfter(value: string | null, now: number = Date.now()): number | null {
+  if (value === null) return null;
+  const raw = value.trim();
+  if (raw === '') return null;
+  if (/^\d+$/.test(raw)) return Math.max(1, Number(raw));
+  const at = Date.parse(raw);
+  if (Number.isNaN(at)) return null;
+  return Math.max(1, Math.ceil((at - now) / 1000));
+}
+
+const retryWaitLabel = (seconds: number): string => {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return rest === 0 ? `${minutes}m` : `${minutes}m ${rest}s`;
+};
+
+// One live countdown at a time: further 429s while it ticks are ignored, so a
+// polling query can't stack a new toast every interval.
+let countdown: { id: number; timer: ReturnType<typeof setInterval> } | null = null;
+
+function startRetryCountdown(seconds: number): void {
+  if (countdown && getToasts().some(t => t.id === countdown!.id)) return;
+  if (countdown) clearInterval(countdown.timer);
+  let remaining = seconds;
+  const id = toast.info(`Rate limited — retry in ${retryWaitLabel(remaining)}`, seconds * 1000);
+  const stop = () => {
+    clearInterval(timer);
+    if (countdown?.timer === timer) countdown = null;
+  };
+  const timer = setInterval(() => {
+    if (!getToasts().some(t => t.id === id)) return stop(); // user dismissed
+    remaining -= 1;
+    if (remaining <= 0) {
+      // The Toaster's own duration timer dismisses at the same wall-clock
+      // moment (and pauses on hover, like every other toast); this line just
+      // keeps the text honest while that timer is suspended.
+      updateToast(id, 'Rate limited — retry now');
+      return stop();
+    }
+    updateToast(id, `Rate limited — retry in ${retryWaitLabel(remaining)}`);
+  }, 1000);
+  countdown = { id, timer };
+}
+
+/** True when the error already has a live countdown toast on screen — callers
+ *  (and the global mutation-cache handler) must not add a second, frozen one. */
+export function hasRetryCountdown(error: unknown): boolean {
+  const apiError = error as ApiError;
+  return apiError?.status === 429 && typeof apiError.retryAfterSec === 'number';
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -68,6 +127,13 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     const err = new Error(body.error?.message ?? `HTTP ${res.status}`) as ApiError;
     err.status = res.status;
     err.code = body.error?.type;
+    if (res.status === 429) {
+      const retryAfterSec = parseRetryAfter(res.headers.get('Retry-After'));
+      if (retryAfterSec !== null) {
+        err.retryAfterSec = retryAfterSec;
+        startRetryCountdown(retryAfterSec);
+      }
+    }
     throw err;
   }
   if (res.status === 204) return undefined as T;

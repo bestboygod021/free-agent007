@@ -45,7 +45,7 @@ async function post(app: Express, path: string, body?: unknown) {
   });
   const data = await res.json().catch(() => null);
   server.close();
-  return { status: res.status, body: data };
+  return { status: res.status, body: data, retryAfter: res.headers.get('Retry-After') };
 }
 
 /** Step past the cooldown first, so a test never fails for a reason it isn't about. */
@@ -149,6 +149,9 @@ describe('password reset by log code', () => {
 
     const immediate = await post(app, '/api/auth/forgot-password');
     expect(immediate.status).toBe(429);
+    // Retry-After carries the cooldown so the client can count it down.
+    expect(Number(immediate.retryAfter)).toBeGreaterThanOrEqual(1);
+    expect(Number(immediate.retryAfter)).toBeLessThanOrEqual(10);
     // a refused request must not disturb the code already in flight
     expect(getResetCode()).toBe(minted);
   });
