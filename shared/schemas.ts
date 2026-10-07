@@ -759,7 +759,7 @@ export type DiscoveredModel = z.infer<typeof discoveredModelSchema>;
 export type DiscoverResponse = z.infer<typeof discoverResponseSchema>;
 
 // ─── Logs viewer: one row as served by GET /api/logs, ring-wide counts, envelope ───
-export const logLevelSchema = z.enum(['debug', 'info', 'warn', 'error']);
+export const logLevelSchema = z.enum(['trace', 'debug', 'info', 'warn', 'error']);
 
 /** One row as served by GET /api/logs. The optional lanes are omitted entirely when unset. */
 export const logEntrySchema = z.object({
@@ -1114,3 +1114,115 @@ export const ollamaNativeErrorSchema = z.object({ error: z.string() });
 
 export type ErrorResponse = z.infer<typeof errorResponseSchema>;
 export type OllamaNativeError = z.infer<typeof ollamaNativeErrorSchema>;
+
+// ─── Input bodies & query strings ───
+// The canonical shapes CLIENTS send. The server's route-level validators are
+// kept in their route modules (this package is imported type-only at runtime),
+// and the contract tests parse the same samples with BOTH — a drift between
+// the two fails CI instead of silently changing what a400 means.
+
+/** Profile names: short, URL/filename-safe, and never one of the built-in
+ *  presets the router treats as magic words. */
+const RESERVED_PROFILE_NAMES = [
+  'auto', 'smart', 'fast', 'cheap', 'budget',
+  'intelligence', 'speed', 'active', 'default',
+];
+
+export const profileNameSchema = z
+  .string()
+  .min(1, 'Profile name cannot be empty')
+  .max(20, 'Profile name must not exceed 20 characters')
+  .regex(/^[a-zA-Z0-9-_]+$/, 'Only Latin letters, digits, hyphens (-) and underscores (_) are allowed')
+  .refine(
+    (name) => !RESERVED_PROFILE_NAMES.includes(name.toLowerCase()),
+    'This name is reserved by the system',
+  );
+
+/** PUT /api/profiles/:id body. Booleans cross the wire as booleans; the route
+ *  converts is_favorite/auto_include_new_models to 0/1 on the way into SQLite. */
+export const profileUpdateSchema = z.object({
+  name: profileNameSchema.optional(),
+  emoji: z.string().max(4).optional(),
+  color: z.string().optional(),
+  is_favorite: z.boolean().optional(),
+  sort_order: z.number().optional(),
+  auto_sort: z.enum(['intelligence', 'speed', 'budget']).nullable().optional(),
+  layout_config: z.string().nullable().optional(),
+  auto_include_new_models: z.boolean().optional(),
+});
+
+/** A stored transcript bubble: the client's ChatMessage minus the in-flight
+ *  lanes (`streaming`, `meta.fusionStreaming`) that must never persist — a
+ *  saved message is finished by definition. */
+export const conversationStoredMessageSchema = playgroundChatMessageSchema
+  .omit({ streaming: true })
+  .extend({ meta: playgroundChatMetaSchema.omit({ fusionStreaming: true }).optional() });
+
+export const conversationTitleSchema = z.string().max(200);
+export const conversationModelIdSchema = z.string().max(200).nullable();
+export const conversationSystemPromptSchema = z.string().max(32_000).nullable();
+
+/** PUT /api/conversations/:id body — strict: an unknown lane is a client bug
+ *  (the PATCH mirror is ConversationPatch in the Playground helpers). */
+export const conversationPatchSchema = z
+  .object({
+    title: conversationTitleSchema.optional(),
+    messages: z.array(conversationStoredMessageSchema).optional(),
+    model: conversationModelIdSchema.optional(),
+    systemPrompt: conversationSystemPromptSchema.optional(),
+  })
+  .strict();
+
+// ─── GET /api/logs query string ───
+const firstQueryParam = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : Array.isArray(value) && typeof value[0] === 'string' ? value[0] : undefined;
+
+const nonEmptyQueryParam = (value: unknown): string | undefined => {
+  const s = firstQueryParam(value);
+  return s !== undefined && s.trim() !== '' ? s : undefined;
+};
+
+/** Repeated params take the first value. Unknown levels and bad cursors are
+ *  hard errors (silently dropping one would show a filtered view that does not
+ *  match the filter asked for); `limit` stays a preference — non-numbers fall
+ *  through to the store's default clamp. The 400 messages are part of the
+ *  contract: tests assert both this schema and the route emit them. */
+export const logQuerySchema = z.object({
+  levels: z.preprocess(
+    nonEmptyQueryParam,
+    z
+      .string()
+      .superRefine((value, ctx) => {
+        const unknown = value
+          .split(',')
+          .map(part => part.trim())
+          .filter(part => part !== '')
+          .find(part => !(logLevelSchema.options as readonly string[]).includes(part));
+        if (unknown !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Unknown log level '${unknown}'. Known levels: ${logLevelSchema.options.join(', ')}`,
+          });
+        }
+      })
+      .transform(value => value.split(',').map(part => part.trim()).filter(part => part !== ''))
+      .optional(),
+  ),
+  sinceId: z.preprocess(
+    nonEmptyQueryParam,
+    z
+      .string()
+      .transform(value => Number(value))
+      .refine(number => Number.isInteger(number) && number >= 0, {
+        message: 'sinceId must be a non-negative integer',
+      })
+      .optional(),
+  ),
+  limit: z.preprocess(nonEmptyQueryParam, z.string().transform(value => Number(value)).optional()),
+  q: z.preprocess(firstQueryParam, z.string().optional()),
+  provider: z.preprocess(firstQueryParam, z.string().optional()),
+});
+
+export type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
+export type ConversationPatch = z.infer<typeof conversationPatchSchema>;
+export type LogQueryParams = z.infer<typeof logQuerySchema>;

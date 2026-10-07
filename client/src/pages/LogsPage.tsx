@@ -49,6 +49,7 @@ const SCROLL_FOLLOW_SLACK = 40
 // inspector): red for error, amber for warn, a calm blue for info, and plain
 // muted for debug — which is noise you opted into.
 const LEVEL_CLASS: Record<LogLevel, string> = {
+  trace: 'bg-muted/40 text-muted-foreground/60',
   debug: 'bg-muted text-muted-foreground',
   info: 'bg-sky-600/15 text-sky-700 dark:text-sky-400',
   warn: 'bg-amber-600/15 text-amber-700 dark:text-amber-400',
@@ -319,7 +320,9 @@ export default function LogsPage() {
                 )}
               >
                 {t(`logs.levels.${level}`)}
-                <span className="tabular-nums opacity-70">{counts[level]}</span>
+                {/* counts fold trace into debug server-side (logCounts is
+                    4-wide by contract); mirror that when indexing. */}
+                <span className="tabular-nums opacity-70">{counts[level === 'trace' ? 'debug' : level]}</span>
               </button>
             )
           })}

@@ -66,6 +66,9 @@ import {
   rateLimitUsageRowSchema,
   errorResponseSchema,
   ollamaNativeErrorSchema,
+  profileUpdateSchema,
+  conversationPatchSchema,
+  logQuerySchema,
 } from '@freellmapi/shared/schemas.js';
 
 // Contract test: the shared Zod schemas (shared/schemas.ts) must parse the
@@ -721,6 +724,82 @@ describe('error envelope: { error: { message, type?, code? } }', () => {
     const body = ollamaNativeErrorSchema.parse(res.body);
     expectConfigKeys(res.body as object, ollamaNativeErrorSchema.shape);
     expect(body.error).toContain('emulation');
+  });
+});
+
+// ─── Turn 9: input contracts — shared schemas and the routes must agree ───
+// The server validates with its route-local zod copies (shared/ is imported
+// type-only at runtime); every sample below is pushed through BOTH the HTTP
+// route and the shared schema, so a drift on either side fails here.
+describe('input contracts: profiles PUT, conversation PATCH, logs query', () => {
+  it('PUT /api/profiles/:id rejects bad names — HTTP and shared schema agree', async () => {
+    const samples = [
+      { name: 'bad name!' },
+      { name: 'default' },        // reserved preset name
+      { name: 'x'.repeat(21) },   // over the 20-char cap
+      { name: '' },               // empty
+    ];
+    for (const body of samples) {
+      const res = await req(app, 'PUT', '/api/profiles/1', body);
+      expect(res.status, JSON.stringify(body)).toBe(400);
+      errorResponseSchema.parse(res.body);
+      expect(profileUpdateSchema.safeParse(body).success).toBe(false);
+    }
+  });
+
+  it('PUT /api/profiles/:id: booleans in, 0/1 out; wrong types rejected on both sides', async () => {
+    expect(profileUpdateSchema.safeParse({ is_favorite: true }).success).toBe(true);
+    const res = await req(app, 'PUT', '/api/profiles/1', { is_favorite: true });
+    expect(res.status).toBe(200);
+    const row = chainSchema.parse(res.body);
+    expect(row.is_favorite).toBe(1); // converted for SQLite on the way in
+
+    const bad = await req(app, 'PUT', '/api/profiles/1', { is_favorite: 'yes' });
+    expect(bad.status).toBe(400);
+    errorResponseSchema.parse(bad.body);
+    expect(profileUpdateSchema.safeParse({ is_favorite: 'yes' }).success).toBe(false);
+  });
+
+  it('PUT /api/conversations/:id: strict patch, both sides', async () => {
+    for (const body of [{ title: 'x'.repeat(201) }, { nope: 1 }]) {
+      const res = await req(app, 'PUT', '/api/conversations/999999', body);
+      expect(res.status, JSON.stringify(body)).toBe(400);
+      const body_ = errorResponseSchema.parse(res.body);
+      expect(body_.error.message).toContain('Invalid conversation update');
+      expect(conversationPatchSchema.safeParse(body).success).toBe(false);
+    }
+    // A valid body clears validation and fails only on the missing row (404
+    // after validation proves the order: schema first, lookup second).
+    const ok = await req(app, 'PUT', '/api/conversations/999999', { title: 'renamed' });
+    expect(ok.status).toBe(404);
+    expect(conversationPatchSchema.safeParse({ title: 'renamed' }).success).toBe(true);
+  });
+
+  it('GET /api/logs: unknown level and bad cursor are hard 400s', async () => {
+    const bad = await req(app, 'GET', '/api/logs?levels=bogus');
+    expect(bad.status).toBe(400);
+    const parsed = errorResponseSchema.parse(bad.body);
+    expect(parsed.error.message).toContain("Unknown log level 'bogus'");
+    expect(logQuerySchema.safeParse({ levels: 'bogus' }).success).toBe(false);
+
+    const cursor = await req(app, 'GET', '/api/logs?sinceId=-1');
+    expect(cursor.status).toBe(400);
+    expect(errorResponseSchema.parse(cursor.body).error.message).toContain('sinceId must be');
+    expect(logQuerySchema.safeParse({ sinceId: '-1' }).success).toBe(false);
+  });
+
+  it('GET /api/logs: valid filters parse on both sides; limit stays lenient', async () => {
+    const good = await req(app, 'GET', '/api/logs?levels=info,warn&sinceId=0&q=boot');
+    expect(good.status).toBe(200);
+    logsResponseSchema.parse(good.body);
+    const shared = logQuerySchema.safeParse({ levels: 'info,warn', sinceId: '0', q: 'boot' });
+    expect(shared.success).toBe(true);
+    if (shared.success) expect(shared.data).toMatchObject({ levels: ['info', 'warn'], sinceId: 0, q: 'boot' });
+
+    // Non-numeric limits are a preference, not an error: the store clamps.
+    const lenient = await req(app, 'GET', '/api/logs?limit=abc');
+    expect(lenient.status).toBe(200);
+    expect(logQuerySchema.safeParse({ limit: 'abc' }).success).toBe(true);
   });
 });
 });

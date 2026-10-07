@@ -9,8 +9,8 @@
 // Relative, not the `@/` alias: the unit tests run under the standalone
 // vitest config, which does not carry the app's path aliases.
 import { apiFetch } from './api'
-import type { ConversationSummary, ConversationDetail, PlaygroundChatMessage } from '../../../shared/types'
-export type { ConversationSummary, ConversationDetail }
+import type { ConversationSummary, ConversationDetail, PlaygroundChatMessage, ConversationPatch } from '../../../shared/types'
+export type { ConversationSummary, ConversationDetail, ConversationPatch }
 /** A conversation with its transcript — the shared detail shape, under this module's historic name. */
 export type Conversation = ConversationDetail
 /** One bubble in the Playground transcript — the shared contract, under this module's historic name. */
@@ -27,12 +27,6 @@ export type FusionPanelEntry = {
 
 
 
-export type ConversationPatch = {
-  title?: string
-  messages?: ChatMessage[]
-  model?: string | null
-  systemPrompt?: string | null
-}
 
 /** localStorage key holding the conversation the Playground had open. */
 export const ACTIVE_CONVERSATION_KEY = 'playground.conversationId'
