@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { getUnifiedApiKey } from '../db/index.js';
 import { buildModelListing, type NormalizedModel } from '../services/model-listing.js';
 import { extractApiToken, timingSafeStringEqual } from './proxy.js';
@@ -18,21 +17,13 @@ import {
   type GeminiInboundRequest,
 } from '../lib/gemini-wire.js';
 import { resolveGeminiModel } from '../services/gemini-map.js';
+import { geminiGenerateSchema } from '@freellmapi/shared/schemas.js';
 
 export const geminiRouter = Router();
 
-const partSchema = z.object({}).passthrough();
-const contentSchema = z.object({
-  role: z.enum(['user', 'model']).optional(),
-  parts: z.array(partSchema).optional(),
-}).passthrough();
-const generateSchema = z.object({
-  contents: z.array(contentSchema).min(1),
-  systemInstruction: z.object({ parts: z.array(partSchema).optional() }).passthrough().optional(),
-  tools: z.array(z.object({}).passthrough()).optional(),
-  toolConfig: z.object({}).passthrough().optional(),
-  generationConfig: z.object({}).passthrough().optional(),
-}).passthrough();
+
+
+
 
 function sendError(res: Response, status: number, message: string, code = 'INVALID_ARGUMENT'): void {
   res.status(status).json({
@@ -109,7 +100,7 @@ geminiRouter.get(/^\/models\/(.+)$/, (req, res) => {
 });
 
 function parseGenerateBody(req: Request, res: Response): GeminiInboundRequest | null {
-  const parsed = generateSchema.safeParse(req.body);
+  const parsed = geminiGenerateSchema.safeParse(req.body);
   if (!parsed.success) {
     const detail = parsed.error.errors
       .slice(0, 5)

@@ -6,7 +6,7 @@ import { getProvider } from '../providers/index.js';
 import type { Platform } from '@freellmapi/shared/types.js';
 import type { ProxyMode } from '@freellmapi/shared/types.js';
 import { getSavedFusionConfig, setSavedFusionConfig, savedFusionConfigSchema, getFusionMaxK } from '../services/fusion.js';
-import { isUnifyEnabled, setUnifyEnabled, getUnifyOverrides, setUnifyOverrides, unifyOverridesSchema } from '../services/model-groups.js';
+import { isUnifyEnabled, setUnifyEnabled, getUnifyOverrides, setUnifyOverrides } from '../services/model-groups.js';
 import { getClaudeModelMap, setClaudeModelMap } from '../services/anthropic-map.js';
 import { getGeminiModelMap, setGeminiModelMap } from '../services/gemini-map.js';
 import { getOllamaEmulationMode } from './ollama.js';
@@ -25,13 +25,13 @@ import {
 } from '../services/compression/config.js';
 import { getHeadroomThresholds, setHeadroomThresholds, getTaskWeightShare, setTaskWeightShare } from '../services/router.js';
 import { MCP_ENABLED_SETTING, isMcpServerEnabled } from './mcp.js';
-import { z } from 'zod';
 import { getAppVersion } from '../lib/app-version.js';
 import {
   UNIFIED_MAX_TOKENS_SETTING,
   UNIFIED_MAX_TOKENS_AUTO,
   unifiedMaxTokensCap,
 } from '../lib/sampling-params.js';
+import { settingsCompatibilitySchema, settingsEnableMcpSchema, settingsGuardrailsSchema, settingsHeadroomSchema, settingsOutputLimitSchema, settingsTaskWeightShareSchema, settingsUnifyPutSchema, settingsUpdateCheckSchema, urlTokenCreateSchema } from '@freellmapi/shared/schemas.js';
 
 export const settingsRouter = Router();
 
@@ -48,14 +48,14 @@ settingsRouter.get('/version', (_req: Request, res: Response) => {
 // operator turns it on: a self-hosted install must not contact GitHub on page
 // load on behalf of someone who never asked it to. The manual checker in
 // Settings is a separate surface and is unaffected by this flag.
-const updateCheckSchema = z.object({ enabled: z.boolean() }).strict();
+
 
 settingsRouter.get('/update-check', (_req: Request, res: Response) => {
   res.json({ enabled: isAutoUpdateCheckEnabled() });
 });
 
 settingsRouter.put('/update-check', (req: Request, res: Response) => {
-  const parsed = updateCheckSchema.safeParse(req.body);
+  const parsed = settingsUpdateCheckSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({
       error: {
@@ -95,15 +95,12 @@ settingsRouter.get('/unify', (_req: Request, res: Response) => {
   res.json({ enabled: isUnifyEnabled(), overrides: getUnifyOverrides() });
 });
 
-const unifyPutSchema = z.object({
-  enabled: z.boolean().optional(),
-  overrides: unifyOverridesSchema.optional(),
-});
+
 
 // Update the unify toggle and/or overrides. Partial: send just `enabled` to
 // flip the switch, or `overrides` to adjust grouping, or both.
 settingsRouter.put('/unify', (req: Request, res: Response) => {
-  const parsed = unifyPutSchema.safeParse(req.body);
+  const parsed = settingsUnifyPutSchema.safeParse(req.body);
   if (!parsed.success) {
     const detail = parsed.error.errors.map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message)).slice(0, 5).join(', ');
     res.status(400).json({ error: { message: `Invalid unify settings: ${detail}`, type: 'invalid_request_error' } });
@@ -141,10 +138,10 @@ settingsRouter.get('/enable-mcp', (_req: Request, res: Response) => {
   res.json({ enabled: isMcpServerEnabled() });
 });
 
-const enableMcpSchema = z.object({ enabled: z.boolean() });
+
 
 settingsRouter.put('/enable-mcp', (req: Request, res: Response) => {
-  const parsed = enableMcpSchema.safeParse(req.body);
+  const parsed = settingsEnableMcpSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid MCP setting: enabled must be a boolean.', type: 'invalid_request_error' } });
     return;
@@ -188,10 +185,7 @@ settingsRouter.put('/gemini-map', (req: Request, res: Response) => {
   }
 });
 
-const compatibilitySchema = z.object({
-  ollamaEmulation: z.enum(['off', 'open-loopback', 'key-required']).optional(),
-  exposeClaudeDiscoveryAliases: z.boolean().optional(),
-}).strict();
+
 
 settingsRouter.get('/agent-compatibility', (_req: Request, res: Response) => {
   res.json({
@@ -201,7 +195,7 @@ settingsRouter.get('/agent-compatibility', (_req: Request, res: Response) => {
 });
 
 settingsRouter.put('/agent-compatibility', (req: Request, res: Response) => {
-  const parsed = compatibilitySchema.safeParse(req.body);
+  const parsed = settingsCompatibilitySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({
       error: {
@@ -226,7 +220,7 @@ settingsRouter.get('/url-tokens', (_req: Request, res: Response) => {
 });
 
 settingsRouter.post('/url-tokens', (req: Request, res: Response) => {
-  const parsed = z.object({ label: z.string().max(120).optional() }).safeParse(req.body);
+  const parsed = urlTokenCreateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid URL token label', type: 'invalid_request_error' } });
     return;
@@ -265,19 +259,13 @@ settingsRouter.get('/output-limit', (_req: Request, res: Response) => {
   res.json(outputLimitState());
 });
 
-const outputLimitPutSchema = z.object({
-  mode: z.union([
-    z.literal('off'),
-    z.literal('auto'),
-    z.number().int().min(1),
-  ]),
-});
+
 
 // Update the unified output-token cap. 'off' restores pass-through behaviour;
 // 'auto' clamps every request's max_tokens to UNIFIED_MAX_TOKENS_AUTO; an
 // integer clamps to that value. Takes effect on the next request.
 settingsRouter.put('/output-limit', (req: Request, res: Response) => {
-  const parsed = outputLimitPutSchema.safeParse(req.body);
+  const parsed = settingsOutputLimitSchema.safeParse(req.body);
   if (!parsed.success) {
     const detail = parsed.error.errors
       .map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message))
@@ -299,10 +287,7 @@ settingsRouter.get('/guardrails', (_req: Request, res: Response) => {
   });
 });
 
-const guardrailsPutSchema = z.object({
-  requestMaxTokensBudget: z.number().int().min(0).optional(),
-  maxConsecutiveUpstreamFails: z.number().int().min(0).optional(),
-});
+
 
 // Get the headroom guardrail thresholds (#899): the remaining-budget fraction
 // at which proactive demotion begins and the score floor at 0 remaining. Both
@@ -312,15 +297,12 @@ settingsRouter.get('/headroom', (_req: Request, res: Response) => {
   res.json({ rampStart: rampStart ?? null, floor: floor ?? null });
 });
 
-const headroomPutSchema = z.object({
-  rampStart: z.number().min(0).max(1).nullable().optional(),
-  floor: z.number().min(0).max(1).nullable().optional(),
-});
+
 
 // Update the headroom guardrail thresholds. null clears a threshold back to the
 // scoring.ts default. Takes effect on the next request — no restart needed.
 settingsRouter.put('/headroom', (req: Request, res: Response) => {
-  const parsed = headroomPutSchema.safeParse(req.body);
+  const parsed = settingsHeadroomSchema.safeParse(req.body);
   if (!parsed.success) {
     const detail = parsed.error.errors
       .map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message))
@@ -345,14 +327,12 @@ settingsRouter.get('/task-weight-share', (_req: Request, res: Response) => {
   res.json({ share: getTaskWeightShare() });
 });
 
-const taskWeightSharePutSchema = z.object({
-  share: z.number().min(0).max(1).nullable().optional(),
-});
+
 
 // Update the task-type weight share. null clears back to the default. Takes
 // effect on the next request — no restart needed.
 settingsRouter.put('/task-weight-share', (req: Request, res: Response) => {
-  const parsed = taskWeightSharePutSchema.safeParse(req.body);
+  const parsed = settingsTaskWeightShareSchema.safeParse(req.body);
   if (!parsed.success || parsed.data.share === undefined) {
     res.status(400).json({ error: { message: 'Invalid task-weight-share: send {"share": 0..1 | null}', type: 'invalid_request_error' } });
     return;
@@ -368,7 +348,7 @@ settingsRouter.put('/task-weight-share', (req: Request, res: Response) => {
 // Update the guardrails. Partial: send just the knob you want to change.
 // Takes effect on the next request — no restart needed. 0 disables a knob.
 settingsRouter.put('/guardrails', (req: Request, res: Response) => {
-  const parsed = guardrailsPutSchema.safeParse(req.body);
+  const parsed = settingsGuardrailsSchema.safeParse(req.body);
   if (!parsed.success) {
     const detail = parsed.error.errors.map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message)).slice(0, 5).join(', ');
     res.status(400).json({ error: { message: `Invalid guardrail settings: ${detail}`, type: 'invalid_request_error' } });

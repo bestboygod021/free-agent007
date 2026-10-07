@@ -6,24 +6,12 @@
  */
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { getDb } from '../db/index.js';
-import { profileNameSchema, profileUpdateSchema } from '@freellmapi/shared/schemas.js';
+import { profileCreateSchema, profileReorderSchema, profileUpdateSchema } from '@freellmapi/shared/schemas.js';
 
 export const profilesRouter = Router();
 
-const createSchema = z.object({
-  name: profileNameSchema,
-  emoji: z.string().max(4).default(''),
-  color: z.string().default('#6366f1'),
-  sourceProfileId: z.number().optional(),
-  // Start the chain with nothing in it instead of a copy of the whole catalog
-  // (#895). The point of a named chain is usually "these three models, in this
-  // order" — starting from 200 rows means deleting 197 of them by hand. An
-  // empty chain also opts out of the catalog-sync backfill, so it stays as
-  // small as the user built it.
-  empty: z.boolean().default(false),
-});
+
 
 function getId(req: Request): number {
   return parseInt(req.params.id as string);
@@ -108,7 +96,7 @@ profilesRouter.get('/:id/models', (req: Request, res: Response) => {
  * Allows optional cloning of the active profile's model priority and layout configuration.
  */
 profilesRouter.post('/', (req: Request, res: Response) => {
-  const parsed = createSchema.safeParse(req.body);
+  const parsed = profileCreateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -233,11 +221,7 @@ profilesRouter.put('/:id', (req: Request, res: Response) => {
 });
 
 // PUT /api/profiles/:id/reorder — update model order + enabled for a profile
-const reorderSchema = z.array(z.object({
-  modelDbId: z.number(),
-  priority: z.number(),
-  enabled: z.boolean(),
-}));
+
 
 profilesRouter.put('/:id/reorder', (req: Request, res: Response) => {
   const db = getDb();
@@ -248,7 +232,7 @@ profilesRouter.put('/:id/reorder', (req: Request, res: Response) => {
     return;
   }
 
-  const parsed = reorderSchema.safeParse(req.body);
+  const parsed = profileReorderSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;

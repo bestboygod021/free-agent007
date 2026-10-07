@@ -5,19 +5,19 @@
  */
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { getDb } from '../db/index.js';
 import { getAllPenalties, getRoutingScores, getRoutingStrategy, setRoutingStrategy, setCustomWeights, getExploreEnabled, setExploreEnabled, getPeakHoursConfig, setPeakHoursConfig, getActiveRoutingWeights, getKeySelectionStrategy, setKeySelectionStrategy } from '../services/router.js';
-import { BANDIT_PRESETS, isValidTimezone, type RoutingStrategy } from '../services/scoring.js';
+import { BANDIT_PRESETS, type RoutingStrategy } from '../services/scoring.js';
 import { parseBudget } from '../lib/budget.js';
 import { getModelGroups } from '../services/model-groups.js';
 import { getPenaltyInspector, clearRouterPressure } from '../services/penalty-inspector.js';
-import { getCooldownCeilingMs, setCooldownCeilingMs, MIN_COOLDOWN_CEILING_MS, MAX_COOLDOWN_CEILING_MS } from '../services/ratelimit.js';
+import { getCooldownCeilingMs, setCooldownCeilingMs } from '../services/ratelimit.js';
 import { getActiveProfileId } from '../services/profile-models.js';
 import { qualifiedModelMemberId } from '../lib/endpoint-scope.js';
 import { overriddenFieldNames } from '../services/model-state.js';
 import { parseModelScope, scopeAllows } from '../lib/model-scope.js';
 import { getQuotaOutlook } from '../services/quota-outlook.js';
+import { routingSchema, fallbackChainUpdateSchema } from '@freellmapi/shared/schemas.js';
 
 export const fallbackRouter = Router();
 
@@ -53,35 +53,7 @@ fallbackRouter.delete('/penalty-inspector', (_req: Request, res: Response) => {
   res.json(clearRouterPressure());
 });
 
-const routingSchema = z.object({
-  strategy: z.enum(['priority', 'balanced', 'smartest', 'fastest', 'reliable', 'custom']),
-  // Only meaningful with strategy 'custom': the user's weight vector. Any
-  // non-negative vector is accepted; setCustomWeights renormalizes to sum 1.
-  weights: z.object({
-    reliability: z.number().nonnegative(),
-    speed: z.number().nonnegative(),
-    intelligence: z.number().nonnegative(),
-  }).optional(),
-  // Exploration toggle: give unmeasured models a guaranteed chance to be tried.
-  exploreEnabled: z.boolean().optional(),
-  // Peak-hours adjustment (#760), off by default. Hours are whole numbers in
-  // 0-23 and are read in `peakTimezone`, never the server's local clock, so the
-  // window means the same thing on a UTC container as on the operator's laptop.
-  peakHoursAdjust: z.boolean().optional(),
-  peakStartHour: z.number().int().min(0).max(23, { message: 'peakStartHour must be an integer between 0 and 23' }).optional(),
-  peakEndHour: z.number().int().min(0).max(23, { message: 'peakEndHour must be an integer between 0 and 23' }).optional(),
-  peakTimezone: z.string().refine(isValidTimezone, { message: 'peakTimezone must be a valid IANA timezone name' }).optional(),
-  // How to pick between several keys of one platform (#919). Independent of
-  // `strategy`, which ranks MODELS — the two are set from the same form, so
-  // they round-trip through the same request.
-  keySelectionStrategy: z.enum(['auto', 'least-remaining']).optional(),
-  // Ceiling on automatic cooldowns (#952): 1 min .. 24 h in ms, null = no cap
-  // (the escalation ladder keeps its 24h top step and 402/403 bench a day).
-  cooldownCeilingMs: z.number().int()
-    .min(MIN_COOLDOWN_CEILING_MS, { message: `cooldownCeilingMs must be at least ${MIN_COOLDOWN_CEILING_MS} (1 minute)` })
-    .max(MAX_COOLDOWN_CEILING_MS, { message: `cooldownCeilingMs must be at most ${MAX_COOLDOWN_CEILING_MS} (24 hours)` })
-    .nullable().optional(),
-});
+
 
 // PUT /routing → switch strategy. Presets are just weight vectors over the three
 // axes; 'priority' falls back to the legacy manual chain order; 'custom' uses
@@ -324,11 +296,7 @@ fallbackRouter.get('/', (req: Request, res: Response) => {
   }));
 });
 
-const updateSchema = z.array(z.object({
-  modelDbId: z.number(),
-  priority: z.number(),
-  enabled: z.boolean(),
-}));
+
 
 /**
  * Model ids that actually exist, so a stale row in a client's snapshot cannot
@@ -341,7 +309,7 @@ function knownModelIds(db: ReturnType<typeof getDb>): Set<number> {
 
 // Update fallback chain (full replace)
 fallbackRouter.put('/', (req: Request, res: Response) => {
-  const parsed = updateSchema.safeParse(req.body);
+  const parsed = fallbackChainUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;

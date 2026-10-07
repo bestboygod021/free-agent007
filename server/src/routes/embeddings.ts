@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { getDb, setSetting } from '../db/index.js';
 import { decrypt, maskKey } from '../lib/crypto.js';
 import { deleteUnusedCustomEndpointKey } from '../lib/custom-provider-cleanup.js';
@@ -13,6 +12,7 @@ import {
   EmbeddingsError,
   type EmbeddingModelRow,
 } from '../services/embeddings.js';
+import { customEmbeddingSchema, embeddingsUpdateSchema } from '@freellmapi/shared/schemas.js';
 
 export const embeddingsRouter = Router();
 
@@ -62,16 +62,7 @@ embeddingsRouter.get('/', (_req: Request, res: Response) => {
   });
 });
 
-const customEmbeddingSchema = z.object({
-  baseUrl: z.string().url('baseUrl must be a valid URL'),
-  model: z.string().min(1),
-  displayName: z.string().optional(),
-  family: z.string().optional(),
-  apiKey: z.string().optional(),
-  label: z.string().optional(),
-  quotaLabel: z.string().optional(),
-  maxInputTokens: z.number().int().positive().optional(),
-});
+
 
 function decryptExistingKey(row: { encrypted_key: string; iv: string; auth_tag: string } | undefined): string | null {
   if (!row) return null;
@@ -190,17 +181,10 @@ embeddingsRouter.post('/custom', async (req: Request, res: Response) => {
   });
 });
 
-const updateSchema = z.object({
-  defaultFamily: z.string().optional(),
-  providers: z.array(z.object({
-    id: z.number(),
-    priority: z.number(),
-    enabled: z.boolean(),
-  })).optional(),
-});
+
 
 embeddingsRouter.put('/', (req: Request, res: Response) => {
-  const parsed = updateSchema.safeParse(req.body);
+  const parsed = embeddingsUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid request body' } });
     return;

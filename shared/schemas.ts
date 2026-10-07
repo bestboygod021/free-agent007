@@ -1352,3 +1352,332 @@ export type ImportKeysRequest = z.infer<typeof importKeysRequestSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
 export type ChangeEmailInput = z.infer<typeof changeEmailInputSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordInputSchema>;
+
+// ── Dashboard input contracts (request bodies) ─────────────────────────────────
+// The single source of truth for what the server ACCEPTS, mirroring the
+// response contracts above. Server routes import these instead of keeping
+// private copies; helpers that validation depends on (isValidTimezone,
+// cooldown ceilings) live here too so the bounds can never drift from the
+// schema that enforces them.
+export function isValidTimezone(timezone: unknown): timezone is string {
+  if (typeof timezone !== 'string' || !timezone.trim()) return false;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+
+export const MIN_COOLDOWN_CEILING_MS = 60000;
+
+
+export const MAX_COOLDOWN_CEILING_MS = 86400000;
+
+
+export const unifyOverridesSchema = z.object({
+  // Coalesce several grouping tokens into one group keyed by `into`. Each key is
+  // a normalized display-name OR an exact "platform:model_id" member id.
+  merges: z.array(z.object({
+    into: z.string().min(1),
+    keys: z.array(z.string().min(1)).min(1),
+  })).default([]),
+  // Force a specific "platform:model_id" row out of its computed group into a
+  // singleton (or into an explicit groupKey).
+  splits: z.array(z.object({
+    member: z.string().min(1),
+    groupKey: z.string().optional(),
+  })).default([]),
+}).default({ merges: [], splits: [] });
+
+
+// ── Backups ──  POST /api/backups · PUT /api/backups/schedule
+
+export const backupCreateSchema = z.object({
+  tables: z.array(z.string().trim().min(1).max(200)).max(500).optional(),
+}).strict();
+
+export const backupScheduleInputSchema = z.object({
+  enabled: z.boolean(),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'time must be HH:mm'),
+  intervalDays: z.number().int().min(1).max(365),
+  backupPath: z.string().max(2000),
+}).strict();
+
+
+// ── Client profiles ──  POST /api/client-profiles · PUT /api/client-profiles/:id
+
+export const clientProfileCreateSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  systemPrompt: z.string().max(32_000).nullish(),
+});
+
+export const clientProfileUpdateSchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  // null clears the prompt (the profile key then authenticates without
+  // injecting anything); absent leaves it untouched.
+  systemPrompt: z.string().max(32_000).nullable().optional(),
+  enabled: z.boolean().optional(),
+});
+
+
+// ── Embeddings management ──  POST /api/embeddings/custom · PUT /api/embeddings
+
+export const customEmbeddingSchema = z.object({
+  baseUrl: z.string().url('baseUrl must be a valid URL'),
+  model: z.string().min(1),
+  displayName: z.string().optional(),
+  family: z.string().optional(),
+  apiKey: z.string().optional(),
+  label: z.string().optional(),
+  quotaLabel: z.string().optional(),
+  maxInputTokens: z.number().int().positive().optional(),
+});
+
+export const embeddingsUpdateSchema = z.object({
+  defaultFamily: z.string().optional(),
+  providers: z.array(z.object({
+    id: z.number(),
+    priority: z.number(),
+    enabled: z.boolean(),
+  })).optional(),
+});
+
+
+// ── Fallback chain ──  PUT /api/fallback/routing · PUT /api/fallback
+
+export const routingSchema = z.object({
+  strategy: z.enum(['priority', 'balanced', 'smartest', 'fastest', 'reliable', 'custom']),
+  // Only meaningful with strategy 'custom': the user's weight vector. Any
+  // non-negative vector is accepted; setCustomWeights renormalizes to sum 1.
+  weights: z.object({
+    reliability: z.number().nonnegative(),
+    speed: z.number().nonnegative(),
+    intelligence: z.number().nonnegative(),
+  }).optional(),
+  // Exploration toggle: give unmeasured models a guaranteed chance to be tried.
+  exploreEnabled: z.boolean().optional(),
+  // Peak-hours adjustment (#760), off by default. Hours are whole numbers in
+  // 0-23 and are read in `peakTimezone`, never the server's local clock, so the
+  // window means the same thing on a UTC container as on the operator's laptop.
+  peakHoursAdjust: z.boolean().optional(),
+  peakStartHour: z.number().int().min(0).max(23, { message: 'peakStartHour must be an integer between 0 and 23' }).optional(),
+  peakEndHour: z.number().int().min(0).max(23, { message: 'peakEndHour must be an integer between 0 and 23' }).optional(),
+  peakTimezone: z.string().refine(isValidTimezone, { message: 'peakTimezone must be a valid IANA timezone name' }).optional(),
+  // How to pick between several keys of one platform (#919). Independent of
+  // `strategy`, which ranks MODELS — the two are set from the same form, so
+  // they round-trip through the same request.
+  keySelectionStrategy: z.enum(['auto', 'least-remaining']).optional(),
+  // Ceiling on automatic cooldowns (#952): 1 min .. 24 h in ms, null = no cap
+  // (the escalation ladder keeps its 24h top step and 402/403 bench a day).
+  cooldownCeilingMs: z.number().int()
+    .min(MIN_COOLDOWN_CEILING_MS, { message: `cooldownCeilingMs must be at least ${MIN_COOLDOWN_CEILING_MS} (1 minute)` })
+    .max(MAX_COOLDOWN_CEILING_MS, { message: `cooldownCeilingMs must be at most ${MAX_COOLDOWN_CEILING_MS} (24 hours)` })
+    .nullable().optional(),
+});
+
+export const fallbackChainUpdateSchema = z.array(z.object({
+  modelDbId: z.number(),
+  priority: z.number(),
+  enabled: z.boolean(),
+}));
+
+
+// ── Gemini passthrough ──  POST /gemini/models/*:generateContent
+
+export const geminiPartSchema = z.object({}).passthrough();
+
+export const geminiContentSchema = z.object({
+  role: z.enum(['user', 'model']).optional(),
+  parts: z.array(geminiPartSchema).optional(),
+}).passthrough();
+
+export const geminiGenerateSchema = z.object({
+  contents: z.array(geminiContentSchema).min(1),
+  systemInstruction: z.object({ parts: z.array(geminiPartSchema).optional() }).passthrough().optional(),
+  tools: z.array(z.object({}).passthrough()).optional(),
+  toolConfig: z.object({}).passthrough().optional(),
+  generationConfig: z.object({}).passthrough().optional(),
+}).passthrough();
+
+
+// ── Media models ──  POST /api/media/custom · PUT /api/media/:id
+
+export const customMediaSchema = z.object({
+  baseUrl: z.string().url('baseUrl must be a valid URL'),
+  model: z.string().min(1),
+  displayName: z.string().optional(),
+  // 'transcription' registers a custom OpenAI-compatible STT endpoint. The
+  // media_models table, GET /api/media/usage, the /v1/audio/transcriptions
+  // handler and the media service's 'custom' adapter all accept it.
+  modality: z.enum(['image', 'audio', 'transcription']),
+  apiKey: z.string().optional(),
+  label: z.string().optional(),
+  quotaLabel: z.string().optional(),
+});
+
+export const mediaUpdateSchema = z.object({ enabled: z.boolean() });
+
+
+// ── Compression preview ──  POST /api/compression/preview
+
+export const compressionPreviewMessageSchema = z.object({
+  role: z.enum(['system', 'user', 'assistant', 'tool']),
+  content: z.union([
+    z.string(),
+    z.null(),
+    z.array(z.union([z.string(), z.record(z.string(), z.unknown())])),
+  ]),
+  name: z.string().optional(),
+  tool_call_id: z.string().optional(),
+  tool_calls: z.array(z.object({
+    id: z.string(),
+    type: z.literal('function'),
+    function: z.object({ name: z.string(), arguments: z.string() }),
+  }).passthrough()).optional(),
+}).passthrough();
+
+
+// ── Catalog models ──  POST /api/models · PUT /api/models/:id
+
+export const modelUpdateSchema = z.object({
+  displayName: z.string().min(1).max(200).optional(),
+  intelligenceRank: z.number().int().min(1).max(1000).optional(),
+  speedRank: z.number().int().min(1).max(1000).optional(),
+  // '' is a legal value: size_label is TEXT NOT NULL DEFAULT '' and the empty
+  // string is the canonical "unscored" tier (scores 0 on the intelligence
+  // axis), so the dashboard's "None" option must be able to send it.
+  sizeLabel: z.string().max(40).optional(),
+  rpmLimit: z.number().int().positive().nullable().optional(),
+  rpdLimit: z.number().int().positive().nullable().optional(),
+  tpmLimit: z.number().int().positive().nullable().optional(),
+  tpdLimit: z.number().int().positive().nullable().optional(),
+  monthlyTokenBudget: z.string().max(80).optional(),
+  contextWindow: z.number().int().positive().nullable().optional(),
+  enabled: z.boolean().optional(),
+  supportsVision: z.boolean().optional(),
+  supportsTools: z.boolean().optional(),
+  fallbackEnabled: z.boolean().optional(),
+}).strict();
+
+export const createModelSchema = z.object({
+  platform: z.string().min(1).max(50),
+  modelId: z.string().min(1).max(200),
+  displayName: z.string().min(1).max(200).optional(),
+  contextWindow: z.number().int().positive().nullable().optional(),
+  rpmLimit: z.number().int().positive().nullable().optional(),
+  rpdLimit: z.number().int().positive().nullable().optional(),
+  tpmLimit: z.number().int().positive().nullable().optional(),
+  tpdLimit: z.number().int().positive().nullable().optional(),
+  supportsVision: z.boolean().optional(),
+  supportsTools: z.boolean().optional(),
+  keyId: z.number().int().positive().nullable().optional(),
+  endpointScope: z.string().nullable().optional(),
+}).strict();
+
+
+// ── Profiles ──  POST /api/profiles · PUT /api/profiles/:id/reorder
+
+export const profileCreateSchema = z.object({
+  name: profileNameSchema,
+  emoji: z.string().max(4).default(''),
+  color: z.string().default('#6366f1'),
+  sourceProfileId: z.number().optional(),
+  // Start the chain with nothing in it instead of a copy of the whole catalog
+  // (#895). The point of a named chain is usually "these three models, in this
+  // order" — starting from 200 rows means deleting 197 of them by hand. An
+  // empty chain also opts out of the catalog-sync backfill, so it stays as
+  // small as the user built it.
+  empty: z.boolean().default(false),
+});
+
+export const profileReorderSchema = z.array(z.object({
+  modelDbId: z.number(),
+  priority: z.number(),
+  enabled: z.boolean(),
+}));
+
+
+// ── Custom endpoints (Keys page) ──  POST /api/keys/custom · /discover-models · /probe
+
+export const modelEntrySchema = z.union([
+  z.string().min(1),
+  z.object({
+    model: z.string().min(1),
+    displayName: z.string().optional(),
+    supportsTools: z.boolean().optional(),
+    supportsVision: z.boolean().optional(),
+  }),
+]);
+
+export const customProviderSchema = z.object({
+  baseUrl: z.string().url('baseUrl must be a valid URL').optional(),
+  keyId: z.number().int().positive().optional(),
+  model: z.string().optional(),
+  models: z.array(modelEntrySchema).optional(),
+  displayName: z.string().optional(),
+  apiKey: z.string().optional(),
+  label: z.string().optional(),
+  // Top-level defaults applied to every model in this submit; a per-entry flag
+  // (object form) overrides them for that one model.
+  supportsTools: z.boolean().optional(),
+  supportsVision: z.boolean().optional(),
+}).refine(
+  d => d.baseUrl !== undefined || d.keyId !== undefined,
+  { message: 'baseUrl or keyId is required' },
+);
+
+export const discoverModelsSchema = z.object({
+  baseUrl: z.string().url('baseUrl must be a valid URL').optional(),
+  keyId: z.number().int().positive().optional(),
+  // Lets the Keys page fetch a list for an endpoint the user is still typing in,
+  // before it has been saved. Falls back to the endpoint's stored credential.
+  apiKey: z.string().optional(),
+}).refine(
+  d => d.baseUrl !== undefined || d.keyId !== undefined,
+  { message: 'baseUrl or keyId is required' },
+);
+
+
+// ── Settings PUT bodies ──  /api/settings/{update-check,unify,enable-mcp,agent-compatibility,…}
+
+// POST /api/settings/url-tokens — the optional label on a freshly minted token.
+export const urlTokenCreateSchema = z.object({ label: z.string().max(120).optional() });
+
+export const settingsUpdateCheckSchema = z.object({ enabled: z.boolean() }).strict();
+
+export const settingsUnifyPutSchema = z.object({
+  enabled: z.boolean().optional(),
+  overrides: unifyOverridesSchema.optional(),
+});
+
+export const settingsEnableMcpSchema = z.object({ enabled: z.boolean() });
+
+export const settingsCompatibilitySchema = z.object({
+  ollamaEmulation: z.enum(['off', 'open-loopback', 'key-required']).optional(),
+  exposeClaudeDiscoveryAliases: z.boolean().optional(),
+}).strict();
+
+export const settingsOutputLimitSchema = z.object({
+  mode: z.union([
+    z.literal('off'),
+    z.literal('auto'),
+    z.number().int().min(1),
+  ]),
+});
+
+export const settingsGuardrailsSchema = z.object({
+  requestMaxTokensBudget: z.number().int().min(0).optional(),
+  maxConsecutiveUpstreamFails: z.number().int().min(0).optional(),
+});
+
+export const settingsHeadroomSchema = z.object({
+  rampStart: z.number().min(0).max(1).nullable().optional(),
+  floor: z.number().min(0).max(1).nullable().optional(),
+});
+
+export const settingsTaskWeightShareSchema = z.object({
+  share: z.number().min(0).max(1).nullable().optional(),
+});
+

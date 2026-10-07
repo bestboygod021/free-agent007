@@ -6,24 +6,11 @@ import { COMPRESSION_MODES, type CompressionMode } from '../services/compression
 import { compressRequest } from '../services/compression/pipeline.js';
 import { getCompressionConfig } from '../services/compression/config.js';
 import { getCompressionStats } from '../services/compression/stats.js';
+import { compressionPreviewMessageSchema } from '@freellmapi/shared/schemas.js';
 
 export const compressionRouter = Router();
 
-const previewMessageSchema = z.object({
-  role: z.enum(['system', 'user', 'assistant', 'tool']),
-  content: z.union([
-    z.string(),
-    z.null(),
-    z.array(z.union([z.string(), z.record(z.string(), z.unknown())])),
-  ]),
-  name: z.string().optional(),
-  tool_call_id: z.string().optional(),
-  tool_calls: z.array(z.object({
-    id: z.string(),
-    type: z.literal('function'),
-    function: z.object({ name: z.string(), arguments: z.string() }),
-  }).passthrough()).optional(),
-}).passthrough();
+
 
 compressionRouter.get('/stats', (_req: Request, res: Response) => {
   res.json({ config: getCompressionConfig(), ...getCompressionStats() });
@@ -34,12 +21,12 @@ function previewMessages(body: unknown): ChatMessage[] | null {
   if (!body || typeof body !== 'object') return null;
   const value = body as Record<string, unknown>;
   if (Array.isArray(value.messages)) {
-    const parsed = z.array(previewMessageSchema).safeParse(value.messages);
+    const parsed = z.array(compressionPreviewMessageSchema).safeParse(value.messages);
     return parsed.success ? parsed.data as ChatMessage[] : null;
   }
   if (typeof value.body === 'string') return [{ role: 'user', content: value.body }];
   if (value.body && typeof value.body === 'object' && Array.isArray((value.body as Record<string, unknown>).messages)) {
-    const parsed = z.array(previewMessageSchema).safeParse((value.body as Record<string, unknown>).messages);
+    const parsed = z.array(compressionPreviewMessageSchema).safeParse((value.body as Record<string, unknown>).messages);
     return parsed.success ? parsed.data as ChatMessage[] : null;
   }
   return null;

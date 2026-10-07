@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { getDb } from '../db/index.js';
 import { encrypt, decrypt, maskKey } from '../lib/crypto.js';
 import { mintClientProfileKey, hashClientProfileKey } from '../lib/system-prompt.js';
+import { clientProfileCreateSchema, clientProfileUpdateSchema } from '@freellmapi/shared/schemas.js';
 
 // Client-profile CRUD (#411), mounted under /api/client-profiles behind the
 // dashboard session gate like every other admin route. The full `sk-cp-...`
@@ -13,22 +13,11 @@ import { mintClientProfileKey, hashClientProfileKey } from '../lib/system-prompt
 
 export const clientProfilesRouter = Router();
 
-const MAX_NAME_LEN = 100;
 // Generous ceiling — a system prompt is configuration, not a document.
-const MAX_PROMPT_LEN = 32_000;
 
-const createSchema = z.object({
-  name: z.string().trim().min(1).max(MAX_NAME_LEN),
-  systemPrompt: z.string().max(MAX_PROMPT_LEN).nullish(),
-});
 
-const updateSchema = z.object({
-  name: z.string().trim().min(1).max(MAX_NAME_LEN).optional(),
-  // null clears the prompt (the profile key then authenticates without
-  // injecting anything); absent leaves it untouched.
-  systemPrompt: z.string().max(MAX_PROMPT_LEN).nullable().optional(),
-  enabled: z.boolean().optional(),
-});
+
+
 
 interface ProfileRow {
   id: number;
@@ -85,7 +74,7 @@ clientProfilesRouter.get('/', (_req: Request, res: Response) => {
 });
 
 clientProfilesRouter.post('/', (req: Request, res: Response) => {
-  const parsed = createSchema.safeParse(req.body);
+  const parsed = clientProfileCreateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'A profile name is required' } });
     return;
@@ -105,7 +94,7 @@ clientProfilesRouter.post('/', (req: Request, res: Response) => {
 clientProfilesRouter.patch('/:id', (req: Request, res: Response) => {
   const id = parseId(req, res);
   if (id === null) return;
-  const parsed = updateSchema.safeParse(req.body);
+  const parsed = clientProfileUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid profile update' } });
     return;

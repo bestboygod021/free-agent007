@@ -20,25 +20,13 @@ import {
   endpointRefMatches,
   qualifiedModelMemberId,
 } from '../lib/endpoint-scope.js';
+import { unifyOverridesSchema } from '@freellmapi/shared/schemas.js';
 
 // ── Settings keys ────────────────────────────────────────────────────────────
 export const UNIFY_ENABLED_KEY = 'unify_models_enabled';
 export const UNIFY_OVERRIDES_KEY = 'model_unify_overrides';
 
-export const unifyOverridesSchema = z.object({
-  // Coalesce several grouping tokens into one group keyed by `into`. Each key is
-  // a normalized display-name OR an exact "platform:model_id" member id.
-  merges: z.array(z.object({
-    into: z.string().min(1),
-    keys: z.array(z.string().min(1)).min(1),
-  })).default([]),
-  // Force a specific "platform:model_id" row out of its computed group into a
-  // singleton (or into an explicit groupKey).
-  splits: z.array(z.object({
-    member: z.string().min(1),
-    groupKey: z.string().optional(),
-  })).default([]),
-}).default({ merges: [], splits: [] });
+
 
 export type UnifyOverrides = z.infer<typeof unifyOverridesSchema>;
 

@@ -27,6 +27,8 @@ import {
   addApiKeySchema,
   updateApiKeySchema,
   importKeysRequestSchema,
+  customProviderSchema,
+  discoverModelsSchema,
 } from '@freellmapi/shared/schemas.js';
 
 export const keysRouter = Router();
@@ -582,35 +584,12 @@ keysRouter.post('/', (req: Request, res: Response) => {
 // all emit tool calls), `supportsVision` defaults to 0 unless declared. Leaving
 // a flag unset keeps the DB default on insert and preserves the stored value on
 // re-registration, so a capability the user later toggled isn't clobbered. (#470)
-const modelEntrySchema = z.union([
-  z.string().min(1),
-  z.object({
-    model: z.string().min(1),
-    displayName: z.string().optional(),
-    supportsTools: z.boolean().optional(),
-    supportsVision: z.boolean().optional(),
-  }),
-]);
+
 // `baseUrl` and `keyId` are both optional but at least one is required: the
 // bulk registration that follows model discovery (#488) already holds the
 // api_keys row it fetched the list with, and naming that row keeps the new
 // models on the same credential of the endpoint's pool (#619/#640).
-const customProviderSchema = z.object({
-  baseUrl: z.string().url('baseUrl must be a valid URL').optional(),
-  keyId: z.number().int().positive().optional(),
-  model: z.string().optional(),
-  models: z.array(modelEntrySchema).optional(),
-  displayName: z.string().optional(),
-  apiKey: z.string().optional(),
-  label: z.string().optional(),
-  // Top-level defaults applied to every model in this submit; a per-entry flag
-  // (object form) overrides them for that one model.
-  supportsTools: z.boolean().optional(),
-  supportsVision: z.boolean().optional(),
-}).refine(
-  d => d.baseUrl !== undefined || d.keyId !== undefined,
-  { message: 'baseUrl or keyId is required' },
-);
+
 // Naming no model at all is the credential-only add: a second key for an
 // endpoint already registered (#702). It needs the endpoint to exist and a key
 // to actually add, so those two checks live in the handler where the DB is in
@@ -768,16 +747,7 @@ async function rejectUnsafeBaseUrl(baseUrl: string, res: Response): Promise<bool
 // immediately. This reads ONLY the operator's own base_url with the operator's
 // own key — it never reads or refreshes the published provider catalog. Nothing
 // is written: the picked ids come back through POST /custom to be registered.
-const discoverModelsSchema = z.object({
-  baseUrl: z.string().url('baseUrl must be a valid URL').optional(),
-  keyId: z.number().int().positive().optional(),
-  // Lets the Keys page fetch a list for an endpoint the user is still typing in,
-  // before it has been saved. Falls back to the endpoint's stored credential.
-  apiKey: z.string().optional(),
-}).refine(
-  d => d.baseUrl !== undefined || d.keyId !== undefined,
-  { message: 'baseUrl or keyId is required' },
-);
+
 
 keysRouter.post('/custom/discover-models', async (req: Request, res: Response) => {
   const parsed = discoverModelsSchema.safeParse(req.body);
