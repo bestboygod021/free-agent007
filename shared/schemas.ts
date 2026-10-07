@@ -1229,11 +1229,16 @@ export type LogQueryParams = z.infer<typeof logQuerySchema>;
 
 
 // ═════════════════════ Auth bodies (POST /api/auth/setup|login) ═════════════════════
-// Registration validates a real address and an 8-char floor. Messages are the
+// The password floor every auth form shares (setup/change/reset on the server
+// repeat the literal 8 — the server keeps its own copy of these schemas; the
+// dual-sample contract tests pin the two together).
+export const PASSWORD_MIN_LENGTH = 8;
+
+// Registration validates a real address and the floor above. Messages are the
 // contract — the dual-sample tests below pin them on both sides.
 export const signupInputSchema = z.object({
   email: z.string().email('A valid email is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`),
 });
 
 // Login is a LOOKUP, not a registration: the address is matched rather than
