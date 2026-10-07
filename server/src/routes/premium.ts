@@ -44,7 +44,7 @@ premiumRouter.get('/', (_req: Request, res: Response) => {
 premiumRouter.post('/key', async (req: Request, res: Response) => {
   const key = typeof req.body?.key === 'string' ? req.body.key.trim() : '';
   if (key.length < 8) {
-    res.status(400).json({ error: 'Enter the license key from your purchase email.' });
+    res.status(400).json({ error: { message: 'Enter the license key from your purchase email.' } });
     return;
   }
 
@@ -58,7 +58,7 @@ premiumRouter.post('/key', async (req: Request, res: Response) => {
     });
     result = (await r.json()) as typeof result;
   } catch {
-    res.status(502).json({ error: 'Could not reach the license service. Check your connection and try again.' });
+    res.status(502).json({ error: { message: 'Could not reach the license service. Check your connection and try again.' } });
     return;
   }
 
@@ -104,7 +104,7 @@ premiumRouter.post('/sync', async (_req: Request, res: Response) => {
 premiumRouter.post('/portal', async (_req: Request, res: Response) => {
   const key = getSetting(SETTING_LICENSE_KEY);
   if (!key) {
-    res.status(400).json({ error: 'No license key configured.' });
+    res.status(400).json({ error: { message: 'No license key configured.' } });
     return;
   }
   try {
@@ -121,6 +121,6 @@ premiumRouter.post('/portal', async (_req: Request, res: Response) => {
     }
     res.json({ url: body.url });
   } catch {
-    res.status(502).json({ error: 'Could not reach the billing service. Try again shortly.' });
+    res.status(502).json({ error: { message: 'Could not reach the billing service. Try again shortly.' } });
   }
 });

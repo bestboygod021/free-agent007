@@ -1093,3 +1093,24 @@ export type RateLimitUsageData = z.infer<typeof rateLimitUsageDataSchema>;
 export type PlaygroundChatMessage = z.infer<typeof playgroundChatMessageSchema>;
 export type ConversationSummary = z.infer<typeof conversationSummarySchema>;
 export type ConversationDetail = z.infer<typeof conversationDetailSchema>;
+
+// ─── Error envelopes ───
+/** The nested error body every dashboard/OAI-shaped surface emits: route 4xx,
+ *  the global errorHandler (500/413), the 429 limiter, and requireAuth. */
+export const errorResponseSchema = z.object({
+  error: z.object({
+    message: z.string(),
+    /** Machine-readable class, e.g. 'authentication_error', 'rate_limit_error',
+     *  'invalid_request_error', 'route_not_found'. Absent on plain 4xx. */
+    type: z.string().optional(),
+    /** Narrower sub-code where a handler has one (e.g. 'request_too_large'). */
+    code: z.string().optional(),
+  }),
+});
+
+/** Native Ollama-protocol errors from the emulation surface: that protocol
+ *  uses a plain string, deliberately NOT the nested OpenAI shape. */
+export const ollamaNativeErrorSchema = z.object({ error: z.string() });
+
+export type ErrorResponse = z.infer<typeof errorResponseSchema>;
+export type OllamaNativeError = z.infer<typeof ollamaNativeErrorSchema>;

@@ -111,6 +111,7 @@ export type {
   ConversationSummary,
   ConversationDetail,
 } from './schemas';
+export type { ErrorResponse, OllamaNativeError } from './schemas';
 
 /** A model declared beside a custom endpoint in an import file (#382). A
  *  capability flag is present only when the paste declared it via a trailing

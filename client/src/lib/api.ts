@@ -1,3 +1,5 @@
+import type { ErrorResponse } from '../../../shared/types'
+
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 const TOKEN_KEY = 'freellmapi_dashboard_token';
 
@@ -49,7 +51,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     headers,
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: { message: res.statusText } }));
+    const body = (await res.json().catch(() => ({ error: { message: res.statusText } }))) as ErrorResponse;
     // A 401 ends the dashboard session ONLY when it is OUR auth saying so.
     // Discover/probe endpoints deliberately relay an upstream provider's 401
     // ("the endpoint rejected the key") with its status intact; treating those

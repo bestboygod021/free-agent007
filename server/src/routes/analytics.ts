@@ -604,7 +604,7 @@ analyticsRouter.get('/requests', (req: Request, res: Response) => {
   // bound parameters; absent filters keep the default behavior identical.
   const status = req.query.status as string | undefined;
   if (status !== undefined && status !== 'success' && status !== 'error' && status !== 'canceled') {
-    res.status(400).json({ error: "invalid status filter (expected 'success', 'error' or 'canceled')" });
+    res.status(400).json({ error: { message: "invalid status filter (expected 'success', 'error' or 'canceled')" } });
     return;
   }
   // Provider filter. The `provider` param carries the stable row id returned by
@@ -619,7 +619,7 @@ analyticsRouter.get('/requests', (req: Request, res: Response) => {
   const providerFilterParams: string[] = [];
   if (provider !== undefined) {
     if (provider.length > 256 || /[\r\n]/.test(provider)) {
-      res.status(400).json({ error: 'invalid provider filter' });
+      res.status(400).json({ error: { message: 'invalid provider filter' } });
       return;
     }
     if (provider === 'custom') {
@@ -639,7 +639,7 @@ analyticsRouter.get('/requests', (req: Request, res: Response) => {
       providerFilterSql = ' AND r.platform = ?';
       providerFilterParams.push(provider);
     } else {
-      res.status(400).json({ error: 'invalid provider filter' });
+      res.status(400).json({ error: { message: 'invalid provider filter' } });
       return;
     }
   } else if (platform !== undefined) {
@@ -648,7 +648,7 @@ analyticsRouter.get('/requests', (req: Request, res: Response) => {
     // Platform ids are short slugs ('groq', 'pt-custom_1'); anything else is a
     // client bug, not a filter.
     if (!/^[A-Za-z0-9_-]{1,64}$/.test(platform)) {
-      res.status(400).json({ error: 'invalid platform filter' });
+      res.status(400).json({ error: { message: 'invalid platform filter' } });
       return;
     }
     providerFilterSql = ' AND r.platform = ?';
@@ -723,7 +723,7 @@ analyticsRouter.get('/requests', (req: Request, res: Response) => {
 analyticsRouter.get('/requests/:id', (req: Request, res: Response) => {
   const id = Number.parseInt(req.params.id as string, 10);
   if (!Number.isInteger(id) || id <= 0) {
-    res.status(400).json({ error: 'invalid request id' });
+    res.status(400).json({ error: { message: 'invalid request id' } });
     return;
   }
   const db = getDb();
@@ -737,7 +737,7 @@ analyticsRouter.get('/requests/:id', (req: Request, res: Response) => {
     WHERE id = ?
   `).get(id) as any;
   if (!r) {
-    res.status(404).json({ error: 'request not found' });
+    res.status(404).json({ error: { message: 'request not found' } });
     return;
   }
 

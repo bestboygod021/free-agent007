@@ -369,5 +369,26 @@ export function createApp(config?: Config) {
     });
   }
 
+  // Unknown API/inference paths get the JSON error envelope instead of
+  // Express's default HTML — agents and apiFetch both parse
+  // `{ error: { message } }`. Non-API paths keep the SPA/HTML handling above,
+  // and route-smoke flags any registered route that falls through here by the
+  // 'route_not_found' type.
+  app.use((req, res, next) => {
+    const p = req.path;
+    const apiish =
+      p === '/api' || p.startsWith('/api/') ||
+      p === '/v1' || p.startsWith('/v1/') ||
+      p === '/v1beta' || p.startsWith('/v1beta/') ||
+      p === '/mcp' || p.startsWith('/mcp/');
+    if (!apiish) {
+      next();
+      return;
+    }
+    res.status(404).json({
+      error: { message: `${req.method} ${p} not found`, type: 'route_not_found' },
+    });
+  });
+
   return app;
 }

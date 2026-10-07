@@ -311,6 +311,12 @@ describe('route-table smoke', () => {
         violations.push(`${label} → ${res.status} HTML (fell through: ${raw.slice(0, 120).replace(/\n/g, ' ')})`);
         continue;
       }
+      // The JSON 404 catch-all means a registered path that fell through no
+      // longer shows up as HTML — catch it by its envelope type instead.
+      if (res.status === 404 && raw.includes('"route_not_found"')) {
+        violations.push(`${label} → 404 route_not_found (fell through to the API catch-all)`);
+        continue;
+      }
       if (res.status === 0) {
         violations.push(`${label} → transport error: ${raw}`);
         continue;

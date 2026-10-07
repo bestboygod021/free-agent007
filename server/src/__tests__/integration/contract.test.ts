@@ -64,6 +64,8 @@ import {
   routingScoreRowSchema,
   tokenUsageModelSchema,
   rateLimitUsageRowSchema,
+  errorResponseSchema,
+  ollamaNativeErrorSchema,
 } from '@freellmapi/shared/schemas.js';
 
 // Contract test: the shared Zod schemas (shared/schemas.ts) must parse the
@@ -638,6 +640,87 @@ describe('response contracts: logs/premium/health/backups/profiles/routing/conve
     expectConfigKeys(detail.body, conversationDetailSchema.shape);
     expect(conv.messages.length).toBeGreaterThan(0);
     playgroundChatMessageSchema.parse(conv.messages[0]);
+  });
+});
+
+// ─── Turn 7: the shared error envelope, across every failure class ───
+describe('error envelope: { error: { message, type?, code? } }', () => {
+  /** Same as `req` but WITHOUT the Authorization header, for 401 probes. */
+  async function reqNoAuth(app: Express, path: string) {
+    const server = app.listen(0, '127.0.0.1');
+    if (!server.listening) await new Promise<void>(resolve => server.once('listening', () => resolve()));
+    const addr = server.address() as { port: number };
+    const res = await fetch(`http://127.0.0.1:${addr.port}${path}`);
+    const data = await res.text();
+    server.close();
+    let json: unknown = null;
+    try { json = JSON.parse(data); } catch { /* non-JSON surfaces in assertions below */ }
+    return { status: res.status, body: json };
+  }
+
+  it('401 without a token: nested envelope with authentication_error', async () => {
+    const res = await reqNoAuth(app, '/api/logs');
+    expect(res.status).toBe(401);
+    const body = errorResponseSchema.parse(res.body);
+    expectConfigKeys(res.body as object, errorResponseSchema.shape);
+    expect(body.error.type).toBe('authentication_error');
+    expect(body.error.message).toContain('Authentication');
+  });
+
+  it("400 invalid query: analytics status filter", async () => {
+    const res = await req(app, 'GET', '/api/analytics/requests?status=bogus');
+    expect(res.status).toBe(400);
+    errorResponseSchema.parse(res.body);
+    expectConfigKeys(res.body as object, errorResponseSchema.shape);
+  });
+
+  it('400 invalid path param + 404 missing row: key cooldowns', async () => {
+    const bad = await req(app, 'DELETE', '/api/keys/abc/cooldowns');
+    expect(bad.status).toBe(400);
+    const badBody = errorResponseSchema.parse(bad.body);
+    expectConfigKeys(bad.body as object, errorResponseSchema.shape);
+    expect(badBody.error.message).toContain('Invalid key id');
+
+    const missing = await req(app, 'DELETE', '/api/keys/999999/cooldowns');
+    expect(missing.status).toBe(404);
+    const missingBody = errorResponseSchema.parse(missing.body);
+    expectConfigKeys(missing.body as object, errorResponseSchema.shape);
+    expect(missingBody.error.message).toContain('not found');
+  });
+
+  it('400 invalid body: premium key activation', async () => {
+    const res = await req(app, 'POST', '/api/premium/key', { key: 'short' });
+    expect(res.status).toBe(400);
+    errorResponseSchema.parse(res.body);
+    expectConfigKeys(res.body as object, errorResponseSchema.shape);
+  });
+
+  it('409 conflict: duplicate profile name', async () => {
+    const first = await req(app, 'POST', '/api/profiles', { name: 'conflict-probe' });
+    expect(first.status).toBe(201);
+
+    const res = await req(app, 'POST', '/api/profiles', { name: 'conflict-probe' });
+    expect(res.status).toBe(409);
+    const body = errorResponseSchema.parse(res.body);
+    expectConfigKeys(res.body as object, errorResponseSchema.shape);
+    expect(body.error.message).toContain('already exists');
+  });
+
+  it('404 unknown /api path: JSON catch-all, not Express HTML', async () => {
+    const res = await req(app, 'GET', '/api/__no_such_route__');
+    expect(res.status).toBe(404);
+    const body = errorResponseSchema.parse(res.body);
+    expectConfigKeys(res.body as object, errorResponseSchema.shape);
+    expect(body.error.type).toBe('route_not_found');
+    expect(body.error.message).toContain('GET /api/__no_such_route__');
+  });
+
+  it('Ollama native surface keeps the protocol string error', async () => {
+    const res = await req(app, 'GET', '/api/tags');
+    expect(res.status).toBe(404); // emulation defaults to off in a fresh DB
+    const body = ollamaNativeErrorSchema.parse(res.body);
+    expectConfigKeys(res.body as object, ollamaNativeErrorSchema.shape);
+    expect(body.error).toContain('emulation');
   });
 });
 });

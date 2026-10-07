@@ -356,14 +356,14 @@ keysRouter.get('/', (_req: Request, res: Response) => {
 keysRouter.delete('/:id/cooldowns', (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) {
-    res.status(400).json({ error: 'Invalid key id' });
+    res.status(400).json({ error: { message: 'Invalid key id' } });
     return;
   }
 
   const db = getDb();
   const exists = db.prepare('SELECT 1 FROM api_keys WHERE id = ?').get(id);
   if (!exists) {
-    res.status(404).json({ error: 'Key not found' });
+    res.status(404).json({ error: { message: 'Key not found' } });
     return;
   }
 
