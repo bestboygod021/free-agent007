@@ -10,6 +10,24 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     base: process.env.VITE_BASE ?? '/',
+    build: {
+      rolldownOptions: {
+        output: {
+          // Vendor groups for the eager shell only: React, the router/query
+          // stack and the UI primitives become small boot chunks, while
+          // page-only graphs (recharts/d3 with AnalyticsPage, etc.) stay in
+          // their lazy route chunks — no catch-all node_modules group, or
+          // they would be dragged back into the entry bundle.
+          codeSplitting: {
+            groups: [
+              { name: 'vendor-react', test: /node_modules[/\\](react|react-dom|scheduler)[/\\]/ },
+              { name: 'vendor-router', test: /node_modules[/\\](@tanstack|react-router|history)[/\\]/ },
+              { name: 'vendor-ui', test: /node_modules[/\\](@base-ui|lucide-react|cmdk)[/\\]/ },
+            ],
+          },
+        },
+      },
+    },
     envDir: path.resolve(__dirname, '..'),
     define: {
       __SERVER_PORT__: JSON.stringify(String(serverPort)),

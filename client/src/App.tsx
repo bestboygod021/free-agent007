@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import { lazy, Suspense, useState, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ChevronDown, KeyRound, LogOut, Menu, MoreHorizontal, Search, Settings, Sparkles } from 'lucide-react'
+import { ChevronDown, KeyRound, Loader2, LogOut, Menu, MoreHorizontal, Search, Settings, Sparkles } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -26,23 +26,27 @@ import { I18nProvider, useI18n } from '@/i18n'
 import { logout } from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { ThemeProvider } from '@/theme'
-import KeysPage from '@/pages/KeysPage'
-import PlaygroundPage from '@/pages/PlaygroundPage'
-import FallbackPage from '@/pages/FallbackPage'
-import ModelDetailPage from '@/pages/ModelDetailPage'
-import FusionPage from '@/pages/FusionPage'
-import EmbeddingsPage from '@/pages/EmbeddingsPage'
-import ImagePage from '@/pages/ImagePage'
-import VideoPage from '@/pages/VideoPage'
-import AudioPage from '@/pages/AudioPage'
-import MediaDetailPage from '@/pages/MediaDetailPage'
-import EmbeddingDetailPage from '@/pages/EmbeddingDetailPage'
-import AnalyticsPage from '@/pages/AnalyticsPage'
-import LogsPage from '@/pages/LogsPage'
-import PremiumPage from '@/pages/PremiumPage'
-import NotFoundPage from '@/pages/NotFoundPage'
-import AgentsPage from '@/pages/AgentsPage'
-import ForgePilotPage from '@/pages/ForgePilotPage'
+// Route-level code split: every page loads on navigation instead of at boot,
+// so the entry bundle is the shell (nav, providers, dialogs, i18n runtime) and
+// heavy page graphs follow their route — recharts rides with AnalyticsPage's
+// chunk only, never the first paint.
+const KeysPage = lazy(() => import('@/pages/KeysPage'))
+const PlaygroundPage = lazy(() => import('@/pages/PlaygroundPage'))
+const FallbackPage = lazy(() => import('@/pages/FallbackPage'))
+const ModelDetailPage = lazy(() => import('@/pages/ModelDetailPage'))
+const FusionPage = lazy(() => import('@/pages/FusionPage'))
+const EmbeddingsPage = lazy(() => import('@/pages/EmbeddingsPage'))
+const ImagePage = lazy(() => import('@/pages/ImagePage'))
+const VideoPage = lazy(() => import('@/pages/VideoPage'))
+const AudioPage = lazy(() => import('@/pages/AudioPage'))
+const MediaDetailPage = lazy(() => import('@/pages/MediaDetailPage'))
+const EmbeddingDetailPage = lazy(() => import('@/pages/EmbeddingDetailPage'))
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'))
+const LogsPage = lazy(() => import('@/pages/LogsPage'))
+const PremiumPage = lazy(() => import('@/pages/PremiumPage'))
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
+const AgentsPage = lazy(() => import('@/pages/AgentsPage'))
+const ForgePilotPage = lazy(() => import('@/pages/ForgePilotPage'))
 
 // Every failed mutation surfaces as an error toast, so no action fails
 // silently. A page that already shows the failure inline can opt out with
@@ -436,6 +440,18 @@ function AppShell({ children }: { children: ReactNode }) {
   )
 }
 
+// Shown by Suspense while a route chunk streams in. Reuses the existing
+// auth.loading key — no new i18n entry for a spinner.
+function RouteFallback() {
+  const { t } = useI18n()
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center" role="status">
+      <Loader2 className="size-4 animate-spin" aria-hidden />
+      <span className="sr-only">{t('auth.loading')}</span>
+    </div>
+  )
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -451,6 +467,7 @@ function App() {
                 <Navbar />
                 <PageContainer>
                   <PageBoundary>
+                    <Suspense fallback={<RouteFallback />}>
                     <Routes>
                       <Route path="/" element={<Navigate to="/models/chat" replace />} />
                       <Route path="/models" element={<Navigate to="/models/chat" replace />} />
@@ -478,6 +495,7 @@ function App() {
                       <Route path="/health" element={<Navigate to="/keys" replace />} />
                       <Route path="*" element={<NotFoundPage />} />
                     </Routes>
+                    </Suspense>
                   </PageBoundary>
                 </PageContainer>
                 <Toaster />
