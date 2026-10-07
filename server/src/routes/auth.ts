@@ -15,6 +15,13 @@ import {
   updatePassword,
   resetUserPassword,
 } from '../services/auth.js';
+import {
+  signupInputSchema,
+  loginInputSchema,
+  changeEmailInputSchema,
+  changePasswordInputSchema,
+  resetPasswordInputSchema,
+} from '@freellmapi/shared/schemas.js';
 import { setupCodeMatches, clearSetupCode } from '../lib/setup-code.js';
 import { generateResetCode, resetCodeMatches, clearResetCode } from '../lib/reset-code.js';
 
@@ -25,25 +32,6 @@ const failedPasswordAttempts = new Map<number, number>();
 // Dashboard auth (#35). These routes are mounted BEFORE requireAuth, so
 // /status, /setup and /login are reachable without a session (bootstrap);
 // /logout and /me validate the token themselves.
-
-// Signing up is the one place the address has to look like an address.
-const signupSchema = z.object({
-  email: z.string().email('A valid email is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-});
-
-// Logging in is a lookup, not a registration, so the address is matched rather
-// than validated. The desktop app seeds its hidden account as
-// `desktop@localhost` (server-host.ts), which has no TLD and so could never
-// satisfy z.email() — every login attempt on a desktop install failed with
-// "A valid email is required" before the password was even checked, including
-// the reset-then-sign-in-from-a-browser route suggested in #807. Length rules
-// belong to signup too: an account created under an older policy must still be
-// able to get in.
-const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required'),
-  password: z.string().min(1, 'Password is required'),
-});
 
 // ── Brute-force throttle ──────────────────────────────────────────────────
 // Simple in-memory per-email limiter. A local single-user tool doesn't need a
@@ -121,7 +109,7 @@ authRouter.post('/setup', (req: Request, res: Response) => {
     return;
   }
 
-  const parsed = signupSchema.safeParse(req.body);
+  const parsed = signupInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -136,7 +124,7 @@ authRouter.post('/setup', (req: Request, res: Response) => {
 });
 
 authRouter.post('/login', (req: Request, res: Response) => {
-  const parsed = loginSchema.safeParse(req.body);
+  const parsed = loginInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -175,19 +163,13 @@ authRouter.get('/me', (req: Request, res: Response) => {
   res.json({ email: session.email });
 });
 
-// Change email (requires active session + current password)
-const changeEmailSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newEmail: z.string().email('A valid email is required'),
-});
-
 authRouter.post('/change-email', (req: Request, res: Response) => {
   const session = validateSession(bearer(req));
   if (!session) {
     res.status(401).json({ error: { message: 'Authentication required', type: 'authentication_error' } });
     return;
   }
-  const parsed = changeEmailSchema.safeParse(req.body);
+  const parsed = changeEmailInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -217,19 +199,13 @@ authRouter.post('/change-email', (req: Request, res: Response) => {
   }
 });
 
-// Change password (requires active session + current password)
-const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-});
-
 authRouter.post('/change-password', (req: Request, res: Response) => {
   const session = validateSession(bearer(req));
   if (!session) {
     res.status(401).json({ error: { message: 'Authentication required', type: 'authentication_error' } });
     return;
   }
-  const parsed = changePasswordSchema.safeParse(req.body);
+  const parsed = changePasswordInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -270,14 +246,8 @@ authRouter.post('/forgot-password', (_req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-// Reset password: accept the logged code + new password
-const resetPasswordSchema = z.object({
-  resetCode: z.string().min(1, 'Reset code is required'),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-});
-
 authRouter.post('/reset-password', (req: Request, res: Response) => {
-  const parsed = resetPasswordSchema.safeParse(req.body);
+  const parsed = resetPasswordInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;

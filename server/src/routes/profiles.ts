@@ -8,26 +8,9 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { getDb } from '../db/index.js';
+import { profileNameSchema, profileUpdateSchema } from '@freellmapi/shared/schemas.js';
 
 export const profilesRouter = Router();
-
-const RESERVED_PROFILE_NAMES = [
-  'auto', 'smart', 'fast', 'cheap', 'budget',
-  'intelligence', 'speed', 'active', 'default',
-];
-
-const profileNameSchema = z
-  .string()
-  .min(1, 'Profile name cannot be empty')
-  .max(20, 'Profile name must not exceed 20 characters')
-  .regex(
-    /^[a-zA-Z0-9-_]+$/,
-    'Only Latin letters, digits, hyphens (-) and underscores (_) are allowed'
-  )
-  .refine(
-    (name) => !RESERVED_PROFILE_NAMES.includes(name.toLowerCase()),
-    'This name is reserved by the system'
-  );
 
 const createSchema = z.object({
   name: profileNameSchema,
@@ -40,17 +23,6 @@ const createSchema = z.object({
   // empty chain also opts out of the catalog-sync backfill, so it stays as
   // small as the user built it.
   empty: z.boolean().default(false),
-});
-
-const updateSchema = z.object({
-  name: profileNameSchema.optional(),
-  emoji: z.string().max(4).optional(),
-  color: z.string().optional(),
-  is_favorite: z.boolean().optional(),
-  sort_order: z.number().optional(),
-  auto_sort: z.enum(['intelligence', 'speed', 'budget']).nullable().optional(),
-  layout_config: z.string().nullable().optional(),
-  auto_include_new_models: z.boolean().optional(),
 });
 
 function getId(req: Request): number {
@@ -212,7 +184,7 @@ profilesRouter.put('/:id', (req: Request, res: Response) => {
     return;
   }
 
-  const parsed = updateSchema.safeParse(req.body);
+  const parsed = profileUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;

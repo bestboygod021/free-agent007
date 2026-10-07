@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { z } from 'zod';
+import { conversationPatchSchema } from '@freellmapi/shared/schemas.js';
 import { getDb } from '../db/index.js';
 
 // Playground conversation storage, mounted under /api/conversations behind the
@@ -16,67 +16,11 @@ import { getDb } from '../db/index.js';
 
 export const conversationsRouter = Router();
 
-const MAX_TITLE_LEN = 200;
 // A conversation is prose plus, occasionally, inlined image data URIs. 2 MB of
 // serialised JSON is far more than any readable chat and still small enough to
 // hand back on every switch without thinking about it. Over that we refuse the
 // write rather than silently truncating someone's history.
 export const MAX_MESSAGES_BYTES = 2 * 1024 * 1024;
-
-// Mirrors the client's ChatMessage. Kept permissive on `content` (an empty
-// assistant bubble is legitimate mid-fusion) and strict on `role`, which is the
-// one field the renderer branches on.
-const metaSchema = z.object({
-  platform: z.string().optional(),
-  model: z.string().optional(),
-  latency: z.number().optional(),
-  fallbackAttempts: z.number().optional(),
-  fusionPanel: z.array(z.object({
-    platform: z.string(),
-    model: z.string(),
-    status: z.enum(['ok', 'failed']).optional(),
-    content: z.string().optional(),
-    error: z.string().optional(),
-  })).optional(),
-  fusionJudge: z.object({ platform: z.string(), model: z.string() }).nullable().optional(),
-});
-
-const messageSchema = z.object({
-  role: z.enum(['user', 'assistant']),
-  content: z.string(),
-  images: z.array(z.string()).optional(),
-  isError: z.boolean().optional(),
-  reasoning: z.string().optional(),
-  meta: metaSchema.optional(),
-});
-// `streaming: true` is deliberately absent above (and so stripped): a stored
-// message is finished by definition, and persisting the flag would restore a
-// transcript stuck mid-answer.
-
-const messagesSchema = z.array(messageSchema);
-
-// 'auto', 'fusion', or a canonical model id — whatever the picker held. Not
-// enumerated: the catalog changes under us, and a conversation pinned to a
-// model that has since gone away should still load.
-const modelSchema = z.string().max(200).nullable();
-const systemPromptSchema = z.string().max(32_000).nullable();
-
-const createSchema = z.object({
-  title: z.string().max(MAX_TITLE_LEN).optional(),
-  messages: messagesSchema.optional(),
-  model: modelSchema.optional(),
-  systemPrompt: systemPromptSchema.optional(),
-}).strict();
-
-// PUT is a full upsert of the mutable state: every field the page owns, written
-// in one statement. Fields left out keep their stored value, so a rename does
-// not have to re-send the transcript (and cannot race one away).
-const updateSchema = z.object({
-  title: z.string().max(MAX_TITLE_LEN).optional(),
-  messages: messagesSchema.optional(),
-  model: modelSchema.optional(),
-  systemPrompt: systemPromptSchema.optional(),
-}).strict();
 
 interface ConversationRow {
   id: number;
@@ -195,7 +139,7 @@ conversationsRouter.get('/:id', (req: Request, res: Response) => {
 });
 
 conversationsRouter.post('/', (req: Request, res: Response) => {
-  const parsed = createSchema.safeParse(req.body ?? {});
+  const parsed = conversationPatchSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid conversation' } });
     return;
@@ -222,7 +166,7 @@ conversationsRouter.post('/', (req: Request, res: Response) => {
 conversationsRouter.put('/:id', (req: Request, res: Response) => {
   const id = parseId(req, res);
   if (id === null) return;
-  const parsed = updateSchema.safeParse(req.body ?? {});
+  const parsed = conversationPatchSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid conversation update' } });
     return;

@@ -21,21 +21,20 @@ import { recordCustomModelTombstone } from '../services/custom-model-tombstone.j
 import type { Db } from '../db/types.js';
 import type { Platform } from '@freellmapi/shared/types.js';
 import { parseModelScope } from '../lib/model-scope.js';
-import { KEY_PROXY_URL_ERROR, KEY_PROXY_URL_MAX, decryptProxyUrl, encryptProxyUrl, isValidKeyProxyUrl, maskProxyUrl } from '../lib/key-proxy.js';
+import { decryptProxyUrl, encryptProxyUrl, maskProxyUrl } from '../lib/key-proxy.js';
+import {
+  apiKeyPlatformSchema,
+  addApiKeySchema,
+  updateApiKeySchema,
+  importKeysRequestSchema,
+} from '@freellmapi/shared/schemas.js';
 
 export const keysRouter = Router();
 
-// Active providers — must match providers/index.ts registrations + shared/types.ts Platform.
-// Moonshot and MiniMax direct integrations were dropped in V4. HuggingFace
-// was dropped in V4 and re-added in V13 via the router.huggingface.co route.
-// SambaNova was dropped in V23 (free tier permanently retired).
-export const PLATFORMS = [
-  'google', 'groq', 'cerebras', 'sail', 'electronhub', 'experiential', 'router9', 'septor', 'clod', 'speechify', 'blaze', 'lucidity', 'airforce', 'dreamprompting', 'waterfall', 'logfare', 'bai', 'radeon', 'nvidia', 'mistral',
-  'openrouter', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama',
-  'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode', 'ovh', 'agnes', 'reka', 'siliconflow',
-  'routeway', 'bazaarlink', 'ainative', 'aion', 'anyapi', 'requesty', 'navy', 'nara', 'sealion', 'orcarouter', 'unorouter', 'xkiro', 'modelscope',
-  'qianfan', 'volcengine', 'longcat', 'xfyun', 'aihorde', 'custom',
-] as const;
+// Active providers — one list, owned by shared/schemas.ts (apiKeyPlatformSchema).
+// The contract test asserts this stays the set the API accepts; nothing on the
+// server is allowed to add a platform on its own.
+export const PLATFORMS = apiKeyPlatformSchema.options;
 
 const ALLOWED_IMPORT_EXTENSIONS = new Set(['.env', '.json', '.jsonc', '.md', '.txt', '.csv']);
 
@@ -50,55 +49,6 @@ const upload = multer({
     }
     cb(null, true);
   },
-});
-
-// `key` is optional so keyless providers (Kilo's anonymous gateway) can be added
-// without one; the handler enforces a non-empty key for everyone else.
-// #590 (per-key proxy): an optional per-key proxy override. Only schemes the
-// proxy layer can actually dispatch through are accepted — an unvalidated
-// string would be stored, encrypted, and only surface as a failed dispatcher
-// at request time, one attempt at a time. '' = no override (global proxy).
-const proxyUrlSchema = z.string().max(KEY_PROXY_URL_MAX).refine(isValidKeyProxyUrl, { message: KEY_PROXY_URL_ERROR });
-
-const addKeySchema = z.object({
-  platform: z.enum(PLATFORMS),
-  key: z.string().optional(),
-  label: z.string().optional(),
-  proxyUrl: proxyUrlSchema.optional(),
-});
-
-// `modelScope` (#657): the model_id list this key may serve — relay stations
-// scope each key to a model group. null (or an empty array) clears the scope,
-// returning the key to serving every model of its platform.
-const updateKeySchema = z.object({
-  enabled: z.boolean().optional(),
-  label: z.string().optional(),
-  modelScope: z.array(z.string().trim().min(1).max(200)).max(100).nullable().optional(),
-  // #590: '' clears the per-key proxy; absent leaves it unchanged.
-  proxyUrl: proxyUrlSchema.optional(),
-  // Monthly budget caps (#1158): 0 clears the cap (unlimited).
-  monthlyRequestCap: z.number().int().min(0).max(1_000_000_000).optional(),
-  monthlyTokenCap: z.number().int().min(0).max(1_000_000_000_000).optional(),
-  // An absent credential leaves the encrypted key untouched.
-  key: z.string().trim().min(1).optional(),
-}).refine(data => data.enabled !== undefined || data.label !== undefined || data.modelScope !== undefined || data.proxyUrl !== undefined || data.key !== undefined || data.monthlyRequestCap !== undefined || data.monthlyTokenCap !== undefined, {
-  message: 'At least one of enabled, label, modelScope, proxyUrl, key, monthlyRequestCap or monthlyTokenCap must be provided',
-});
-
-const importKeySchema = z.object({
-  keyName: z.string().optional(),
-  keyValue: z.string().min(1),
-  platform: z.enum(PLATFORMS),
-  // A custom row names an ENDPOINT, so it only means something with the URL
-  // the export file carried alongside it (#687).
-  baseUrl: z.string().optional(),
-  // Models declared beside a custom endpoint in the paste (#382). Ignored for
-  // catalog platforms — their model lists come from the catalog, not the file.
-  models: z.array(z.object({
-    id: z.string().min(1),
-    supportsTools: z.boolean().optional(),
-    supportsVision: z.boolean().optional(),
-  })).max(200).optional(),
 });
 
 function handleUploadError(err: any, res: Response, next: NextFunction): boolean {
@@ -551,7 +501,7 @@ keysRouter.post('/:id/reveal', (req: Request, res: Response) => {
 
 // Add a key
 keysRouter.post('/', (req: Request, res: Response) => {
-  const parsed = addKeySchema.safeParse(req.body);
+  const parsed = addApiKeySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -1326,7 +1276,7 @@ keysRouter.post('/preview', (req: Request, res: Response, next: NextFunction) =>
 });
 
 keysRouter.post('/import-selected', async (req: Request, res: Response) => {
-  const parsed = z.object({ keys: z.array(importKeySchema).max(100) }).safeParse(req.body);
+  const parsed = importKeysRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -1514,7 +1464,7 @@ keysRouter.patch('/:id', (req: Request, res: Response) => {
     return;
   }
 
-  const parsed = updateKeySchema.safeParse(req.body);
+  const parsed = updateApiKeySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
