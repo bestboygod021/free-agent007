@@ -1,4 +1,5 @@
-import type { ProviderQuotaState } from '../../../../shared/types'
+import type { HealthPlatform, HealthData } from '../../../../shared/types'
+export type { HealthPlatform, HealthData }
 import { ExternalLink } from 'lucide-react'
 import { useI18n } from '@/i18n'
 
@@ -19,18 +20,4 @@ export function GetKeyLink({ url }: { url: string }) {
   )
 }
 
-export type HealthPlatform = {
-  platform: string
-  totalKeys: number
-  healthyKeys: number
-  rateLimitedKeys: number
-  invalidKeys: number
-  errorKeys: number
-  unknownKeys: number
-}
 
-export type HealthData = {
-  platforms: HealthPlatform[]
-  keys: { id: number; platform: string; status: string; lastCheckedAt: string | null; lastHealthError: string | null }[]
-  quotaStates: ProviderQuotaState[]
-}

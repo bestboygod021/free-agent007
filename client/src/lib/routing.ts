@@ -4,17 +4,38 @@
 
 // The full GET /api/fallback row now lives in shared/schemas.ts; imported
 // for local use (Row below) and re-exported so importers keep one import site.
-import type { FallbackEntry } from '../../../shared/types'
-export type { FallbackEntry }
+import type {
+  FallbackEntry,
+  RoutingStrategy,
+  KeySelectionStrategy,
+  RoutingWeights,
+  RoutingScore,
+  RoutingScoreRow,
+  RoutingData,
+  TokenUsageData,
+  RateLimitWindow,
+  RateLimitUsageRow,
+  RateLimitUsageData,
+} from '../../../shared/types'
+export type {
+  FallbackEntry,
+  RoutingStrategy,
+  KeySelectionStrategy,
+  RoutingWeights,
+  RoutingScore,
+  RoutingScoreRow,
+  RoutingData,
+  TokenUsageData,
+  RateLimitWindow,
+  RateLimitUsageRow,
+  RateLimitUsageData,
+}
 
-export type RoutingStrategy = 'priority' | 'balanced' | 'smartest' | 'fastest' | 'reliable' | 'custom'
 
 // How the gateway picks between several keys of ONE platform, once a model has
 // been chosen (#919). Separate from RoutingStrategy, which ranks models: the
 // two are independent knobs and the Fallback page sets them side by side.
-export type KeySelectionStrategy = 'auto' | 'least-remaining'
 
-export type RoutingWeights = { reliability: number; speed: number; intelligence: number }
 
 /** Presets the peak-hours adjustment (#760) leaves alone: they already sit at
  *  the two ends of the speed↔reliability axis, so reweighting them would make
@@ -22,54 +43,11 @@ export type RoutingWeights = { reliability: number; speed: number; intelligence:
  *  PEAK_EXEMPT_STRATEGIES in server/src/services/scoring.ts. */
 export const PEAK_EXEMPT_STRATEGIES: RoutingStrategy[] = ['fastest', 'reliable']
 
-export type RoutingScore = {
-  modelDbId: number
-  reliability: number
-  speed: number
-  intelligence: number
-  headroom: number
-  rateLimit: number
-  score: number
-  totalRequests: number
-}
 
-export type RoutingData = {
-  strategy: RoutingStrategy
-  weights: RoutingWeights | null
-  customWeights: RoutingWeights
-  /** Exploration toggle: when on, unmeasured models get a guaranteed chance to
-   *  be tried so they build reliability/speed data (#685 follow-up). Required:
-   *  the server always sends it, and the checkbox renders straight from it. */
-  exploreEnabled: boolean
-  /** Peak-hours adjustment (#760): opt-in, off by default. `peakAdjusted` says
-   *  whether `weights` above is the raw preset or a peak-hours variant of it —
-   *  the weight summary is labelled from that flag so the numbers never change
-   *  under the operator without an explanation. */
-  peakHoursAdjust: boolean
-  peakStartHour: number
-  peakEndHour: number
-  /** IANA timezone the peak window is read in (default 'UTC'). */
-  peakTimezone: string
-  peakAdjusted: boolean
-  /** Key-selection policy (#919). Required for the same reason as
-   *  exploreEnabled: the picker renders straight from GET /routing. */
-  keySelectionStrategy: KeySelectionStrategy
-  /** Ceiling on the router's own cooldown guesses in ms (#952); null = no cap
-   *  (ladder tops out at 24h, 402/403 bench a day). */
-  cooldownCeilingMs: number | null
-  scores: (RoutingScore & { platform: string; modelId: string; displayName: string; enabled: boolean })[]
-}
 
 // A merged row: fallback-chain metadata + live bandit scores.
 export type Row = FallbackEntry & Partial<RoutingScore>
 
-export type TokenUsageData = {
-  totalBudget: number
-  totalUsed: number
-  /** Served smartest-first (intelligenceRank 1 = smartest); the bar and its
-   *  legend keep that order. */
-  models: { displayName: string; platform: string; modelId?: string; intelligenceRank?: number; budget: number; used?: number }[]
-}
 
 // Custom endpoints all share the generic 'custom' platform id, so show the
 // user's key label ("Ollama box") instead so the models list names the actual
@@ -266,24 +244,8 @@ export function groupQuotaBadge(
 // router would pick next for that model (the routable key with the most
 // headroom), so the client only has to aggregate across a group's members.
 
-export type RateLimitWindow = {
-  used: number
-  limit: number
-}
 
-export type RateLimitUsageRow = {
-  modelDbId: number
-  platform: string
-  modelId: string
-  rpm: RateLimitWindow | null
-  rpd: RateLimitWindow | null
-  tpm: RateLimitWindow | null
-}
 
-export type RateLimitUsageData = {
-  generatedAtMs: number
-  rows: RateLimitUsageRow[]
-}
 
 export type RateLimitKind = 'RPM' | 'RPD' | 'TPM'
 

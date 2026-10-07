@@ -1,31 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
+import type { LicenseStatus, CatalogSyncState, PremiumStatus } from '../../../shared/types'
+export type { LicenseStatus, CatalogSyncState, PremiumStatus }
 
-export type LicenseStatus = {
-  valid: boolean
-  plan: 'annual' | 'lifetime' | null
-  status: string | null
-  expiresAt: string | null
-  cancelAtPeriodEnd?: boolean
-  reason?: string
-  checkedAtMs: number
-}
 
-export type CatalogSyncState = {
-  baseUrl: string
-  appliedVersion: string | null
-  appliedTier: string | null
-  lastSyncMs: number | null
-  lastError: string | null
-}
 
-export type PremiumStatus = {
-  hasKey: boolean
-  maskedKey: string | null
-  license: LicenseStatus | null
-  catalog: CatalogSyncState
-  siteUrl: string
-}
 
 export function usePremium() {
   const query = useQuery<PremiumStatus>({

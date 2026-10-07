@@ -70,6 +70,48 @@ export type {
   DiscoverResponse,
 } from './schemas';
 
+// The interface below `extends` it, so the name must also be in local scope.
+import type { ProviderQuotaState } from './schemas';
+
+// Logs viewer rows, premium/license status, health + degradation, backups,
+// chains, fallback routing scores, rate limits and Playground conversations —
+// response-only shapes parsed at the shared boundary.
+export type {
+  LogLevel,
+  LogEntry,
+  LogCounts,
+  LogsResponse,
+  LicenseStatus,
+  CatalogSyncState,
+  PremiumStatus,
+  ProviderQuotaState,
+  HealthPlatform,
+  HealthKeyRow,
+  DegradationStatus,
+  HealthData,
+  BackupMeta,
+  BackupSchedule,
+  BackupListResponse,
+  BackupScheduleResponse,
+  BackupCreateResponse,
+  BackupTablesResponse,
+  Chain,
+  RoutingStrategy,
+  KeySelectionStrategy,
+  RoutingWeights,
+  RoutingScore,
+  RoutingScoreRow,
+  RoutingData,
+  TokenUsageModel,
+  TokenUsageData,
+  RateLimitWindow,
+  RateLimitUsageRow,
+  RateLimitUsageData,
+  PlaygroundChatMessage,
+  ConversationSummary,
+  ConversationDetail,
+} from './schemas';
+
 /** A model declared beside a custom endpoint in an import file (#382). A
  *  capability flag is present only when the paste declared it via a trailing
  *  -TOOLS / -VISION suffix. */
@@ -606,24 +648,6 @@ export interface RateLimitStatus {
 export type QuotaMetric = 'requests' | 'tokens' | 'credits' | 'neurons';
 export type QuotaResetStrategy = 'fixed_calendar' | 'rolling_window' | 'token_bucket' | 'provider_reported' | 'unknown';
 export type QuotaObservationSource = 'header' | 'quota_api' | 'error_body' | 'local_usage' | 'documentation' | 'probe';
-
-export interface ProviderQuotaState {
-  platform: Platform;
-  keyId: number;
-  /** The key's operator-facing label, when the row still names a live key. */
-  keyLabel?: string | null;
-  quotaPoolKey: string;
-  metric: QuotaMetric;
-  limit: number | null;
-  remaining: number | null;
-  resetAt: string | null;
-  resetStrategy: QuotaResetStrategy;
-  source: QuotaObservationSource;
-  confidence: number;
-  notes: string | null;
-  observedAt: string;
-  updatedAt: string;
-}
 
 export interface ProviderQuotaObservation extends ProviderQuotaState {
   id: string;

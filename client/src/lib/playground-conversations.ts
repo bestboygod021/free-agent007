@@ -9,6 +9,12 @@
 // Relative, not the `@/` alias: the unit tests run under the standalone
 // vitest config, which does not carry the app's path aliases.
 import { apiFetch } from './api'
+import type { ConversationSummary, ConversationDetail, PlaygroundChatMessage } from '../../../shared/types'
+export type { ConversationSummary, ConversationDetail }
+/** A conversation with its transcript — the shared detail shape, under this module's historic name. */
+export type Conversation = ConversationDetail
+/** One bubble in the Playground transcript — the shared contract, under this module's historic name. */
+export type ChatMessage = PlaygroundChatMessage
 
 export type FusionPanelEntry = {
   platform: string
@@ -18,57 +24,8 @@ export type FusionPanelEntry = {
   error?: string
 }
 
-/**
- * One bubble in the Playground transcript. Persisted verbatim (minus
- * `streaming`, see `toStoredMessages`) so a restored conversation renders
- * identically to the live one: routing meta, reasoning and image thumbnails
- * included.
- */
-export type ChatMessage = {
-  role: 'user' | 'assistant'
-  content: string
-  // Data URIs of the images attached to this turn: rendered as thumbnails in
-  // the bubble and replayed as `image_url` parts on every follow-up request.
-  images?: string[]
-  // Request-level failure rendered as a distinct error bubble, not a fake
-  // assistant reply.
-  isError?: boolean
-  // Thinking tokens (`delta.reasoning_content`) accumulated separately from the
-  // answer, shown as a collapsible aside above it.
-  reasoning?: string
-  // True while this bubble is still being filled in by an open stream. Never
-  // stored — a saved message is finished by definition.
-  streaming?: boolean
-  meta?: {
-    platform?: string
-    model?: string
-    latency?: number
-    fallbackAttempts?: number
-    // Fusion responses: the panel models (with their answers, for the
-    // collapsible trace) and the judge that synthesized them (null when not
-    // synthesized — single survivor / best_of). `fusionStreaming` is true while
-    // panel/judge frames are still arriving.
-    fusionPanel?: FusionPanelEntry[]
-    fusionJudge?: { platform: string; model: string } | null
-    fusionStreaming?: boolean
-  }
-}
 
-/** Sidebar row: enough to list a conversation, never its transcript. */
-export type ConversationSummary = {
-  id: number
-  title: string
-  model: string | null
-  messageCount: number
-  createdAt: number
-  updatedAt: number
-}
 
-/** A conversation with its transcript, as returned by GET /:id. */
-export type Conversation = Omit<ConversationSummary, 'messageCount'> & {
-  messages: ChatMessage[]
-  systemPrompt: string | null
-}
 
 export type ConversationPatch = {
   title?: string

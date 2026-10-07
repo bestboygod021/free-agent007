@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip } from '@/components/tooltip'
+import type { Chain } from '../../../shared/types'
+export type { Chain }
 
 // Named fallback chains (#960/#895). The backend /api/profiles CRUD is
 // complete and every chain is listed as an `auto:<name>` model in /v1/models;
@@ -29,21 +31,6 @@ function readCollapsed(): boolean {
   }
 }
 
-export type Chain = {
-  id: number
-  name: string
-  emoji: string
-  color: string
-  type: 'default' | 'builtin' | 'custom'
-  is_favorite: number
-  sort_order: number
-  auto_sort: string | null
-  layout_config: string | null
-  // 0 once the chain opts out of the catalog-sync backfill (#895), which is
-  // what an empty-created chain does — it stays exactly as hand-built.
-  auto_include_new_models: number
-  created_at: string
-}
 
 export function ChainManager() {
   const { t } = useI18n()

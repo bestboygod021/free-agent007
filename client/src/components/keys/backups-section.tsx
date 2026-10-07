@@ -10,23 +10,9 @@ import { Badge } from '@/components/ui/badge'
 import { ConfirmButton } from '@/components/confirm-button'
 import { Archive, ChevronDown, Download, Trash2 } from 'lucide-react'
 import { useI18n } from '@/i18n'
+import type { BackupMeta, BackupSchedule, BackupListResponse, BackupScheduleResponse, BackupCreateResponse, BackupTablesResponse } from '../../../../shared/types'
 
-type BackupMeta = {
-  id: number
-  filename: string
-  filesize: number
-  isFull: boolean
-  source: 'manual' | 'scheduled' | 'pre-restore'
-  createdAt: string
-  tables: string[]
-}
 
-type BackupSchedule = {
-  enabled: boolean
-  time: string
-  intervalDays: number
-  backupPath: string
-}
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -100,15 +86,15 @@ function BackupsPanel() {
 
   const { data: tables = [] } = useQuery<string[]>({
     queryKey: ['backup-tables'],
-    queryFn: () => apiFetch<{ tables: string[] }>('/api/backups/tables').then(r => r.tables),
+    queryFn: () => apiFetch<BackupTablesResponse>('/api/backups/tables').then(r => r.tables),
   })
 
-  const { data: list } = useQuery<{ items: BackupMeta[]; total: number }>({
+  const { data: list } = useQuery<BackupListResponse>({
     queryKey: ['backups', page],
     queryFn: () => apiFetch(`/api/backups?page=${page}&pageSize=${pageSize}`),
   })
 
-  const { data: schedule } = useQuery<{ schedule: BackupSchedule }>({
+  const { data: schedule } = useQuery<BackupScheduleResponse>({
     queryKey: ['backup-schedule'],
     queryFn: () => apiFetch('/api/backups/schedule'),
   })
@@ -121,7 +107,7 @@ function BackupsPanel() {
   const create = useMutation({
     meta: { silenceToast: true },
     mutationFn: (chosen: string[]) =>
-      apiFetch<{ backup: BackupMeta }>('/api/backups', {
+      apiFetch<BackupCreateResponse>('/api/backups', {
         method: 'POST',
         body: JSON.stringify(chosen.length > 0 ? { tables: chosen } : {}),
       }),

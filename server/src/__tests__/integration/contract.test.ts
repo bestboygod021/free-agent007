@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { z } from 'zod';
 import type { Express } from 'express';
 import { createApp } from '../../app.js';
 import { initDb, getDb } from '../../db/index.js';
@@ -37,6 +38,32 @@ import {
   penaltyInspectorSchema,
   mediaDataSchema,
   mediaUsageSchema,
+  logsResponseSchema,
+  licenseStatusSchema,
+  premiumStatusSchema,
+  healthDataSchema,
+  degradationStatusSchema,
+  backupListSchema,
+  backupScheduleResponseSchema,
+  backupCreateResponseSchema,
+  backupTablesResponseSchema,
+  chainSchema,
+  routingDataSchema,
+  tokenUsageDataSchema,
+  rateLimitUsageDataSchema,
+  conversationSummarySchema,
+  conversationDetailSchema,
+  playgroundChatMessageSchema,
+  logEntrySchema,
+  logCountsSchema,
+  catalogSyncStateSchema,
+  healthPlatformSchema,
+  healthKeyRowSchema,
+  backupMetaSchema,
+  backupScheduleSchema,
+  routingScoreRowSchema,
+  tokenUsageModelSchema,
+  rateLimitUsageRowSchema,
 } from '@freellmapi/shared/schemas.js';
 
 // Contract test: the shared Zod schemas (shared/schemas.ts) must parse the
@@ -491,4 +518,126 @@ describe('Shared API contracts (zod schemas vs live responses)', () => {
     expectExactKeys(parsed.data.models[0], mediaUsageSchema.shape.models.element.shape);
     expect(parsed.data.modality).toBe('image');
   });
+
+// ─── Turn 6: type-aliased response bodies now pinned by schema ───
+describe('response contracts: logs/premium/health/backups/profiles/routing/conversations', () => {
+  it('GET /api/logs: entries/nextId/counts envelope', async () => {
+    const res = await req(app, 'GET', '/api/logs');
+    expect(res.status).toBe(200);
+    const body = logsResponseSchema.parse(res.body);
+    expectConfigKeys(res.body, logsResponseSchema.shape);
+    expectConfigKeys(body.counts, logCountsSchema.shape);
+    // Optional lanes (provider/model/event/requestId/…) are omitted when unset;
+    // expectConfigKeys accepts absent optionals but never unknown keys.
+    for (const e of body.entries.slice(0, 3)) expectConfigKeys(e, logEntrySchema.shape);
+  });
+
+  it('GET /api/premium: license + catalog-sync envelope', async () => {
+    const res = await req(app, 'GET', '/api/premium');
+    expect(res.status).toBe(200);
+    const body = premiumStatusSchema.parse(res.body);
+    expectConfigKeys(res.body, premiumStatusSchema.shape);
+    expectConfigKeys(body.catalog, catalogSyncStateSchema.shape);
+    if (body.license !== null) licenseStatusSchema.parse(body.license);
+  });
+
+  it('GET /api/health: platforms/keys/quota states/degradation', async () => {
+    const res = await req(app, 'GET', '/api/health');
+    expect(res.status).toBe(200);
+    const body = healthDataSchema.parse(res.body);
+    expectConfigKeys(res.body, healthDataSchema.shape);
+    expectConfigKeys(body.degradation, degradationStatusSchema.shape);
+    if (body.platforms.length > 0) expectConfigKeys(body.platforms[0], healthPlatformSchema.shape);
+    if (body.keys.length > 0) expectConfigKeys(body.keys[0], healthKeyRowSchema.shape);
+  });
+
+  it('GET /api/backups: list envelope with meta rows', async () => {
+    const res = await req(app, 'GET', '/api/backups');
+    expect(res.status).toBe(200);
+    const body = backupListSchema.parse(res.body);
+    expectConfigKeys(res.body, backupListSchema.shape);
+    if (body.items.length > 0) expectConfigKeys(body.items[0], backupMetaSchema.shape);
+  });
+
+  it('POST /api/backups: created meta row', async () => {
+    const res = await req(app, 'POST', '/api/backups', {});
+    expect(res.status).toBe(201);
+    const body = backupCreateResponseSchema.parse(res.body);
+    expectConfigKeys(res.body, backupCreateResponseSchema.shape);
+    expectConfigKeys(body.backup, backupMetaSchema.shape);
+    expect(body.backup.filesize).toBeGreaterThan(0);
+  });
+
+  it('GET /api/backups/schedule + /tables: envelopes', async () => {
+    const sched = await req(app, 'GET', '/api/backups/schedule');
+    expect(sched.status).toBe(200);
+    const schedBody = backupScheduleResponseSchema.parse(sched.body);
+    expectConfigKeys(sched.body, backupScheduleResponseSchema.shape);
+    expectConfigKeys(schedBody.schedule, backupScheduleSchema.shape);
+
+    const tables = await req(app, 'GET', '/api/backups/tables');
+    expect(tables.status).toBe(200);
+    const tablesBody = backupTablesResponseSchema.parse(tables.body);
+    expectConfigKeys(tables.body, backupTablesResponseSchema.shape);
+    expect(tablesBody.tables.every(t => typeof t === 'string')).toBe(true);
+  });
+
+  it('GET /api/profiles: chain rows match the shared Chain contract', async () => {
+    const res = await req(app, 'GET', '/api/profiles');
+    expect(res.status).toBe(200);
+    const rows = z.array(chainSchema).parse(res.body);
+    const def = rows.find(r => r.type === 'default');
+    expect(def).toBeDefined();
+    expectConfigKeys(def!, chainSchema.shape);
+  });
+
+  it('GET /api/fallback/routing: strategy/weights/scores envelope', async () => {
+    const res = await req(app, 'GET', '/api/fallback/routing');
+    expect(res.status).toBe(200);
+    const body = routingDataSchema.parse(res.body);
+    expectConfigKeys(res.body, routingDataSchema.shape);
+    if (body.scores.length > 0) expectConfigKeys(body.scores[0], routingScoreRowSchema.shape);
+  });
+
+  it('GET /api/fallback/token-usage: budget envelope + model rows', async () => {
+    const res = await req(app, 'GET', '/api/fallback/token-usage');
+    expect(res.status).toBe(200);
+    const body = tokenUsageDataSchema.parse(res.body);
+    expectConfigKeys(res.body, tokenUsageDataSchema.shape);
+    // Rows only appear for platforms with enabled keys (seeded in beforeAll);
+    // tolerate an empty list on a database where that seed is absent.
+    if (body.models.length > 0) expectConfigKeys(body.models[0], tokenUsageModelSchema.shape);
+  });
+
+  it('GET /api/fallback/rate-limit-usage: window rows', async () => {
+    const res = await req(app, 'GET', '/api/fallback/rate-limit-usage');
+    expect(res.status).toBe(200);
+    const body = rateLimitUsageDataSchema.parse(res.body);
+    expectConfigKeys(res.body, rateLimitUsageDataSchema.shape);
+    if (body.rows.length > 0) expectConfigKeys(body.rows[0], rateLimitUsageRowSchema.shape);
+  });
+
+  it('GET/POST /api/conversations: summaries and the detail transcript', async () => {
+    const created = await req(app, 'POST', '/api/conversations', {
+      title: 'contract-shape probe',
+      messages: [{ role: 'user', content: 'ping' }],
+    });
+    expect([200, 201]).toContain(created.status);
+
+    const list = await req(app, 'GET', '/api/conversations');
+    expect(list.status).toBe(200);
+    expect(Array.isArray(list.body)).toBe(true);
+    const summaries = z.array(conversationSummarySchema).parse(list.body);
+    for (const s of summaries) expectConfigKeys(s, conversationSummarySchema.shape);
+    const probe = summaries.find(s => s.title === 'contract-shape probe');
+    expect(probe).toBeDefined();
+
+    const detail = await req(app, 'GET', `/api/conversations/${probe!.id}`);
+    expect(detail.status).toBe(200);
+    const conv = conversationDetailSchema.parse(detail.body);
+    expectConfigKeys(detail.body, conversationDetailSchema.shape);
+    expect(conv.messages.length).toBeGreaterThan(0);
+    playgroundChatMessageSchema.parse(conv.messages[0]);
+  });
+});
 });

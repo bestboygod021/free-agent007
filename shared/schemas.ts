@@ -8,6 +8,7 @@
 // through shared/type-only re-exports, so no zod runtime code is bundled for
 // the browser.
 import { z } from 'zod';
+import type { Platform } from './types';
 
 /** How the global outbound proxy URL is interpreted. Per-key proxies always
  * use the traditional forward-proxy transport. */
@@ -756,3 +757,339 @@ export type MediaData = z.infer<typeof mediaDataSchema>;
 export type MediaUsage = z.infer<typeof mediaUsageSchema>;
 export type DiscoveredModel = z.infer<typeof discoveredModelSchema>;
 export type DiscoverResponse = z.infer<typeof discoverResponseSchema>;
+
+// ─── Logs viewer: one row as served by GET /api/logs, ring-wide counts, envelope ───
+export const logLevelSchema = z.enum(['debug', 'info', 'warn', 'error']);
+
+/** One row as served by GET /api/logs. The optional lanes are omitted entirely when unset. */
+export const logEntrySchema = z.object({
+  id: z.number(),
+  /** ISO-8601 timestamp. */
+  ts: z.string(),
+  level: logLevelSchema,
+  source: z.string().optional(),
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  event: z.string().optional(),
+  requestId: z.string().optional(),
+  message: z.string(),
+});
+
+/** Ring-wide totals per level — NOT filtered by the current query. */
+export const logCountsSchema = z.object({
+  debug: z.number(),
+  info: z.number(),
+  warn: z.number(),
+  error: z.number(),
+});
+
+export const logsResponseSchema = z.object({
+  entries: z.array(logEntrySchema),
+  /** Highest id the ring holds — the cursor for the next poll, even when empty. */
+  nextId: z.number(),
+  counts: logCountsSchema,
+});
+
+// ─── Premium status (license + catalog sync), GET /api/premium ───
+export const licenseStatusSchema = z.object({
+  valid: z.boolean(),
+  plan: z.enum(['annual', 'lifetime']).nullable(),
+  status: z.string().nullable(),
+  expiresAt: z.string().nullable(),
+  cancelAtPeriodEnd: z.boolean().optional(),
+  reason: z.string().optional(),
+  checkedAtMs: z.number(),
+});
+
+export const catalogSyncStateSchema = z.object({
+  baseUrl: z.string(),
+  appliedVersion: z.string().nullable(),
+  appliedTier: z.string().nullable(),
+  lastSyncMs: z.number().nullable(),
+  lastError: z.string().nullable(),
+});
+
+export const premiumStatusSchema = z.object({
+  hasKey: z.boolean(),
+  maskedKey: z.string().nullable(),
+  license: licenseStatusSchema.nullable(),
+  catalog: catalogSyncStateSchema,
+  siteUrl: z.string(),
+});
+
+// ─── Key health, GET /api/health ───
+/** A per-key quota window the gateway is currently tracking. */
+export const providerQuotaStateSchema = z.object({
+  platform: z.custom<Platform>(v => typeof v === 'string'),
+  keyId: z.number(),
+  /** The key's operator-facing label, when the row still names a live key. */
+  keyLabel: z.string().nullable().optional(),
+  quotaPoolKey: z.string(),
+  metric: z.enum(['requests', 'tokens', 'credits', 'neurons']),
+  limit: z.number().nullable(),
+  remaining: z.number().nullable(),
+  resetAt: z.string().nullable(),
+  resetStrategy: z.enum(['fixed_calendar', 'rolling_window', 'token_bucket', 'provider_reported', 'unknown']),
+  source: z.enum(['header', 'quota_api', 'error_body', 'local_usage', 'documentation', 'probe']),
+  confidence: z.number(),
+  notes: z.string().nullable(),
+  observedAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const healthPlatformSchema = z.object({
+  platform: z.string(),
+  hasProvider: z.boolean(),
+  totalKeys: z.number(),
+  healthyKeys: z.number(),
+  rateLimitedKeys: z.number(),
+  invalidKeys: z.number(),
+  errorKeys: z.number(),
+  unknownKeys: z.number(),
+  enabledKeys: z.number(),
+});
+
+export const healthKeyRowSchema = z.object({
+  id: z.number(),
+  platform: z.string(),
+  label: z.string(),
+  status: z.string(),
+  enabled: z.boolean(),
+  /** api_keys.created_at — SQLite datetime('now') TEXT. */
+  createdAt: z.string(),
+  lastCheckedAt: z.string().nullable(),
+  lastHealthError: z.string().nullable(),
+});
+
+/** Degraded-routing machine state: ms-since-epoch entry time, null while normal. */
+export const degradationStatusSchema = z.object({
+  healthyProviders: z.number(),
+  totalProviders: z.number(),
+  ratio: z.number(),
+  state: z.enum(['normal', 'degraded']),
+  degradedAt: z.number().nullable(),
+});
+
+export const healthDataSchema = z.object({
+  platforms: z.array(healthPlatformSchema),
+  keys: z.array(healthKeyRowSchema),
+  quotaStates: z.array(providerQuotaStateSchema),
+  degradation: degradationStatusSchema,
+});
+
+// ─── Backups ───
+export const backupMetaSchema = z.object({
+  id: z.number(),
+  filename: z.string(),
+  filesize: z.number(),
+  isFull: z.boolean(),
+  source: z.enum(['manual', 'scheduled', 'pre-restore']),
+  createdAt: z.string(),
+  tables: z.array(z.string()),
+});
+
+export const backupScheduleSchema = z.object({
+  enabled: z.boolean(),
+  time: z.string(),
+  intervalDays: z.number(),
+  backupPath: z.string(),
+});
+
+export const backupListSchema = z.object({
+  items: z.array(backupMetaSchema),
+  total: z.number(),
+});
+
+export const backupScheduleResponseSchema = z.object({ schedule: backupScheduleSchema });
+export const backupCreateResponseSchema = z.object({ backup: backupMetaSchema });
+export const backupTablesResponseSchema = z.object({ tables: z.array(z.string()) });
+
+// ─── Chains (profiles), GET /api/profiles ───
+export const chainSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  emoji: z.string(),
+  color: z.string(),
+  type: z.enum(['default', 'builtin', 'custom']),
+  is_favorite: z.number(),
+  sort_order: z.number(),
+  auto_sort: z.string().nullable(),
+  layout_config: z.string().nullable(),
+  auto_include_new_models: z.number(),
+  created_at: z.string(),
+});
+
+// ─── Fallback routing, GET /api/fallback/routing ───
+export const routingStrategySchema = z.enum(['priority', 'balanced', 'smartest', 'fastest', 'reliable', 'custom']);
+export const keySelectionStrategySchema = z.enum(['auto', 'least-remaining']);
+export const routingWeightsSchema = z.object({
+  reliability: z.number(),
+  speed: z.number(),
+  intelligence: z.number(),
+});
+
+export const routingScoreSchema = z.object({
+  modelDbId: z.number(),
+  reliability: z.number(),
+  speed: z.number(),
+  intelligence: z.number(),
+  headroom: z.number(),
+  rateLimit: z.number(),
+  score: z.number(),
+  totalRequests: z.number(),
+});
+
+/** The scores lane carries the model's identity alongside its bandit numbers. */
+export const routingScoreRowSchema = routingScoreSchema.extend({
+  platform: z.string(),
+  modelId: z.string(),
+  displayName: z.string(),
+  enabled: z.boolean(),
+});
+
+export const routingDataSchema = z.object({
+  strategy: routingStrategySchema,
+  /** The stored preset weights; null before the first custom save. */
+  weights: routingWeightsSchema.nullable(),
+  customWeights: routingWeightsSchema,
+  /** Exploration toggle (#685): unmeasured models get a guaranteed chance. */
+  exploreEnabled: z.boolean(),
+  /** Peak-hours adjustment (#760): opt-in, off by default. */
+  peakHoursAdjust: z.boolean(),
+  peakStartHour: z.number(),
+  peakEndHour: z.number(),
+  /** IANA timezone the peak window is read in (default 'UTC'). */
+  peakTimezone: z.string(),
+  /** Whether `weights` is the raw preset or a peak-hours variant. */
+  peakAdjusted: z.boolean(),
+  /** Key-selection policy (#919). */
+  keySelectionStrategy: keySelectionStrategySchema,
+  /** Ceiling on the router's cooldown guesses in ms (#952); null = no cap. */
+  cooldownCeilingMs: z.number().nullable(),
+  scores: z.array(routingScoreRowSchema),
+});
+
+// ─── Monthly budget bar, GET /api/fallback/token-usage ───
+export const tokenUsageModelSchema = z.object({
+  modelDbId: z.number(),
+  displayName: z.string(),
+  platform: z.string(),
+  modelId: z.string(),
+  intelligenceRank: z.number(),
+  budget: z.number(),
+  used: z.number(),
+  enabled: z.boolean(),
+  rpmLimit: z.number().nullable(),
+  rpdLimit: z.number().nullable(),
+  tpmLimit: z.number().nullable(),
+  tpdLimit: z.number().nullable(),
+});
+
+export const tokenUsageDataSchema = z.object({
+  totalBudget: z.number(),
+  totalUsed: z.number(),
+  models: z.array(tokenUsageModelSchema),
+});
+
+// ─── Rate-limit pressure, GET /api/fallback/rate-limit-usage ───
+export const rateLimitWindowSchema = z.object({ used: z.number(), limit: z.number() });
+
+export const rateLimitUsageRowSchema = z.object({
+  modelDbId: z.number(),
+  platform: z.string(),
+  modelId: z.string(),
+  rpm: rateLimitWindowSchema.nullable(),
+  rpd: rateLimitWindowSchema.nullable(),
+  tpm: rateLimitWindowSchema.nullable(),
+});
+
+export const rateLimitUsageDataSchema = z.object({
+  generatedAtMs: z.number(),
+  rows: z.array(rateLimitUsageRowSchema),
+});
+
+// ─── Playground conversations, GET/POST /api/conversations ───
+export const fusionPanelEntrySchema = z.object({
+  platform: z.string(),
+  model: z.string(),
+  status: z.enum(['ok', 'failed']).optional(),
+  content: z.string().optional(),
+  error: z.string().optional(),
+});
+
+export const playgroundChatMetaSchema = z.object({
+  platform: z.string().optional(),
+  model: z.string().optional(),
+  latency: z.number().optional(),
+  fallbackAttempts: z.number().optional(),
+  /** Fusion trace: panel answers and the synthesizing judge (null = single survivor). */
+  fusionPanel: z.array(fusionPanelEntrySchema).optional(),
+  fusionJudge: z.object({ platform: z.string(), model: z.string() }).nullable().optional(),
+  fusionStreaming: z.boolean().optional(),
+});
+
+/** One transcript bubble, persisted verbatim (minus `streaming`). */
+export const playgroundChatMessageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string(),
+  images: z.array(z.string()).optional(),
+  isError: z.boolean().optional(),
+  reasoning: z.string().optional(),
+  streaming: z.boolean().optional(),
+  meta: playgroundChatMetaSchema.optional(),
+});
+
+/** Sidebar row: enough to list a conversation, never its transcript. */
+export const conversationSummarySchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  model: z.string().nullable(),
+  messageCount: z.number(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+/** A conversation with its transcript, as returned by GET /api/conversations/:id. */
+export const conversationDetailSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  messages: z.array(playgroundChatMessageSchema),
+  model: z.string().nullable(),
+  systemPrompt: z.string().nullable(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+export type LogLevel = z.infer<typeof logLevelSchema>;
+export type LogEntry = z.infer<typeof logEntrySchema>;
+export type LogCounts = z.infer<typeof logCountsSchema>;
+export type LogsResponse = z.infer<typeof logsResponseSchema>;
+export type LicenseStatus = z.infer<typeof licenseStatusSchema>;
+export type CatalogSyncState = z.infer<typeof catalogSyncStateSchema>;
+export type PremiumStatus = z.infer<typeof premiumStatusSchema>;
+export type ProviderQuotaState = z.infer<typeof providerQuotaStateSchema>;
+export type HealthPlatform = z.infer<typeof healthPlatformSchema>;
+export type HealthKeyRow = z.infer<typeof healthKeyRowSchema>;
+export type DegradationStatus = z.infer<typeof degradationStatusSchema>;
+export type HealthData = z.infer<typeof healthDataSchema>;
+export type BackupMeta = z.infer<typeof backupMetaSchema>;
+export type BackupSchedule = z.infer<typeof backupScheduleSchema>;
+export type BackupListResponse = z.infer<typeof backupListSchema>;
+export type BackupScheduleResponse = z.infer<typeof backupScheduleResponseSchema>;
+export type BackupCreateResponse = z.infer<typeof backupCreateResponseSchema>;
+export type BackupTablesResponse = z.infer<typeof backupTablesResponseSchema>;
+export type Chain = z.infer<typeof chainSchema>;
+export type RoutingStrategy = z.infer<typeof routingStrategySchema>;
+export type KeySelectionStrategy = z.infer<typeof keySelectionStrategySchema>;
+export type RoutingWeights = z.infer<typeof routingWeightsSchema>;
+export type RoutingScore = z.infer<typeof routingScoreSchema>;
+export type RoutingScoreRow = z.infer<typeof routingScoreRowSchema>;
+export type RoutingData = z.infer<typeof routingDataSchema>;
+export type TokenUsageModel = z.infer<typeof tokenUsageModelSchema>;
+export type TokenUsageData = z.infer<typeof tokenUsageDataSchema>;
+export type RateLimitWindow = z.infer<typeof rateLimitWindowSchema>;
+export type RateLimitUsageRow = z.infer<typeof rateLimitUsageRowSchema>;
+export type RateLimitUsageData = z.infer<typeof rateLimitUsageDataSchema>;
+export type PlaygroundChatMessage = z.infer<typeof playgroundChatMessageSchema>;
+export type ConversationSummary = z.infer<typeof conversationSummarySchema>;
+export type ConversationDetail = z.infer<typeof conversationDetailSchema>;
