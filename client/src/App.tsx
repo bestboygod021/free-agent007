@@ -24,7 +24,7 @@ import { Toaster } from '@/components/toaster'
 import { UpdateReminder } from '@/components/update-reminder'
 import { usePremium } from '@/hooks/use-premium'
 import { I18nProvider, useI18n } from '@/i18n'
-import { hasRetryCountdown, logout, RETRY_SUCCEEDED_EVENT } from '@/lib/api'
+import { hasRetryCountdown, logout, RETRY_SUCCEEDED_EVENT, restorePendingRetry } from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { ThemeProvider } from '@/theme'
 // Route-level code split: every page loads on navigation instead of at boot,
@@ -523,6 +523,13 @@ function RouteFallback() {
 function App() {
   useEffect(() => {
     prefetchWhenIdle(IDLE_WARM_ROUTES)
+  }, [])
+
+  // A reload mid-countdown must not lose the window: rebuild the pending
+  // rate-limit toast (with its remaining time and retry button) if the saved
+  // deadline is still ahead.
+  useEffect(() => {
+    restorePendingRetry()
   }, [])
 
   // The rate-limit toast's retry button re-runs the request that hit the 429;

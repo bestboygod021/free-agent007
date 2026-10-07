@@ -1238,5 +1238,11 @@
     "ready": "Giới hạn tốc độ — thử lại ngay",
     "retryNow": "Thử lại ngay",
     "retried": "Đã thử lại — yêu cầu thành công"
+  },
+  "rateLimitEvents": {
+    "title": "Yêu cầu bị giới hạn gần đây",
+    "empty": "Không có phản hồi 429 gần đây",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Bảng điều khiển /api"
   }
 }

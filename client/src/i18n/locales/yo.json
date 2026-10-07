@@ -1238,5 +1238,11 @@
     "ready": "Opoponago iye — gbìyànjú báyì",
     "retryNow": "Gbìyànjú báyì",
     "retried": "A ti gbìyànjú àtúnṣe — aṣeyọrí ni ìfẹ́"
+  },
+  "rateLimitEvents": {
+    "title": "Àwọn ìbéèrè tí a yọ kùlò nísinsìnyí",
+    "empty": "Kò sí ìdáhùn 429 nísinsìnyí",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Dábùùsù /api"
   }
 }

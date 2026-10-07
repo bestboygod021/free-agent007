@@ -1238,5 +1238,11 @@
     "ready": "Rate limited — retry now",
     "retryNow": "Retry now",
     "retried": "Retried — request succeeded"
+  },
+  "rateLimitEvents": {
+    "title": "Recently rate-limited requests",
+    "empty": "No recent 429 responses",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Dashboard /api"
   }
 }

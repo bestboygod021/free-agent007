@@ -1238,5 +1238,11 @@
     "ready": "Limit zapytań — spróbuj teraz",
     "retryNow": "Spróbuj ponownie",
     "retried": "Ponowiono — żądanie powiodło się"
+  },
+  "rateLimitEvents": {
+    "title": "Ostatnio ograniczone żądania",
+    "empty": "Brak ostatnich odpowiedzi 429",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Panel /api"
   }
 }

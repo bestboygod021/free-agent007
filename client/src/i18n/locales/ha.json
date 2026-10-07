@@ -1238,5 +1238,11 @@
     "ready": "Iyakar hawa — sake gwadawa yanzu",
     "retryNow": "Sake gwadawa yanzu",
     "retried": "An sake gwadawa — an sami nasara"
+  },
+  "rateLimitEvents": {
+    "title": "Buƙatuka da aka yi wa ƙasa a baya",
+    "empty": "Babu amsa 429 ta ƙarshe",
+    "proxyScope": "Mai wakiltar /v1",
+    "adminScope": "Allon bayanai /api"
   }
 }

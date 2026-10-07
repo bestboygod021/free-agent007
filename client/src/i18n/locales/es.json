@@ -1238,5 +1238,11 @@
     "ready": "Límite de tasa — reintentar ahora",
     "retryNow": "Reintentar ahora",
     "retried": "Reintentado — solicitud exitosa"
+  },
+  "rateLimitEvents": {
+    "title": "Solicitudes limitadas recientemente",
+    "empty": "Sin respuestas 429 recientes",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Panel /api"
   }
 }

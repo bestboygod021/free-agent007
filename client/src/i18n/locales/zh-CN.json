@@ -1238,5 +1238,11 @@
     "ready": "已限流 — 现在重试",
     "retryNow": "立即重试",
     "retried": "已重新尝试 — 请求成功"
+  },
+  "rateLimitEvents": {
+    "title": "最近被限流的请求",
+    "empty": "近期没有 429 响应",
+    "proxyScope": "代理 /v1",
+    "adminScope": "控制台 /api"
   }
 }

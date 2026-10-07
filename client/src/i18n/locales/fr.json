@@ -1238,5 +1238,11 @@
     "ready": "Limite de débit — réessayer maintenant",
     "retryNow": "Réessayer maintenant",
     "retried": "Réessai effectué — requête réussie"
+  },
+  "rateLimitEvents": {
+    "title": "Requêtes récemment limitées",
+    "empty": "Aucune réponse 429 récente",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Tableau de bord /api"
   }
 }

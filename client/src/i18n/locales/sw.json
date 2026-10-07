@@ -1238,5 +1238,11 @@
     "ready": "Kikomo cha muda — jaribu sasa",
     "retryNow": "Jaribu sasa",
     "retried": "Imajaribiwa tena — ombi limefanikiwa"
+  },
+  "rateLimitEvents": {
+    "title": "Maombi yaliyopigwa kikomo hivi karibuni",
+    "empty": "Hakuna majibu ya 429 hivi karibuni",
+    "proxyScope": "Mwakilishi /v1",
+    "adminScope": "Dashibodi /api"
   }
 }

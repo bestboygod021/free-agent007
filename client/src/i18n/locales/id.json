@@ -1238,5 +1238,11 @@
     "ready": "Batas laju — coba sekarang",
     "retryNow": "Coba sekarang",
     "retried": "Dicoba ulang — permintaan berhasil"
+  },
+  "rateLimitEvents": {
+    "title": "Permintaan yang baru dibatasi",
+    "empty": "Tidak ada respons 429 baru-baru ini",
+    "proxyScope": "Proksi /v1",
+    "adminScope": "Dasbor /api"
   }
 }

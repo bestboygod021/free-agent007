@@ -1238,5 +1238,11 @@
     "ready": "Hız sınırı — şimdi tekrar dene",
     "retryNow": "Şimdi tekrar dene",
     "retried": "Tekrar denendi — istek başarılı"
+  },
+  "rateLimitEvents": {
+    "title": "Son dönemde hız sınırına takılan istekler",
+    "empty": "Yakın zamanda 429 yanıtı yok",
+    "proxyScope": "Vekil sunucu /v1",
+    "adminScope": "Gösterge paneli /api"
   }
 }

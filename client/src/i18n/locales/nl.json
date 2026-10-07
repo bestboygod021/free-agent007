@@ -1238,5 +1238,11 @@
     "ready": "Snelheidslimiet — nu opnieuw proberen",
     "retryNow": "Nu opnieuw proberen",
     "retried": "Opnieuw geprobeerd — verzoek geslaagd"
+  },
+  "rateLimitEvents": {
+    "title": "Onlangs afgeknotte verzoeken",
+    "empty": "Geen recente 429-responses",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Dashboard /api"
   }
 }

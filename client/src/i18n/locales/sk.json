@@ -1238,5 +1238,11 @@
     "ready": "Limit rýchlosti — skúsiť teraz",
     "retryNow": "Skúsiť znova",
     "retried": "Skúsené znova — požiadavka úspešná"
+  },
+  "rateLimitEvents": {
+    "title": "Nedávno obmedzené požiadavky",
+    "empty": "Žiadne nedávne odpovede 429",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Panel /api"
   }
 }

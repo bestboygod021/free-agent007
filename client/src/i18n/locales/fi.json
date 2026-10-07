@@ -1238,5 +1238,11 @@
     "ready": "Nopeusraja — yritä nyt",
     "retryNow": "Yritä uudelleen",
     "retried": "Yritetty uudelleen — pyyntö onnistui"
+  },
+  "rateLimitEvents": {
+    "title": "Äskoinen nopeusrajoitettu pyyntöjä",
+    "empty": "Ei äskettäisiä 429-vastauksia",
+    "proxyScope": "Välityspalvelin /v1",
+    "adminScope": "Hallintapaneeli /api"
   }
 }

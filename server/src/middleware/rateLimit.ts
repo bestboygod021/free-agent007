@@ -12,6 +12,38 @@ import type { Request, Response, NextFunction } from 'express';
 // with PROXY_RATE_LIMIT_RPM (requests per minute per IP); set it to 0 to turn
 // rate limiting off entirely.
 
+/** One rejected request, as surfaced on GET /api/health/rate-limits. `scope`
+ *  names the limiter that rejected it: 'proxy' guards /v1 (+ siblings), 'admin'
+ *  guards the dashboard /api surface. Kept in memory (a ring of the most
+ *  recent MAX_EVENTS) — a restart clears it, which is fine for an operator
+ *  "what just got throttled" view. */
+export interface RateLimitEvent {
+  ts: number;
+  scope: 'proxy' | 'admin';
+  method: string;
+  path: string;
+  ip: string;
+  limit: number;
+  retryAfter: number;
+}
+
+const MAX_EVENTS = 200;
+const events: RateLimitEvent[] = [];
+
+export function recordRateLimitEvent(event: RateLimitEvent): void {
+  events.unshift(event);
+  if (events.length > MAX_EVENTS) events.length = MAX_EVENTS;
+}
+
+/** Newest first. */
+export function getRateLimitEvents(): RateLimitEvent[] {
+  return [...events];
+}
+
+export function clearRateLimitEventsForTests(): void {
+  events.length = 0;
+}
+
 const WINDOW_MS = 60_000;
 const DEFAULT_RPM = 120;
 // Bound the IP map so a flood of distinct (e.g. spoofed) source addresses can't
@@ -34,6 +66,7 @@ function parseLimit(): number {
 export function createProxyRateLimiter(rpmLimit?: number) {
   const limit = rpmLimit !== undefined ? Math.floor(Math.max(0, rpmLimit)) : parseLimit();
   const windows = new Map<string, WindowState>();
+  const scope = 'proxy' as const;
 
   return function proxyRateLimit(req: Request, res: Response, next: NextFunction): void {
     if (limit === 0) {
@@ -64,6 +97,17 @@ export function createProxyRateLimiter(rpmLimit?: number) {
     if (state.count > limit) {
       const retryAfter = Math.max(1, Math.ceil((state.resetAt - now) / 1000));
       res.setHeader('Retry-After', String(retryAfter));
+      // Keep a short operator-visible trail of what the limiter rejected —
+      // surfaced on GET /api/health/rate-limits (admin dashboard).
+      recordRateLimitEvent({
+        ts: now,
+        scope,
+        method: req.method,
+        path: req.originalUrl ?? req.url,
+        ip,
+        limit,
+        retryAfter,
+      });
       res.status(429).json({
         error: {
           message: `Rate limit exceeded: more than ${limit} requests per minute. Retry in ${retryAfter}s.`,
@@ -101,6 +145,7 @@ function parseAdminLimit(): number {
 export function createAdminRateLimiter(rpm?: number) {
   const limit = rpm !== undefined ? Math.floor(Math.max(0, rpm)) : parseAdminLimit();
   const windows = new Map<string, WindowState>();
+  const scope = 'admin' as const;
 
   return function adminRateLimit(req: Request, res: Response, next: NextFunction): void {
     if (limit === 0) {
@@ -131,6 +176,17 @@ export function createAdminRateLimiter(rpm?: number) {
     if (state.count > limit) {
       const retryAfter = Math.max(1, Math.ceil((state.resetAt - now) / 1000));
       res.setHeader('Retry-After', String(retryAfter));
+      // Keep a short operator-visible trail of what the limiter rejected —
+      // surfaced on GET /api/health/rate-limits (admin dashboard).
+      recordRateLimitEvent({
+        ts: now,
+        scope,
+        method: req.method,
+        path: req.originalUrl ?? req.url,
+        ip,
+        limit,
+        retryAfter,
+      });
       res.status(429).json({
         error: {
           message: `Rate limit exceeded: more than ${limit} requests per minute. Retry in ${retryAfter}s.`,

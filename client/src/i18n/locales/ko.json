@@ -1238,5 +1238,11 @@
     "ready": "속도 제한 — 지금 재시도",
     "retryNow": "지금 재시도",
     "retried": "재시도됨 — 요청 성공"
+  },
+  "rateLimitEvents": {
+    "title": "최근 제한된 요청",
+    "empty": "최근 429 응답 없음",
+    "proxyScope": "프록시 /v1",
+    "adminScope": "대시보드 /api"
   }
 }

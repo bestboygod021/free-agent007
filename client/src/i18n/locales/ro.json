@@ -1238,5 +1238,11 @@
     "ready": "Limită de rată — reîncearcă acum",
     "retryNow": "Reîncearcă acum",
     "retried": "Reîncercat — cererea a reușit"
+  },
+  "rateLimitEvents": {
+    "title": "Cereri limitate recent",
+    "empty": "Fără răspunsuri 429 recente",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Panou /api"
   }
 }

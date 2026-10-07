@@ -1238,5 +1238,11 @@
     "ready": "Ratenlimit — jetzt erneut versuchen",
     "retryNow": "Jetzt erneut versuchen",
     "retried": "Erneut versucht — Anfrage erfolgreich"
+  },
+  "rateLimitEvents": {
+    "title": "Kürzlich gedrosselte Anfragen",
+    "empty": "Keine kürzlichen 429-Antworten",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Dashboard /api"
   }
 }

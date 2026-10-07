@@ -24,9 +24,15 @@ describe('toast store (#586)', () => {
 
     it('lets an explicit per-call duration win, including for errors', async () => {
       const { toast, getToasts } = await loadStore()
-      toast.error('transient', 2000)
-      toast.success('slow read', 10000)
+      toast.error('transient', { duration: 2000 })
+      toast.success('slow read', { duration: 10000 })
       expect(getToasts().map(t => t.duration)).toEqual([2000, 10000])
+    })
+
+    it('accepts an explicit null duration (sticky) for any kind', async () => {
+      const { toast, getToasts } = await loadStore()
+      toast.info('pinned', { duration: null })
+      expect(getToasts()[0].duration).toBeNull()
     })
   })
 
@@ -40,6 +46,20 @@ describe('toast store (#586)', () => {
     toast.info('poll failed')
     toast.error('other failure')
     expect(getToasts()).toHaveLength(3)
+  })
+
+  it('carries an action button through push and updateToast', async () => {
+    const { toast, getToasts, updateToast } = await loadStore()
+    const onClick = vi.fn()
+    const id = toast.info('retry countdown', { duration: null, action: { label: 'Retry now', onClick, disabled: true } })
+    expect(getToasts()[0].action).toMatchObject({ label: 'Retry now', disabled: true })
+    // The countdown flips it live without replacing the toast.
+    updateToast(id, 'retry now', { action: { label: 'Retry now', onClick, disabled: false } })
+    expect(getToasts()[0].message).toBe('retry now')
+    expect(getToasts()[0].action?.disabled).toBe(false)
+    // Omitting the action keeps the one already attached.
+    updateToast(id, 'retry now — armed')
+    expect(getToasts()[0].action?.label).toBe('Retry now')
   })
 
   it('dismissToast removes a toast and ignores unknown ids', async () => {

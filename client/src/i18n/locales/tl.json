@@ -1238,5 +1238,11 @@
     "ready": "Limit ng rate — subukan ngayon",
     "retryNow": "Subukan ngayon",
     "retried": "Na-subukan muli — matagumpay ang request"
+  },
+  "rateLimitEvents": {
+    "title": "Mga kamakailang na-limit na request",
+    "empty": "Walang kamakailang 429 na response",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Dashboard /api"
   }
 }

@@ -1238,5 +1238,11 @@
     "ready": "Ograničenje brzine — pokušaj sada",
     "retryNow": "Pokušaj ponovo",
     "retried": "Ponovo pokušano — zahtev je uspešan"
+  },
+  "rateLimitEvents": {
+    "title": "Скорашње ограничени захтеви",
+    "empty": "Нема скорашњих 429 одговора",
+    "proxyScope": "Прокси /v1",
+    "adminScope": "Контролна табла /api"
   }
 }

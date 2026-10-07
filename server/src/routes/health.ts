@@ -5,8 +5,16 @@ import { checkKeyHealth, checkAllKeys } from '../services/health.js';
 import { getDegradationStatus } from '../services/degradation.js';
 import { hasProvider } from '../providers/index.js';
 import { getQuotaStateForKeys } from '../services/provider-quota.js';
+import { getRateLimitEvents } from '../middleware/rateLimit.js';
 
 export const healthRouter = Router();
+
+// Recent rate-limit rejections across both limiters (newest first). Mounted
+// under requireAuth (app.ts) so only the dashboard session sees them; the
+// in-memory ring resets with the server process.
+healthRouter.get('/rate-limits', (_req: Request, res: Response) => {
+  res.json({ events: getRateLimitEvents() });
+});
 
 // Get health status for all platforms
 healthRouter.get('/', (_req: Request, res: Response) => {

@@ -1238,5 +1238,11 @@
     "ready": "Sürət limiti — indi yenidən cəhd edin",
     "retryNow": "İndi yenidən cəhd edin",
     "retried": "Yenidən cəhd edildi — sorğu uğurlu oldu"
+  },
+  "rateLimitEvents": {
+    "title": "Yaxında məhdudlaşdırılan sorğular",
+    "empty": "Yaxın zamanda 429 cavabları yoxdur",
+    "proxyScope": "Proksi /v1",
+    "adminScope": "Panel /api"
   }
 }

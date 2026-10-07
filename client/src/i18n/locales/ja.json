@@ -1238,5 +1238,11 @@
     "ready": "レート制限 — 今すぐ再試行",
     "retryNow": "今すぐ再試行",
     "retried": "再試行しました — リクエスト成功"
+  },
+  "rateLimitEvents": {
+    "title": "最近レート制限されたリクエスト",
+    "empty": "最近の429応答はありません",
+    "proxyScope": "プロキシ /v1",
+    "adminScope": "ダッシュボード /api"
   }
 }

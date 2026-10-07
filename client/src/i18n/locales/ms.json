@@ -1238,5 +1238,11 @@
     "ready": "Had kadar — cuba sekarang",
     "retryNow": "Cuba sekarang",
     "retried": "Dicuba semula — permintaan berjaya"
+  },
+  "rateLimitEvents": {
+    "title": "Permintaan yang baru diletakkan had",
+    "empty": "Tiada respons 429 baru-baru ini",
+    "proxyScope": "Proksi /v1",
+    "adminScope": "Papan pemuka /api"
   }
 }

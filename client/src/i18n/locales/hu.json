@@ -1238,5 +1238,11 @@
     "ready": "Sebességkorlát — újrapróbálás most",
     "retryNow": "Újrapróbálás most",
     "retried": "Újrapróbálva — a kérés sikeres"
+  },
+  "rateLimitEvents": {
+    "title": "Nemrég korlátozott kérések",
+    "empty": "Nincs legutóbbi 429-válasz",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Irányítópult /api"
   }
 }

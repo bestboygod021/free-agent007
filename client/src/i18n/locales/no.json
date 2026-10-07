@@ -1238,5 +1238,11 @@
     "ready": "Hastighetsbegrensning — prøv igjen nå",
     "retryNow": "Prøv igjen nå",
     "retried": "Prøvd igjen — forespørselen lyktes"
+  },
+  "rateLimitEvents": {
+    "title": "Nylig rate-begrensede forespørsler",
+    "empty": "Ingen nylige 429-svar",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Dashbord /api"
   }
 }

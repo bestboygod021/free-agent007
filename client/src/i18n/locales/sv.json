@@ -1238,5 +1238,11 @@
     "ready": "Hastighetsgräns — försök igen nu",
     "retryNow": "Försök igen nu",
     "retried": "Försökt igen — förfrågan lyckades"
+  },
+  "rateLimitEvents": {
+    "title": "Nyligen begränsade förfrågningar",
+    "empty": "Inga nyliga 429-svar",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Instrumentpanel /api"
   }
 }

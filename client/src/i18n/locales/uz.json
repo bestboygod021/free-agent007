@@ -1238,5 +1238,11 @@
     "ready": "Tezlik chegarasi — hozir qayta urinish",
     "retryNow": "Hozir qayta urinish",
     "retried": "Qayta urinildi — so'rov muvaffaqiyatli"
+  },
+  "rateLimitEvents": {
+    "title": "Yaqinda cheklangan so'rovlar",
+    "empty": "Yaqinda 429 javoblari yo'q",
+    "proxyScope": "Proksi /v1",
+    "adminScope": "Panel /api"
   }
 }

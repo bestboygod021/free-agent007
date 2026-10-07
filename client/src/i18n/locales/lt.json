@@ -1238,5 +1238,11 @@
     "ready": "Greičio riba — bandykite dabar",
     "retryNow": "Bandykite dar kartą",
     "retried": "Bandyta dar kartą — užklausa sėkminga"
+  },
+  "rateLimitEvents": {
+    "title": "Neseniai apriboti užklausų",
+    "empty": "Nėra neseniai gautų 429 atsakymų",
+    "proxyScope": "Tarpinis serveris /v1",
+    "adminScope": "Prietaisų skydelis /api"
   }
 }

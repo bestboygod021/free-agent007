@@ -1238,5 +1238,11 @@
     "ready": "Limite di richieste — riprova ora",
     "retryNow": "Riprova ora",
     "retried": "Riprovato — richiesta riuscita"
+  },
+  "rateLimitEvents": {
+    "title": "Richieste limitate di recente",
+    "empty": "Nessuna risposta 429 recente",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Dashboard /api"
   }
 }

@@ -1238,5 +1238,11 @@
     "ready": "Oke oge — nwalee ugbu a",
     "retryNow": "Nwalee ugbu a",
     "retried": "E nwala ọzọ — arụrụọ nọrọ mma"
+  },
+  "rateLimitEvents": {
+    "title": "Ntụbegide njikọ natụleela",
+    "empty": "Enweghị azịza 429 n'oge na-adịbeghị anya",
+    "proxyScope": "Proxy /v1",
+    "adminScope": "Dashboard /api"
   }
 }

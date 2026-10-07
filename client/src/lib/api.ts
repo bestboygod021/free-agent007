@@ -66,6 +66,73 @@ const retryWaitLabel = (seconds: number): string => {
  *  "Retry now" button has a usable window before the toast auto-dismisses. */
 const READY_GRACE_SEC = 10;
 
+/** sessionStorage slot for the pending rate-limited retry: the deadline plus
+ *  the minimal request descriptor, so a reload mid-countdown re-arms the same
+ *  toast (and button) instead of losing the window to a refresh. */
+const PENDING_RETRY_KEY = 'freellmapi.pendingRetry';
+
+type PendingRetry = { retryAt: number; path: string; method?: string; body?: string };
+
+function persistPendingRetry(retryAt: number, path: string, options?: RequestInit): void {
+  if (typeof sessionStorage === 'undefined') return;
+  try {
+    const pending: PendingRetry = { retryAt, path };
+    // Only the serializable, replay-safe parts of RequestInit survive the trip:
+    // method + string body. Headers (auth, content-type) are rebuilt inside
+    // apiFetch on the way back out.
+    if (typeof options?.method === 'string') pending.method = options.method;
+    if (typeof options?.body === 'string') pending.body = options.body;
+    sessionStorage.setItem(PENDING_RETRY_KEY, JSON.stringify(pending));
+  } catch {
+    /* storage unavailable/full — this session's countdown still works */
+  }
+}
+
+export function clearPendingRetry(): void {
+  if (typeof sessionStorage === 'undefined') return;
+  try {
+    sessionStorage.removeItem(PENDING_RETRY_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function readPendingRetry(): PendingRetry | null {
+  if (typeof sessionStorage === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(PENDING_RETRY_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PendingRetry>;
+    if (typeof parsed.retryAt !== 'number' || typeof parsed.path !== 'string') return null;
+    return parsed as PendingRetry;
+  } catch {
+    return null;
+  }
+}
+
+/** Rebuild the countdown after a reload: while the saved deadline is still in
+ *  the future, re-arm the same toast with the remaining time and a retry
+ *  closure reconstructed from the stored descriptor. Called once from App. */
+export function restorePendingRetry(): boolean {
+  const pending = readPendingRetry();
+  if (!pending) return false;
+  const remainingMs = pending.retryAt - Date.now();
+  if (remainingMs <= 0) {
+    // The window already opened (or the slot is stale) — nothing to restore.
+    clearPendingRetry();
+    return false;
+  }
+  const active = countdown; // snapshot: closures lose the narrowing of a module-level let
+  if (active && getToasts().some(t => t.id === active.id)) return false;
+  const retry = () =>
+    apiFetch(pending.path, {
+      ...(pending.method ? { method: pending.method } : {}),
+      ...(pending.body !== undefined ? { body: pending.body } : {}),
+    });
+  startRetryCountdown(Math.max(1, Math.ceil(remainingMs / 1000)), retry);
+  return true;
+}
+
 /** Dispatched after the toast's retry button successfully re-runs the request
  *  that hit the 429 — App listens and refetches so the UI shows the data the
  *  opened window just allowed through. */
@@ -77,6 +144,7 @@ async function runRetry(retry: () => Promise<unknown>): Promise<void> {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent(RETRY_SUCCEEDED_EVENT));
     }
+    clearPendingRetry();
     toast.success(translate('rateLimit.retried'));
   } catch (e) {
     const err = e as ApiError;
@@ -106,13 +174,19 @@ function startRetryCountdown(seconds: number, retry?: () => Promise<unknown>): v
     : undefined;
   // retryWaitLabel already renders the full localized sentence (the dictionary
   // carries the "Rate limited —" phrasing), so it is the message verbatim.
-  const id = toast.info(retryWaitLabel(remaining), (seconds + READY_GRACE_SEC) * 1000, action);
+  const id = toast.info(retryWaitLabel(remaining), {
+    duration: (seconds + READY_GRACE_SEC) * 1000,
+    action,
+  });
   const stop = () => {
     clearInterval(timer);
     if (countdown?.timer === timer) countdown = null;
   };
   const timer = setInterval(() => {
-    if (!getToasts().some(t => t.id === id)) return stop(); // user dismissed
+    if (!getToasts().some(t => t.id === id)) {
+      clearPendingRetry(); // user dismissed the countdown — forget the window
+      return stop();
+    }
     remaining -= 1;
     if (remaining <= 0) {
       // The Toaster's own duration timer keeps running (with the READY_GRACE_SEC
@@ -121,7 +195,7 @@ function startRetryCountdown(seconds: number, retry?: () => Promise<unknown>): v
       updateToast(
         id,
         translate('rateLimit.ready'),
-        action ? { ...action, disabled: false } : undefined,
+        action ? { action: { ...action, disabled: false } } : undefined,
       );
       return stop();
     }
@@ -176,6 +250,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
       const retryAfterSec = parseRetryAfter(res.headers.get('Retry-After'));
       if (retryAfterSec !== null) {
         err.retryAfterSec = retryAfterSec;
+        persistPendingRetry(Date.now() + retryAfterSec * 1000, path, options);
         startRetryCountdown(retryAfterSec, () => apiFetch(path, options));
       }
     }

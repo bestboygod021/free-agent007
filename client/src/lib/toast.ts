@@ -23,6 +23,16 @@ export type ToastItem = {
   action?: ToastAction
 }
 
+/** Per-call options accepted by `toast.*`: an explicit duration and/or an
+ *  inline action button. Always passed as one bag so the surface can grow
+ *  without another positional parameter. */
+export type ToastOptions = {
+  /** Auto-dismiss delay in ms; `null` = sticky. Omit to keep the kind's default. */
+  duration?: number | null
+  /** Inline button (e.g. "Retry now" on the rate-limit countdown). */
+  action?: ToastAction
+}
+
 /** Most toasts kept on screen at once; older ones are evicted (see push). */
 const MAX_VISIBLE_TOASTS = 4
 
@@ -68,19 +78,21 @@ export function dismissToast(id: number) {
  *  429 countdown so seconds tick without stacking a new toast every second.
  *  Pass `action` to replace the inline button (the countdown flips it from
  *  disabled to clickable at zero); omit it and the current action stays. */
-export function updateToast(id: number, message: string, action?: ToastAction): void {
+export function updateToast(id: number, message: string, options?: Pick<ToastOptions, 'action'>): void {
   if (!items.some(t => t.id === id)) return
-  items = items.map(t => (t.id === id ? { ...t, message, ...(action ? { action } : {}) } : t))
+  items = items.map(t => (t.id === id ? { ...t, message, ...(options?.action ? { action: options.action } : {}) } : t))
   emit()
 }
 
-function push(kind: ToastKind, message: string, duration?: number, action?: ToastAction): number {
+function push(kind: ToastKind, message: string, options?: ToastOptions): number {
   const id = nextId++
+  // An explicit duration wins (null = sticky); otherwise the kind's default.
+  const duration = options?.duration !== undefined ? options.duration : DEFAULT_DURATIONS[kind]
   // Replace an identical pending toast instead of stacking duplicates (a
   // failing poll would otherwise pile up the same error every interval).
   const next = [
     ...items.filter(t => !(t.kind === kind && t.message === message)),
-    { id, kind, message, duration: duration ?? DEFAULT_DURATIONS[kind], ...(action ? { action } : {}) },
+    { id, kind, message, duration, ...(options?.action ? { action: options.action } : {}) },
   ]
   // Enforce the cap without silently evicting an unread error: drop the
   // oldest non-error first, and only evict an error once the stack is all
@@ -95,7 +107,7 @@ function push(kind: ToastKind, message: string, duration?: number, action?: Toas
 }
 
 export const toast = {
-  success: (message: string, duration?: number) => push('success', message, duration),
-  error: (message: string, duration?: number) => push('error', message, duration),
-  info: (message: string, duration?: number, action?: ToastAction) => push('info', message, duration, action),
+  success: (message: string, options?: ToastOptions) => push('success', message, options),
+  error: (message: string, options?: ToastOptions) => push('error', message, options),
+  info: (message: string, options?: ToastOptions) => push('info', message, options),
 }
