@@ -113,6 +113,7 @@
     "rateLimitProxy": "प्रॉक्सी /v1 सीमा (प्रति मिनट अनुरोध)",
     "rateLimitAdmin": "डैशबोर्ड /api सीमा (प्रति मिनट अनुरोध)",
     "rateLimitKey": "प्रति-कुंजी /v1 सीमा (प्रति मिनट अनुरोध)",
+    "rateLimitUnified": "एकीकृत-कुंजी /v1 सीमा (प्रति मिनट अनुरोध)",
     "rateLimitEnvLocked": "{env} से सेट — संपादन के लिए हटाएँ",
     "rateLimitSaved": "लागू — अगले अनुरोध पर प्रभावी",
     "generalDescription": "इस डैशबोर्ड की भाषा और दिखावट।",
@@ -1256,6 +1257,8 @@
     "callerHistory": "कॉलर इतिहास",
     "hourlyTrend": "पिछले 24 घंटे",
     "keyUsage": "कुंजी अनुसार उपयोग",
-    "spike": "पिछले 5 मिनट में {count} अनुरोध सीमित किए गए"
+    "spike": "पिछले 5 मिनट में {count} अनुरोध सीमित किए गए",
+    "hourFilter": "घंटा: {hour}",
+    "serverLog": "सर्वर लॉग"
   }
 }

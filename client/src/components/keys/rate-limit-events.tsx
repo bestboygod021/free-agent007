@@ -1,9 +1,9 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { useI18n } from '@/i18n'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, X } from 'lucide-react'
 
 // Operator view over the rate limiters' rejection trail: every 429 the server
 // answered (dashboard /api, proxy /v1, per-key buckets) lands here, newest
@@ -26,7 +26,7 @@ type RateLimitEvent = {
   retryAfter: number
 }
 
-type KeyUsage = { subject: string; label?: string | null; count: number; limit: number; resetAt: number }
+type KeyUsage = { subject: string; label?: string | null; count: number; limit: number; percent?: number; resetAt: number }
 
 type Stats = {
   windowHours: number
@@ -51,6 +51,13 @@ export function RateLimitEvents() {
   // Pinned once so the trend strip's hour labels stay stable across re-renders
   // (react-hooks/purity forbids Date.now() in the render body).
   const [now] = useState(() => Date.now())
+  // Timeline hand-off: /keys?rlHour=<epoch ms>&rlSpan=<ms> pins the list to the
+  // bucket the operator clicked on the analytics overlay.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rlHourRaw = searchParams.get('rlHour')
+  const rlHour = rlHourRaw !== null && /^\d+$/.test(rlHourRaw) ? Number(rlHourRaw) : null
+  const rlSpanRaw = Number(searchParams.get('rlSpan'))
+  const rlSpan = Number.isFinite(rlSpanRaw) && rlSpanRaw > 0 ? rlSpanRaw : 3_600_000
 
   const { data } = useQuery<{ events: RateLimitEvent[]; keyUsage: KeyUsage[]; spike: { at: number; count: number } | null }>({
     queryKey: ['rate-limit-events'],
@@ -66,17 +73,54 @@ export function RateLimitEvents() {
   })
 
   const allEvents = data?.events ?? []
-  const events = filter === 'all' ? allEvents : allEvents.filter(e => e.scope === filter)
+  const scoped = filter === 'all' ? allEvents : allEvents.filter(e => e.scope === filter)
+  const events = rlHour === null ? scoped : scoped.filter(e => e.ts >= rlHour && e.ts < rlHour + rlSpan)
   const keyUsage = data?.keyUsage ?? []
   const buckets = stats?.buckets ?? []
   const maxBucket = Math.max(1, ...buckets.map(b => b.count))
 
+  // Scroll the card into view when the timeline sent the operator here.
+  useEffect(() => {
+    if (rlHour === null) return;
+    document.getElementById('rate-limit-events')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  }, [rlHour]);
+
+  const hourLabel = rlHour === null
+    ? ''
+    : new Date(rlHour).toLocaleString(locale, rlSpan > 3_600_000
+        ? { month: 'short', day: 'numeric' }
+        : { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
   return (
-    <section aria-labelledby="rate-limit-events-title" className="rounded-xl border bg-card p-4">
+    <section id="rate-limit-events" aria-labelledby="rate-limit-events-title" className="rounded-xl border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 id="rate-limit-events-title" className="text-sm font-semibold">
-          {t('rateLimitEvents.title')}
-        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 id="rate-limit-events-title" className="text-sm font-semibold">
+            {t('rateLimitEvents.title')}
+          </h3>
+          {rlHour !== null && (
+            <button
+              type="button"
+              aria-label={t('common.dismiss')}
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.delete('rlHour');
+                next.delete('rlSpan');
+                setSearchParams(next, { replace: true });
+              }}
+              className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs text-primary transition-colors hover:bg-primary/20"
+            >
+              {t('rateLimitEvents.hourFilter', { hour: hourLabel })}
+              <X className="size-3" />
+            </button>
+          )}
+          <Link
+            to="/logs?q=rate-limit"
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            {t('rateLimitEvents.serverLog')}
+          </Link>
+        </div>
         <div role="group" aria-label={t('rateLimitEvents.title')} className="flex flex-wrap gap-1">
           {SCOPES.map(scope => (
             <button
@@ -189,8 +233,8 @@ export function RateLimitEvents() {
                   ) : (
                     <span className="font-mono">{row.subject}</span>
                   )}
-                  <span className="tabular-nums text-muted-foreground">
-                    {row.count}/{row.limit}
+                  <span className={`tabular-nums ${(row.percent ?? 0) >= 80 ? 'font-medium text-destructive' : 'text-muted-foreground'}`}>
+                    {row.count}/{row.limit} ({row.percent ?? Math.round((row.count / Math.max(1, row.limit)) * 100)}%)
                   </span>
                 </div>
                 <div
@@ -237,7 +281,15 @@ export function RateLimitSpikeBanner() {
       className="flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
     >
       <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-      <span>{t('rateLimitEvents.spike', { count: spike.count })}</span>
+      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {t('rateLimitEvents.spike', { count: spike.count })}
+        <Link
+          to="/logs?q=rate-limit"
+          className="font-medium underline underline-offset-2 hover:text-foreground"
+        >
+          {t('rateLimitEvents.serverLog')}
+        </Link>
+      </span>
     </div>
   )
 }

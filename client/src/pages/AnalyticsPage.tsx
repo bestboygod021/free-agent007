@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { hourRangeFromBucket } from '@/lib/timeline-marker'
 import { useQuery } from '@tanstack/react-query'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -437,6 +438,17 @@ export default function AnalyticsPage() {
   // Browser's offset from UTC in minutes (480 = UTC+8), so the server buckets
   // timeline hours/days on the viewer's wall clock instead of UTC.
   const tzOffset = -new Date().getTimezoneOffset()
+  const navigate = useNavigate()
+
+  // Clicking the dashed 429 overlay jumps to the Keys-page event list pinned
+  // to exactly that bucket — the marker is the query, not just the picture.
+  const openRateLimitBucket = (datum: unknown) => {
+    const timestamp = (datum as { payload?: { timestamp?: string } } | undefined)?.payload?.timestamp
+    if (!timestamp) return
+    const range = hourRangeFromBucket(timestamp, tzOffset)
+    if (!range) return
+    navigate(`/keys?rlHour=${range.start}&rlSpan=${range.span}`)
+  }
 
   const { data: timeline = [] } = useQuery({
     queryKey: ['analytics', 'timeline', range, tzOffset],
@@ -637,7 +649,13 @@ export default function AnalyticsPage() {
                       stroke="var(--destructive)"
                       strokeDasharray="4 3"
                       strokeWidth={1.2}
-                      dot={false}
+                      dot={{
+                        r: 3,
+                        strokeWidth: 0,
+                        fill: 'var(--destructive)',
+                        className: 'cursor-pointer',
+                        onClick: openRateLimitBucket,
+                      }}
                       connectNulls={false}
                     />
                   </LineChart>

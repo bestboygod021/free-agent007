@@ -6,6 +6,8 @@ import {
   createKeyRateLimiter,
   getKeyRateLimitUsage,
   getRateLimitEvents,
+  getRateLimitSpike,
+  recordRateLimitEvent,
   clearRateLimitEventsForTests,
 } from '../../middleware/rateLimit.js';
 
@@ -197,4 +199,64 @@ describe('dashboard/proxy rate limiters', () => {
     });
   });
 
+  it('opens a fresh window at exactly resetAt — the boundary millisecond counts', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      const t0 = Date.now();
+      vi.setSystemTime(t0);
+      const limiter = createProxyRateLimiter(1);
+      expect(run(limiter).nexted).toBe(true); // window born: [t0, t0+60_000)
+      const resetAt = t0 + 60_000;
+
+      vi.setSystemTime(resetAt - 1); // last millisecond of the old window
+      expect(run(limiter).nexted).toBe(false);
+
+      vi.setSystemTime(resetAt); // exactly at resetAt: `now >= resetAt` rolls over
+      const fresh = run(limiter);
+      expect(fresh.nexted).toBe(true);
+      expect(fresh.res.headers['X-RateLimit-Remaining']).toBe('0');
+
+      vi.setSystemTime(resetAt); // still the new window's first slot — over cap again
+      expect(run(limiter).nexted).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('fires one spike alert per cooldown and drops it after ten minutes', () => {
+    process.env.RATE_LIMIT_ALERT_THRESHOLD = '3';
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      const t0 = Date.now();
+      const event = (ts: number) => ({
+        ts,
+        scope: 'proxy' as const,
+        method: 'GET',
+        path: '/v1/models',
+        ip: null,
+        subject: null,
+        limit: 1,
+        retryAfter: 60,
+      });
+      for (let i = 0; i < 3; i++) recordRateLimitEvent(event(t0));
+      expect(getRateLimitSpike()).toMatchObject({ at: t0, count: 3 });
+
+      // Two more bursts well inside the cooldown: alert must not re-fire, so
+      // the stored spike keeps its original stamp and count.
+      vi.setSystemTime(t0 + 60_000);
+      for (let i = 0; i < 3; i++) recordRateLimitEvent(event(t0 + 60_000));
+      expect(getRateLimitSpike()).toMatchObject({ at: t0, count: 3 });
+
+      // Ten minutes after the alert the spike ages out…
+      vi.setSystemTime(t0 + 600_000);
+      expect(getRateLimitSpike()).toBeNull();
+
+      // …and with the cooldown elapsed, a fresh burst alerts again.
+      for (let i = 0; i < 3; i++) recordRateLimitEvent(event(t0 + 600_000));
+      expect(getRateLimitSpike()).toMatchObject({ at: t0 + 600_000, count: 3 });
+    } finally {
+      vi.useRealTimers();
+      delete process.env.RATE_LIMIT_ALERT_THRESHOLD;
+    }
+  });
 });

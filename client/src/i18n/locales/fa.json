@@ -113,6 +113,7 @@
     "rateLimitProxy": "سقف پراکسی /v1 (درخواست در دقیقه)",
     "rateLimitAdmin": "سقف داشبورد /api (درخواست در دقیقه)",
     "rateLimitKey": "سقف هر کلید /v1 (درخواست در دقیقه)",
+    "rateLimitUnified": "سقف کلیدِ یکپارچه /v1 (درخواست در دقیقه)",
     "rateLimitEnvLocked": "با متغیر {env} ثابت شده؛ برای ویرایش آن را حذف کنید",
     "rateLimitSaved": "اعمال شد — در درخواست بعدی مؤثر است",
     "generalDescription": "زبان و ظاهر این داشبورد.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "تاریخچه‌ی تماس‌گیرنده",
     "hourlyTrend": "۲۴ ساعت اخیر",
     "keyUsage": "مصرف به‌ازای هر کلید",
-    "spike": "{count} درخواست در ۵ دقیقهٔ اخیر محدود شد"
+    "spike": "{count} درخواست در ۵ دقیقهٔ اخیر محدود شد",
+    "hourFilter": "ساعت {hour}",
+    "serverLog": "لاگ سرور"
   }
 }

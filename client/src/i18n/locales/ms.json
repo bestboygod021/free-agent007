@@ -113,6 +113,7 @@
     "rateLimitProxy": "Had proksi /v1 (permintaan/minit)",
     "rateLimitAdmin": "Had papan pemuka /api (permintaan/minit)",
     "rateLimitKey": "Had setiap kunci /v1 (permintaan/minit)",
+    "rateLimitUnified": "Had kunci bersatu /v1 (permintaan/minit)",
     "rateLimitEnvLocked": "Ditetapkan oleh {env} — buang untuk menyunting",
     "rateLimitSaved": "Dikuatkuasakan — berkesan pada permintaan seterusnya",
     "generalDescription": "Bahasa dan penampilan papan pemuka ini.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Sejarah pemanggil",
     "hourlyTrend": "24 jam lepas",
     "keyUsage": "Penggunaan mengikut kunci",
-    "spike": "{count} permintaan dihadkan dalam 5 minit lalu"
+    "spike": "{count} permintaan dihadkan dalam 5 minit lalu",
+    "hourFilter": "Jam: {hour}",
+    "serverLog": "Log pelayan"
   }
 }

@@ -113,6 +113,7 @@
     "rateLimitProxy": "Tope de proxy /v1 (req/min)",
     "rateLimitAdmin": "Tope del panel /api (req/min)",
     "rateLimitKey": "Tope por clave /v1 (req/min)",
+    "rateLimitUnified": "Tope de clave unificada /v1 (req/min)",
     "rateLimitEnvLocked": "Fijado por {env}; quítalo para editar",
     "rateLimitSaved": "Aplicado — surtirá efecto en la próxima solicitud",
     "generalDescription": "Idioma y apariencia de este panel.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Historial del llamante",
     "hourlyTrend": "Últimas 24 horas",
     "keyUsage": "Uso por clave",
-    "spike": "{count} solicitudes limitadas en los últimos 5 minutos"
+    "spike": "{count} solicitudes limitadas en los últimos 5 minutos",
+    "hourFilter": "Hora: {hour}",
+    "serverLog": "Registro del servidor"
   }
 }

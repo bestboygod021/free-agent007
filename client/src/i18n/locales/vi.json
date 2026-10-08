@@ -113,6 +113,7 @@
     "rateLimitProxy": "Giới hạn proxy /v1 (yêu cầu/phút)",
     "rateLimitAdmin": "Giới hạn bảng điều khiển /api (yêu cầu/phút)",
     "rateLimitKey": "Giới hạn theo khóa /v1 (yêu cầu/phút)",
+    "rateLimitUnified": "Giới hạn khóa hợp nhất /v1 (yêu cầu/phút)",
     "rateLimitEnvLocked": "Đặt bởi {env} — gỡ biến để chỉnh sửa",
     "rateLimitSaved": "Đã áp dụng — có hiệu lực ở yêu cầu tiếp theo",
     "generalDescription": "Ngôn ngữ và giao diện của bảng điều khiển này.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Lịch sử người gọi",
     "hourlyTrend": "24 giờ qua",
     "keyUsage": "Dùng theo khóa",
-    "spike": "{count} yêu cầu bị giới hạn trong 5 phút qua"
+    "spike": "{count} yêu cầu bị giới hạn trong 5 phút qua",
+    "hourFilter": "Giờ: {hour}",
+    "serverLog": "Nhật ký máy chủ"
   }
 }

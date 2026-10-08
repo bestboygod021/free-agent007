@@ -113,6 +113,7 @@
     "rateLimitProxy": "Batas proksi /v1 (permintaan/menit)",
     "rateLimitAdmin": "Batas dasbor /api (permintaan/menit)",
     "rateLimitKey": "Batas per kunci /v1 (permintaan/menit)",
+    "rateLimitUnified": "Batas kunci terpadu /v1 (permintaan/menit)",
     "rateLimitEnvLocked": "Dikunci oleh {env} — hapus untuk mengedit",
     "rateLimitSaved": "Diterapkan — berlaku pada permintaan berikutnya",
     "generalDescription": "Bahasa dan tampilan dasbor ini.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Riwayat pemanggil",
     "hourlyTrend": "24 jam terakhir",
     "keyUsage": "Penggunaan per kunci",
-    "spike": "{count} permintaan dibatasi dalam 5 menit terakhir"
+    "spike": "{count} permintaan dibatasi dalam 5 menit terakhir",
+    "hourFilter": "Jam: {hour}",
+    "serverLog": "Log server"
   }
 }

@@ -113,6 +113,7 @@
     "rateLimitProxy": "Proxy-/v1-grense (forespørsler/min)",
     "rateLimitAdmin": "Dashbord-/api-grense (forespørsler/min)",
     "rateLimitKey": "Pr. nøkkel-/v1-grense (forespørsler/min)",
+    "rateLimitUnified": "Enhetlig nøkkel-/v1-grense (forespørsler/min)",
     "rateLimitEnvLocked": "Låst av {env} — fjern den for å redigere",
     "rateLimitSaved": "Brukt — gjelder ved neste forespørsel",
     "generalDescription": "Språk og utseende for dette dashbordet.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Anropshistorikk",
     "hourlyTrend": "Siste 24 timer",
     "keyUsage": "Forbruk per nøkkel",
-    "spike": "{count} forespørsler ble begrenset siste 5 minutter"
+    "spike": "{count} forespørsler ble begrenset siste 5 minutter",
+    "hourFilter": "Time: {hour}",
+    "serverLog": "Serverlogg"
   }
 }

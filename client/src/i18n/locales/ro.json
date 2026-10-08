@@ -113,6 +113,7 @@
     "rateLimitProxy": "Limită proxy /v1 (cereri/min)",
     "rateLimitAdmin": "Limită panou /api (cereri/min)",
     "rateLimitKey": "Limită pe cheie /v1 (cereri/min)",
+    "rateLimitUnified": "Limită cheie unificată /v1 (cereri/min)",
     "rateLimitEnvLocked": "Fixat de {env} — eliminați variabila pentru editare",
     "rateLimitSaved": "Aplicat — intră în vigoare la următoarea cerere",
     "generalDescription": "Limba și aspectul acestui panou.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Istoricul apelantului",
     "hourlyTrend": "Ultimele 24 de ore",
     "keyUsage": "Utilizare pe cheie",
-    "spike": "{count} cereri limitate în ultimele 5 minute"
+    "spike": "{count} cereri limitate în ultimele 5 minute",
+    "hourFilter": "Ora: {hour}",
+    "serverLog": "Jurnal server"
   }
 }

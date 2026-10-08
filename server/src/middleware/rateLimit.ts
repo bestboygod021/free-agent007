@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { getDb, getSetting, setSetting } from '../db/index.js';
+import { getDb, getSetting, getUnifiedApiKey, setSetting } from '../db/index.js';
 import { getClientContext } from '../lib/client-context.js';
 import { decrypt } from '../lib/crypto.js';
 import { recordLogEntry } from '../lib/server-logs.js';
@@ -189,18 +189,20 @@ export function getRateLimitStats(windowHours = 24): RateLimitStats {
 // The middleware resolves per request so a dashboard save takes effect on the
 // next request — no restart, no stale factory closure.
 
-export type RateLimitSettingKind = 'proxy' | 'admin' | 'key';
+export type RateLimitSettingKind = 'proxy' | 'admin' | 'key' | 'unified';
 type RateLimitSource = 'env' | 'settings' | 'default';
 
 const SETTING_KEYS: Record<RateLimitSettingKind, string> = {
   proxy: 'rateLimit.proxyRpm',
   admin: 'rateLimit.adminRpm',
   key: 'rateLimit.keyRpm',
+  unified: 'rateLimit.unifiedRpm',
 };
 const ENV_NAMES: Record<RateLimitSettingKind, string> = {
   proxy: 'PROXY_RATE_LIMIT_RPM',
   admin: 'ADMIN_RATE_LIMIT_RPM',
   key: 'KEY_RATE_LIMIT_RPM',
+  unified: 'UNIFIED_RATE_LIMIT_RPM',
 };
 
 const settingOverrides: Partial<Record<RateLimitSettingKind, number>> = {};
@@ -210,7 +212,7 @@ function loadSettingOverrides(): void {
   if (settingsLoaded) return;
   settingsLoaded = true; // set first: a missing DB must not retry every request
   try {
-    for (const kind of ['proxy', 'admin', 'key'] as RateLimitSettingKind[]) {
+    for (const kind of ['proxy', 'admin', 'key', 'unified'] as RateLimitSettingKind[]) {
       const raw = getSetting(SETTING_KEYS[kind]);
       if (raw === undefined) continue;
       const n = Number(raw);
@@ -249,19 +251,27 @@ export function getRateLimitSettings() {
     proxyRpm: resolveLimit('proxy', DEFAULT_RPM),
     adminRpm: resolveLimit('admin', ADMIN_DEFAULT_RPM),
     keyRpm: resolveLimit('key', KEY_DEFAULT_RPM),
+    unifiedRpm: resolveLimit('unified', UNIFIED_DEFAULT_RPM),
     sources: {
       proxy: limitSource('proxy'),
       admin: limitSource('admin'),
       key: limitSource('key'),
+      unified: limitSource('unified'),
     } as Record<RateLimitSettingKind, RateLimitSource>,
   };
 }
 
-export function setRateLimitSettings(update: { proxyRpm?: number; adminRpm?: number; keyRpm?: number }) {
+export function setRateLimitSettings(update: {
+  proxyRpm?: number;
+  adminRpm?: number;
+  keyRpm?: number;
+  unifiedRpm?: number;
+}) {
   const map: Array<[RateLimitSettingKind, number | undefined]> = [
     ['proxy', update.proxyRpm],
     ['admin', update.adminRpm],
     ['key', update.keyRpm],
+    ['unified', update.unifiedRpm],
   ];
   for (const [kind, value] of map) {
     if (value === undefined) continue;
@@ -322,6 +332,55 @@ function maybeDetectSpike(now: number): void {
     });
   } catch {
     /* logging must never break a rejection */
+  }
+}
+
+// ── Unified-key identity (pre-auth bucket split) ────────────────────────────
+// The dashboard-issued unified key is plaintext in `settings` (that is how
+// GET /api/settings/api-key serves it), so its fingerprint can be derived
+// without the api_keys decryption path. Cached for a minute like the label
+// map: one settings read per 60s instead of one per request.
+
+let unifiedFpCache: { at: number; fp: string | null } | null = null;
+
+function unifiedFingerprint(): string | null {
+  if (unifiedFpCache && Date.now() - unifiedFpCache.at < 60_000) return unifiedFpCache.fp;
+  let fp: string | null = null;
+  try {
+    const secret = getUnifiedApiKey();
+    if (secret) fp = `key:${createHash('sha256').update(secret).digest('hex').slice(0, 8)}`;
+  } catch {
+    /* no DB / no row yet — nothing can match */
+  }
+  unifiedFpCache = { at: Date.now(), fp };
+  return fp;
+}
+
+// ── Approaching-cap warning (fires once per subject per window) ──────────────
+// At 80% of the cap the pass path logs a soft warn so the operator hears about
+// the budget BEFORE the first 429. Keyed by subject+window so a sustained
+// stream cannot spam the log.
+
+const approachNotified = new Map<string, number>(); // key → window resetAt
+
+function noteApproaching(subject: string, resetAt: number, limit: number, count: number, now: number): void {
+  const key = `${subject}|${resetAt}`;
+  if (approachNotified.has(key)) return;
+  approachNotified.set(key, resetAt);
+  if (approachNotified.size > MAX_TRACKED_KEYS) {
+    for (const [k, until] of approachNotified) if (now >= until) approachNotified.delete(k);
+  }
+  try {
+    const pct = Math.round((count / limit) * 100);
+    recordLogEntry({
+      level: 'warn',
+      source: 'rate-limit',
+      event: 'approaching',
+      message: `Approaching rate limit: ${subject} at ${pct}% of the ${limit}/req-min cap (${count}/${limit}).`,
+      tsMs: now,
+    });
+  } catch {
+    /* logging must never break a passing request */
   }
 }
 
@@ -523,6 +582,9 @@ export function createAdminRateLimiter(
 // bucket alone. Tune with KEY_RATE_LIMIT_RPM; 0 disables it.
 
 const KEY_DEFAULT_RPM = 180;
+/** The unified key is one credential shared by every client — it rides the
+ *  same per-minute default as a single api key until an operator retunes it. */
+const UNIFIED_DEFAULT_RPM = KEY_DEFAULT_RPM;
 const MAX_TRACKED_KEYS = 5_000;
 const keyWindows = new Map<string, WindowState>();
 // The usage view needs the cap; every mount parses the same env so the last
@@ -553,19 +615,24 @@ export function createKeyRateLimiter(rpmLimit?: number) {
   const scope = 'key' as const;
 
   return function keyRateLimit(req: Request, res: Response, next: NextFunction): void {
-    const limit = resolveLimit('key', fallback);
-    activeKeyLimit = limit;
-    if (limit === 0) {
-      next();
-      return;
-    }
+    activeKeyLimit = resolveLimit('key', fallback);
     const token = presentedApiToken(req);
     if (!token) {
       // No credential presented — the IP bucket already counts this request.
       next();
       return;
     }
-    const subject = `key:${createHash('sha256').update(token).digest('hex').slice(0, 8)}`;
+    const fingerprint = `key:${createHash('sha256').update(token).digest('hex').slice(0, 8)}`;
+    // The unified key gets its OWN bucket: without the split, one shared
+    // credential would both dodge the per-key view (T22: subject null) and be
+    // at the mercy of whatever cap an api-key row would impose.
+    const isUnified = fingerprint === unifiedFingerprint();
+    const subject = isUnified ? `unified:${fingerprint.slice(4)}` : fingerprint;
+    const limit = isUnified ? resolveLimit('unified', UNIFIED_DEFAULT_RPM) : activeKeyLimit;
+    if (limit === 0) {
+      next(); // 0 disables this bucket entirely
+      return;
+    }
 
     const now = Date.now();
     let state = keyWindows.get(subject);
@@ -579,6 +646,13 @@ export function createKeyRateLimiter(rpmLimit?: number) {
       for (const [key, value] of keyWindows) {
         if (now >= value.resetAt) keyWindows.delete(key);
       }
+    }
+
+    // Still passing, but at/over 80% of the cap: warn once per window so the
+    // budget is visible before the first rejection.
+    const approachAt = Math.max(1, Math.ceil(limit * 0.8));
+    if (state.count === approachAt && approachAt <= limit) {
+      noteApproaching(subject, state.resetAt, limit, state.count, now);
     }
 
     if (state.count > limit) {
@@ -614,20 +688,33 @@ export function getKeyRateLimitUsage(): Array<{
   label: string | null;
   count: number;
   limit: number;
+  percent: number;
   resetAt: number;
 }> {
   const now = Date.now();
-  const usage: Array<{ subject: string; label: string | null; count: number; limit: number; resetAt: number }> = [];
+  const usage: Array<{
+    subject: string;
+    label: string | null;
+    count: number;
+    limit: number;
+    percent: number;
+    resetAt: number;
+  }> = [];
   for (const [subject, state] of keyWindows) {
     if (now >= state.resetAt) {
       keyWindows.delete(subject);
       continue;
     }
+    // Live per-row caps: the unified bucket resolves its own kind, the rest
+    // show the cap the last key-limiter mount enforces.
+    const limit = subject.startsWith('unified:') ? resolveLimit('unified', UNIFIED_DEFAULT_RPM) : activeKeyLimit;
     usage.push({
       subject,
-      label: labelSubject(subject),
+      // api_keys labels only — an `unified:` fingerprint has no key row.
+      label: subject.startsWith('unified:') ? null : labelSubject(subject),
       count: state.count,
-      limit: activeKeyLimit,
+      limit,
+      percent: limit > 0 ? Math.min(100, Math.round((state.count / limit) * 100)) : 0,
       resetAt: state.resetAt,
     });
   }
@@ -638,6 +725,10 @@ export function getKeyRateLimitUsage(): Array<{
 export function clearRateLimitEventsForTests(): void {
   events.length = 0;
   keyWindows.clear();
+  approachNotified.clear();
+  lastSpike = null;
+  lastSpikeAlertAt = 0;
+  unifiedFpCache = null;
   withDb(db => {
     db.prepare(`DELETE FROM rate_limit_events`).run();
     return undefined;

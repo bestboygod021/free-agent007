@@ -113,6 +113,7 @@
     "rateLimitProxy": "代理 /v1 上限（請求/分鐘）",
     "rateLimitAdmin": "控制台 /api 上限（請求/分鐘）",
     "rateLimitKey": "每金鑰 /v1 上限（請求/分鐘）",
+    "rateLimitUnified": "統一金鑰 /v1 上限（請求/分鐘）",
     "rateLimitEnvLocked": "由 {env} 固定 — 取消該變數才能編輯",
     "rateLimitSaved": "已套用 — 將在下一個請求生效",
     "generalDescription": "此儀表板的語言與外觀。",
@@ -1256,6 +1257,8 @@
     "callerHistory": "呼叫方歷史",
     "hourlyTrend": "最近 24 小時",
     "keyUsage": "按金鑰用量",
-    "spike": "過去 5 分鐘內有 {count} 個請求被限流"
+    "spike": "過去 5 分鐘內有 {count} 個請求被限流",
+    "hourFilter": "小時：{hour}",
+    "serverLog": "伺服器日誌"
   }
 }

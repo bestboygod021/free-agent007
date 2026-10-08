@@ -3,8 +3,11 @@ import type { Express } from 'express';
 import { createApp } from '../../app.js';
 import { initDb } from '../../db/index.js';
 import { mintDashboardToken } from '../helpers/auth.js';
-import { createAdminRateLimiter } from '../../middleware/rateLimit.js';
-import { run } from '../helpers/limit-mock.js';
+import { createAdminRateLimiter, createKeyRateLimiter, getKeyRateLimitUsage, getRateLimitEvents, clearRateLimitEventsForTests } from '../../middleware/rateLimit.js';
+import { run, mockReq } from '../helpers/limit-mock.js';
+import { regenerateUnifiedKey, getUnifiedApiKey } from '../../db/index.js';
+import { queryLogs } from '../../lib/server-logs.js';
+import { createHash } from 'node:crypto';
 
 // GET/PUT /api/settings/rate-limits — the dashboard-editable caps. The key
 // property is live effect: saving must change limiter behaviour on the NEXT
@@ -54,7 +57,8 @@ describe('GET/PUT /api/settings/rate-limits', () => {
       proxyRpm: 120,
       adminRpm: 600,
       keyRpm: 180,
-      sources: { proxy: 'default', admin: 'default', key: 'default' },
+      unifiedRpm: 180,
+      sources: { proxy: 'default', admin: 'default', key: 'default', unified: 'default' },
     });
   });
 
@@ -110,4 +114,71 @@ describe('GET/PUT /api/settings/rate-limits', () => {
     expect(results.map(r => r.nexted)).toEqual([true, true, false]);
     expect(results[2].res.statusCode).toBe(429);
   });
+  it('persists and reports the unified-key cap like the others', async () => {
+    const put = await call(app, 'PUT', '/api/settings/rate-limits', { unifiedRpm: 42 }, token);
+    expect(put.status).toBe(200);
+    expect(put.body).toMatchObject({ unifiedRpm: 42, sources: { unified: 'settings' } });
+
+    const get = await call(app, 'GET', '/api/settings/rate-limits', undefined, token);
+    expect(get.body.unifiedRpm).toBe(42);
+
+    // The at-least-one rule now includes unifiedRpm — still nothing to save.
+    const empty = await call(app, 'PUT', '/api/settings/rate-limits', {}, token);
+    expect(empty.status).toBe(400);
+  });
+
+  it('splits the unified key into its own bucket with its own cap', async () => {
+    clearRateLimitEventsForTests();
+    const unified = regenerateUnifiedKey();
+    await call(app, 'PUT', '/api/settings/rate-limits', { unifiedRpm: 2, keyRpm: 180 }, token);
+
+    const mkReq = (tok: string) => ({ ...mockReq('/v1/models', 'POST'), headers: { authorization: `Bearer ${tok}` } });
+    const limiter = createKeyRateLimiter();
+
+    // Unified bucket: 2 pass, the third rejects under the unified cap…
+    expect(run(limiter, mkReq(unified)).nexted).toBe(true);
+    expect(run(limiter, mkReq(unified)).nexted).toBe(true);
+    const third = run(limiter, mkReq(unified));
+    expect(third.nexted).toBe(false);
+    expect(third.res.statusCode).toBe(429);
+
+    // …while an ordinary presented key keeps counting in a separate bucket.
+    for (let i = 0; i < 3; i++) expect(run(limiter, mkReq('sk-plain-key')).nexted).toBe(true);
+
+    const usage = getKeyRateLimitUsage();
+    const unifiedRow = usage.find(u => u.subject.startsWith('unified:'));
+    expect(unifiedRow).toMatchObject({ label: null, limit: 2, percent: 100 });
+    const plainRow = usage.find(u => u.subject.startsWith('key:'));
+    expect(plainRow).toMatchObject({ limit: 180, percent: 2 });
+
+    const event = getRateLimitEvents().find(e => e.subject?.startsWith('unified:'));
+    expect(event).toMatchObject({ scope: 'key', limit: 2 });
+    // The raw unified credential must never appear in the trail.
+    expect(JSON.stringify(getRateLimitEvents())).not.toContain(unified);
+    expect(getUnifiedApiKey()).toBe(unified);
+  });
+
+  it('warns once at 80% of a key cap, before any rejection', async () => {
+    clearRateLimitEventsForTests();
+    await call(app, 'PUT', '/api/settings/rate-limits', { keyRpm: 5, unifiedRpm: 42 }, token);
+
+    const limiter = createKeyRateLimiter();
+    const req = () => ({ ...mockReq('/v1/models', 'POST'), headers: { authorization: 'Bearer sk-approach-test' } });
+    for (let i = 0; i < 4; i++) expect(run(limiter, req()).nexted).toBe(true); // 4/5 = 80%
+
+    const fp = `key:${createHash('sha256').update('sk-approach-test').digest('hex').slice(0, 8)}`;
+    const warns = () =>
+      queryLogs({ levels: ['warn'] }).filter(e => e.event === 'approaching' && e.message.includes(fp));
+    expect(warns()).toHaveLength(1);
+    expect(warns()[0].message).toContain('80%');
+
+    // The 5th pass is over the threshold but not a rejection — no repeat.
+    expect(run(limiter, req()).nexted).toBe(true);
+    expect(warns()).toHaveLength(1);
+
+    // The 6th is the actual 429 — still no second warning (same window).
+    expect(run(limiter, req()).nexted).toBe(false);
+    expect(warns()).toHaveLength(1);
+  });
+
 });

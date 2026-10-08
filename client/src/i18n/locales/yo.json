@@ -113,6 +113,7 @@
     "rateLimitProxy": "Àkọ̀kọ̀ proksì /v1 (ìbè ìṣẹ́jú)",
     "rateLimitAdmin": "Àkọ̀kọ̀ àpò ìṣàkó /api (ìbè ìṣẹ́jú)",
     "rateLimitKey": "Àkọ̀kọ̀ fún ìwọ̀lé /v1 (ìbè ìṣẹ́jú)",
+    "rateLimitUnified": "Àkọ̀kọ̀ ìwọ̀lé àkọ́kọ́yìn /v1 (ìbè ìṣẹ́jú)",
     "rateLimitEnvLocked": "A ṣètò pẹ̀lú {env} — yíyọ kúkúrú láti àtúnṣe",
     "rateLimitSaved": "A tọ́ka síbẹ́ — yóò fi ṣe pẹ̀lú ìbè tó kàn tókàn tuntún",
     "generalDescription": "Ede ati irisi dasibodu yii.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Ìtàn olùpè",
     "hourlyTrend": "Wákàtí 24 kéyìn",
     "keyUsage": "Ìṣàmúlò nípa aṣọyè",
-    "spike": "A dín ìbè {count} sínú ìṣẹ́jú márùn-ún tó kọjá"
+    "spike": "A dín ìbè {count} sínú ìṣẹ́jú márùn-ún tó kọjá",
+    "hourFilter": "Wákàtí: {hour}",
+    "serverLog": "Àkọsílẹ̀ ẹrùnrin"
   }
 }

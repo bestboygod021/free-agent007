@@ -113,6 +113,7 @@
     "rateLimitProxy": "حد الوكيل /v1 (طلب/دقيقة)",
     "rateLimitAdmin": "حد لوحة التحكم /api (طلب/دقيقة)",
     "rateLimitKey": "حد لكل مفتاح /v1 (طلب/دقيقة)",
+    "rateLimitUnified": "حد المفتاح الموحد /v1 (طلب/دقيقة)",
     "rateLimitEnvLocked": "مثبّت عبر {env} — أزله للتعديل",
     "rateLimitSaved": "طُبّق — يسري في الطلب التالي",
     "generalDescription": "لغة لوحة التحكم هذه ومظهرها.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "سجل المتصل",
     "hourlyTrend": "آخر 24 ساعة",
     "keyUsage": "الاستخدام لكل مفتاح",
-    "spike": "{count} طلبات تمت حصرتها خلال آخر 5 دقائق"
+    "spike": "{count} طلبات تمت حصرتها خلال آخر 5 دقائق",
+    "hourFilter": "الساعة: {hour}",
+    "serverLog": "سجل الخادم"
   }
 }

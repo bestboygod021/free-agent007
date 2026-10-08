@@ -113,6 +113,7 @@
     "rateLimitProxy": "Proxy /v1 sınırı (istek/dk)",
     "rateLimitAdmin": "Gösterge paneli /api sınırı (istek/dk)",
     "rateLimitKey": "Anahtar başına /v1 sınırı (istek/dk)",
+    "rateLimitUnified": "Birleşik anahtar /v1 sınırı (istek/dk)",
     "rateLimitEnvLocked": "{env} ile sabitlendi — düzenlemek için kaldırıldı",
     "rateLimitSaved": "Uygulandı — sonraki istekte geçerli olacak",
     "generalDescription": "Bu panonun dili ve görünümü.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Çağrı geçmişi",
     "hourlyTrend": "Son 24 saat",
     "keyUsage": "Anahtara göre kullanım",
-    "spike": "Son 5 dakikada {count} istek sınırlandırıldı"
+    "spike": "Son 5 dakikada {count} istek sınırlandırıldı",
+    "hourFilter": "Saat: {hour}",
+    "serverLog": "Sunucu günlüğü"
   }
 }

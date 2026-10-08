@@ -113,6 +113,7 @@
     "rateLimitProxy": "Proxyn /v1-raja (pyyntöä/min)",
     "rateLimitAdmin": "Kojulla /api-raja (pyyntöä/min)",
     "rateLimitKey": "Avaimen /v1-raja (pyyntöä/min)",
+    "rateLimitUnified": "Yhtenäisavain-/v1-raja (pyyntöä/min)",
     "rateLimitEnvLocked": "Asetettu {env}-muuttujalla — poista se muokataksesi",
     "rateLimitSaved": "Käytössä — voimaan seuraavassa pyynnössä",
     "generalDescription": "Tämän hallintapaneelin kieli ja ulkoasu.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Soittajan historia",
     "hourlyTrend": "Viimeiset 24 tuntia",
     "keyUsage": "Käyttö avaimittain",
-    "spike": "{count} pyyntöä rajoitettu viimeisen 5 minuutin aikana"
+    "spike": "{count} pyyntöä rajoitettu viimeisen 5 minuutin aikana",
+    "hourFilter": "Tunti: {hour}",
+    "serverLog": "Palvelinloki"
   }
 }

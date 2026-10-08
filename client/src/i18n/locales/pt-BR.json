@@ -113,6 +113,7 @@
     "rateLimitProxy": "Limite do proxy /v1 (requisições/min)",
     "rateLimitAdmin": "Limite do painel /api (requisições/min)",
     "rateLimitKey": "Limite por chave /v1 (requisições/min)",
+    "rateLimitUnified": "Limite da chave unificada /v1 (requisições/min)",
     "rateLimitEnvLocked": "Definido por {env} — remova para editar",
     "rateLimitSaved": "Aplicado — efetivo na próxima requisição",
     "generalDescription": "Idioma e aparência deste painel.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Histórico do chamador",
     "hourlyTrend": "Últimas 24 horas",
     "keyUsage": "Uso por chave",
-    "spike": "{count} requisições limitadas nos últimos 5 minutos"
+    "spike": "{count} requisições limitadas nos últimos 5 minutos",
+    "hourFilter": "Hora: {hour}",
+    "serverLog": "Log do servidor"
   }
 }

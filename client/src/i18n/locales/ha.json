@@ -113,6 +113,7 @@
     "rateLimitProxy": "Igelin proxy /v1 (bukatun/daqiƙa)",
     "rateLimitAdmin": "Igelin allon bayanai /api (bukatun/daqiƙa)",
     "rateLimitKey": "Igelin kalinin /v1 (bukatun/daqiƙa)",
+    "rateLimitUnified": "Igelin kalin da aka haɗa /v1 (bukatun/daqiƙa)",
     "rateLimitEnvLocked": "An ƙayyade ta {env} — cire shi don gyara",
     "rateLimitSaved": "An aiwata — zai amfana da bukaci mai zuwa",
     "generalDescription": "Harshe da kamanni na wannan dashboard.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Tarihin mai kira",
     "hourlyTrend": "Kwana 24 da suka wuce",
     "keyUsage": "Amfani ga kowace mabuɗi",
-    "spike": "{count} bukatu an rage su cikin dakiku 5 da suka gabata"
+    "spike": "{count} bukatu an rage su cikin dakiku 5 da suka gabata",
+    "hourFilter": "Awa: {hour}",
+    "serverLog": "Rayarjin sabiwa"
   }
 }

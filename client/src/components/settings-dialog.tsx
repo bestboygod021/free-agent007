@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   AlertTriangle,
   ArrowRight,
@@ -552,19 +552,25 @@ type RateLimitSettings = {
   proxyRpm: number;
   adminRpm: number;
   keyRpm: number;
-  sources: Record<'proxy' | 'admin' | 'key', 'env' | 'settings' | 'default'>;
+  unifiedRpm: number;
+  sources: Record<'proxy' | 'admin' | 'key' | 'unified', 'env' | 'settings' | 'default'>;
 };
 
 const RATE_LIMIT_ENV_VARS = {
   proxy: 'PROXY_RATE_LIMIT_RPM',
   admin: 'ADMIN_RATE_LIMIT_RPM',
   key: 'KEY_RATE_LIMIT_RPM',
+  unified: 'UNIFIED_RATE_LIMIT_RPM',
 } as const;
 
-function RateLimitSection() {
+// Exported for the section's own render test — mounting the whole dialog for
+// one form would drag every other section's fixtures along.
+export function RateLimitSection() {
   const { t } = useI18n();
   const [settings, setSettings] = useState<RateLimitSettings | null>(null);
-  const [form, setForm] = useState({ proxyRpm: '', adminRpm: '', keyRpm: '' });
+  const [form, setForm] = useState({ proxyRpm: '', adminRpm: '', keyRpm: '', unifiedRpm: '' });
+  // Leading-edge guard so a double-click can never stack two PUTs.
+  const lastPutAtRef = useRef(0);
   const [busy, setBusy] = useState<'load' | 'save' | null>('load');
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
@@ -579,6 +585,7 @@ function RateLimitSection() {
           proxyRpm: String(next.proxyRpm),
           adminRpm: String(next.adminRpm),
           keyRpm: String(next.keyRpm),
+          unifiedRpm: String(next.unifiedRpm),
         });
         setBusy(null);
       })
@@ -592,8 +599,20 @@ function RateLimitSection() {
     };
   }, []);
 
+  // A save that changes nothing is a save that still burns an admin-bucket
+  // slot (and, at a cap of 1, locks the operator out for the window).
+  const dirty =
+    settings !== null &&
+    (form.proxyRpm !== String(settings.proxyRpm) ||
+      form.adminRpm !== String(settings.adminRpm) ||
+      form.keyRpm !== String(settings.keyRpm) ||
+      form.unifiedRpm !== String(settings.unifiedRpm));
+
   async function save() {
-    if (!settings) return;
+    if (!settings || !dirty) return;
+    const now = Date.now();
+    if (now - lastPutAtRef.current < 800) return;
+    lastPutAtRef.current = now;
     setBusy('save');
     setError('');
     try {
@@ -603,6 +622,7 @@ function RateLimitSection() {
           proxyRpm: Number(form.proxyRpm),
           adminRpm: Number(form.adminRpm),
           keyRpm: Number(form.keyRpm),
+          unifiedRpm: Number(form.unifiedRpm),
         }),
       });
       setSettings(next);
@@ -610,6 +630,7 @@ function RateLimitSection() {
         proxyRpm: String(next.proxyRpm),
         adminRpm: String(next.adminRpm),
         keyRpm: String(next.keyRpm),
+        unifiedRpm: String(next.unifiedRpm),
       });
       setSaved(true);
     } catch (e) {
@@ -623,8 +644,9 @@ function RateLimitSection() {
     { key: 'proxy' as const, field: 'proxyRpm' as const, label: 'rateLimitProxy' },
     { key: 'admin' as const, field: 'adminRpm' as const, label: 'rateLimitAdmin' },
     { key: 'key' as const, field: 'keyRpm' as const, label: 'rateLimitKey' },
+    { key: 'unified' as const, field: 'unifiedRpm' as const, label: 'rateLimitUnified' },
   ];
-  const envLocked = (rowKey: 'proxy' | 'admin' | 'key') =>
+  const envLocked = (rowKey: 'proxy' | 'admin' | 'key' | 'unified') =>
     settings?.sources[rowKey] === 'env'
       ? t('settings.rateLimitEnvLocked', { env: RATE_LIMIT_ENV_VARS[rowKey] })
       : undefined;
@@ -660,7 +682,7 @@ function RateLimitSection() {
         <button
           type="button"
           onClick={() => void save()}
-          disabled={busy !== null || !settings}
+          disabled={busy !== null || !settings || !dirty}
           className="rounded-lg bg-foreground px-4 py-2 text-xs font-medium text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
         >
           {busy === 'save' ? t('common.saving') : t('common.saveChanges')}

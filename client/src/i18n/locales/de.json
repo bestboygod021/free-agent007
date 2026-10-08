@@ -113,6 +113,7 @@
     "rateLimitProxy": "Proxy-/v1-Limit (Anfragen/Min.)",
     "rateLimitAdmin": "Dashboard-/api-Limit (Anfragen/Min.)",
     "rateLimitKey": "Pro-Schlüssel-/v1-Limit (Anfragen/Min.)",
+    "rateLimitUnified": "Einheitlicher-Schlüssel-/v1-Limit (Anfragen/Min.)",
     "rateLimitEnvLocked": "Durch {env} festgelegt — zum Bearbeiten entfernen",
     "rateLimitSaved": "Übernommen — gilt ab der nächsten Anfrage",
     "generalDescription": "Sprache und Erscheinungsbild dieses Dashboards.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Anruferverlauf",
     "hourlyTrend": "Letzte 24 Stunden",
     "keyUsage": "Nutzung pro Schlüssel",
-    "spike": "{count} Anfragen in den letzten 5 Minuten gedrosselt"
+    "spike": "{count} Anfragen in den letzten 5 Minuten gedrosselt",
+    "hourFilter": "Stunde: {hour}",
+    "serverLog": "Serverprotokoll"
   }
 }

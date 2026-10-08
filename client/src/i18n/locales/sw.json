@@ -113,6 +113,7 @@
     "rateLimitProxy": "Kikomo cha proksi /v1 (maombi/dakika)",
     "rateLimitAdmin": "Kikomo cha dashibodi /api (maombi/dakika)",
     "rateLimitKey": "Kikomo kwa ufunguo /v1 (maombi/dakika)",
+    "rateLimitUnified": "Kikomo cha ufunguo ulioungwa /v1 (maombi/dakika)",
     "rateLimitEnvLocked": "Imewekwa na {env} — oa ili kuhariri",
     "rateLimitSaved": "Imetekelezwa — itaanza kwa ombi linalofuata",
     "generalDescription": "Lugha na mwonekano wa dashibodi hii.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Historia ya mtiaji",
     "hourlyTrend": "Saa 24 zilizopita",
     "keyUsage": "Matumizi kwa kila ufunguo",
-    "spike": "Maombi {count} yamezuiliwa katika dakika 5 zilizopita"
+    "spike": "Maombi {count} yamezuiliwa katika dakika 5 zilizopita",
+    "hourFilter": "Saa: {hour}",
+    "serverLog": "Kumbukumbu za seva"
   }
 }

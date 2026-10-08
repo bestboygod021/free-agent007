@@ -113,6 +113,7 @@
     "rateLimitProxy": "پراکسی /v1 حد (فی منٹ درخواستیں)",
     "rateLimitAdmin": "ڈیش بورڈ /api حد (فی منٹ درخواستیں)",
     "rateLimitKey": "فی کی /v1 حد (فی منٹ درخواستیں)",
+    "rateLimitUnified": "یکجہ کلید /v1 حد (فی منٹ درخواستیں)",
     "rateLimitEnvLocked": "{env} سے مقرر — ترمیم کے لیے ہٹائیں",
     "rateLimitSaved": "لاگو — اگلی درخواست پر نافذ",
     "generalDescription": "اس ڈیش بورڈ کی زبان اور ظاہری شکل۔",
@@ -1256,6 +1257,8 @@
     "callerHistory": "کالر کی تاریخ",
     "hourlyTrend": "گزشتہ 24 گھنٹے",
     "keyUsage": "کلید کے حساب استعمال",
-    "spike": "گزشتہ 5 منٹ میں {count} درخواستیں محدود ہوئیں"
+    "spike": "گزشتہ 5 منٹ میں {count} درخواستیں محدود ہوئیں",
+    "hourFilter": "گھنٹہ: {hour}",
+    "serverLog": "سرور لاگ"
   }
 }

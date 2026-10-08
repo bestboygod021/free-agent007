@@ -113,6 +113,7 @@
     "rateLimitProxy": "Limit ng proxy /v1 (request/min)",
     "rateLimitAdmin": "Limit ng dashboard /api (request/min)",
     "rateLimitKey": "Bawat-susi /v1 limit (request/min)",
+    "rateLimitUnified": "Isang-kapaki-pakinabang na susi /v1 limit (request/min)",
     "rateLimitEnvLocked": "Naka-set sa {env} — alisin ito para mai-edit",
     "rateLimitSaved": "Nailapat — magkakabisa sa susunod na request",
     "generalDescription": "Wika at hitsura ng dashboard na ito.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Kasaysayan ng caller",
     "hourlyTrend": "Nakaraang 24 oras",
     "keyUsage": "Gamit bawat key",
-    "spike": "{count} request ang na-limit sa nakaraang 5 minuto"
+    "spike": "{count} request ang na-limit sa nakaraang 5 minuto",
+    "hourFilter": "Oras: {hour}",
+    "serverLog": "Log ng server"
   }
 }

@@ -113,6 +113,7 @@
     "rateLimitProxy": "Nkwari proxy /v1 (arịrịotu/nda ebbe)",
     "rateLimitAdmin": "Nkwari dashboard /api (arịrịotu/nda ebbe)",
     "rateLimitKey": "Nkwari kị /v1 (arịrịotu/nda ebbe)",
+    "rateLimitUnified": "Nkwariị gbasoo /v1 (arịrịotu/nda ebbe)",
     "rateLimitEnvLocked": "Akọtara site ya {env} — wepụ ya ka ọ dịrị ịdezi",
     "rateLimitSaved": "E tinyere — ga-esi na arịrịkọ na-esote",
     "generalDescription": "Asụsụ na ọdịdị nke dashboard a.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Ndekọ onye kaaga",
     "hourlyTrend": "awa 24 gara aga",
     "keyUsage": "Eji kwa igodo",
-    "spike": "Arịrịotu {count} dakọtara n'ime nkeji ise gara aga"
+    "spike": "Arịrịotu {count} dakọtara n'ime nkeji ise gara aga",
+    "hourFilter": "Ehihie: {hour}",
+    "serverLog": "Nsete seva"
   }
 }

@@ -113,6 +113,7 @@
     "rateLimitProxy": "Proxy-/v1-gräns (förfrågningar/min)",
     "rateLimitAdmin": "Dashboard-/api-gräns (förfrågningar/min)",
     "rateLimitKey": "Per nyckel-/v1-gräns (förfrågningar/min)",
+    "rateLimitUnified": "Enhetlig nyckel-/v1-gräns (förfrågningar/min)",
     "rateLimitEnvLocked": "Låst av {env} — ta bort den för att redigera",
     "rateLimitSaved": "Tillämpat — gäller nästa förfrågan",
     "generalDescription": "Språk och utseende för den här instrumentpanelen.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Samtalarens historik",
     "hourlyTrend": "Senaste 24 timmarna",
     "keyUsage": "Användning per nyckel",
-    "spike": "{count} förfrågningar begränsades de senaste 5 minuterna"
+    "spike": "{count} förfrågningar begränsades de senaste 5 minuterna",
+    "hourFilter": "Timme: {hour}",
+    "serverLog": "Serverlogg"
   }
 }

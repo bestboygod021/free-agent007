@@ -113,6 +113,7 @@
     "rateLimitProxy": "Proxy-/v1-limiet (verzoeken/min)",
     "rateLimitAdmin": "Dashboard-/api-limiet (verzoeken/min)",
     "rateLimitKey": "Per-sleutel-/v1-limiet (verzoeken/min)",
+    "rateLimitUnified": "Uniforme-sleutel-/v1-limiet (verzoeken/min)",
     "rateLimitEnvLocked": "Vastgezet door {env} — verwijder deze om aan te passen",
     "rateLimitSaved": "Toegepast — geldt bij het volgende verzoek",
     "generalDescription": "Taal en uiterlijk van dit dashboard.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Beller-geschiedenis",
     "hourlyTrend": "Laatste 24 uur",
     "keyUsage": "Gebruik per sleutel",
-    "spike": "{count} verzoeken beperkt in de afgelopen 5 minuten"
+    "spike": "{count} verzoeken beperkt in de afgelopen 5 minuten",
+    "hourFilter": "Uur: {hour}",
+    "serverLog": "Serverlogboek"
   }
 }

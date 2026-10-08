@@ -113,6 +113,7 @@
     "rateLimitProxy": "Limit proxy /v1 (požiadaviek/min)",
     "rateLimitAdmin": "Limit panela /api (požiadaviek/min)",
     "rateLimitKey": "Limit na kľúč /v1 (požiadaviek/min)",
+    "rateLimitUnified": "Limit zjednoteného kľúča /v1 (požiadaviek/min)",
     "rateLimitEnvLocked": "Nastavené cez {env} — odstráňte premennú pre úpravu",
     "rateLimitSaved": "Použité — prejaví sa pri ďalšej požiadavke",
     "generalDescription": "Jazyk a vzhľad tohto panela.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "História volajúceho",
     "hourlyTrend": "Posledných 24 hodín",
     "keyUsage": "Spotreba podľa kľúča",
-    "spike": "{count} požiadaviek obmedzených za posledných 5 minút"
+    "spike": "{count} požiadaviek obmedzených za posledných 5 minút",
+    "hourFilter": "Hodina: {hour}",
+    "serverLog": "Log servera"
   }
 }

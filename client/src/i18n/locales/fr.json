@@ -113,6 +113,7 @@
     "rateLimitProxy": "Plafond proxy /v1 (req/min)",
     "rateLimitAdmin": "Plafond tableau de bord /api (req/min)",
     "rateLimitKey": "Plafond par clé /v1 (req/min)",
+    "rateLimitUnified": "Plafond clé unifiée /v1 (req/min)",
     "rateLimitEnvLocked": "Fixé par {env} — retirez-le pour modifier",
     "rateLimitSaved": "Appliqué — prend effet à la prochaine requête",
     "generalDescription": "Langue et apparence de ce tableau de bord.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Historique de l'appelant",
     "hourlyTrend": "24 dernières heures",
     "keyUsage": "Utilisation par clé",
-    "spike": "{count} requêtes limitées au cours des 5 dernières minutes"
+    "spike": "{count} requêtes limitées au cours des 5 dernières minutes",
+    "hourFilter": "Heure : {hour}",
+    "serverLog": "Journal du serveur"
   }
 }

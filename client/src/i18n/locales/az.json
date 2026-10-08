@@ -113,6 +113,7 @@
     "rateLimitProxy": "Proxy /v1 limiti (dəqiqəyə sorğu)",
     "rateLimitAdmin": "Panel /api limiti (dəqiqəyə sorğu)",
     "rateLimitKey": "Açar başına /v1 limiti (dəqiqəyə sorğu)",
+    "rateLimitUnified": "Birləşdirilmiş açar /v1 limiti (dəqiqəyə sorğu)",
     "rateLimitEnvLocked": "{env} tərəfindən sabitlənib — redaktə üçün silin",
     "rateLimitSaved": "Tətbiq edildi — növbəti sorğuda qüvvəyə minəcək",
     "generalDescription": "Bu panelin dili və görünüşü.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Zəng edənin tarixçəsi",
     "hourlyTrend": "Son 24 saat",
     "keyUsage": "Açar istifadəsi",
-    "spike": "Son 5 dəqiqədə {count} sorğu məhdudlaşdırıldı"
+    "spike": "Son 5 dəqiqədə {count} sorğu məhdudlaşdırıldı",
+    "hourFilter": "Saat: {hour}",
+    "serverLog": "Server jurnalı"
   }
 }

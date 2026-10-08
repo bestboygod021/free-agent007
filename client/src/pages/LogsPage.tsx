@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useSearchParams } from 'react-router-dom'
 import { apiFetch } from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -121,10 +122,14 @@ export default function LogsPage() {
   const { t } = useI18n()
   const queryClient = useQueryClient()
 
+  // A deep link (the rate-limit panel's "server log" entry, /logs?q=rate-limit)
+  // must prefill the filter — the haystack search covers message AND source.
+  const [searchParams] = useSearchParams()
+  const initialQuery = searchParams.get('q') ?? ''
   const [levels, setLevels] = useState<LogLevel[]>(() => [...DEFAULT_LOG_LEVELS])
   const [provider, setProvider] = useState('all')
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState(initialQuery)
+  const [search, setSearch] = useState(initialQuery)
   const [paused, setPaused] = useState(false)
 
   // The tail itself lives in component state, not in the query cache: each poll

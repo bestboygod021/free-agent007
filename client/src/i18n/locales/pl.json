@@ -113,6 +113,7 @@
     "rateLimitProxy": "Limit proxy /v1 (żądań/min)",
     "rateLimitAdmin": "Limit pulpitu /api (żądań/min)",
     "rateLimitKey": "Limit na klucz /v1 (żądań/min)",
+    "rateLimitUnified": "Limit zunifikowanego klucza /v1 (żądań/min)",
     "rateLimitEnvLocked": "Ustawione przez {env} — usuń zmienną, aby edytować",
     "rateLimitSaved": "Zastosowane — obowiązuje od następnego żądania",
     "generalDescription": "Język i wygląd tego panelu.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Historia dzwoniącego",
     "hourlyTrend": "Ostatnie 24 godziny",
     "keyUsage": "Użycie według klucza",
-    "spike": "{count} żądań ograniczonych w ostatnich 5 minutach"
+    "spike": "{count} żądań ograniczonych w ostatnich 5 minutach",
+    "hourFilter": "Godzina: {hour}",
+    "serverLog": "Dziennik serwera"
   }
 }

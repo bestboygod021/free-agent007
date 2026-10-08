@@ -113,6 +113,7 @@
     "rateLimitProxy": "Proksi /v1 chegarasi (daqiqada so'rovlar)",
     "rateLimitAdmin": "Panel /api chegarasi (daqiqada so'rovlar)",
     "rateLimitKey": "Kalitga /v1 chegarasi (daqiqada so'rovlar)",
+    "rateLimitUnified": "Birlashtirilgan kalit /v1 chegarasi (daqiqada so'rovlar)",
     "rateLimitEnvLocked": "{env} orqali o'rnatilgan — tahrirlash uchuni olib tashlang",
     "rateLimitSaved": "Qo'llanildi — keyingi so'rovda kuchga kiradi",
     "generalDescription": "Ushbu boshqaruv panelining tili va ko'rinishi.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "Qo'ng'iroq tarixi",
     "hourlyTrend": "Oxirgi 24 soat",
     "keyUsage": "Kalit bo'yicha sarf",
-    "spike": "So'nggi 5 daqiqada {count} so'rov cheklandi"
+    "spike": "So'nggi 5 daqiqada {count} so'rov cheklandi",
+    "hourFilter": "Soat: {hour}",
+    "serverLog": "Server jurnali"
   }
 }

@@ -7,6 +7,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import { I18nProvider } from '@/i18n'
 import { RateLimitSpikeBanner } from './rate-limit-events'
 
@@ -29,11 +30,13 @@ function renderBanner() {
   act(() => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     root.render(
-      <QueryClientProvider client={client}>
-        <I18nProvider initialLocale="en">
-          <RateLimitSpikeBanner />
-        </I18nProvider>
-      </QueryClientProvider>,
+      <MemoryRouter>
+        <QueryClientProvider client={client}>
+          <I18nProvider initialLocale="en">
+            <RateLimitSpikeBanner />
+          </I18nProvider>
+        </QueryClientProvider>
+      </MemoryRouter>,
     )
   })
 }

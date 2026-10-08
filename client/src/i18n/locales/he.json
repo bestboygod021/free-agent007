@@ -113,6 +113,7 @@
     "rateLimitProxy": "מגבלת פרוקסי /v1 (בקשות/דקה)",
     "rateLimitAdmin": "מגבלת לוח בקרה /api (בקשות/דקה)",
     "rateLimitKey": "מגבלת מפתח /v1 (בקשות/דקה)",
+    "rateLimitUnified": "מגבלת מפתח מאוחד /v1 (בקשות/דקה)",
     "rateLimitEnvLocked": "נקבע על ידי {env} — הסר את המשתנה כדי לערוך",
     "rateLimitSaved": "הוחל — ייכנס לתוקף בבקשה הבאה",
     "generalDescription": "שפה ומראה של לוח הבקרה הזה.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "היסטוריית המתקשר",
     "hourlyTrend": "24 השעות האחרונות",
     "keyUsage": "שימוש לפי מפתח",
-    "spike": "{count} בקשות הוגבלו ב־5 הדקות האחרונות"
+    "spike": "{count} בקשות הוגבלו ב־5 הדקות האחרונות",
+    "hourFilter": "שעה: {hour}",
+    "serverLog": "יומן השרת"
   }
 }

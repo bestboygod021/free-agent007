@@ -113,6 +113,7 @@
     "rateLimitProxy": "프록시 /v1 상한 (요청/분)",
     "rateLimitAdmin": "대시보드 /api 상한 (요청/분)",
     "rateLimitKey": "키별 /v1 상한 (요청/분)",
+    "rateLimitUnified": "통합 키 /v1 상한 (요청/분)",
     "rateLimitEnvLocked": "{env}이(가) 고정 — 편집하려면 제거하세요",
     "rateLimitSaved": "적용됨 — 다음 요청부터 유효",
     "generalDescription": "이 대시보드의 언어와 모양입니다.",
@@ -1256,6 +1257,8 @@
     "callerHistory": "호출자 기록",
     "hourlyTrend": "최근 24시간",
     "keyUsage": "키별 사용량",
-    "spike": "최근 5분 동안 {count}개 요청이 제한되었습니다"
+    "spike": "최근 5분 동안 {count}개 요청이 제한되었습니다",
+    "hourFilter": "시간: {hour}",
+    "serverLog": "서버 로그"
   }
 }

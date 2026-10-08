@@ -1197,10 +1197,18 @@ export const rateLimitSettingsSchema = z
     proxyRpm: z.number().int().min(0).max(60000).optional(),
     adminRpm: z.number().int().min(0).max(60000).optional(),
     keyRpm: z.number().int().min(0).max(60000).optional(),
+    unifiedRpm: z.number().int().min(0).max(60000).optional(),
   })
-  .refine(v => v.proxyRpm !== undefined || v.adminRpm !== undefined || v.keyRpm !== undefined, {
-    message: 'at least one of proxyRpm, adminRpm, keyRpm is required',
-  });
+  .refine(
+    v =>
+      v.proxyRpm !== undefined ||
+      v.adminRpm !== undefined ||
+      v.keyRpm !== undefined ||
+      v.unifiedRpm !== undefined,
+    {
+      message: 'at least one of proxyRpm, adminRpm, keyRpm, unifiedRpm is required',
+    },
+  );
 
 export const logQuerySchema = z.object({
   levels: z.preprocess(
