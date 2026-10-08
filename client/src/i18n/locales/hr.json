@@ -109,6 +109,12 @@
     "sectionCompression": "Kompresija",
     "sectionAdvanced": "Napredno",
     "sectionPreview": "Pregled",
+    "sectionRateLimit": "Brzinska ograničenja",
+    "rateLimitProxy": "Ograničenje proksija /v1 (zahtjeva/min)",
+    "rateLimitAdmin": "Ograničenje nadzorne ploče /api (zahtjeva/min)",
+    "rateLimitKey": "Ograničenje po ključu /v1 (zahtjeva/min)",
+    "rateLimitEnvLocked": "Postavljeno putem {env} — uklonite varijablu za uređivanje",
+    "rateLimitSaved": "Primijenjeno — vrijedi od sljedećeg zahtjeva",
     "generalDescription": "Jezik i izgled ove nadzorne ploče.",
     "advancedDescription": "Pragovi i sigurnosne sklopke kompresijskog lanca.",
     "compressionTitle": "Kompresija promptova",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · ograničenje {limit}/min · pokušaj za {retry} s",
     "callerHistory": "Povijest zvanja",
     "hourlyTrend": "Posljednja 24 sata",
-    "keyUsage": "Potrošnja po ključu"
+    "keyUsage": "Potrošnja po ključu",
+    "spike": "{count} zahtjeva ograničeno u zadnjih 5 minuta"
   }
 }

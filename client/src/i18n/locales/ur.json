@@ -109,6 +109,12 @@
     "sectionCompression": "کمپریشن",
     "sectionAdvanced": "ایڈوانسڈ",
     "sectionPreview": "پیش منظر",
+    "sectionRateLimit": "ریٹ حدیں",
+    "rateLimitProxy": "پراکسی /v1 حد (فی منٹ درخواستیں)",
+    "rateLimitAdmin": "ڈیش بورڈ /api حد (فی منٹ درخواستیں)",
+    "rateLimitKey": "فی کی /v1 حد (فی منٹ درخواستیں)",
+    "rateLimitEnvLocked": "{env} سے مقرر — ترمیم کے لیے ہٹائیں",
+    "rateLimitSaved": "لاگو — اگلی درخواست پر نافذ",
     "generalDescription": "اس ڈیش بورڈ کی زبان اور ظاہری شکل۔",
     "advancedDescription": "کمپریشن پائپ لائن کے لیے حدود اور حفاظتی سوئچز۔",
     "compressionTitle": "پرامپٹ کمپریشن",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · حد {limit}/منٹ · {retry} سیکنڈ میں دوبارہ کوشش",
     "callerHistory": "کالر کی تاریخ",
     "hourlyTrend": "گزشتہ 24 گھنٹے",
-    "keyUsage": "کلید کے حساب استعمال"
+    "keyUsage": "کلید کے حساب استعمال",
+    "spike": "گزشتہ 5 منٹ میں {count} درخواستیں محدود ہوئیں"
   }
 }

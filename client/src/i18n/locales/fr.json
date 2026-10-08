@@ -109,6 +109,12 @@
     "sectionCompression": "Compression",
     "sectionAdvanced": "Avancé",
     "sectionPreview": "Aperçu",
+    "sectionRateLimit": "Limites de débit",
+    "rateLimitProxy": "Plafond proxy /v1 (req/min)",
+    "rateLimitAdmin": "Plafond tableau de bord /api (req/min)",
+    "rateLimitKey": "Plafond par clé /v1 (req/min)",
+    "rateLimitEnvLocked": "Fixé par {env} — retirez-le pour modifier",
+    "rateLimitSaved": "Appliqué — prend effet à la prochaine requête",
     "generalDescription": "Langue et apparence de ce tableau de bord.",
     "advancedDescription": "Seuils et interrupteurs de sécurité du pipeline de compression.",
     "compressionTitle": "Compression des prompts",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · plafond {limit}/min · nouvel essai dans {retry}s",
     "callerHistory": "Historique de l'appelant",
     "hourlyTrend": "24 dernières heures",
-    "keyUsage": "Utilisation par clé"
+    "keyUsage": "Utilisation par clé",
+    "spike": "{count} requêtes limitées au cours des 5 dernières minutes"
   }
 }

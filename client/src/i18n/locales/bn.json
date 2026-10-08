@@ -109,6 +109,12 @@
     "sectionCompression": "কম্প্রেশন",
     "sectionAdvanced": "উন্নত",
     "sectionPreview": "প্রিভিউ",
+    "sectionRateLimit": "দরের সীমা",
+    "rateLimitProxy": "প্রক্সি /v1 সীমা (প্রতি মিনিটে অনুরোধ)",
+    "rateLimitAdmin": "ড্যাশবোর্ড /api সীমা (প্রতি মিনিটে অনুরোধ)",
+    "rateLimitKey": "প্রতি-কী /v1 সীমা (প্রতি মিনিটে অনুরোধ)",
+    "rateLimitEnvLocked": "{env} দ্বারা নির্ধারিত — সম্পাদনার জন্য সরান",
+    "rateLimitSaved": "প্রযোগ হয়েছে — পরবর্তী অনুরোধে কার্যকর",
     "generalDescription": "এই ড্যাশবোর্ডের ভাষা ও চেহারা।",
     "advancedDescription": "কম্প্রেশন পাইপলাইনের সীমা ও নিরাপত্তা সুইচ।",
     "compressionTitle": "প্রম্পট কম্প্রেশন",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · সীমা {limit}/মিনিট · {retry} সেকেন্ড পরে পুনরায় চেষ্টা",
     "callerHistory": "কলার ইতিহাস",
     "hourlyTrend": "গত ২৪ ঘণ্টা",
-    "keyUsage": "কী অনুযায়ী ব্যবহার"
+    "keyUsage": "কী অনুযায়ী ব্যবহার",
+    "spike": "গত ৫ মিনিটে {count} অনুরোধ সীমাবদ্ধ হয়েছে"
   }
 }

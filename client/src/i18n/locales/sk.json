@@ -109,6 +109,12 @@
     "sectionCompression": "Kompresia",
     "sectionAdvanced": "Rozšírené",
     "sectionPreview": "Náhľad",
+    "sectionRateLimit": "Rýchlostné limity",
+    "rateLimitProxy": "Limit proxy /v1 (požiadaviek/min)",
+    "rateLimitAdmin": "Limit panela /api (požiadaviek/min)",
+    "rateLimitKey": "Limit na kľúč /v1 (požiadaviek/min)",
+    "rateLimitEnvLocked": "Nastavené cez {env} — odstráňte premennú pre úpravu",
+    "rateLimitSaved": "Použité — prejaví sa pri ďalšej požiadavke",
     "generalDescription": "Jazyk a vzhľad tohto panela.",
     "advancedDescription": "Prahové hodnoty a poistky kompresného reťazca.",
     "compressionTitle": "Kompresia promptov",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · limit {limit}/min · opakovanie o {retry} s",
     "callerHistory": "História volajúceho",
     "hourlyTrend": "Posledných 24 hodín",
-    "keyUsage": "Spotreba podľa kľúča"
+    "keyUsage": "Spotreba podľa kľúča",
+    "spike": "{count} požiadaviek obmedzených za posledných 5 minút"
   }
 }

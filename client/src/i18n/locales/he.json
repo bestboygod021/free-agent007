@@ -109,6 +109,12 @@
     "sectionCompression": "דחיסה",
     "sectionAdvanced": "מתקדם",
     "sectionPreview": "תצוגה מקדימה",
+    "sectionRateLimit": "מגבלות קצב",
+    "rateLimitProxy": "מגבלת פרוקסי /v1 (בקשות/דקה)",
+    "rateLimitAdmin": "מגבלת לוח בקרה /api (בקשות/דקה)",
+    "rateLimitKey": "מגבלת מפתח /v1 (בקשות/דקה)",
+    "rateLimitEnvLocked": "נקבע על ידי {env} — הסר את המשתנה כדי לערוך",
+    "rateLimitSaved": "הוחל — ייכנס לתוקף בבקשה הבאה",
     "generalDescription": "שפה ומראה של לוח הבקרה הזה.",
     "advancedDescription": "ספים ומתגי בטיחות עבור צינור הדחיסה.",
     "compressionTitle": "דחיסת פרומפטים",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · תקרה {limit}/דקה · ניסיון נוסף בעוד {retry} שנ׳",
     "callerHistory": "היסטוריית המתקשר",
     "hourlyTrend": "24 השעות האחרונות",
-    "keyUsage": "שימוש לפי מפתח"
+    "keyUsage": "שימוש לפי מפתח",
+    "spike": "{count} בקשות הוגבלו ב־5 הדקות האחרונות"
   }
 }

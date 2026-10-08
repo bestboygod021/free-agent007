@@ -1,5 +1,5 @@
 import type { ErrorResponse } from '../../../shared/types'
-import { getToasts, toast, updateToast, type ToastAction } from './toast'
+import { dismissToast, getToasts, toast, updateToast, type ToastAction } from './toast'
 import { formatCount, translate } from '../i18n/translate'
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -69,7 +69,14 @@ const READY_GRACE_SEC = 10;
 /** Observable mirror of the countdown for persistent UI (the FloatingBar chip,
  *  beforeunload guard): secondsLeft ticks down, ready flips at zero, active
  *  clears when the toast is dismissed or the retry lands. */
-export type RetryCountdownSnapshot = { active: boolean; secondsLeft: number; ready: boolean };
+export type RetryCountdownSnapshot = {
+  active: boolean;
+  secondsLeft: number;
+  ready: boolean;
+  /** Armed once the window opens: runs the original request (and folds the
+   *  countdown away) so the chip can offer the toast's retry without waiting. */
+  retryNow?: () => void;
+};
 
 let retryCountdownSnapshot: RetryCountdownSnapshot = { active: false, secondsLeft: 0, ready: false };
 const retryCountdownListeners = new Set<(snapshot: RetryCountdownSnapshot) => void>();
@@ -225,7 +232,20 @@ function startRetryCountdown(seconds: number, retry?: () => Promise<unknown>): v
         translate('rateLimit.ready'),
         action ? { action: { ...action, disabled: false } } : undefined,
       );
-      setRetryCountdown({ active: true, secondsLeft: 0, ready: true });
+      setRetryCountdown({
+        active: true,
+        secondsLeft: 0,
+        ready: true,
+        retryNow: retry
+          ? () => {
+              // Fold everything down BEFORE the request: the chip unmounts, the
+              // countdown toast disappears, and a duplicate click is impossible.
+              setRetryCountdown({ active: false, secondsLeft: 0, ready: false });
+              dismissToast(id);
+              void runRetry(retry);
+            }
+          : undefined,
+      });
       return stop(false);
     }
     updateToast(id, retryWaitLabel(remaining));

@@ -109,6 +109,12 @@
     "sectionCompression": "压缩",
     "sectionAdvanced": "高级",
     "sectionPreview": "预览",
+    "sectionRateLimit": "速率限制",
+    "rateLimitProxy": "代理 /v1 上限（请求/分钟）",
+    "rateLimitAdmin": "控制台 /api 上限（请求/分钟）",
+    "rateLimitKey": "每密钥 /v1 上限（请求/分钟）",
+    "rateLimitEnvLocked": "由 {env} 固定 — 取消该变量才能编辑",
+    "rateLimitSaved": "已应用 — 将在下一个请求生效",
     "generalDescription": "此仪表盘的语言与外观。",
     "advancedDescription": "压缩流程的阈值与安全开关。",
     "compressionTitle": "提示词压缩",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · 上限 {limit}/分钟 · {retry} 秒后重试",
     "callerHistory": "调用方历史",
     "hourlyTrend": "最近 24 小时",
-    "keyUsage": "按密钥用量"
+    "keyUsage": "按密钥用量",
+    "spike": "过去 5 分钟内有 {count} 个请求被限流"
   }
 }

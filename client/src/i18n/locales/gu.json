@@ -109,6 +109,12 @@
     "sectionCompression": "કમ્પ્રેશન",
     "sectionAdvanced": "અદ્યતન",
     "sectionPreview": "પ્રીવ્યૂ",
+    "sectionRateLimit": "દર મર્યાદાઓ",
+    "rateLimitProxy": "પ્રોક્સી /v1 મર્યાદા (મિનિટદીઠ વિનંતીઓ)",
+    "rateLimitAdmin": "ડેશબોર્ડ /api મર્યાદા (મિનિટદીઠ વિનંતીઓ)",
+    "rateLimitKey": "દર કી /v1 મર્યાદા (મિનિટદીઠ વિનંતીઓ)",
+    "rateLimitEnvLocked": "{env} દ્વારા નિશ્ચિત — સંપાદન માટે તેને દૂર કરો",
+    "rateLimitSaved": "લાગુ કરાયું — આગલી વિનંતીમાં અસરકારક",
     "generalDescription": "આ ડેશબોર્ડની ભાષા અને દેખાવ.",
     "advancedDescription": "કમ્પ્રેશન પાઇપલાઇન માટે મર્યાદાઓ અને સલામતી સ્વિચ.",
     "compressionTitle": "પ્રોમ્પ્ટ કમ્પ્રેશન",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · મર્યાદા {limit}/મિનિટ · {retry}s માં ફરી પ્રયાસ",
     "callerHistory": "કૉલર ઇતિહાસ",
     "hourlyTrend": "છેલ્લા 24 કલાક",
-    "keyUsage": "કી પ્રતિ વપરાશ"
+    "keyUsage": "કી પ્રતિ વપરાશ",
+    "spike": "છેલ્લા 5 મિનિટમાં {count} વિનંતીઓ મર્યાદિત"
   }
 }

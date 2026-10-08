@@ -109,6 +109,12 @@
     "sectionCompression": "การบีบอัด",
     "sectionAdvanced": "ขั้นสูง",
     "sectionPreview": "ดูตัวอย่าง",
+    "sectionRateLimit": "ขีดจำกัดอัตรา",
+    "rateLimitProxy": "ขีดจำกัดพร็อกซี /v1 (คำขอ/นาที)",
+    "rateLimitAdmin": "ขีดจำกัดแดชบอร์ด /api (คำขอ/นาที)",
+    "rateLimitKey": "ขีดจำกัดต่อคีย์ /v1 (คำขอ/นาที)",
+    "rateLimitEnvLocked": "ถูกล็อกด้วย {env} — ลบตัวแปรเพื่อแก้ไข",
+    "rateLimitSaved": "นำไปใช้แล้ว — จะมีผลกับคำขอถัดไป",
     "generalDescription": "ภาษาและรูปลักษณ์ของแดชบอร์ดนี้",
     "advancedDescription": "ค่าเกณฑ์และสวิตช์ความปลอดภัยสำหรับไปป์ไลน์การบีบอัด",
     "compressionTitle": "การบีบอัดพร้อมท์",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · เพดาน {limit}/นาที · ลองอีกครั้งใน {retry} วิ",
     "callerHistory": "ประวัติผู้โทร",
     "hourlyTrend": "24 ชั่วโมงที่ผ่านมา",
-    "keyUsage": "การใช้งานต่อคีย์"
+    "keyUsage": "การใช้งานต่อคีย์",
+    "spike": "{count} คำขอถูกจำกัดในช่วง 5 นาทีที่ผ่านมา"
   }
 }

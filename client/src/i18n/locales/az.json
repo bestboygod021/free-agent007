@@ -109,6 +109,12 @@
     "sectionCompression": "Sıxılma",
     "sectionAdvanced": "Ətraflı",
     "sectionPreview": "Ön baxış",
+    "sectionRateLimit": "Sürət limitləri",
+    "rateLimitProxy": "Proxy /v1 limiti (dəqiqəyə sorğu)",
+    "rateLimitAdmin": "Panel /api limiti (dəqiqəyə sorğu)",
+    "rateLimitKey": "Açar başına /v1 limiti (dəqiqəyə sorğu)",
+    "rateLimitEnvLocked": "{env} tərəfindən sabitlənib — redaktə üçün silin",
+    "rateLimitSaved": "Tətbiq edildi — növbəti sorğuda qüvvəyə minəcək",
     "generalDescription": "Bu panelin dili və görünüşü.",
     "advancedDescription": "Sıxılma prosesi üçün hədlər və təhlükəsizlik açarları.",
     "compressionTitle": "Prompt sıxılması",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · limit {limit}/dəq · {retry} saniyədən sonra yenidən cəhd",
     "callerHistory": "Zəng edənin tarixçəsi",
     "hourlyTrend": "Son 24 saat",
-    "keyUsage": "Açar istifadəsi"
+    "keyUsage": "Açar istifadəsi",
+    "spike": "Son 5 dəqiqədə {count} sorğu məhdudlaşdırıldı"
   }
 }

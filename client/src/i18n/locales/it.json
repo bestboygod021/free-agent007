@@ -109,6 +109,12 @@
     "sectionCompression": "Compressione",
     "sectionAdvanced": "Avanzate",
     "sectionPreview": "Anteprima",
+    "sectionRateLimit": "Limiti di velocità",
+    "rateLimitProxy": "Limite proxy /v1 (richieste/min)",
+    "rateLimitAdmin": "Limite dashboard /api (richieste/min)",
+    "rateLimitKey": "Limite per chiave /v1 (richieste/min)",
+    "rateLimitEnvLocked": "Impostato da {env} — rimuovilo per modificare",
+    "rateLimitSaved": "Applicato — avrà effetto alla prossima richiesta",
     "generalDescription": "Lingua e aspetto di questa dashboard.",
     "advancedDescription": "Soglie e interruttori di sicurezza della pipeline di compressione.",
     "compressionTitle": "Compressione dei prompt",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · massimo {limit}/min · riprova tra {retry}s",
     "callerHistory": "Cronologia chiamante",
     "hourlyTrend": "Ultime 24 ore",
-    "keyUsage": "Uso per chiave"
+    "keyUsage": "Uso per chiave",
+    "spike": "{count} richieste limitate negli ultimi 5 minuti"
   }
 }

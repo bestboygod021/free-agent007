@@ -106,8 +106,48 @@ describe('RetryCountdownBar', () => {
 
     await vi.advanceTimersByTimeAsync(2_000)
     await flush()
-    expect(container.textContent).toBe('Rate limited — retry now')
+    // ready: the status text flips AND the pill grows its retry button
+    expect(container.textContent).toContain('Rate limited — retry now')
+    const retryButton = container.querySelector('button')
+    expect(retryButton?.textContent).toBe('Retry now')
     expect(getRetryCountdown()).toMatchObject({ active: true, ready: true })
+  })
+
+  it('replays the blocked request from the chip button once the window opens', async () => {
+    renderBar()
+    await triggerCountdown('1')
+    await flush()
+    await vi.advanceTimersByTimeAsync(1_000)
+    await flush()
+
+    const button = container.querySelector('button')
+    expect(button?.textContent).toBe('Retry now')
+
+    // The window is open now: the next fetch succeeds, the chip folds away.
+    const ok = {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+      json: async () => ({}),
+      text: async () => '{}',
+    } as unknown as Response
+    const fetchMock = vi.fn().mockResolvedValue(ok)
+    vi.stubGlobal('fetch', fetchMock)
+
+    await act(async () => button!.click())
+    await flush()
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/api/keys')
+    expect(getRetryCountdown().active).toBe(false)
+    expect(container.textContent).toBe('')
+    // The countdown toast folded away with the chip; only the success toast
+    // (retried) remains — and it carries a Retry action no longer needed.
+    const countdownToastLeft = getToasts().some(t =>
+      String((t as { message?: unknown }).message ?? '').includes('Rate limited'),
+    )
+    expect(countdownToastLeft).toBe(false)
   })
 
   it('drops the chip and the unload guard once the countdown is dismissed', async () => {

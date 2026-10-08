@@ -109,6 +109,12 @@
     "sectionCompression": "कॉम्प्रेशन",
     "sectionAdvanced": "प्रगत",
     "sectionPreview": "पूर्वावलोकन",
+    "sectionRateLimit": "वेग मर्यादा",
+    "rateLimitProxy": "प्रॉक्सी /v1 मर्यादा (मिनिटाला विनंत्या)",
+    "rateLimitAdmin": "डॅशबोर्ड /api मर्यादा (मिनिटाला विनंत्या)",
+    "rateLimitKey": "प्रति की /v1 मर्यादा (मिनिटाला विनंत्या)",
+    "rateLimitEnvLocked": "{env} द्वारे निश्चित — संपादनासाठी काढून टाका",
+    "rateLimitSaved": "लागू केले — पुढच्या विनंतीला प्रभावी",
     "generalDescription": "या डॅशबोर्डची भाषा आणि स्वरूप.",
     "advancedDescription": "कॉम्प्रेशन पाइपलाइनसाठी मर्यादा आणि सुरक्षा स्विच.",
     "compressionTitle": "प्रॉम्प्ट कॉम्प्रेशन",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · मर्यादा {limit}/मिनिट · {retry}s मध्ये पुन्हा प्रयत्न",
     "callerHistory": "कॉलर इतिहास",
     "hourlyTrend": "मागील 24 तास",
-    "keyUsage": "कीनुसार वापर"
+    "keyUsage": "कीनुसार वापर",
+    "spike": "मागील 5 मिनिटांत {count} विनंत्या मर्यादित केल्या"
   }
 }

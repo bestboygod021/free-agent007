@@ -109,6 +109,12 @@
     "sectionCompression": "الضغط",
     "sectionAdvanced": "متقدم",
     "sectionPreview": "المعاينة",
+    "sectionRateLimit": "حدود المعدل",
+    "rateLimitProxy": "حد الوكيل /v1 (طلب/دقيقة)",
+    "rateLimitAdmin": "حد لوحة التحكم /api (طلب/دقيقة)",
+    "rateLimitKey": "حد لكل مفتاح /v1 (طلب/دقيقة)",
+    "rateLimitEnvLocked": "مثبّت عبر {env} — أزله للتعديل",
+    "rateLimitSaved": "طُبّق — يسري في الطلب التالي",
     "generalDescription": "لغة لوحة التحكم هذه ومظهرها.",
     "advancedDescription": "الحدود ومفاتيح الأمان الخاصة بمسار الضغط.",
     "compressionTitle": "ضغط الموجه",
@@ -1249,6 +1255,7 @@
     "details": "الـ IP {ip} · الحد {limit}/دقيقة · إعادة المحاولة بعد {retry} ثانية",
     "callerHistory": "سجل المتصل",
     "hourlyTrend": "آخر 24 ساعة",
-    "keyUsage": "الاستخدام لكل مفتاح"
+    "keyUsage": "الاستخدام لكل مفتاح",
+    "spike": "{count} طلبات تمت حصرتها خلال آخر 5 دقائق"
   }
 }

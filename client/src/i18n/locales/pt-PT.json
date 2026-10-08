@@ -109,6 +109,12 @@
     "sectionCompression": "Compressão",
     "sectionAdvanced": "Avançado",
     "sectionPreview": "Pré-visualização",
+    "sectionRateLimit": "Limites de taxa",
+    "rateLimitProxy": "Limite do proxy /v1 (pedidos/min)",
+    "rateLimitAdmin": "Limite do painel /api (pedidos/min)",
+    "rateLimitKey": "Limite por chave /v1 (pedidos/min)",
+    "rateLimitEnvLocked": "Definido por {env} — remova para editar",
+    "rateLimitSaved": "Aplicado — eficaz no próximo pedido",
     "generalDescription": "Idioma e aspeto deste painel.",
     "advancedDescription": "Limiares e interruptores de segurança do pipeline de compressão.",
     "compressionTitle": "Compressão de prompts",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · teto {limit}/min · nova tentativa em {retry}s",
     "callerHistory": "Histórico do chamador",
     "hourlyTrend": "Últimas 24 horas",
-    "keyUsage": "Uso por chave"
+    "keyUsage": "Uso por chave",
+    "spike": "{count} pedidos limitados nos últimos 5 minutos"
   }
 }

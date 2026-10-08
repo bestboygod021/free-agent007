@@ -18,6 +18,7 @@ import {
   Sparkles,
   SquareTerminal,
   Sun,
+  Timer,
   Wrench,
   X,
 } from 'lucide-react'
@@ -274,10 +275,11 @@ const ENGINES = [
   { id: 'hard-budget', tKey: 'engineHardBudget', lossless: false },
 ] as const
 
-type SectionId = 'general' | 'compression' | 'advanced' | 'preview'
+type SectionId = 'general' | 'ratelimit' | 'compression' | 'advanced' | 'preview'
 
 const SECTIONS = [
   { id: 'general', tKey: 'sectionGeneral', icon: SlidersHorizontal },
+  { id: 'ratelimit', tKey: 'sectionRateLimit', icon: Timer },
   { id: 'compression', tKey: 'sectionCompression', icon: Gauge },
   { id: 'advanced', tKey: 'sectionAdvanced', icon: Wrench },
   { id: 'preview', tKey: 'sectionPreview', icon: FlaskConical },
@@ -541,6 +543,132 @@ function PreviewSection({ state }: { state: CompressionState }) {
 }
 
 const RELEASES_URL = 'https://github.com/tashfeenahmed/freellmapi/releases'
+
+// GET/PUT /api/settings/rate-limits: the three requests-per-minute caps an
+// operator can retune without touching the server's env. Precedence lives in
+// the middleware (env > setting > default), so an env-pinned row renders
+// locked and saving applies to the very next request — no restart.
+type RateLimitSettings = {
+  proxyRpm: number;
+  adminRpm: number;
+  keyRpm: number;
+  sources: Record<'proxy' | 'admin' | 'key', 'env' | 'settings' | 'default'>;
+};
+
+const RATE_LIMIT_ENV_VARS = {
+  proxy: 'PROXY_RATE_LIMIT_RPM',
+  admin: 'ADMIN_RATE_LIMIT_RPM',
+  key: 'KEY_RATE_LIMIT_RPM',
+} as const;
+
+function RateLimitSection() {
+  const { t } = useI18n();
+  const [settings, setSettings] = useState<RateLimitSettings | null>(null);
+  const [form, setForm] = useState({ proxyRpm: '', adminRpm: '', keyRpm: '' });
+  const [busy, setBusy] = useState<'load' | 'save' | null>('load');
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<RateLimitSettings>('/api/settings/rate-limits')
+      .then(next => {
+        if (cancelled) return;
+        setSettings(next);
+        setForm({
+          proxyRpm: String(next.proxyRpm),
+          adminRpm: String(next.adminRpm),
+          keyRpm: String(next.keyRpm),
+        });
+        setBusy(null);
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : String(e));
+        setBusy(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function save() {
+    if (!settings) return;
+    setBusy('save');
+    setError('');
+    try {
+      const next = await apiFetch<RateLimitSettings>('/api/settings/rate-limits', {
+        method: 'PUT',
+        body: JSON.stringify({
+          proxyRpm: Number(form.proxyRpm),
+          adminRpm: Number(form.adminRpm),
+          keyRpm: Number(form.keyRpm),
+        }),
+      });
+      setSettings(next);
+      setForm({
+        proxyRpm: String(next.proxyRpm),
+        adminRpm: String(next.adminRpm),
+        keyRpm: String(next.keyRpm),
+      });
+      setSaved(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const rows = [
+    { key: 'proxy' as const, field: 'proxyRpm' as const, label: 'rateLimitProxy' },
+    { key: 'admin' as const, field: 'adminRpm' as const, label: 'rateLimitAdmin' },
+    { key: 'key' as const, field: 'keyRpm' as const, label: 'rateLimitKey' },
+  ];
+  const envLocked = (rowKey: 'proxy' | 'admin' | 'key') =>
+    settings?.sources[rowKey] === 'env'
+      ? t('settings.rateLimitEnvLocked', { env: RATE_LIMIT_ENV_VARS[rowKey] })
+      : undefined;
+
+  return (
+    <>
+      <SectionHeader title={t('settings.sectionRateLimit')} />
+      {rows.map(row => (
+        <Row
+          key={row.key}
+          label={t(`settings.${row.label}`)}
+          hint={envLocked(row.key)}
+          control={(
+            <input
+              type="number"
+              min={0}
+              max={60000}
+              value={form[row.field]}
+              onChange={event => {
+                setSaved(false);
+                setForm(prev => ({ ...prev, [row.field]: event.target.value }));
+              }}
+              disabled={settings?.sources[row.key] === 'env' || busy === 'load'}
+              aria-label={t(`settings.${row.label}`)}
+              className="h-9 w-32 rounded-lg border border-input bg-transparent px-3 font-mono text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+            />
+          )}
+        />
+      ))}
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-4">
+        {error && <p className="me-auto text-xs text-destructive">{error}</p>}
+        {saved && !error && <p className="me-auto text-xs text-muted-foreground">{t('settings.rateLimitSaved')}</p>}
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={busy !== null || !settings}
+          className="rounded-lg bg-foreground px-4 py-2 text-xs font-medium text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+        >
+          {busy === 'save' ? t('common.saving') : t('common.saveChanges')}
+        </button>
+      </div>
+    </>
+  );
+}
 
 function GeneralSection({ active }: { active: boolean }) {
   const { t } = useI18n()
@@ -964,7 +1092,7 @@ export function SettingsDialog({
   const [section, setSection] = useState<SectionId>('general')
   const state = useCompressionSettings(open)
   const { config, busy, error, save } = state
-  const compressionSection = section !== 'general'
+  const compressionSection = section !== 'general' && section !== 'ratelimit'
   const loading = compressionSection && !config && busy === 'load'
 
   return (
@@ -1012,6 +1140,7 @@ export function SettingsDialog({
           {/* min-height keeps the popup from resizing as sections are switched. */}
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:min-h-[27rem] sm:px-6 sm:py-6">
             {section === 'general' && <GeneralSection active={open} />}
+            {section === 'ratelimit' && <RateLimitSection />}
             {loading && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />

@@ -8,6 +8,7 @@ import { getQuotaStateForKeys } from '../services/provider-quota.js';
 import {
   getKeyRateLimitUsage,
   getRateLimitEvents,
+  getRateLimitSpike,
   getRateLimitStats,
 } from '../middleware/rateLimit.js';
 
@@ -18,7 +19,7 @@ export const healthRouter = Router();
 // the dashboard session sees them; events are durable (rate_limit_events,
 // 7-day retention) while the key counters are in-memory by nature.
 healthRouter.get('/rate-limits', (_req: Request, res: Response) => {
-  res.json({ events: getRateLimitEvents(), keyUsage: getKeyRateLimitUsage() });
+  res.json({ events: getRateLimitEvents(), keyUsage: getKeyRateLimitUsage(), spike: getRateLimitSpike() });
 });
 
 // Hourly totals + per-path breakdown over the trailing 24h — feeds the trend

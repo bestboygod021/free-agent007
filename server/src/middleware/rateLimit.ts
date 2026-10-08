@@ -1,7 +1,9 @@
-import { createHash } from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
-import { getDb } from '../db/index.js';
+import { getDb, getSetting, setSetting } from '../db/index.js';
 import { getClientContext } from '../lib/client-context.js';
+import { decrypt } from '../lib/crypto.js';
+import { recordLogEntry } from '../lib/server-logs.js';
+import { createHash } from 'node:crypto';
 
 // Per-IP fixed-window rate limiters for the public /v1 proxy (#35, item #6)
 // and the dashboard /api surface, plus a per-API-key bucket on the proxy.
@@ -43,6 +45,9 @@ export interface RateLimitEvent {
   subject: string | null;
   limit: number;
   retryAfter: number;
+  /** Read-time decoration for scope 'key': the api_keys label matching the
+   *  fingerprint (null when the key was deleted or undecryptable). */
+  label?: string | null;
 }
 
 const MAX_EVENTS = 200;
@@ -62,8 +67,10 @@ function withDb<T>(fn: (db: RateLimitDb) => T): T | undefined {
 }
 
 export function recordRateLimitEvent(event: RateLimitEvent): void {
+  const now = Date.now();
   events.unshift(event);
   if (events.length > MAX_EVENTS) events.length = MAX_EVENTS;
+  maybeDetectSpike(now);
   withDb(db => {
     db.prepare(
       `INSERT INTO rate_limit_events (ts, scope, method, path, ip, subject, limit_rpm, retry_after)
@@ -107,9 +114,10 @@ export function getRateLimitEvents(): RateLimitEvent[] {
       subject: r.subject,
       limit: r.limit_rpm,
       retryAfter: r.retry_after,
+      label: labelSubject(r.subject),
     }));
   }
-  return [...events];
+  return events.map(e => ({ ...e, label: labelSubject(e.subject) }));
 }
 
 export interface RateLimitStatsBucket {
@@ -176,6 +184,179 @@ export function getRateLimitStats(windowHours = 24): RateLimitStats {
   };
 }
 
+// ── Runtime settings (dashboard-editable caps) ──────────────────────────────
+// Precedence per cap: explicit env > dashboard setting > factory/default.
+// The middleware resolves per request so a dashboard save takes effect on the
+// next request — no restart, no stale factory closure.
+
+export type RateLimitSettingKind = 'proxy' | 'admin' | 'key';
+type RateLimitSource = 'env' | 'settings' | 'default';
+
+const SETTING_KEYS: Record<RateLimitSettingKind, string> = {
+  proxy: 'rateLimit.proxyRpm',
+  admin: 'rateLimit.adminRpm',
+  key: 'rateLimit.keyRpm',
+};
+const ENV_NAMES: Record<RateLimitSettingKind, string> = {
+  proxy: 'PROXY_RATE_LIMIT_RPM',
+  admin: 'ADMIN_RATE_LIMIT_RPM',
+  key: 'KEY_RATE_LIMIT_RPM',
+};
+
+const settingOverrides: Partial<Record<RateLimitSettingKind, number>> = {};
+let settingsLoaded = false;
+
+function loadSettingOverrides(): void {
+  if (settingsLoaded) return;
+  settingsLoaded = true; // set first: a missing DB must not retry every request
+  try {
+    for (const kind of ['proxy', 'admin', 'key'] as RateLimitSettingKind[]) {
+      const raw = getSetting(SETTING_KEYS[kind]);
+      if (raw === undefined) continue;
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) settingOverrides[kind] = Math.floor(n);
+    }
+  } catch {
+    /* no DB yet (unit tests) — defaults it is */
+  }
+}
+
+function envLimit(kind: RateLimitSettingKind): number | undefined {
+  const raw = process.env[ENV_NAMES[kind]];
+  if (raw === undefined || raw.trim() === '') return undefined;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return Math.floor(n);
+}
+
+function resolveLimit(kind: RateLimitSettingKind, fallback: number): number {
+  const fromEnv = envLimit(kind);
+  if (fromEnv !== undefined) return fromEnv;
+  loadSettingOverrides();
+  const fromSettings = settingOverrides[kind];
+  if (fromSettings !== undefined) return fromSettings;
+  return fallback;
+}
+
+function limitSource(kind: RateLimitSettingKind): RateLimitSource {
+  if (envLimit(kind) !== undefined) return 'env';
+  loadSettingOverrides();
+  return settingOverrides[kind] !== undefined ? 'settings' : 'default';
+}
+
+export function getRateLimitSettings() {
+  return {
+    proxyRpm: resolveLimit('proxy', DEFAULT_RPM),
+    adminRpm: resolveLimit('admin', ADMIN_DEFAULT_RPM),
+    keyRpm: resolveLimit('key', KEY_DEFAULT_RPM),
+    sources: {
+      proxy: limitSource('proxy'),
+      admin: limitSource('admin'),
+      key: limitSource('key'),
+    } as Record<RateLimitSettingKind, RateLimitSource>,
+  };
+}
+
+export function setRateLimitSettings(update: { proxyRpm?: number; adminRpm?: number; keyRpm?: number }) {
+  const map: Array<[RateLimitSettingKind, number | undefined]> = [
+    ['proxy', update.proxyRpm],
+    ['admin', update.adminRpm],
+    ['key', update.keyRpm],
+  ];
+  for (const [kind, value] of map) {
+    if (value === undefined) continue;
+    setSetting(SETTING_KEYS[kind], String(value));
+    settingOverrides[kind] = value;
+  }
+  settingsLoaded = true;
+  return getRateLimitSettings();
+}
+
+// ── Spike detection (server-log WARN + dashboard banner) ────────────────────
+// Ten or more rejections inside five minutes means something is actively
+// hammering the server, not a lone client hitting its budget. Fires at most
+// once per cooldown so a sustained flood logs one warning, not one per 429.
+
+const SPIKE_WINDOW_MS = 5 * 60_000;
+const SPIKE_COOLDOWN_MS = 10 * 60_000;
+const SPIKE_DEFAULT_THRESHOLD = 10;
+
+function spikeThreshold(): number {
+  const raw = process.env.RATE_LIMIT_ALERT_THRESHOLD;
+  if (raw === undefined || raw.trim() === '') return SPIKE_DEFAULT_THRESHOLD;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 1) return SPIKE_DEFAULT_THRESHOLD;
+  return Math.floor(n);
+}
+
+let lastSpikeAlertAt = 0;
+let lastSpike: { at: number; count: number } | null = null;
+
+/** Most recent spike, kept for SPIKE_COOLDOWN_MS so the dashboard banner and
+ *  the /rate-limits response stay consistent, then nulled. */
+export function getRateLimitSpike(): { at: number; count: number } | null {
+  if (!lastSpike) return null;
+  if (Date.now() - lastSpike.at >= SPIKE_COOLDOWN_MS) return null;
+  return lastSpike;
+}
+
+function maybeDetectSpike(now: number): void {
+  const threshold = spikeThreshold();
+  // The ring is newest-first; count the tail inside the window.
+  let recent = 0;
+  for (const event of events) {
+    if (event.ts < now - SPIKE_WINDOW_MS) break;
+    recent += 1;
+  }
+  if (recent < threshold) return;
+  if (now - lastSpikeAlertAt < SPIKE_COOLDOWN_MS) return;
+  lastSpikeAlertAt = now;
+  lastSpike = { at: now, count: recent };
+  try {
+    recordLogEntry({
+      level: 'warn',
+      source: 'rate-limit',
+      event: 'spike',
+      message: `Rate-limit spike: ${recent} rejections in the last 5 minutes (threshold ${threshold}).`,
+      tsMs: now,
+    });
+  } catch {
+    /* logging must never break a rejection */
+  }
+}
+
+// ── Key-label join (fingerprint → api_keys.label, read time) ────────────────
+
+let keyLabelCache: { at: number; map: Map<string, string> } | null = null;
+
+function keyLabelMap(): Map<string, string> {
+  if (keyLabelCache && Date.now() - keyLabelCache.at < 60_000) return keyLabelCache.map;
+  const map = new Map<string, string>();
+  try {
+    const rows = getDb()
+      .prepare(`SELECT label, encrypted_key, iv, auth_tag FROM api_keys`)
+      .all() as Array<{ label: string; encrypted_key: string; iv: string; auth_tag: string }>;
+    for (const row of rows) {
+      try {
+        const secret = decrypt(row.encrypted_key, row.iv, row.auth_tag);
+        const fingerprint = `key:${createHash('sha256').update(secret).digest('hex').slice(0, 8)}`;
+        map.set(fingerprint, row.label);
+      } catch {
+        /* undecryptable with the current ENCRYPTION_KEY — show the fingerprint */
+      }
+    }
+  } catch {
+    /* no DB — empty map */
+  }
+  keyLabelCache = { at: Date.now(), map };
+  return map;
+}
+
+function labelSubject(subject: string | null | undefined): string | null {
+  if (!subject) return null;
+  return keyLabelMap().get(subject) ?? null;
+}
+
 /** Caller identity for the event trail: the AsyncLocalStorage context the
  *  clientContextMiddleware sets (exactly what request-analytics stores in
  *  requests.client_ip), falling back to a normalized socket address. */
@@ -186,20 +367,15 @@ function callerIp(req: Request): string | null {
   return raw?.replace(/^::ffff:/i, '') ?? null;
 }
 
-function parseLimit(): number {
-  const raw = process.env.PROXY_RATE_LIMIT_RPM;
-  if (raw === undefined || raw.trim() === '') return DEFAULT_RPM;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) return DEFAULT_RPM;
-  return Math.floor(n);
-}
 
 export function createProxyRateLimiter(rpmLimit?: number) {
-  const limit = rpmLimit !== undefined ? Math.floor(Math.max(0, rpmLimit)) : parseLimit();
+  // Resolved per request: env > dashboard setting > the mount's fallback.
+  const fallback = rpmLimit !== undefined ? Math.floor(Math.max(0, rpmLimit)) : DEFAULT_RPM;
   const windows = new Map<string, WindowState>();
   const scope = 'proxy' as const;
 
   return function proxyRateLimit(req: Request, res: Response, next: NextFunction): void {
+    const limit = resolveLimit('proxy', fallback);
     if (limit === 0) {
       next();
       return;
@@ -266,20 +442,21 @@ export function createProxyRateLimiter(rpmLimit?: number) {
 // Tune with ADMIN_RATE_LIMIT_RPM (requests per minute per IP); 0 disables it.
 const ADMIN_DEFAULT_RPM = 600;
 
-function parseAdminLimit(): number {
-  const raw = process.env.ADMIN_RATE_LIMIT_RPM;
-  if (raw === undefined || raw.trim() === '') return ADMIN_DEFAULT_RPM;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) return ADMIN_DEFAULT_RPM;
-  return Math.floor(n);
-}
 
-export function createAdminRateLimiter(rpm?: number) {
-  const limit = rpm !== undefined ? Math.floor(Math.max(0, rpm)) : parseAdminLimit();
+export function createAdminRateLimiter(
+  rpm?: number,
+  // 'admin' (default) follows env > dashboard setting > fallback. `null` is a
+  // dedicated bucket (the key-export limiter) that answers ONLY to its own
+  // explicit cap — the broad dashboard knobs must not loosen it.
+  options?: { settingKind?: 'admin' | null },
+) {
+  const settingKind = options?.settingKind === undefined ? 'admin' : options.settingKind;
+  const fallback = rpm !== undefined ? Math.floor(Math.max(0, rpm)) : ADMIN_DEFAULT_RPM;
   const windows = new Map<string, WindowState>();
   const scope = 'admin' as const;
 
   return function adminRateLimit(req: Request, res: Response, next: NextFunction): void {
+    const limit = settingKind ? resolveLimit(settingKind, fallback) : fallback;
     if (limit === 0) {
       next();
       return;
@@ -352,13 +529,6 @@ const keyWindows = new Map<string, WindowState>();
 // factory's value is the live one.
 let activeKeyLimit = KEY_DEFAULT_RPM;
 
-function parseKeyLimit(): number {
-  const raw = process.env.KEY_RATE_LIMIT_RPM;
-  if (raw === undefined || raw.trim() === '') return KEY_DEFAULT_RPM;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) return KEY_DEFAULT_RPM;
-  return Math.floor(n);
-}
 
 /** Mirrors routes/proxy.ts extractApiToken (Bearer / x-api-key /
  *  x-goog-api-key) as a header-only read. Duplicated on purpose: importing the
@@ -376,11 +546,15 @@ function presentedApiToken(req: Request): string | undefined {
 }
 
 export function createKeyRateLimiter(rpmLimit?: number) {
-  const limit = rpmLimit !== undefined ? Math.floor(Math.max(0, rpmLimit)) : parseKeyLimit();
-  activeKeyLimit = limit;
+  const fallback = rpmLimit !== undefined ? Math.floor(Math.max(0, rpmLimit)) : KEY_DEFAULT_RPM;
+  // Snapshot for the usage view; requests below refresh it with the resolved
+  // (env/settings-aware) value so the bar shows the cap actually enforced.
+  activeKeyLimit = fallback;
   const scope = 'key' as const;
 
   return function keyRateLimit(req: Request, res: Response, next: NextFunction): void {
+    const limit = resolveLimit('key', fallback);
+    activeKeyLimit = limit;
     if (limit === 0) {
       next();
       return;
@@ -435,15 +609,27 @@ export function createKeyRateLimiter(rpmLimit?: number) {
 
 /** Live per-key window counters for the Keys page ("118/180 this minute").
  *  Expired windows are pruned as they are read. */
-export function getKeyRateLimitUsage(): Array<{ subject: string; count: number; limit: number; resetAt: number }> {
+export function getKeyRateLimitUsage(): Array<{
+  subject: string;
+  label: string | null;
+  count: number;
+  limit: number;
+  resetAt: number;
+}> {
   const now = Date.now();
-  const usage: Array<{ subject: string; count: number; limit: number; resetAt: number }> = [];
+  const usage: Array<{ subject: string; label: string | null; count: number; limit: number; resetAt: number }> = [];
   for (const [subject, state] of keyWindows) {
     if (now >= state.resetAt) {
       keyWindows.delete(subject);
       continue;
     }
-    usage.push({ subject, count: state.count, limit: activeKeyLimit, resetAt: state.resetAt });
+    usage.push({
+      subject,
+      label: labelSubject(subject),
+      count: state.count,
+      limit: activeKeyLimit,
+      resetAt: state.resetAt,
+    });
   }
   usage.sort((a, b) => b.count - a.count);
   return usage;

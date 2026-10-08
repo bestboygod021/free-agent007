@@ -109,6 +109,12 @@
     "sectionCompression": "ਕੰਪਰੈਸ਼ਨ",
     "sectionAdvanced": "ਉੱਨਤ",
     "sectionPreview": "ਝਲਕ",
+    "sectionRateLimit": "ਦਰ ਸੀਮਾਵਾਂ",
+    "rateLimitProxy": "ਪ੍ਰੋਕਸੀ /v1 ਸੀਮਾ (ਪ੍ਰਤੀ ਮਿੰਟ ਬੇਨਤੀਆਂ)",
+    "rateLimitAdmin": "ਡੈਸ਼ਬੋਰਡ /api ਸੀਮਾ (ਪ੍ਰਤੀ ਮਿੰਟ ਬੇਨਤੀਆਂ)",
+    "rateLimitKey": "ਪ੍ਰਤੀ-ਕੁੰਜੀ /v1 ਸੀਮਾ (ਪ੍ਰਤੀ ਮਿੰਟ ਬੇਨਤੀਆਂ)",
+    "rateLimitEnvLocked": "{env} ਨਾਲ ਸੈੱਟ — ਸੰਪਾਦਨ ਲਈ ਹਟਾਓ",
+    "rateLimitSaved": "ਲਾਗੂ — ਅਗਲੀ ਬੇਨਤੀ ਤੋਂ ਪ੍ਰਭਾਵੀ",
     "generalDescription": "ਇਸ ਡੈਸ਼ਬੋਰਡ ਦੀ ਭਾਸ਼ਾ ਅਤੇ ਦਿੱਖ।",
     "advancedDescription": "ਕੰਪਰੈਸ਼ਨ ਪਾਈਪਲਾਈਨ ਲਈ ਹੱਦਾਂ ਅਤੇ ਸੁਰੱਖਿਆ ਸਵਿੱਚ।",
     "compressionTitle": "ਪ੍ਰੋਂਪਟ ਕੰਪਰੈਸ਼ਨ",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · ਸੀਮਾ {limit}/ਮਿੰਟ · {retry} ਸਕਿੰਟ ਵਿੱਚ ਮੁੜ ਕੋਸ਼ਿਸ਼",
     "callerHistory": "ਕਾਲਰ ਇਤਿਹਾਸ",
     "hourlyTrend": "ਪਿਛਲੇ 24 ਘੰਟੇ",
-    "keyUsage": "ਕੁੰਜੀ ਅਨੁਸਾਰ ਵਰਤੋਂ"
+    "keyUsage": "ਕੁੰਜੀ ਅਨੁਸਾਰ ਵਰਤੋਂ",
+    "spike": "ਪਿਛਲੇ 5 ਮਿੰਟ ਵਿੱਚ {count} ਬੇਨਤੀਆਂ ਸੀਮਿਤ"
   }
 }

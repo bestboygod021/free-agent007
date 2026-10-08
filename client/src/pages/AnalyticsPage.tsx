@@ -630,6 +630,16 @@ export default function AnalyticsPage() {
                     <Legend wrapperStyle={{ fontSize: 12 }} iconType="line" />
                     <Line type="monotone" dataKey="successCount" name={t('common.success')} stroke={primaryFill} strokeWidth={1.5} dot={false} />
                     <Line type="monotone" dataKey="failureCount" name={t('common.failures')} stroke="var(--destructive)" strokeWidth={1.5} dot={false} />
+                    <Line
+                      type="monotone"
+                      dataKey="rateLimitCount"
+                      name={t('rateLimitEvents.title')}
+                      stroke="var(--destructive)"
+                      strokeDasharray="4 3"
+                      strokeWidth={1.2}
+                      dot={false}
+                      connectNulls={false}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               )}

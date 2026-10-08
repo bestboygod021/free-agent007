@@ -109,6 +109,12 @@
     "sectionCompression": "Comprimare",
     "sectionAdvanced": "Avansat",
     "sectionPreview": "Previzualizare",
+    "sectionRateLimit": "Limite de viteză",
+    "rateLimitProxy": "Limită proxy /v1 (cereri/min)",
+    "rateLimitAdmin": "Limită panou /api (cereri/min)",
+    "rateLimitKey": "Limită pe cheie /v1 (cereri/min)",
+    "rateLimitEnvLocked": "Fixat de {env} — eliminați variabila pentru editare",
+    "rateLimitSaved": "Aplicat — intră în vigoare la următoarea cerere",
     "generalDescription": "Limba și aspectul acestui panou.",
     "advancedDescription": "Praguri și comutatoare de siguranță pentru lanțul de comprimare.",
     "compressionTitle": "Comprimarea prompturilor",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · plafon {limit}/min · reîncercare în {retry} s",
     "callerHistory": "Istoricul apelantului",
     "hourlyTrend": "Ultimele 24 de ore",
-    "keyUsage": "Utilizare pe cheie"
+    "keyUsage": "Utilizare pe cheie",
+    "spike": "{count} cereri limitate în ultimele 5 minute"
   }
 }

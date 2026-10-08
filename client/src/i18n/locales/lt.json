@@ -109,6 +109,12 @@
     "sectionCompression": "Suspaudimas",
     "sectionAdvanced": "Išplėstiniai",
     "sectionPreview": "Peržiūra",
+    "sectionRateLimit": "Greičio ribos",
+    "rateLimitProxy": "Proxy /v1 riba (užklausų/min)",
+    "rateLimitAdmin": "Prietašų skydelio /api riba (užklausų/min)",
+    "rateLimitKey": "Rakto /v1 riba (užklausų/min)",
+    "rateLimitEnvLocked": "Nustatyta pagal {env} — pašalinkite, kad redaguotumėte",
+    "rateLimitSaved": "Taikoma — įsigalios nuo kitos užklausos",
     "generalDescription": "Šio skydelio kalba ir išvaizda.",
     "advancedDescription": "Suspaudimo grandinės slenksčiai ir apsaugos jungikliai.",
     "compressionTitle": "Raginimų (prompt) suspaudimas",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · riba {limit}/min · pakartoti po {retry} s",
     "callerHistory": "Skambinančiojo istorija",
     "hourlyTrend": "Paskutinės 24 valandos",
-    "keyUsage": "Naudojimas pagal raktą"
+    "keyUsage": "Naudojimas pagal raktą",
+    "spike": "{count} užklausos apribotos per pastarąsias 5 minutes"
   }
 }

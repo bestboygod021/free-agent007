@@ -109,6 +109,12 @@
     "sectionCompression": "Pakkaus",
     "sectionAdvanced": "Lisäasetukset",
     "sectionPreview": "Esikatselu",
+    "sectionRateLimit": "Nopeusrajoitukset",
+    "rateLimitProxy": "Proxyn /v1-raja (pyyntöä/min)",
+    "rateLimitAdmin": "Kojulla /api-raja (pyyntöä/min)",
+    "rateLimitKey": "Avaimen /v1-raja (pyyntöä/min)",
+    "rateLimitEnvLocked": "Asetettu {env}-muuttujalla — poista se muokataksesi",
+    "rateLimitSaved": "Käytössä — voimaan seuraavassa pyynnössä",
     "generalDescription": "Tämän hallintapaneelin kieli ja ulkoasu.",
     "advancedDescription": "Pakkausputken raja-arvot ja turvakytkimet.",
     "compressionTitle": "Promptien pakkaus",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · raja {limit}/min · yritä uudelleen {retry} s kuluttua",
     "callerHistory": "Soittajan historia",
     "hourlyTrend": "Viimeiset 24 tuntia",
-    "keyUsage": "Käyttö avaimittain"
+    "keyUsage": "Käyttö avaimittain",
+    "spike": "{count} pyyntöä rajoitettu viimeisen 5 minuutin aikana"
   }
 }

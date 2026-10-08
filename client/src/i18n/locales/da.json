@@ -109,6 +109,12 @@
     "sectionCompression": "Komprimering",
     "sectionAdvanced": "Avanceret",
     "sectionPreview": "Forhåndsvisning",
+    "sectionRateLimit": "Hastighedsgrænser",
+    "rateLimitProxy": "Proxy-/v1-grænse (forespørgsler/min)",
+    "rateLimitAdmin": "Dashboard-/api-grænse (forespørgsler/min)",
+    "rateLimitKey": "Pr. nøgle-/v1-grænse (forespørgsler/min)",
+    "rateLimitEnvLocked": "Sat af {env} — fjern den for at redigere",
+    "rateLimitSaved": "Anvendt — træder i kraft ved næste forespørgsel",
     "generalDescription": "Sprog og udseende for dette dashboard.",
     "advancedDescription": "Tærskler og sikkerhedskontakter for komprimeringspipelinen.",
     "compressionTitle": "Promptkomprimering",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · loft {limit}/min · prøv igen om {retry} s",
     "callerHistory": "Afsenderhistorik",
     "hourlyTrend": "Seneste 24 timer",
-    "keyUsage": "Forbrug pr. nøgle"
+    "keyUsage": "Forbrug pr. nøgle",
+    "spike": "{count} forespørgsler blev begrænset inden for de seneste 5 minutter"
   }
 }

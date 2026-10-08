@@ -109,6 +109,12 @@
     "sectionCompression": "Compression",
     "sectionAdvanced": "Advanced",
     "sectionPreview": "Preview",
+    "sectionRateLimit": "Rate limits",
+    "rateLimitProxy": "Proxy /v1 cap (requests/min)",
+    "rateLimitAdmin": "Dashboard /api cap (requests/min)",
+    "rateLimitKey": "Per-key /v1 cap (requests/min)",
+    "rateLimitEnvLocked": "Pinned by {env} — unset it to edit",
+    "rateLimitSaved": "Applied — effective on the next request",
     "generalDescription": "Language and appearance of this dashboard.",
     "advancedDescription": "Thresholds and safety switches for the compression pipeline.",
     "compressionTitle": "Prompt compression",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · cap {limit}/min · retry after {retry}s",
     "callerHistory": "Caller history",
     "hourlyTrend": "Last 24 hours",
-    "keyUsage": "Per-key usage"
+    "keyUsage": "Per-key usage",
+    "spike": "{count} requests rate-limited in the last 5 minutes"
   }
 }

@@ -201,6 +201,9 @@ export const timelineBucketSchema = z.object({
   failureCount: z.number(),
   inputTokens: z.number(),
   outputTokens: z.number(),
+  /** Rate-limit rejections bucketed on the same wall-clock timestamp (null
+   *  when the endpoint predates the field). Charted as the dashed overlay. */
+  rateLimitCount: z.number().nullable().optional(),
 });
 
 /** Row of GET /api/analytics/by-model. Same id/name pair /by-platform returns
@@ -1187,6 +1190,18 @@ const nonEmptyQueryParam = (value: unknown): string | undefined => {
  *  match the filter asked for); `limit` stays a preference — non-numbers fall
  *  through to the store's default clamp. The 400 messages are part of the
  *  contract: tests assert both this schema and the route emit them. */
+/** PUT /api/settings/rate-limits — requests-per-minute caps; 0 disables a
+ *  limiter. Any subset of fields; at least one must be present. */
+export const rateLimitSettingsSchema = z
+  .object({
+    proxyRpm: z.number().int().min(0).max(60000).optional(),
+    adminRpm: z.number().int().min(0).max(60000).optional(),
+    keyRpm: z.number().int().min(0).max(60000).optional(),
+  })
+  .refine(v => v.proxyRpm !== undefined || v.adminRpm !== undefined || v.keyRpm !== undefined, {
+    message: 'at least one of proxyRpm, adminRpm, keyRpm is required',
+  });
+
 export const logQuerySchema = z.object({
   levels: z.preprocess(
     nonEmptyQueryParam,

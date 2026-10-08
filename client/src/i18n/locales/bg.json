@@ -109,6 +109,12 @@
     "sectionCompression": "Компресия",
     "sectionAdvanced": "Разширени",
     "sectionPreview": "Преглед",
+    "sectionRateLimit": "Лимити на заявки",
+    "rateLimitProxy": "Лимит на прокси /v1 (заявки/мин)",
+    "rateLimitAdmin": "Лимит на таблото /api (заявки/мин)",
+    "rateLimitKey": "Лимит на ключ /v1 (заявки/мин)",
+    "rateLimitEnvLocked": "Зададен чрез {env} — премахнете го за редакция",
+    "rateLimitSaved": "Приложено — влиза в сила при следващата заявка",
     "generalDescription": "Език и външен вид на този панел.",
     "advancedDescription": "Прагове и предпазители на веригата за компресия.",
     "compressionTitle": "Компресия на промпта",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · лимит {limit}/мин · повтор след {retry} с",
     "callerHistory": "История на обаждащия се",
     "hourlyTrend": "Последните 24 часа",
-    "keyUsage": "Използване на ключ"
+    "keyUsage": "Използване на ключ",
+    "spike": "{count} заявки са ограничени за последните 5 минути"
   }
 }

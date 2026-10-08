@@ -109,6 +109,12 @@
     "sectionCompression": "Kompresja",
     "sectionAdvanced": "Zaawansowane",
     "sectionPreview": "Podgląd",
+    "sectionRateLimit": "Limity szybkości",
+    "rateLimitProxy": "Limit proxy /v1 (żądań/min)",
+    "rateLimitAdmin": "Limit pulpitu /api (żądań/min)",
+    "rateLimitKey": "Limit na klucz /v1 (żądań/min)",
+    "rateLimitEnvLocked": "Ustawione przez {env} — usuń zmienną, aby edytować",
+    "rateLimitSaved": "Zastosowane — obowiązuje od następnego żądania",
     "generalDescription": "Język i wygląd tego panelu.",
     "advancedDescription": "Progi i zabezpieczenia potoku kompresji.",
     "compressionTitle": "Kompresja promptów",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · limit {limit}/min · ponów za {retry} s",
     "callerHistory": "Historia dzwoniącego",
     "hourlyTrend": "Ostatnie 24 godziny",
-    "keyUsage": "Użycie według klucza"
+    "keyUsage": "Użycie według klucza",
+    "spike": "{count} żądań ograniczonych w ostatnich 5 minutach"
   }
 }

@@ -109,6 +109,12 @@
     "sectionCompression": "Компресија",
     "sectionAdvanced": "Напредно",
     "sectionPreview": "Преглед",
+    "sectionRateLimit": "Ограничења брзине",
+    "rateLimitProxy": "Ограничење прокси /v1 (захтева/мин)",
+    "rateLimitAdmin": "Ограничење контролне таблице /api (захтева/мин)",
+    "rateLimitKey": "Ограничење по кључу /v1 (захтева/мин)",
+    "rateLimitEnvLocked": "Постављено преко {env} — уклоните променљиву за уређивање",
+    "rateLimitSaved": "Примењено — важи од следећег захтева",
     "generalDescription": "Језик и изглед ове контролне табле.",
     "advancedDescription": "Прагови и сигурносни прекидачи ланца компресије.",
     "compressionTitle": "Компресија промптова",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · ограничење {limit}/мин · поновни покушај за {retry} с",
     "callerHistory": "Историја позиваоца",
     "hourlyTrend": "Последњих 24 сата",
-    "keyUsage": "Употреба по кључу"
+    "keyUsage": "Употреба по кључу",
+    "spike": "{count} захтева ограничено у последњих 5 минута"
   }
 }

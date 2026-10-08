@@ -109,6 +109,12 @@
     "sectionCompression": "Mpịkọta",
     "sectionAdvanced": "Nke dị elu",
     "sectionPreview": "Nlele",
+    "sectionRateLimit": "Nkwari nha",
+    "rateLimitProxy": "Nkwari proxy /v1 (arịrịotu/nda ebbe)",
+    "rateLimitAdmin": "Nkwari dashboard /api (arịrịotu/nda ebbe)",
+    "rateLimitKey": "Nkwari kị /v1 (arịrịotu/nda ebbe)",
+    "rateLimitEnvLocked": "Akọtara site ya {env} — wepụ ya ka ọ dịrị ịdezi",
+    "rateLimitSaved": "E tinyere — ga-esi na arịrịkọ na-esote",
     "generalDescription": "Asụsụ na ọdịdị nke dashboard a.",
     "advancedDescription": "Oke na mgbanwe nchekwa maka usoro mpịkọta.",
     "compressionTitle": "Mpịkọta prompt",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · oke {limit}/nkeji · nwaa ọzọ mgbe {retry} s",
     "callerHistory": "Ndekọ onye kaaga",
     "hourlyTrend": "awa 24 gara aga",
-    "keyUsage": "Eji kwa igodo"
+    "keyUsage": "Eji kwa igodo",
+    "spike": "Arịrịotu {count} dakọtara n'ime nkeji ise gara aga"
   }
 }

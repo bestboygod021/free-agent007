@@ -109,6 +109,12 @@
     "sectionCompression": "Siqish",
     "sectionAdvanced": "Kengaytirilgan",
     "sectionPreview": "Oldindan ko'rish",
+    "sectionRateLimit": "Tezlik cheklovlari",
+    "rateLimitProxy": "Proksi /v1 chegarasi (daqiqada so'rovlar)",
+    "rateLimitAdmin": "Panel /api chegarasi (daqiqada so'rovlar)",
+    "rateLimitKey": "Kalitga /v1 chegarasi (daqiqada so'rovlar)",
+    "rateLimitEnvLocked": "{env} orqali o'rnatilgan — tahrirlash uchuni olib tashlang",
+    "rateLimitSaved": "Qo'llanildi — keyingi so'rovda kuchga kiradi",
     "generalDescription": "Ushbu boshqaruv panelining tili va ko'rinishi.",
     "advancedDescription": "Siqish jarayoni uchun chegaralar va xavfsizlik kalitlari.",
     "compressionTitle": "Promptni siqish",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · chek {limit}/daq · {retry} soniyadan keyin qayta urinish",
     "callerHistory": "Qo'ng'iroq tarixi",
     "hourlyTrend": "Oxirgi 24 soat",
-    "keyUsage": "Kalit bo'yicha sarf"
+    "keyUsage": "Kalit bo'yicha sarf",
+    "spike": "So'nggi 5 daqiqada {count} so'rov cheklandi"
   }
 }

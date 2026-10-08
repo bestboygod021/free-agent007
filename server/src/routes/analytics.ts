@@ -467,6 +467,18 @@ analyticsRouter.get('/timeline', (req: Request, res: Response) => {
     ORDER BY timestamp ASC
   `).all(dateFormat, tzModifier, since) as any[];
 
+  // Rate-limit rejections bucketed with the SAME wall-clock formula so the
+  // dashboard can draw them as an overlay on the request timeline.
+  const rateLimitRows = db
+    .prepare(
+      `SELECT strftime(?, datetime(ts / 1000, 'unixepoch'), ?) AS timestamp, COUNT(*) AS rate_limit_count
+       FROM rate_limit_events
+       WHERE datetime(ts / 1000, 'unixepoch') >= ?
+       GROUP BY timestamp`,
+    )
+    .all(dateFormat, tzModifier, since) as Array<{ timestamp: string; rate_limit_count: number }>;
+  const rateLimitByBucket = new Map(rateLimitRows.map(r => [r.timestamp, r.rate_limit_count]));
+
   res.json(rows.map(r => ({
     timestamp: r.timestamp,
     requests: r.requests,
@@ -474,6 +486,7 @@ analyticsRouter.get('/timeline', (req: Request, res: Response) => {
     failureCount: r.failure_count,
     inputTokens: r.input_tokens ?? 0,
     outputTokens: r.output_tokens ?? 0,
+    rateLimitCount: rateLimitByBucket.get(r.timestamp) ?? null,
   })));
 });
 

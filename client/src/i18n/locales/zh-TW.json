@@ -109,6 +109,12 @@
     "sectionCompression": "壓縮",
     "sectionAdvanced": "進階",
     "sectionPreview": "預覽",
+    "sectionRateLimit": "速率限制",
+    "rateLimitProxy": "代理 /v1 上限（請求/分鐘）",
+    "rateLimitAdmin": "控制台 /api 上限（請求/分鐘）",
+    "rateLimitKey": "每金鑰 /v1 上限（請求/分鐘）",
+    "rateLimitEnvLocked": "由 {env} 固定 — 取消該變數才能編輯",
+    "rateLimitSaved": "已套用 — 將在下一個請求生效",
     "generalDescription": "此儀表板的語言與外觀。",
     "advancedDescription": "壓縮流程的門檻值與安全開關。",
     "compressionTitle": "提示詞壓縮",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · 上限 {limit}/分鐘 · {retry} 秒後重試",
     "callerHistory": "呼叫方歷史",
     "hourlyTrend": "最近 24 小時",
-    "keyUsage": "按金鑰用量"
+    "keyUsage": "按金鑰用量",
+    "spike": "過去 5 分鐘內有 {count} 個請求被限流"
   }
 }

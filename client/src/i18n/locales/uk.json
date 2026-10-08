@@ -109,6 +109,12 @@
     "sectionCompression": "Стиснення",
     "sectionAdvanced": "Додатково",
     "sectionPreview": "Попередній перегляд",
+    "sectionRateLimit": "Ліміти швидкості",
+    "rateLimitProxy": "Ліміт проксі /v1 (запитів/хв)",
+    "rateLimitAdmin": "Ліміт панелі /api (запитів/хв)",
+    "rateLimitKey": "Ліміт на ключ /v1 (запитів/хв)",
+    "rateLimitEnvLocked": "Задано через {env} — приберіть змінну для редагування",
+    "rateLimitSaved": "Застосовано — набуде чинності з наступним запитом",
     "generalDescription": "Мова та вигляд цієї панелі.",
     "advancedDescription": "Порогові значення та запобіжники конвеєра стиснення.",
     "compressionTitle": "Стиснення підказок",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · ліміт {limit}/хв · повтор через {retry} с",
     "callerHistory": "Історія викликача",
     "hourlyTrend": "Останні 24 години",
-    "keyUsage": "Використання за ключем"
+    "keyUsage": "Використання за ключем",
+    "spike": "{count} запитів обмежено за останні 5 хвилин"
   }
 }

@@ -24,11 +24,28 @@ export function RetryCountdownBar() {
   }, [snapshot.active])
 
   if (!snapshot.active) return null
-  const label = snapshot.ready ? t('rateLimit.ready') : retryWaitLabel(snapshot.secondsLeft)
+  if (snapshot.ready && snapshot.retryNow) {
+    // Window open: the pill turns into an action so waiting on the toast is
+    // never required — one click replays the blocked request immediately.
+    return (
+      <FloatingBar show>
+        <span role="status" aria-live="polite" className="text-sm text-muted-foreground">
+          {t('rateLimit.ready')}
+        </span>
+        <button
+          type="button"
+          onClick={snapshot.retryNow}
+          className="rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          {t('rateLimit.retryNow')}
+        </button>
+      </FloatingBar>
+    )
+  }
   return (
     <FloatingBar show>
       <span role="status" aria-live="polite" className="text-sm text-muted-foreground">
-        {label}
+        {retryWaitLabel(snapshot.secondsLeft)}
       </span>
     </FloatingBar>
   )

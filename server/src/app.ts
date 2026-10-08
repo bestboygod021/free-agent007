@@ -233,7 +233,7 @@ export function createApp(config?: Config) {
   // endpoint a guesser can attack. The broad limiter above is sized for normal
   // dashboard traffic and far too loose for that, so this path gets its own
   // tight per-IP bucket on top of it.
-  app.use('/api/keys/export', createAdminRateLimiter(EXPORT_RATE_LIMIT_RPM));
+  app.use('/api/keys/export', createAdminRateLimiter(EXPORT_RATE_LIMIT_RPM, { settingKind: null }));
 
   app.use('/api/keys', requireAuth, keysRouter);
   // Per-client key management (#411). Dashboard-session gated like the rest of

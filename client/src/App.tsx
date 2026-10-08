@@ -22,6 +22,7 @@ import { ErrorBoundary } from '@/components/error-boundary'
 import { SettingsDialog } from '@/components/settings-dialog'
 import { Toaster } from '@/components/toaster'
 import { RetryCountdownBar } from '@/components/retry-countdown-bar'
+import { KeysNavBadge } from '@/components/keys-nav-badge'
 import { UpdateReminder } from '@/components/update-reminder'
 import { usePremium } from '@/hooks/use-premium'
 import { I18nProvider, useI18n } from '@/i18n'
@@ -322,7 +323,10 @@ function Navbar() {
                 // Split control: the label navigates, the chevron reveals the
                 // pages hiding behind it.
                 <div key={item.to} className="flex items-center gap-0.5">
-                  <NavItem to={item.to}>{t(item.labelKey)}</NavItem>
+                  <NavItem to={item.to}>
+                    {t(item.labelKey)}
+                    {item.to === '/keys' && <KeysNavBadge />}
+                  </NavItem>
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       aria-label={t(menu.ariaKey)}
@@ -347,6 +351,7 @@ function Navbar() {
               ) : (
                 <NavItem key={item.to} to={item.to}>
                   {t(item.labelKey)}
+                  {item.to === '/keys' && <KeysNavBadge />}
                 </NavItem>
               )
             })}
@@ -427,6 +432,7 @@ function Navbar() {
                         className={location.pathname === item.to ? 'bg-accent text-accent-foreground font-medium' : undefined}
                       >
                         {t(item.labelKey)}
+                        {item.to === '/keys' && <KeysNavBadge />}
                       </DropdownMenuItem>
                     )
                   })}

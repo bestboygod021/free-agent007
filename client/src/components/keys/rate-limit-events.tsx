@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { useI18n } from '@/i18n'
+import { AlertTriangle } from 'lucide-react'
 
 // Operator view over the rate limiters' rejection trail: every 429 the server
 // answered (dashboard /api, proxy /v1, per-key buckets) lands here, newest
@@ -18,11 +19,14 @@ type RateLimitEvent = {
   path: string
   ip: string | null
   subject: string | null
+  /** Operator-facing api_keys label for key-scoped events (read-time join;
+   *  null when the fingerprint has no key row or the material won't decrypt). */
+  label?: string | null
   limit: number
   retryAfter: number
 }
 
-type KeyUsage = { subject: string; count: number; limit: number; resetAt: number }
+type KeyUsage = { subject: string; label?: string | null; count: number; limit: number; resetAt: number }
 
 type Stats = {
   windowHours: number
@@ -48,7 +52,7 @@ export function RateLimitEvents() {
   // (react-hooks/purity forbids Date.now() in the render body).
   const [now] = useState(() => Date.now())
 
-  const { data } = useQuery<{ events: RateLimitEvent[]; keyUsage: KeyUsage[] }>({
+  const { data } = useQuery<{ events: RateLimitEvent[]; keyUsage: KeyUsage[]; spike: { at: number; count: number } | null }>({
     queryKey: ['rate-limit-events'],
     queryFn: () => apiFetch('/api/health/rate-limits'),
     refetchInterval: 60_000,
@@ -112,7 +116,11 @@ export function RateLimitEvents() {
                   <span className="font-mono">
                     {event.method} {event.path}
                   </span>
-                  {event.subject && <span className="font-mono text-muted-foreground">{event.subject}</span>}
+                  {event.label ? (
+                    <span className="text-muted-foreground" title={event.subject ?? undefined}>{event.label}</span>
+                  ) : (
+                    event.subject && <span className="font-mono text-muted-foreground">{event.subject}</span>
+                  )}
                   <span className="text-muted-foreground">{new Date(event.ts).toLocaleString(locale)}</span>
                 </button>
                 {open && (
@@ -176,7 +184,11 @@ export function RateLimitEvents() {
             {keyUsage.map(row => (
               <li key={row.subject} className="text-xs">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono">{row.subject}</span>
+                  {row.label ? (
+                    <span title={row.subject}>{row.label}</span>
+                  ) : (
+                    <span className="font-mono">{row.subject}</span>
+                  )}
                   <span className="tabular-nums text-muted-foreground">
                     {row.count}/{row.limit}
                   </span>
@@ -199,5 +211,33 @@ export function RateLimitEvents() {
         </div>
       )}
     </section>
+  )
+}
+
+/** The spike callout the Keys page shows beside the degradation banner: only
+ *  while a 5-minute rejection burst is fresh. The server already gates at ten
+ *  minutes; this client-side check covers reads of a cached payload. Shares
+ *  the panel's query key family so both stay warm together. */
+export function RateLimitSpikeBanner() {
+  const { t } = useI18n()
+  // Pinned once per mount — react-hooks/purity bans Date.now() in the render
+  // body, and a one-shot timestamp is plenty for a ten-minute freshness gate.
+  const [now] = useState(() => Date.now())
+  const { data } = useQuery<{ spike: { at: number; count: number } | null }>({
+    queryKey: ['rate-limit-events', 'banner'],
+    queryFn: () => apiFetch('/api/health/rate-limits'),
+    refetchInterval: 60_000,
+    retry: false,
+  })
+  const spike = data?.spike
+  if (!spike || now - spike.at > 10 * 60_000) return null
+  return (
+    <div
+      role="alert"
+      className="flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+    >
+      <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+      <span>{t('rateLimitEvents.spike', { count: spike.count })}</span>
+    </div>
   )
 }

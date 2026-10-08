@@ -109,6 +109,12 @@
     "sectionCompression": "कम्प्रेसन",
     "sectionAdvanced": "उन्नत",
     "sectionPreview": "पूर्वावलोकन",
+    "sectionRateLimit": "दर सीमाहरू",
+    "rateLimitProxy": "प्रक्सि /v1 सीमा (प्रति मिनेट अनुरोधहरू)",
+    "rateLimitAdmin": "ड्यासबोर्ड /api सीमा (प्रति मिनेट अनुरोधहरू)",
+    "rateLimitKey": "प्रति-कुञ्जी /v1 सीमा (प्रति मिनेट अनुरोधहरू)",
+    "rateLimitEnvLocked": "{env} द्वारा निर्धारित — सम्पादन गर्न हटाउनुहोस्",
+    "rateLimitSaved": "लागू गरियो — अर्को अनुरोधमा प्रभावकारी",
     "generalDescription": "यो ड्यासबोर्डको भाषा र देखावट।",
     "advancedDescription": "कम्प्रेसन पाइपलाइनका थ्रेसहोल्ड र सुरक्षा स्विचहरू।",
     "compressionTitle": "प्रम्प्ट कम्प्रेसन",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · सीमा {limit}/मिनेट · {retry} सेकेन्डमा फेरि प्रयास",
     "callerHistory": "कलर इतिहास",
     "hourlyTrend": "पछिल्ला 24 घण्टा",
-    "keyUsage": "कुञ्जी अनुसार प्रयोग"
+    "keyUsage": "कुञ्जी अनुसार प्रयोग",
+    "spike": "पछिल्लो ५ मिनेटमा {count} अनुरोधहरू सीमित भए"
   }
 }

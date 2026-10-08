@@ -109,6 +109,12 @@
     "sectionCompression": "Compression",
     "sectionAdvanced": "Advanced",
     "sectionPreview": "Preview",
+    "sectionRateLimit": "Mga limit ng bilis",
+    "rateLimitProxy": "Limit ng proxy /v1 (request/min)",
+    "rateLimitAdmin": "Limit ng dashboard /api (request/min)",
+    "rateLimitKey": "Bawat-susi /v1 limit (request/min)",
+    "rateLimitEnvLocked": "Naka-set sa {env} — alisin ito para mai-edit",
+    "rateLimitSaved": "Nailapat — magkakabisa sa susunod na request",
     "generalDescription": "Wika at hitsura ng dashboard na ito.",
     "advancedDescription": "Mga threshold at safety switch para sa compression pipeline.",
     "compressionTitle": "Compression ng prompt",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · limit {limit}/min · subukan muli sa {retry}s",
     "callerHistory": "Kasaysayan ng caller",
     "hourlyTrend": "Nakaraang 24 oras",
-    "keyUsage": "Gamit bawat key"
+    "keyUsage": "Gamit bawat key",
+    "spike": "{count} request ang na-limit sa nakaraang 5 minuto"
   }
 }

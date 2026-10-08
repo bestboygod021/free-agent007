@@ -109,6 +109,12 @@
     "sectionCompression": "Komprimierung",
     "sectionAdvanced": "Erweitert",
     "sectionPreview": "Vorschau",
+    "sectionRateLimit": "Rate-Limits",
+    "rateLimitProxy": "Proxy-/v1-Limit (Anfragen/Min.)",
+    "rateLimitAdmin": "Dashboard-/api-Limit (Anfragen/Min.)",
+    "rateLimitKey": "Pro-Schlüssel-/v1-Limit (Anfragen/Min.)",
+    "rateLimitEnvLocked": "Durch {env} festgelegt — zum Bearbeiten entfernen",
+    "rateLimitSaved": "Übernommen — gilt ab der nächsten Anfrage",
     "generalDescription": "Sprache und Erscheinungsbild dieses Dashboards.",
     "advancedDescription": "Schwellenwerte und Sicherheitsschalter für die Komprimierungs-Pipeline.",
     "compressionTitle": "Prompt-Komprimierung",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · Limit {limit}/Min. · Erneut versuchen in {retry} s",
     "callerHistory": "Anruferverlauf",
     "hourlyTrend": "Letzte 24 Stunden",
-    "keyUsage": "Nutzung pro Schlüssel"
+    "keyUsage": "Nutzung pro Schlüssel",
+    "spike": "{count} Anfragen in den letzten 5 Minuten gedrosselt"
   }
 }

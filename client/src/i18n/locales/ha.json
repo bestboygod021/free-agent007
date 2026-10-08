@@ -109,6 +109,12 @@
     "sectionCompression": "Matsawa",
     "sectionAdvanced": "Na ci gaba",
     "sectionPreview": "Samfoti",
+    "sectionRateLimit": "Ƙididdigar ƙimar",
+    "rateLimitProxy": "Igelin proxy /v1 (bukatun/daqiƙa)",
+    "rateLimitAdmin": "Igelin allon bayanai /api (bukatun/daqiƙa)",
+    "rateLimitKey": "Igelin kalinin /v1 (bukatun/daqiƙa)",
+    "rateLimitEnvLocked": "An ƙayyade ta {env} — cire shi don gyara",
+    "rateLimitSaved": "An aiwata — zai amfana da bukaci mai zuwa",
     "generalDescription": "Harshe da kamanni na wannan dashboard.",
     "advancedDescription": "Iyaka da maɓallan tsaro na tsarin matsawa.",
     "compressionTitle": "Matsawar prompt",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · iyaka {limit}/na minti · sake gwaji bay {retry} s",
     "callerHistory": "Tarihin mai kira",
     "hourlyTrend": "Kwana 24 da suka wuce",
-    "keyUsage": "Amfani ga kowace mabuɗi"
+    "keyUsage": "Amfani ga kowace mabuɗi",
+    "spike": "{count} bukatu an rage su cikin dakiku 5 da suka gabata"
   }
 }

@@ -109,6 +109,12 @@
     "sectionCompression": "Sıkıştırma",
     "sectionAdvanced": "Gelişmiş",
     "sectionPreview": "Önizleme",
+    "sectionRateLimit": "Hız sınırları",
+    "rateLimitProxy": "Proxy /v1 sınırı (istek/dk)",
+    "rateLimitAdmin": "Gösterge paneli /api sınırı (istek/dk)",
+    "rateLimitKey": "Anahtar başına /v1 sınırı (istek/dk)",
+    "rateLimitEnvLocked": "{env} ile sabitlendi — düzenlemek için kaldırıldı",
+    "rateLimitSaved": "Uygulandı — sonraki istekte geçerli olacak",
     "generalDescription": "Bu panonun dili ve görünümü.",
     "advancedDescription": "Sıkıştırma hattı için eşikler ve güvenlik anahtarları.",
     "compressionTitle": "İstem sıkıştırma",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · üst sınır {limit}/dk · {retry} sn sonra tekrar dene",
     "callerHistory": "Çağrı geçmişi",
     "hourlyTrend": "Son 24 saat",
-    "keyUsage": "Anahtara göre kullanım"
+    "keyUsage": "Anahtara göre kullanım",
+    "spike": "Son 5 dakikada {count} istek sınırlandırıldı"
   }
 }

@@ -109,6 +109,12 @@
     "sectionCompression": "Compressie",
     "sectionAdvanced": "Geavanceerd",
     "sectionPreview": "Voorbeeld",
+    "sectionRateLimit": "Snelheidslimieten",
+    "rateLimitProxy": "Proxy-/v1-limiet (verzoeken/min)",
+    "rateLimitAdmin": "Dashboard-/api-limiet (verzoeken/min)",
+    "rateLimitKey": "Per-sleutel-/v1-limiet (verzoeken/min)",
+    "rateLimitEnvLocked": "Vastgezet door {env} — verwijder deze om aan te passen",
+    "rateLimitSaved": "Toegepast — geldt bij het volgende verzoek",
     "generalDescription": "Taal en uiterlijk van dit dashboard.",
     "advancedDescription": "Drempelwaarden en veiligheidsschakelaars voor de compressiepipeline.",
     "compressionTitle": "Promptcompressie",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · limiet {limit}/min · opnieuw proberen over {retry} s",
     "callerHistory": "Beller-geschiedenis",
     "hourlyTrend": "Laatste 24 uur",
-    "keyUsage": "Gebruik per sleutel"
+    "keyUsage": "Gebruik per sleutel",
+    "spike": "{count} verzoeken beperkt in de afgelopen 5 minuten"
   }
 }

@@ -109,6 +109,12 @@
     "sectionCompression": "ಸಂಕೋಚನ",
     "sectionAdvanced": "ಸುಧಾರಿತ",
     "sectionPreview": "ಪೂರ್ವವೀಕ್ಷಣೆ",
+    "sectionRateLimit": "ವೇಗ ಮಿತಿಗಳು",
+    "rateLimitProxy": "ಪ್ರಾಕ್ಸಿ /v1 ಮಿತಿ (ನಿಮಿಷಕ್ಕೆ ವಿನಂತಿಗಳು)",
+    "rateLimitAdmin": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ /api ಮಿತಿ (ನಿಮಿಷಕ್ಕೆ ವಿನಂತಿಗಳು)",
+    "rateLimitKey": "ಪ್ರತಿ ಕೀ /v1 ಮಿತಿ (ನಿಮಿಷಕ್ಕೆ ವಿನಂತಿಗಳು)",
+    "rateLimitEnvLocked": "{env} ಮೂಲಕ ಹೊಂದಿಸಲಾಗಿದೆ — ಸಂಪಾದಿಸಲು ತೆಗೆದುಹಾಕಿ",
+    "rateLimitSaved": "ಅನ್ವಯಿಸಲಾಗಿದೆ — ಮುಂದಿನ ವಿನಂತಿಗೆ ಜಾರಿ",
     "generalDescription": "ಈ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ನ ಭಾಷೆ ಮತ್ತು ನೋಟ.",
     "advancedDescription": "ಸಂಕೋಚನ ಪೈಪ್‌ಲೈನ್‌ಗಾಗಿ ಮಿತಿಗಳು ಮತ್ತು ಸುರಕ್ಷತಾ ಸ್ವಿಚ್‌ಗಳು.",
     "compressionTitle": "ಪ್ರಾಂಪ್ಟ್ ಸಂಕೋಚನ",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · ಮಿತಿ {limit}/ನಿಮಿ · {retry} ಸೆಕೆಂಡಿನಲ್ಲಿ ಮತ್ತೆ ಪ್ರಯತ್ನ",
     "callerHistory": "ಕಾಲರ್ ಇತಿಹಾಸ",
     "hourlyTrend": "ಕಳೆದ 24 ಗಂಟೆ",
-    "keyUsage": "ಕೀ ಪ್ರತಿ ಬಳಕೆ"
+    "keyUsage": "ಕೀ ಪ್ರತಿ ಬಳಕೆ",
+    "spike": "ಕಳೆದ 5 ನಿಮಿಷದಲ್ಲಿ {count} ವಿನಂತಿಗಳಿಗೆ ಮಿತಿ ವಿಧಿಸಲಾಗಿದೆ"
   }
 }

@@ -109,6 +109,12 @@
     "sectionCompression": "संपीड़न",
     "sectionAdvanced": "उन्नत",
     "sectionPreview": "पूर्वावलोकन",
+    "sectionRateLimit": "दर सीमाएँ",
+    "rateLimitProxy": "प्रॉक्सी /v1 सीमा (प्रति मिनट अनुरोध)",
+    "rateLimitAdmin": "डैशबोर्ड /api सीमा (प्रति मिनट अनुरोध)",
+    "rateLimitKey": "प्रति-कुंजी /v1 सीमा (प्रति मिनट अनुरोध)",
+    "rateLimitEnvLocked": "{env} से सेट — संपादन के लिए हटाएँ",
+    "rateLimitSaved": "लागू — अगले अनुरोध पर प्रभावी",
     "generalDescription": "इस डैशबोर्ड की भाषा और दिखावट।",
     "advancedDescription": "संपीड़न पाइपलाइन के लिए सीमाएँ और सुरक्षा स्विच।",
     "compressionTitle": "प्रॉम्प्ट संपीड़न",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · सीमा {limit}/मिनट · {retry}s में पुनः प्रयास",
     "callerHistory": "कॉलर इतिहास",
     "hourlyTrend": "पिछले 24 घंटे",
-    "keyUsage": "कुंजी अनुसार उपयोग"
+    "keyUsage": "कुंजी अनुसार उपयोग",
+    "spike": "पिछले 5 मिनट में {count} अनुरोध सीमित किए गए"
   }
 }

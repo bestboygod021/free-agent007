@@ -109,6 +109,12 @@
     "sectionCompression": "Сжатие",
     "sectionAdvanced": "Дополнительно",
     "sectionPreview": "Предпросмотр",
+    "sectionRateLimit": "Лимиты запросов",
+    "rateLimitProxy": "Лимит прокси /v1 (запросов/мин)",
+    "rateLimitAdmin": "Лимит панели /api (запросов/мин)",
+    "rateLimitKey": "Лимит на ключ /v1 (запросов/мин)",
+    "rateLimitEnvLocked": "Задано через {env} — уберите переменную для правки",
+    "rateLimitSaved": "Применено — вступит в силу со следующего запроса",
     "generalDescription": "Язык и внешний вид этой панели.",
     "advancedDescription": "Пороги и предохранители конвейера сжатия.",
     "compressionTitle": "Сжатие промптов",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · предел {limit}/мин · повтор через {retry} с",
     "callerHistory": "История вызывающего",
     "hourlyTrend": "Последние 24 часа",
-    "keyUsage": "Использование по ключам"
+    "keyUsage": "Использование по ключам",
+    "spike": "{count} запросов ограничено за последние 5 минут"
   }
 }

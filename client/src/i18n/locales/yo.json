@@ -109,6 +109,12 @@
     "sectionCompression": "Ifunpọ",
     "sectionAdvanced": "Ilọsiwaju",
     "sectionPreview": "Awotẹlẹ",
+    "sectionRateLimit": "Àkọ̀kọ̀ ọ̀gẹ́",
+    "rateLimitProxy": "Àkọ̀kọ̀ proksì /v1 (ìbè ìṣẹ́jú)",
+    "rateLimitAdmin": "Àkọ̀kọ̀ àpò ìṣàkó /api (ìbè ìṣẹ́jú)",
+    "rateLimitKey": "Àkọ̀kọ̀ fún ìwọ̀lé /v1 (ìbè ìṣẹ́jú)",
+    "rateLimitEnvLocked": "A ṣètò pẹ̀lú {env} — yíyọ kúkúrú láti àtúnṣe",
+    "rateLimitSaved": "A tọ́ka síbẹ́ — yóò fi ṣe pẹ̀lú ìbè tó kàn tókàn tuntún",
     "generalDescription": "Ede ati irisi dasibodu yii.",
     "advancedDescription": "Awọn ààlà ati awọn àmúyẹ ààbò fun ìlànà ifunpọ.",
     "compressionTitle": "Ifunpọ ilana",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · apọnu {limit}/isẹju · gbìyànjú lẹ́yìn {retry} s",
     "callerHistory": "Ìtàn olùpè",
     "hourlyTrend": "Wákàtí 24 kéyìn",
-    "keyUsage": "Ìṣàmúlò nípa aṣọyè"
+    "keyUsage": "Ìṣàmúlò nípa aṣọyè",
+    "spike": "A dín ìbè {count} sínú ìṣẹ́jú márùn-ún tó kọjá"
   }
 }

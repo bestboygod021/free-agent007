@@ -31,9 +31,10 @@ const KEY_EVENT = {
   scope: 'key' as const,
   path: '/v1/chat/completions',
   subject: 'key:ab12cd34',
+  label: 'prod groq',
   limit: 180,
 }
-const KEY_USAGE = [{ subject: 'key:ab12cd34', count: 118, limit: 180, resetAt: Date.now() + 30_000 }]
+const KEY_USAGE = [{ subject: 'key:ab12cd34', label: 'prod groq', count: 118, limit: 180, resetAt: Date.now() + 30_000 }]
 const hour = new Date().toISOString().slice(0, 13)
 const STATS = {
   windowHours: 24,
@@ -99,7 +100,10 @@ describe('RateLimitEvents card', () => {
     await flush()
     expect(container.textContent).toContain('Recently rate-limited requests')
     expect(container.textContent).toContain('/api/ping')
-    expect(container.textContent).toContain('key:ab12cd34')
+    // The read-time label join shows the operator's name wherever the bare
+    // fingerprint used to appear; the fingerprint survives as a hover title.
+    expect(container.textContent).toContain('prod groq')
+    expect(container.querySelector('[title="key:ab12cd34"]')).not.toBeNull()
     // Hourly trend: 24 slots, at least one filled for the stubbed hour.
     const bars = [...container.querySelectorAll('[role="img"] > div')]
     expect(bars).toHaveLength(24)

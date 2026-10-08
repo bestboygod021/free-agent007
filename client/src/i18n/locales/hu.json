@@ -109,6 +109,12 @@
     "sectionCompression": "Tömörítés",
     "sectionAdvanced": "Speciális",
     "sectionPreview": "Előnézet",
+    "sectionRateLimit": "Sebességkorlátok",
+    "rateLimitProxy": "Proxy /v1-korlát (kérés/perc)",
+    "rateLimitAdmin": "Irányítópult /api-korlát (kérés/perc)",
+    "rateLimitKey": "Kulcsonkénti /v1-korlát (kérés/perc)",
+    "rateLimitEnvLocked": "A(z) {env} rögzíti — szerkesztéshez távolítsa el",
+    "rateLimitSaved": "Alkalmazva — a következő kérésnél lép érvénybe",
     "generalDescription": "A vezérlőpult nyelve és megjelenése.",
     "advancedDescription": "A tömörítési folyamat küszöbértékei és biztonsági kapcsolói.",
     "compressionTitle": "Prompt-tömörítés",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · korlát {limit}/perc · újrapróbálás {retry} mp múlva",
     "callerHistory": "Hívó előzményei",
     "hourlyTrend": "Utolsó 24 óra",
-    "keyUsage": "Használat kulcsonként"
+    "keyUsage": "Használat kulcsonként",
+    "spike": "{count} kérés korlátozva az elmúlt 5 percben"
   }
 }

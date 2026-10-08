@@ -109,6 +109,12 @@
     "sectionCompression": "ጭመቃ",
     "sectionAdvanced": "የላቀ",
     "sectionPreview": "ቅድመ-እይታ",
+    "sectionRateLimit": "የደረጃ ቁጥር መጠኖች",
+    "rateLimitProxy": "የፕሮክሲ /v1 ገደብ (በደቂቃ ጥያቄዎች)",
+    "rateLimitAdmin": "የዳሽቦርድ /api ገደብ (በደቂቃ ጥያቄዎች)",
+    "rateLimitKey": "በመለያ በአንድ /v1 ገደብ (በደቂቃ ጥያቄዎች)",
+    "rateLimitEnvLocked": "በ {env} ተሰክቷል — ለማስተካከል አንሰት",
+    "rateLimitSaved": "ተተግብሯል — በሚቀጥለው ጥያቄ ይሠራል",
     "generalDescription": "የዚህ ዳሽቦርድ ቋንቋ እና አቀራረብ።",
     "advancedDescription": "የጭመቃ ሂደት ገደቦች እና የደህንነት መቀየሪያዎች።",
     "compressionTitle": "የፕሮምፕት ጭመቃ",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · መጠን {limit}/ደቂቃ · ከ {retry} ሰከንድ በኋላ እንደገና ይሞክሩ",
     "callerHistory": "የደውሉ ታሪክ",
     "hourlyTrend": "የመጨረሻው 24 ሰዓት",
-    "keyUsage": "በቁልፍ የተጠቀመው"
+    "keyUsage": "በቁልፍ የተጠቀመው",
+    "spike": "በየቅርብ ወቅቱ 5 ደቂቃ ውስጥ {count} ጥያቄዎች ተደምቀዋል"
   }
 }

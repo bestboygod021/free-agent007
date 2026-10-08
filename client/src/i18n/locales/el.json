@@ -109,6 +109,12 @@
     "sectionCompression": "Συμπίεση",
     "sectionAdvanced": "Για προχωρημένους",
     "sectionPreview": "Προεπισκόπηση",
+    "sectionRateLimit": "Όρια ρυθμού",
+    "rateLimitProxy": "Όριο διακομιστή μεσολάβησης /v1 (αιτήματα/λεπτό)",
+    "rateLimitAdmin": "Όριο πίνακα ελέγχου /api (αιτήματα/λεπτό)",
+    "rateLimitKey": "Όριο ανά κλειδί /v1 (αιτήματα/λεπτό)",
+    "rateLimitEnvLocked": "Ορίστηκε από {env} — αφαιρέστε τη μεταβλητή για επεξεργασία",
+    "rateLimitSaved": "Εφαρμόστηκε — ισχύει στο επόμενο αίτημα",
     "generalDescription": "Γλώσσα και εμφάνιση αυτού του πίνακα ελέγχου.",
     "advancedDescription": "Όρια και διακόπτες ασφαλείας για τη ροή συμπίεσης.",
     "compressionTitle": "Συμπίεση prompt",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · όριο {limit}/λεπτό · νέα προσπάθεια σε {retry} δευτ",
     "callerHistory": "Ιστορικό καλούντος",
     "hourlyTrend": "Τελευταίες 24 ώρες",
-    "keyUsage": "Χρήση ανά κλειδί"
+    "keyUsage": "Χρήση ανά κλειδί",
+    "spike": "{count} αιτήματα περιορίστηκαν τις τελευταίες 5 λεπτά"
   }
 }

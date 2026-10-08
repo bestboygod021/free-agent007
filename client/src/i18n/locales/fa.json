@@ -109,6 +109,12 @@
     "sectionCompression": "فشرده‌سازی",
     "sectionAdvanced": "پیشرفته",
     "sectionPreview": "پیش‌نمایش",
+    "sectionRateLimit": "محدودیت نرخ",
+    "rateLimitProxy": "سقف پراکسی /v1 (درخواست در دقیقه)",
+    "rateLimitAdmin": "سقف داشبورد /api (درخواست در دقیقه)",
+    "rateLimitKey": "سقف هر کلید /v1 (درخواست در دقیقه)",
+    "rateLimitEnvLocked": "با متغیر {env} ثابت شده؛ برای ویرایش آن را حذف کنید",
+    "rateLimitSaved": "اعمال شد — در درخواست بعدی مؤثر است",
     "generalDescription": "زبان و ظاهر این داشبورد.",
     "advancedDescription": "آستانه‌ها و کلیدهای ایمنی خط فشرده‌سازی.",
     "compressionTitle": "فشرده‌سازی پرامپت",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · سقف {limit}/دقیقه — تلاش مجدد پس از {retry} ثانیه",
     "callerHistory": "تاریخچه‌ی تماس‌گیرنده",
     "hourlyTrend": "۲۴ ساعت اخیر",
-    "keyUsage": "مصرف به‌ازای هر کلید"
+    "keyUsage": "مصرف به‌ازای هر کلید",
+    "spike": "{count} درخواست در ۵ دقیقهٔ اخیر محدود شد"
   }
 }

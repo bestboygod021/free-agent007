@@ -31,7 +31,20 @@ import {
   UNIFIED_MAX_TOKENS_AUTO,
   unifiedMaxTokensCap,
 } from '../lib/sampling-params.js';
-import { settingsCompatibilitySchema, settingsEnableMcpSchema, settingsGuardrailsSchema, settingsHeadroomSchema, settingsOutputLimitSchema, settingsTaskWeightShareSchema, settingsUnifyPutSchema, settingsUpdateCheckSchema, urlTokenCreateSchema } from '@freellmapi/shared/schemas.js';
+import {
+  rateLimitSettingsSchema,
+  settingsCompatibilitySchema,
+  settingsEnableMcpSchema,
+  settingsGuardrailsSchema,
+  settingsHeadroomSchema,
+  settingsOutputLimitSchema,
+  settingsTaskWeightShareSchema,
+  settingsUnifyPutSchema,
+  settingsUpdateCheckSchema,
+  urlTokenCreateSchema,
+} from '@freellmapi/shared/schemas.js';
+
+import { getRateLimitSettings, setRateLimitSettings } from '../middleware/rateLimit.js';
 
 export const settingsRouter = Router();
 
@@ -364,6 +377,30 @@ settingsRouter.put('/guardrails', (req: Request, res: Response) => {
     requestMaxTokensBudget: getRequestMaxTokensBudget(),
     maxConsecutiveUpstreamFails: getMaxConsecutiveUpstreamFails(),
   });
+});
+
+// Rate-limit caps (proxy /v1, admin /api, per-key). Precedence lives in the
+// middleware: env > this setting > default. Values are requests-per-minute;
+// 0 disables that limiter entirely. Saving applies to the NEXT request — the
+// middleware resolves per request, so no restart.
+settingsRouter.get('/rate-limits', (_req: Request, res: Response) => {
+  res.json(getRateLimitSettings());
+});
+
+settingsRouter.put('/rate-limits', (req: Request, res: Response) => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const parsed = rateLimitSettingsSchema.safeParse(body);
+  if (!parsed.success) {
+    const detail = parsed.error.errors
+      .map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message))
+      .slice(0, 5)
+      .join(', ');
+    res.status(400).json({
+      error: { message: `Invalid rate limit settings: ${detail}`, type: 'invalid_request_error' },
+    });
+    return;
+  }
+  res.json(setRateLimitSettings(parsed.data));
 });
 
 // Get the unified API key

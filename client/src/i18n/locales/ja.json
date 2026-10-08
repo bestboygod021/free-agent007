@@ -109,6 +109,12 @@
     "sectionCompression": "圧縮",
     "sectionAdvanced": "詳細設定",
     "sectionPreview": "プレビュー",
+    "sectionRateLimit": "レート制限",
+    "rateLimitProxy": "プロキシ /v1 の上限（リクエスト/分）",
+    "rateLimitAdmin": "ダッシュボード /api の上限（リクエスト/分）",
+    "rateLimitKey": "キーごとの /v1 上限（リクエスト/分）",
+    "rateLimitEnvLocked": "{env} によって固定 — 編集するには解除してください",
+    "rateLimitSaved": "適用済み — 次のリクエストから有効",
     "generalDescription": "このダッシュボードの言語と外観。",
     "advancedDescription": "圧縮パイプラインのしきい値と安全スイッチ。",
     "compressionTitle": "プロンプト圧縮",
@@ -1249,6 +1255,7 @@
     "details": "IP {ip} · 上限 {limit}/分 · {retry} 秒後に再試行",
     "callerHistory": "呼び出し元の履歴",
     "hourlyTrend": "過去24時間",
-    "keyUsage": "キーごとの使用量"
+    "keyUsage": "キーごとの使用量",
+    "spike": "直近5分で {count} 件のリクエストが制限されました"
   }
 }
