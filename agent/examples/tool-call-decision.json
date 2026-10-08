@@ -1,0 +1,12 @@
+{
+  "tool": "github.pull_request.create",
+  "action": "create",
+  "sideEffect": "external_write",
+  "riskLevel": "medium",
+  "reversible": true,
+  "reason": "Creates an externally visible artifact (a pull request) in the user's GitHub repository.",
+  "requiredScopes": ["pull_request:write"],
+  "targetRef": "agent/run-8f2c",
+  "approvalId": null,
+  "estimatedCost": 0
+}

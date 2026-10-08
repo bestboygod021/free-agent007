@@ -1,0 +1,57 @@
+{
+  "name": "@freellmapi/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ForgePilot deterministic agent kernel — decision core, prompt library, JSON Schema contracts and compute modes for agent-driven software delivery.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./core/*.js": {
+      "types": "./dist/core/*.d.ts",
+      "default": "./dist/core/*.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "schema",
+    "prompts",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate:schemas": "vitest run test/schema.test.ts",
+    "check": "npm run typecheck && npm run test",
+    "prompt:show": "tsx scripts/show-prompt.ts",
+    "prompt:list": "tsx scripts/show-prompt.ts --list",
+    "render:gaps": "tsx scripts/render-gaps.ts",
+    "render:coverage": "tsx scripts/render-design-coverage.ts",
+    "render:audit": "tsx scripts/render-capability-audit.ts",
+    "render:upgrades": "tsx scripts/render-upgrade-contracts.ts",
+    "playground": "tsx apps/playground/server.ts",
+    "api": "FORGEPILOT_API_LISTEN=1 tsx apps/api/server.ts"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.3"
+  },
+  "engines": {
+    "node": ">=20.18.0 <25.0.0",
+    "npm": ">=10.0.0"
+  }
+}

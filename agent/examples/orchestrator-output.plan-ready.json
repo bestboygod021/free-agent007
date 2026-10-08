@@ -1,0 +1,73 @@
+{
+  "status": "approval_required",
+  "summary": "نقشه ساخت فروشگاه چندزبانه آماده تأیید است. ۱۱ تسک در ۶ مایلستون، بدون هیچ نوشتن روی مخزن تا زمان تأیید شما.",
+  "confirmedRequirements": [
+    "فروشگاه چندزبانه با پشتیبانی fa-IR و en-US",
+    "پنل مدیریت با نقش‌های کاربری",
+    "پرداخت آنلاین",
+    "مدیریت انبار",
+    "احراز هویت",
+    "تست خودکار و استقرار پیش‌نمایش"
+  ],
+  "assumptions": [
+    {
+      "assumption": "پرداخت با ارائه‌دهنده‌ای انجام می‌شود که حالت آزمایشی (sandbox) دارد.",
+      "impactIfWrong": "اگر درگاه داخلی بدون sandbox باشد، تسک پرداخت باید با stub نوشته شود و اتصال واقعی به تأیید انسانی موکول شود.",
+      "confidence": "medium"
+    },
+    {
+      "assumption": "زبان پیش‌فرض رابط کاربری fa-IR با جهت RTL است.",
+      "impactIfWrong": "اگر LTR باشد، فقط چیدمان تغییر می‌کند؛ معماری i18n دست‌نخورده می‌ماند.",
+      "confidence": "high"
+    }
+  ],
+  "clarificationQuestions": [
+    {
+      "question": "مالیات و ارز چندگانه در نسخه اول لازم است یا فقط یک ارز؟",
+      "whyItMatters": "مدل داده سفارش و ذخیره مبلغ را تغییر می‌دهد؛ بعداً افزودنش migration پرریسک دارد.",
+      "priority": "blocking",
+      "options": ["یک ارز (IRR)", "چند ارز بدون تبدیل", "چند ارز با نرخ تبدیل روزانه"],
+      "defaultIfUnanswered": "یک ارز (IRR) و فیلد currency برای توسعه بعدی"
+    },
+    {
+      "question": "ارسال سفارش با کدام سرویس انجام می‌شود؟",
+      "whyItMatters": "تعیین می‌کند Connector حمل‌ونقل ساخته شود یا فقط یک رابط خالی.",
+      "priority": "high",
+      "options": ["رابط خالی (فعلاً دستی)", "اتصال به یک سرویس مشخص"],
+      "defaultIfUnanswered": "رابط خالی با پیاده‌سازی دستی"
+    }
+  ],
+  "plan": [
+    { "milestone": "Bootstrap", "steps": ["ساخت اسکلت monorepo", "تنظیم lint/typecheck/test", "افزودن CI"], "exitCriteria": ["هر سه دستور با کد خروج ۰"] },
+    { "milestone": "Auth", "steps": ["مدل کاربر و نقش", "ورود/خروج", "میان‌افزار احراز دسترسی"], "exitCriteria": ["تست دسترسی متقاطعtenant خطا می‌دهد"] },
+    { "milestone": "Catalog", "steps": ["مدل محصول و موجودی", "API کاتالوگ", "UI فروشگاه"], "exitCriteria": ["موجودی منفی نمی‌شود"] },
+    { "milestone": "Checkout", "steps": ["سبد خرید", "آداپتور پرداخت", "وب‌هوک"], "exitCriteria": ["پرداخت آزمایشی موفق", "امضای وب‌هوک بررسی می‌شود"] },
+    { "milestone": "Admin", "steps": ["داشبورد", "مدیریت سفارش", "گزارش انبار"], "exitCriteria": ["فقط نقش admin دسترسی دارد"] },
+    { "milestone": "Quality", "steps": ["اجرای ماتریس تست", "بررسی امنیتی", "پیش‌نمایش"], "exitCriteria": ["بدون finding بحرانی باز", "secret scan پاک"] }
+  ],
+  "requiredPermissions": [
+    { "connector": "github", "scope": "repository:read", "purpose": "خواندن کد موجود پیش از تغییر", "riskLevel": "read" },
+    { "connector": "github", "scope": "repository:write", "purpose": "ساخت branch ایجنت و commit", "riskLevel": "medium" },
+    { "connector": "github", "scope": "pull_request:write", "purpose": "باز کردن Pull Request قابل بررسی", "riskLevel": "medium" }
+  ],
+  "securityRisks": [
+    {
+      "severity": "high",
+      "category": "authz",
+      "location": "design:multi-tenant",
+      "description": "هر کوئری دیتابیس باید organizationId را از session بگیرد، نه از ورودی کاربر.",
+      "impact": "در غیر این صورت نشت داده بین tenantها رخ می‌دهد.",
+      "remediation": "اعمال RLS در Postgres به‌عنوان لایه دوم دفاع.",
+      "verification": "pnpm vitest run tests/api -t 'cross-tenant'",
+      "status": "open"
+    }
+  ],
+  "tasks": [],
+  "tests": ["unit", "integration", "e2e checkout", "accessibility (axe-core)", "secret scan", "dependency audit"],
+  "artifacts": [
+    { "kind": "report", "ref": ".forgepilot/reports/plan_shop_mvp.md", "description": "سند کامل نقشه برای بررسی انسانی" }
+  ],
+  "nextAction": "کاربر باید نقشه و مجوزهای درخواست‌شده را تأیید یا رد کند؛ تا آن زمان هیچ فایلی نوشته نمی‌شود.",
+  "proposedEvent": "plan_ready",
+  "budget": { "estimatedTokens": 1450000, "estimatedSeconds": 5400, "estimatedCost": 0 }
+}

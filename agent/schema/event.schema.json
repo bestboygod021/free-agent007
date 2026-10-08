@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/event.schema.json",
+  "title": "SystemEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "schemaVersion", "tenantId", "runId", "type", "timestamp", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "minLength": 1 },
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "tenantId": { "type": "string", "minLength": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "type": {
+      "type": "string",
+      "enum": [
+        "project.created",
+        "run.created",
+        "run.state_changed",
+        "requirements.clarification_requested",
+        "spec.generated",
+        "plan.generated",
+        "approval.requested",
+        "approval.granted",
+        "approval.rejected",
+        "task.created",
+        "task.started",
+        "task.completed",
+        "task.blocked",
+        "tool.call.proposed",
+        "tool.call.started",
+        "tool.call.completed",
+        "tool.call.denied",
+        "file.changed",
+        "commit.created",
+        "test.started",
+        "test.completed",
+        "repair.started",
+        "repair.exhausted",
+        "security.scan.completed",
+        "preview.created",
+        "deployment.approval_requested",
+        "deployment.started",
+        "deployment.completed",
+        "deployment.failed",
+        "model.routed",
+        "quota.exhausted",
+        "run.failed",
+        "run.completed",
+        "run.cancelled"
+      ]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "actorType": { "type": "string", "enum": ["user", "agent", "system", "connector"] },
+    "actorId": { "type": "string" },
+    "parentEventId": { "type": "string" },
+    "payload": { "type": "object" },
+    "redacted": {
+      "type": "boolean",
+      "description": "true when secret redaction modified the payload before it was stored"
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/common.defs.json",
+  "title": "Common definitions",
+  "$defs": {
+    "privacyLevel": {
+      "type": "string",
+      "enum": ["public", "internal", "private", "confidential"]
+    },
+    "riskLevel": {
+      "type": "string",
+      "enum": ["read", "low", "medium", "high", "critical"]
+    },
+    "autonomyLevel": {
+      "type": "string",
+      "enum": ["readonly", "supervised", "autonomous-branch", "full"]
+    },
+    "taskStatus": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "ready",
+        "running",
+        "blocked",
+        "needs_repair",
+        "completed",
+        "failed",
+        "skipped"
+      ]
+    },
+    "runState": {
+      "type": "string",
+      "enum": [
+        "INTAKE",
+        "CLARIFY",
+        "SPECIFY",
+        "PLAN",
+        "AWAITING_PLAN_APPROVAL",
+        "RECON",
+        "IMPLEMENT",
+        "TEST",
+        "REPAIR",
+        "SECURITY_REVIEW",
+        "PREVIEW",
+        "AWAITING_DEPLOY_APPROVAL",
+        "DEPLOY",
+        "VERIFY",
+        "FINALIZE",
+        "DONE",
+        "FAILED",
+        "CANCELLED",
+        "BLOCKED"
+      ]
+    },
+    "sideEffectClass": {
+      "type": "string",
+      "enum": [
+        "none",
+        "local_write",
+        "external_write",
+        "destructive",
+        "billing",
+        "credential",
+        "production"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  }
+}

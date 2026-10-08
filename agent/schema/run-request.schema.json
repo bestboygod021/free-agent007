@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/run-request.schema.json",
+  "title": "RunRequest",
+  "description": "The body of POST /v1/projects/:projectId/runs. computeMode is mandatory: the whole run is configured from it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request", "computeMode", "privacyLevel", "autonomyLevel"],
+  "properties": {
+    "request": { "type": "string", "minLength": 10, "maxLength": 20000 },
+    "computeMode": {
+      "type": "string",
+      "enum": ["free", "paid", "local"],
+      "description": "The single switch that configures providers, budgets, gates and egress for the entire run."
+    },
+    "privacyLevel": { "$ref": "common.defs.json#/$defs/privacyLevel" },
+    "autonomyLevel": { "$ref": "common.defs.json#/$defs/autonomyLevel" },
+    "locale": { "type": "string" },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxCostPerRun": {
+          "type": "number",
+          "minimum": 0,
+          "description": "May only lower the mode's own ceiling, never raise it."
+        },
+        "perRunTokens": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider"],
+      "properties": {
+        "provider": { "type": "string", "enum": ["github", "gitlab", "local"] },
+        "url": { "type": "string" },
+        "baseBranch": { "type": "string" }
+      }
+    },
+    "modelPreferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preferredProviders": { "type": "array", "items": { "type": "string" } },
+        "excludedProviders": { "type": "array", "items": { "type": "string" } },
+        "localModel": { "type": "string" },
+        "byokReference": {
+          "type": "string",
+          "description": "A SecretReference name, never a raw key."
+        }
+      }
+    },
+    "integrations": { "type": "array", "items": { "type": "string" } },
+    "targetPlatforms": { "type": "array", "items": { "type": "string" } },
+    "consents": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cloudEgress": { "type": "boolean" },
+        "providerMayTrainOnInput": { "type": "boolean" }
+      }
+    }
+  }
+}

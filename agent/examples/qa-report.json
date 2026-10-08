@@ -1,0 +1,35 @@
+{
+  "overallStatus": "fail",
+  "testCases": [
+    { "id": "TC-001", "title": "Login with valid credentials", "kind": "integration", "status": "pass", "evidenceRef": "logs/run8f2c/tc001.txt" },
+    { "id": "TC-002", "title": "Non-admin cannot reach /admin", "kind": "integration", "status": "pass", "evidenceRef": "logs/run8f2c/tc002.txt" },
+    { "id": "TC-003", "title": "Checkout with test card completes and decrements stock", "kind": "e2e", "status": "fail", "evidenceRef": "logs/run8f2c/tc003.txt" },
+    { "id": "TC-004", "title": "Cart page is reachable with keyboard only", "kind": "accessibility", "status": "pass", "evidenceRef": "logs/run8f2c/tc004.txt" },
+    { "id": "TC-005", "title": "fa-IR renders RTL without overflow", "kind": "e2e", "status": "flaky", "evidenceRef": "logs/run8f2c/tc005.txt" },
+    { "id": "TC-006", "title": "Payment webhook with bad signature is rejected", "kind": "security", "status": "pass", "evidenceRef": "logs/run8f2c/tc006.txt" },
+    { "id": "TC-007", "title": "Duplicate webhook delivery is idempotent", "kind": "idempotency", "status": "fail", "evidenceRef": "logs/run8f2c/tc007.txt" }
+  ],
+  "accessibilityFindings": [
+    {
+      "severity": "medium",
+      "category": "accessibility",
+      "location": "apps/web/components/CartItem.tsx:22",
+      "description": "The remove button has no accessible name.",
+      "impact": "Screen reader users cannot tell which item they are removing.",
+      "remediation": "Add aria-label including the product name.",
+      "verification": "pnpm playwright test --grep @a11y",
+      "status": "open"
+    }
+  ],
+  "performanceFindings": ["Cart page LCP 2.9s on the preview environment; acceptable for MVP but flagged."],
+  "securityRelevantFindings": [],
+  "flakyTests": ["TC-005"],
+  "recommendedFixes": [
+    "Make the webhook handler idempotent using the provider event id as the dedupe key",
+    "Add aria-label to the remove button in CartItem"
+  ],
+  "commandsExecuted": [
+    { "command": "pnpm vitest run", "exitCode": 0, "logsRef": "logs/run8f2c/unit.txt" },
+    { "command": "pnpm playwright test", "exitCode": 1, "logsRef": "logs/run8f2c/e2e.txt" }
+  ]
+}

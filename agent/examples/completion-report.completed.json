@@ -1,0 +1,45 @@
+{
+  "taskId": "task_backend_auth",
+  "taskStatus": "completed",
+  "summary": "Added POST /v1/projects with session-derived organization scoping, zod validation and four integration tests.",
+  "acceptanceCriteria": [
+    "Only authenticated users can create projects",
+    "The caller must be a member of the target organization",
+    "Project name is validated (1..80 chars, trimmed)",
+    "Duplicate project names are rejected per organization",
+    "The organizationId from the request body is ignored; it is derived from the session",
+    "Tests cover success, unauthenticated, cross-tenant and duplicate-name cases"
+  ],
+  "filesInspected": ["apps/api/src/router.ts", "packages/database/prisma/schema.prisma"],
+  "filesChanged": [
+    "apps/api/src/modules/projects/create-project.ts",
+    "apps/api/src/modules/projects/create-project.test.ts",
+    "apps/api/src/router.ts"
+  ],
+  "dependenciesAdded": [],
+  "commandsExecuted": [
+    { "command": "pnpm lint", "exitCode": 0, "durationMs": 8200, "logsRef": "logs/run8f2c/lint.txt" },
+    { "command": "pnpm typecheck", "exitCode": 0, "durationMs": 21400, "logsRef": "logs/run8f2c/tsc.txt" },
+    { "command": "pnpm vitest run tests/api", "exitCode": 0, "durationMs": 15300, "logsRef": "logs/run8f2c/test.txt" }
+  ],
+  "tests": [
+    { "name": "creates a project for an organization member", "passed": true },
+    { "name": "rejects unauthenticated callers", "passed": true },
+    { "name": "rejects callers from another organization", "passed": true },
+    { "name": "rejects a duplicate project name", "passed": true }
+  ],
+  "securityReview": [
+    {
+      "severity": "info",
+      "category": "tenant-isolation",
+      "location": "apps/api/src/modules/projects/create-project.ts",
+      "description": "organizationId is read from the verified session, never from the request body.",
+      "impact": "Prevents IDOR on project creation.",
+      "remediation": "None required.",
+      "verification": "pnpm vitest run tests/api -t 'another organization'",
+      "status": "fixed"
+    }
+  ],
+  "knownLimitations": ["Rate limiting is not applied to this endpoint yet (tracked in task_api_rate_limit)."],
+  "diffRef": "diffs/run8f2c/task_backend_auth.patch"
+}

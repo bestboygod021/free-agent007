@@ -1,0 +1,13 @@
+{
+  "request": "بازنویسی ماژول پرداخت با پوشش تست کامل، بازبینی امنیتی و استقرار پیش‌نمایش.",
+  "computeMode": "paid",
+  "privacyLevel": "private",
+  "autonomyLevel": "autonomous-branch",
+  "locale": "fa-IR",
+  "budget": { "maxCostPerRun": 12 },
+  "repository": { "provider": "github", "url": "https://github.com/acme/shop", "baseBranch": "main" },
+  "modelPreferences": { "byokReference": "openai-main" },
+  "integrations": ["github"],
+  "targetPlatforms": ["web"],
+  "consents": { "cloudEgress": true, "providerMayTrainOnInput": false }
+}

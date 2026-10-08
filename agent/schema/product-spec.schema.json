@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgepilot.dev/schema/product-spec.schema.json",
+  "title": "ProductSpec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "problemStatement",
+    "targetUsers",
+    "userJourneys",
+    "functionalRequirements",
+    "nonFunctionalRequirements",
+    "assumptions",
+    "ambiguities",
+    "mvp",
+    "nonGoals",
+    "integrations",
+    "risks",
+    "acceptanceCriteria"
+  ],
+  "properties": {
+    "problemStatement": { "type": "string", "minLength": 20 },
+    "targetUsers": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "userJourneys": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "steps"],
+        "properties": {
+          "name": { "type": "string" },
+          "actor": { "type": "string" },
+          "steps": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "functionalRequirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "statement", "priority"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^FR-\\d+$" },
+          "statement": { "type": "string" },
+          "priority": { "type": "string", "enum": ["must", "should", "could", "wont"] },
+          "source": { "type": "string", "enum": ["user", "assumption", "derived"] }
+        }
+      }
+    },
+    "nonFunctionalRequirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "category", "statement"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^NFR-\\d+$" },
+          "category": {
+            "type": "string",
+            "enum": [
+              "security",
+              "performance",
+              "accessibility",
+              "privacy",
+              "reliability",
+              "maintainability",
+              "i18n",
+              "observability",
+              "cost"
+            ]
+          },
+          "statement": { "type": "string" },
+          "measurement": { "type": "string" }
+        }
+      }
+    },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "ambiguities": { "type": "array", "items": { "type": "string" } },
+    "mvp": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "nonGoals": { "type": "array", "items": { "type": "string" } },
+    "integrations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "reason", "authType"],
+        "properties": {
+          "name": { "type": "string" },
+          "reason": { "type": "string" },
+          "authType": {
+            "type": "string",
+            "enum": ["oauth2", "api_key", "github_app", "browser_session", "local", "none"]
+          },
+          "hasOfficialApi": { "type": "boolean" },
+          "fallbackToBrowser": { "type": "boolean" }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["risk", "mitigation"],
+        "properties": {
+          "risk": { "type": "string" },
+          "likelihood": { "type": "string", "enum": ["low", "medium", "high"] },
+          "mitigation": { "type": "string" }
+        }
+      }
+    },
+    "acceptanceCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "given", "when", "then"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^AC-\\d+$" },
+          "given": { "type": "string" },
+          "when": { "type": "string" },
+          "then": { "type": "string" }
+        }
+      }
+    }
+  }
+}
