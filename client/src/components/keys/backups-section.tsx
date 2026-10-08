@@ -10,9 +10,29 @@ import { Badge } from '@/components/ui/badge'
 import { ConfirmButton } from '@/components/confirm-button'
 import { Archive, ChevronDown, Download, Trash2 } from 'lucide-react'
 import { useI18n } from '@/i18n'
+<<<<<<< HEAD
 import type { BackupMeta, BackupSchedule, BackupListResponse, BackupScheduleResponse, BackupCreateResponse, BackupTablesResponse } from '../../../../shared/types'
 
 
+=======
+
+interface BackupMeta {
+  id: number
+  filename: string
+  filesize: number
+  isFull: boolean
+  source: 'manual' | 'scheduled' | 'pre-restore' | 'pre-update'
+  createdAt: string
+  tables: string[]
+}
+
+interface BackupSchedule {
+  enabled: boolean
+  time: string
+  intervalDays: number
+  backupPath: string
+}
+>>>>>>> upstream/main
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -86,15 +106,26 @@ function BackupsPanel() {
 
   const { data: tables = [] } = useQuery<string[]>({
     queryKey: ['backup-tables'],
+<<<<<<< HEAD
     queryFn: () => apiFetch<BackupTablesResponse>('/api/backups/tables').then(r => r.tables),
   })
 
   const { data: list } = useQuery<BackupListResponse>({
+=======
+    queryFn: () => apiFetch<{ tables: string[] }>('/api/backups/tables').then(r => r.tables),
+  })
+
+  const { data: list } = useQuery<{ items: BackupMeta[]; total: number }>({
+>>>>>>> upstream/main
     queryKey: ['backups', page],
     queryFn: () => apiFetch(`/api/backups?page=${page}&pageSize=${pageSize}`),
   })
 
+<<<<<<< HEAD
   const { data: schedule } = useQuery<BackupScheduleResponse>({
+=======
+  const { data: schedule } = useQuery<{ schedule: BackupSchedule }>({
+>>>>>>> upstream/main
     queryKey: ['backup-schedule'],
     queryFn: () => apiFetch('/api/backups/schedule'),
   })
@@ -107,7 +138,11 @@ function BackupsPanel() {
   const create = useMutation({
     meta: { silenceToast: true },
     mutationFn: (chosen: string[]) =>
+<<<<<<< HEAD
       apiFetch<BackupCreateResponse>('/api/backups', {
+=======
+      apiFetch<{ backup: BackupMeta }>('/api/backups', {
+>>>>>>> upstream/main
         method: 'POST',
         body: JSON.stringify(chosen.length > 0 ? { tables: chosen } : {}),
       }),
@@ -218,7 +253,13 @@ function BackupsPanel() {
                       ? t('backups.scheduled')
                       : item.source === 'pre-restore'
                         ? t('backups.preRestore')
+<<<<<<< HEAD
                         : t('backups.manual')}
+=======
+                        : item.source === 'pre-update'
+                          ? t('backups.preUpdate')
+                          : t('backups.manual')}
+>>>>>>> upstream/main
                   </Badge>
                   <div className="inline-flex items-center gap-1">
                     <Button
@@ -270,13 +311,24 @@ function BackupsPanel() {
         )}
       </div>
 
+<<<<<<< HEAD
       <AutoBackupForm schedule={schedule?.schedule ?? null} onSaved={invalidate} />
+=======
+      {/* Keyed on the stored schedule so the form re-seeds when it loads or
+          changes, rather than copying props into state from an effect. */}
+      <AutoBackupForm
+        key={JSON.stringify(schedule?.schedule ?? null)}
+        schedule={schedule?.schedule ?? null}
+        onSaved={invalidate}
+      />
+>>>>>>> upstream/main
     </div>
   )
 }
 
 function AutoBackupForm({ schedule, onSaved }: { schedule: BackupSchedule | null; onSaved: () => void }) {
   const { t } = useI18n()
+<<<<<<< HEAD
   const [enabled, setEnabled] = useState(false)
   const [time, setTime] = useState('03:00')
   const [intervalDays, setIntervalDays] = useState('1')
@@ -297,6 +349,14 @@ function AutoBackupForm({ schedule, onSaved }: { schedule: BackupSchedule | null
     setBackupPath(schedule.backupPath ?? '')
   }
 
+=======
+  const [enabled, setEnabled] = useState(schedule?.enabled ?? false)
+  const [time, setTime] = useState(schedule?.time ?? '03:00')
+  const [intervalDays, setIntervalDays] = useState(String(schedule?.intervalDays ?? 1))
+  const [backupPath, setBackupPath] = useState(schedule?.backupPath ?? '')
+  const [savedFlash, setSavedFlash] = useState(false)
+
+>>>>>>> upstream/main
   const save = useMutation({
     meta: { silenceToast: true },
     mutationFn: (body: Record<string, unknown>) =>

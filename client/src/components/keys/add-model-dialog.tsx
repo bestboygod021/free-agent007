@@ -12,7 +12,11 @@ import { FieldError } from '@/components/ui/field-error'
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
 import type { ApiKey } from '@freellmapi/shared/types'
+<<<<<<< HEAD
 import { PLATFORMS, CUSTOM_GROUP } from '@/components/keys/platform-data'
+=======
+import { PLATFORMS, CUSTOM_GROUP } from '@/components/keys/shared'
+>>>>>>> upstream/main
 
 export interface AddModelDialogProps {
   open: boolean
@@ -32,7 +36,11 @@ export function AddModelDialog(props: AddModelDialogProps) {
   return <AddModelForm key={formKey} {...props} />
 }
 
+<<<<<<< HEAD
 type CreateModelPayload = {
+=======
+interface CreateModelPayload {
+>>>>>>> upstream/main
   platform: string
   modelId: string
   displayName?: string

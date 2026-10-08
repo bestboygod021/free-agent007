@@ -16,8 +16,12 @@
     "modelsMenu": "ماڈل کی اقسام کو براؤز کریں۔",
     "agents": "ایجنٹس",
     "logs": "لاگز",
+<<<<<<< HEAD
     "analyticsMenu": "تجزیات کے صفحات",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "تجزیات کے صفحات"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "اپنا اکاؤنٹ بنائیں",
@@ -109,6 +113,7 @@
     "sectionCompression": "کمپریشن",
     "sectionAdvanced": "ایڈوانسڈ",
     "sectionPreview": "پیش منظر",
+<<<<<<< HEAD
     "sectionRateLimit": "ریٹ حدیں",
     "rateLimitProxy": "پراکسی /v1 حد (فی منٹ درخواستیں)",
     "rateLimitAdmin": "ڈیش بورڈ /api حد (فی منٹ درخواستیں)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "یکجہ کلید /v1 حد (فی منٹ درخواستیں)",
     "rateLimitEnvLocked": "{env} سے مقرر — ترمیم کے لیے ہٹائیں",
     "rateLimitSaved": "لاگو — اگلی درخواست پر نافذ",
+=======
+>>>>>>> upstream/main
     "generalDescription": "اس ڈیش بورڈ کی زبان اور ظاہری شکل۔",
     "advancedDescription": "کمپریشن پائپ لائن کے لیے حدود اور حفاظتی سوئچز۔",
     "compressionTitle": "پرامپٹ کمپریشن",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "پیش منظر چلائیں",
     "updatesTitle": "اپ ڈیٹس",
     "checkForUpdates": "اپ ڈیٹس کے لیے چیک کریں۔",
+<<<<<<< HEAD
     "lastChecked": "آخری بار چیک کیا گیا: {when}",
     "currentVersion": "موجودہ بلڈ:",
     "updateAvailable": "اپ ڈیٹ دستیاب ہے",
     "changelog": "کیا بدلا ہے",
+=======
+    "updateAvailable": "اپ ڈیٹ دستیاب ہے",
+>>>>>>> upstream/main
     "upToDate": "تازہ ترین",
     "buildAhead": "یہ بلڈ آفیشل main سے آگے ہے۔",
     "buildDiverged": "یہ بلڈ آفیشل main سے مختلف ہو گیا ہے۔",
     "buildUnknown": "اس کسٹم بلڈ کا آفیشل main سے موازنہ نہیں کیا جا سکتا۔",
     "notGitInstall": "اس انسٹالیشن میں commit کی معلومات شامل نہیں ہیں۔",
     "checkFailed": "اپ ڈیٹس کی جانچ نہیں ہو سکی۔",
+<<<<<<< HEAD
     "contactsGithub": "جانچ دستی طور پر کی جاتی ہے اور GitHub سے رابطہ کرتی ہے۔",
     "autoUpdateCheck": "خودکار اپ ڈیٹ جانچ",
     "autoUpdateCheckHelp": "دن میں ایک بار نئی ریلیز کے لیے GitHub کی جانچ کرتا ہے اور یاد دہانی دکھاتا ہے۔ بطور ڈیفالٹ بند ہے۔",
     "openReleases": "GitHub ریلیزز کھولیں",
     "restartAfterUpdate": "بلڈ مکمل ہونے کے بعد FreeLLMAPI کو دوبارہ شروع کریں۔"
+=======
+    "autoUpdateCheck": "خودکار اپ ڈیٹ جانچ",
+    "restartAfterUpdate": "بلڈ مکمل ہونے کے بعد FreeLLMAPI کو دوبارہ شروع کریں۔",
+    "downloadUpdate": "اپ ڈیٹ ڈاؤن لوڈ کریں",
+    "downloadingUpdate": "ڈاؤن لوڈ ہو رہا ہے… {percent}%",
+    "restartToUpdate": "اپ ڈیٹ کے لیے دوبارہ شروع کریں",
+    "updateReadyHint": "ڈاؤن لوڈ ہو گیا۔ FreeLLMAPI آپ کے ڈیٹا کا بیک اپ لیتا ہے، دوبارہ شروع ہوتا ہے اور نیا ورژن کھولتا ہے۔",
+    "updateInstallFailed": "اپ ڈیٹ انسٹال نہیں ہو سکا۔",
+    "updateNow": "ابھی اپ ڈیٹ کریں",
+    "updatingContainer": "نئی امیج کھینچی جا رہی ہے اور دوبارہ شروع ہو رہا ہے۔ FreeLLMAPI واپس آنے پر یہ صفحہ دوبارہ لوڈ ہوگا۔",
+    "updateNowFailed": "اپ ڈیٹر نے درخواست قبول نہیں کی۔ چیک کریں کہ watchtower کنٹینر چل رہا ہے۔",
+    "updateNowTimeout": "5 منٹ بعد بھی FreeLLMAPI دوبارہ شروع نہیں ہوا۔ watchtower کنٹینر کے لاگز دیکھیں۔"
+>>>>>>> upstream/main
   },
   "models": {
     "title": "ماڈلز",
@@ -217,6 +242,10 @@
     "noKey": "کوئی چابی نہیں",
     "dragToReorder": "دوبارہ ترتیب دینے کے لیے گھسیٹیں۔",
     "dragToReorderGroup": "ماڈل کو دوبارہ ترتیب دینے کے لیے گھسیٹیں۔",
+<<<<<<< HEAD
+=======
+    "moveToRank": "رینک پر جائیں",
+>>>>>>> upstream/main
     "providerCount": "{count} فراہم کنندگان",
     "servedBy": "{providers} کے ذریعہ پیش کیا گیا۔",
     "viewProviders": "فراہم کنندگان کو دیکھیں",
@@ -231,6 +260,10 @@
     "settingsHint": "کیٹلاگ ماڈلز میں مقامی ترامیم کیٹلاگ کی مطابقت پذیری میں رکھی جاتی ہیں۔ حذف شدہ کیٹلاگ ماڈل اس وقت تک حذف رہتے ہیں جب تک کہ آپ انہیں تشکیل کے ذریعے دوبارہ شامل نہیں کرتے ہیں۔",
     "catalogModel": "کیٹلاگ",
     "customModel": "اپنی مرضی کے مطابق",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "دریافت شدہ",
+>>>>>>> upstream/main
     "localOverride": "مقامی اوور رائڈ",
     "displayName": "ڈسپلے کا نام",
     "sizeLabel": "صلاحیت کا درجہ",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "چابیاں",
     "pageDescription": "فراہم کنندہ کی اسناد اور متحد API کلید جس سے آپ کی ایپس جڑتی ہیں۔",
     "tabProviders": "فراہم کرنے والے",
     "checklistSummary": "{total} میں سے {configured} فراہم کنندگان ترتیب دیے گئے",
     "checklistKeyless": "کلید کی ضرورت نہیں",
     "checklistNoKeyTip": "ابھی تک کوئی کلید شامل نہیں کی گئی۔ شامل کرنے کے لیے کلک کریں۔",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "اکاؤنٹ بنانے اور کلید حاصل کرنے کے لیے {provider} کھولیں",
+>>>>>>> upstream/main
     "checklistKeylessTip": "کلید کے بغیر کام کرتا ہے۔",
     "tabQuotaSignals": "کوٹہ سگنلز",
     "tabApiKey": "متحد API کلید",
@@ -506,11 +546,19 @@
     "platform": "پلیٹ فارم",
     "hideAdded": "شامل کیے گئے فراہم کنندگان چھپائیں",
     "apiToken": "API ٹوکن",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "API کلید کی ضرورت نہیں ہے۔",
     "bearerTokenPlaceholder": "بیئرر ٹوکن",
     "pasteKeyPlaceholder": "یہاں کلید چسپاں کریں۔",
     "pasteSeveral": "کئی چسپاں کریں",
     "keylessHint": "API کلید کی ضرورت نہیں ہے: اس فراہم کنندہ کا مفت درجہ گمنام ہے (فی IP کی شرح محدود)۔",
+=======
+    "keyOptionalPlaceholder": "اختیاری",
+    "bearerTokenPlaceholder": "بیئرر ٹوکن",
+    "pasteKeyPlaceholder": "یہاں کلید چسپاں کریں۔",
+    "pasteSeveral": "کئی چسپاں کریں",
+    "keyOptionalHint": "اختیاری: گمنام مفت درجے (فی IP شرح محدود) کے لیے خالی چھوڑیں، یا اپنا اکاؤنٹ استعمال کرنے کے لیے اپنی کلید پیسٹ کریں۔",
+>>>>>>> upstream/main
     "enable": "فعال کریں۔",
     "noProviderKeys": "ابھی تک کوئی فراہم کنندہ کیز نہیں ہیں۔ روٹنگ شروع کرنے کے لیے اوپر ایک شامل کریں۔",
     "filterPlaceholder": "فلٹر فراہم کنندگان یا چابیاں",
@@ -688,7 +736,18 @@
     "testFailed": "ماڈل ٹیسٹ ناکام ہو گیا",
     "testThrottled": "دوبارہ ٹیسٹ کرنے سے پہلے براہ کرم {seconds} سیکنڈ انتظار کریں۔",
     "noModelsForProvider": "اس فراہم کنندہ کے لیے کوئی ماڈل ترتیب نہیں دیا گیا ہے۔",
+<<<<<<< HEAD
     "testModels": "ماڈلز کی جانچ کریں"
+=======
+    "testModels": "ماڈلز کی جانچ کریں",
+    "monthlyRequestCapLabel": "ماہانہ درخواستوں کی حد",
+    "monthlyTokenCapLabel": "ماہانہ ٹوکن کی حد",
+    "capUnlimitedPlaceholder": "لامحدود",
+    "capEditHint": "حدیں ہر مہینے کی 1 تاریخ کو 00:00 UTC پر ری سیٹ ہوتی ہیں۔ لامحدود کے لیے خالی چھوڑیں۔",
+    "monthlyUsageLine": "اس مہینے {requests} درخواستیں، {tokens} ٹوکن",
+    "quotaBalanceHint": "{limit} {metric} میں سے {remaining} باقی",
+    "quotaBalanceLeft": "{remaining} باقی"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "اپ ڈیٹ سے پہلے"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "صحت مند",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "ایک ہمیشہ فعال ذاتی معاون جو آپ کی اپنی مشین سے WhatsApp، Telegram، Discord اور دیگر پر جواب دیتا ہے۔",
+<<<<<<< HEAD
       "hermes": "Nous Research کا خود کو بہتر بنانے والا ایجنٹ، مستقل میموری اور مہارتوں کے ساتھ، ٹرمینل میں یا چیٹ ایپس پر۔"
+=======
+      "hermes": "Nous Research کا خود کو بہتر بنانے والا ایجنٹ، مستقل میموری اور مہارتوں کے ساتھ، ٹرمینل میں یا چیٹ ایپس پر۔",
+      "pi": "ایک سادہ ٹرمینل ایجنٹ، جسے آپ اپنی ایکسٹینشنز، مہارتوں اور پرامپٹ ٹیمپلیٹس سے ڈھالتے ہیں۔",
+      "reasonix": "DeepSeek کے لیے بنایا گیا ٹرمینل کوڈنگ ایجنٹ، جو پریفکس کیشنگ کے گرد بنا ہے تاکہ لمبے سیشن بھی سستے رہیں۔"
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "FreeLLMAPI کا نیا ورژن انسٹال ہو چکا ہے۔",
+    "reload": "دوبارہ لوڈ کریں"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "گزشتہ 5 منٹ میں {count} درخواستیں محدود ہوئیں",
     "hourFilter": "گھنٹہ: {hour}",
     "serverLog": "سرور لاگ"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "اس چین کا نام تبدیل کریں",
+    "renameConfirm": "چین \"{oldName}\" کا نام \"{name}\" کریں؟ auto:{oldName} کال کرنے والے کلائنٹس کو auto:{name} پر جانا ہوگا۔",
+    "renamePlaceholder": "نیا چین نام",
+    "renameFailed": "چین کا نام تبدیل نہیں ہو سکا۔"
+  },
+  "updates": {
+    "versionAvailable": "ورژن {version} دستیاب ہے",
+    "versionReady": "ورژن {version} انسٹال کے لیے تیار ہے",
+    "releaseNotes": "ریلیز نوٹس",
+    "tryAgain": "دوبارہ کوشش کریں",
+    "offline": "اپنا انٹرنیٹ کنکشن چیک کریں اور دوبارہ کوشش کریں۔"
+>>>>>>> upstream/main
   }
 }

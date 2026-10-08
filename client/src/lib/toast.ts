@@ -6,6 +6,7 @@
 
 export type ToastKind = 'success' | 'error' | 'info'
 
+<<<<<<< HEAD
 export type ToastAction = {
   label: string
   onClick: () => void
@@ -14,11 +15,15 @@ export type ToastAction = {
 }
 
 export type ToastItem = {
+=======
+export interface ToastItem {
+>>>>>>> upstream/main
   id: number
   kind: ToastKind
   message: string
   /** Auto-dismiss delay in ms; `null` means sticky until manually dismissed. */
   duration: number | null
+<<<<<<< HEAD
   /** Optional inline button (e.g. "Retry now" on the rate-limit countdown). */
   action?: ToastAction
 }
@@ -31,6 +36,8 @@ export type ToastOptions = {
   duration?: number | null
   /** Inline button (e.g. "Retry now" on the rate-limit countdown). */
   action?: ToastAction
+=======
+>>>>>>> upstream/main
 }
 
 /** Most toasts kept on screen at once; older ones are evicted (see push). */
@@ -74,6 +81,7 @@ export function dismissToast(id: number) {
   emit()
 }
 
+<<<<<<< HEAD
 /** Rewrite a toast's text in place (same id, timer untouched) — used by the
  *  429 countdown so seconds tick without stacking a new toast every second.
  *  Pass `action` to replace the inline button (the countdown flips it from
@@ -88,11 +96,19 @@ function push(kind: ToastKind, message: string, options?: ToastOptions): number 
   const id = nextId++
   // An explicit duration wins (null = sticky); otherwise the kind's default.
   const duration = options?.duration !== undefined ? options.duration : DEFAULT_DURATIONS[kind]
+=======
+function push(kind: ToastKind, message: string, duration?: number): number {
+  const id = nextId++
+>>>>>>> upstream/main
   // Replace an identical pending toast instead of stacking duplicates (a
   // failing poll would otherwise pile up the same error every interval).
   const next = [
     ...items.filter(t => !(t.kind === kind && t.message === message)),
+<<<<<<< HEAD
     { id, kind, message, duration, ...(options?.action ? { action: options.action } : {}) },
+=======
+    { id, kind, message, duration: duration ?? DEFAULT_DURATIONS[kind] },
+>>>>>>> upstream/main
   ]
   // Enforce the cap without silently evicting an unread error: drop the
   // oldest non-error first, and only evict an error once the stack is all
@@ -107,7 +123,13 @@ function push(kind: ToastKind, message: string, options?: ToastOptions): number 
 }
 
 export const toast = {
+<<<<<<< HEAD
   success: (message: string, options?: ToastOptions) => push('success', message, options),
   error: (message: string, options?: ToastOptions) => push('error', message, options),
   info: (message: string, options?: ToastOptions) => push('info', message, options),
+=======
+  success: (message: string, duration?: number) => push('success', message, duration),
+  error: (message: string, duration?: number) => push('error', message, duration),
+  info: (message: string, duration?: number) => push('info', message, duration),
+>>>>>>> upstream/main
 }

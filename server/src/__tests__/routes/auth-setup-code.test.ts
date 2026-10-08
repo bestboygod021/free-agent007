@@ -21,13 +21,21 @@ function appWithRemote(remoteAddr: string): Express {
   return app;
 }
 
+<<<<<<< HEAD
 async function postSetup(app: Express, body: unknown) {
+=======
+async function postSetup(app: Express, body: unknown, headers: Record<string, string> = {}) {
+>>>>>>> upstream/main
   const server = app.listen(0, '127.0.0.1');
   if (!server.listening) await new Promise<void>(resolve => server.once('listening', () => resolve()));
   const addr = server.address() as { port: number };
   const res = await fetch(`http://127.0.0.1:${addr.port}/api/auth/setup`, {
     method: 'POST',
+<<<<<<< HEAD
     headers: { 'Content-Type': 'application/json' },
+=======
+    headers: { 'Content-Type': 'application/json', ...headers },
+>>>>>>> upstream/main
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => null);
@@ -90,6 +98,46 @@ describe('First-run setup code gate (FIX 1)', () => {
     expect(typeof body.token).toBe('string');
   });
 
+<<<<<<< HEAD
+=======
+  // The documented reverse-proxy deployment (Caddy/nginx/Traefik on the same
+  // host, docs/en/proxy/OVERVIEW.md) makes every request a loopback socket, so
+  // the socket test alone said "local" for the entire internet and any visitor
+  // could claim an unclaimed dashboard with no code. A forwarded hop can never
+  // GRANT locality, but a non-loopback one withdraws it.
+  it('rejects a loopback socket whose forwarded hop is remote', async () => {
+    const { status, body } = await postSetup(
+      appWithRemote('127.0.0.1'),
+      CREDS,
+      { 'X-Forwarded-For': '203.0.113.7' },
+    );
+    expect(status).toBe(403);
+    expect(body.error.type).toBe('setup_code_required');
+    const count = (getDb().prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
+    expect(count).toBe(0);
+  });
+
+  it('still allows a same-host proxy that forwards a local browser', async () => {
+    const { status } = await postSetup(
+      appWithRemote('127.0.0.1'),
+      CREDS,
+      { 'X-Forwarded-For': '127.0.0.1' },
+    );
+    expect(status).toBe(201);
+  });
+
+  it('accepts the setup code through a proxy with a remote forwarded hop', async () => {
+    const code = getSetupCode();
+    expect(code).toBeTruthy();
+    const { status } = await postSetup(
+      appWithRemote('127.0.0.1'),
+      { ...CREDS, setupCode: code },
+      { 'X-Forwarded-For': '203.0.113.7' },
+    );
+    expect(status).toBe(201);
+  });
+
+>>>>>>> upstream/main
   it('still 409s a second setup once an account exists (remote, even with a code)', async () => {
     // Claim locally first.
     expect((await postSetup(appWithRemote('127.0.0.1'), CREDS)).status).toBe(201);

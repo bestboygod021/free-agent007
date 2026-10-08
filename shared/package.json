@@ -2,6 +2,7 @@
   "name": "@freellmapi/shared",
   "version": "0.1.0",
   "private": true,
+<<<<<<< HEAD
   "type": "module",
   "main": "./dist/types.js",
   "types": "./dist/types.d.ts",
@@ -35,4 +36,8 @@
   "dependencies": {
     "zod": "^3.24.4"
   }
+=======
+  "main": "./types.ts",
+  "types": "./types.ts"
+>>>>>>> upstream/main
 }

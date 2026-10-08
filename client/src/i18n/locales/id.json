@@ -16,8 +16,12 @@
     "modelsMenu": "Telusuri jenis model",
     "agents": "Agen",
     "logs": "Log",
+<<<<<<< HEAD
     "analyticsMenu": "Halaman analisis",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Halaman analisis"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Buat akun Anda",
@@ -109,6 +113,7 @@
     "sectionCompression": "Kompresi",
     "sectionAdvanced": "Lanjutan",
     "sectionPreview": "Pratinjau",
+<<<<<<< HEAD
     "sectionRateLimit": "Batas laju",
     "rateLimitProxy": "Batas proksi /v1 (permintaan/menit)",
     "rateLimitAdmin": "Batas dasbor /api (permintaan/menit)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Batas kunci terpadu /v1 (permintaan/menit)",
     "rateLimitEnvLocked": "Dikunci oleh {env} — hapus untuk mengedit",
     "rateLimitSaved": "Diterapkan — berlaku pada permintaan berikutnya",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Bahasa dan tampilan dasbor ini.",
     "advancedDescription": "Ambang batas dan sakelar pengaman untuk alur kompresi.",
     "compressionTitle": "Kompresi prompt",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Jalankan pratinjau",
     "updatesTitle": "Pembaruan",
     "checkForUpdates": "Periksa pembaruan",
+<<<<<<< HEAD
     "lastChecked": "Terakhir diperiksa: {when}",
     "currentVersion": "Build saat ini:",
     "updateAvailable": "Pembaruan tersedia",
     "changelog": "Yang berubah",
+=======
+    "updateAvailable": "Pembaruan tersedia",
+>>>>>>> upstream/main
     "upToDate": "Sudah terbaru",
     "buildAhead": "Build ini lebih maju dari cabang main resmi.",
     "buildDiverged": "Build ini telah menyimpang dari cabang main resmi.",
     "buildUnknown": "Build khusus ini tidak dapat dibandingkan dengan cabang main resmi.",
     "notGitInstall": "Instalasi ini tidak menyertakan informasi commit.",
     "checkFailed": "Tidak dapat memeriksa pembaruan.",
+<<<<<<< HEAD
     "contactsGithub": "Pemeriksaan dilakukan secara manual dan menghubungi GitHub.",
     "autoUpdateCheck": "Pemeriksaan pembaruan otomatis",
     "autoUpdateCheckHelp": "Memeriksa GitHub sekali sehari untuk rilis baru dan menampilkan pengingat. Nonaktif secara bawaan.",
     "openReleases": "Buka Rilis GitHub",
     "restartAfterUpdate": "Mulai ulang FreeLLMAPI setelah proses build selesai."
+=======
+    "autoUpdateCheck": "Pemeriksaan pembaruan otomatis",
+    "restartAfterUpdate": "Mulai ulang FreeLLMAPI setelah proses build selesai.",
+    "downloadUpdate": "Unduh pembaruan",
+    "downloadingUpdate": "Mengunduh… {percent}%",
+    "restartToUpdate": "Mulai ulang untuk memperbarui",
+    "updateReadyHint": "Selesai diunduh. FreeLLMAPI mencadangkan data Anda, memulai ulang, lalu membuka versi baru.",
+    "updateInstallFailed": "Pembaruan tidak dapat dipasang.",
+    "updateNow": "Perbarui sekarang",
+    "updatingContainer": "Menarik image baru dan memulai ulang. Halaman ini dimuat ulang saat FreeLLMAPI kembali.",
+    "updateNowFailed": "Pembaru tidak menerima permintaan. Pastikan kontainer watchtower berjalan.",
+    "updateNowTimeout": "FreeLLMAPI belum dimulai ulang setelah 5 menit. Periksa log kontainer watchtower."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Model",
@@ -217,6 +242,10 @@
     "noKey": "tidak ada kunci",
     "dragToReorder": "Tarik untuk menyusun ulang",
     "dragToReorderGroup": "Seret untuk menyusun ulang model",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Lompat ke peringkat",
+>>>>>>> upstream/main
     "providerCount": "Penyedia {count}",
     "servedBy": "Dilayani oleh {providers}",
     "viewProviders": "Lihat penyedia",
@@ -231,6 +260,10 @@
     "settingsHint": "Pengeditan lokal pada model katalog disimpan di seluruh sinkronisasi katalog. Model katalog yang dihapus tetap terhapus sampai Anda menambahkannya lagi melalui konfigurasi.",
     "catalogModel": "katalog",
     "customModel": "adat",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "ditemukan",
+>>>>>>> upstream/main
     "localOverride": "penggantian lokal",
     "displayName": "Nama tampilan",
     "sizeLabel": "Tingkat kemampuan",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing terdegradasi: {healthy} dari {total} penyedia sehat (sejak {since})",
     "noProvider": "Tanpa penyedia",
     "enabledCount": "{count} aktif",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Kunci",
     "pageDescription": "Kredensial penyedia dan kunci API terpadu yang terhubung dengan aplikasi Anda.",
     "tabProviders": "Penyedia",
     "checklistSummary": "{configured} dari {total} penyedia telah dikonfigurasi",
     "checklistKeyless": "tidak perlu kunci",
     "checklistNoKeyTip": "Belum ada kunci yang ditambahkan. Klik untuk menambahkan.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Buka {provider} untuk membuat akun dan mendapatkan kunci",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Berfungsi tanpa kunci.",
     "tabQuotaSignals": "Sinyal kuota",
     "tabApiKey": "Kunci API terpadu",
@@ -506,11 +546,19 @@
     "platform": "Peron",
     "hideAdded": "Sembunyikan penyedia yang sudah ditambahkan",
     "apiToken": "Token API",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Tidak diperlukan kunci API",
     "bearerTokenPlaceholder": "Token pembawa",
     "pasteKeyPlaceholder": "tempelkan kunci di sini",
     "pasteSeveral": "Tempel beberapa",
     "keylessHint": "Tidak diperlukan kunci API: tingkat gratis penyedia ini bersifat anonim (dibatasi tarif per IP).",
+=======
+    "keyOptionalPlaceholder": "Opsional",
+    "bearerTokenPlaceholder": "Token pembawa",
+    "pasteKeyPlaceholder": "tempelkan kunci di sini",
+    "pasteSeveral": "Tempel beberapa",
+    "keyOptionalHint": "Opsional: biarkan kosong untuk tingkat gratis anonim (dibatasi per IP), atau tempel kunci Anda sendiri untuk menggunakan akun Anda.",
+>>>>>>> upstream/main
     "enable": "Aktifkan",
     "noProviderKeys": "Belum ada kunci penyedia. Tambahkan satu di atas untuk memulai perutean.",
     "filterPlaceholder": "Filter penyedia atau kunci",
@@ -688,7 +736,18 @@
     "testFailed": "Pengujian model gagal",
     "testThrottled": "Harap tunggu {seconds} detik sebelum menguji model ini lagi.",
     "noModelsForProvider": "Tidak ada model yang dikonfigurasi untuk penyedia ini.",
+<<<<<<< HEAD
     "testModels": "Uji model"
+=======
+    "testModels": "Uji model",
+    "monthlyRequestCapLabel": "Batas permintaan bulanan",
+    "monthlyTokenCapLabel": "Batas token bulanan",
+    "capUnlimitedPlaceholder": "Tanpa batas",
+    "capEditHint": "Batas disetel ulang pada tanggal 1 pukul 00:00 UTC. Kosongkan untuk tanpa batas.",
+    "monthlyUsageLine": "{requests} permintaan, {tokens} token bulan ini",
+    "quotaBalanceHint": "Tersisa {remaining} dari {limit} {metric}",
+    "quotaBalanceLeft": "Tersisa {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Sebelum pembaruan"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "sehat",
@@ -1144,17 +1208,29 @@
       "generic": "Perkakas lain mana pun yang berbicara API OpenAI, disiapkan manual dengan URL dasar dan kunci.",
       "atomcode": "Agen terminal dari AtomGit, ditulis dalam Rust, yang menerima endpoint apa pun yang kompatibel dengan OpenAI.",
       "openclaw": "Asisten pribadi yang selalu aktif dan menjawab di WhatsApp, Telegram, Discord, dan lainnya dari mesin Anda sendiri.",
+<<<<<<< HEAD
       "hermes": "Agen dari Nous Research yang terus memperbaiki diri, dengan memori persisten dan keterampilan, di terminal atau di aplikasi chat."
+=======
+      "hermes": "Agen dari Nous Research yang terus memperbaiki diri, dengan memori persisten dan keterampilan, di terminal atau di aplikasi chat.",
+      "pi": "Agen terminal minimalis yang Anda bentuk dengan ekstensi, keterampilan, dan templat prompt Anda sendiri.",
+      "reasonix": "Agen coding terminal yang dibuat khusus untuk DeepSeek, dibangun di sekitar prefix caching agar sesi panjang tetap murah."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "Versi FreeLLMAPI yang lebih baru telah terpasang.",
+    "reload": "Muat ulang"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Kumpulan tingkat gratis ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Mulai kosong",
     "startEmptyHint": "Membuat rantai tanpa model dan menjauhkan model katalog baru darinya. Jika tidak dicentang, rantai dimulai sebagai salinan rantai bawaan.",
     "curated": "Dikurasi",
+<<<<<<< HEAD
     "curatedHint": "Model katalog baru tidak ditambahkan ke rantai ini secara otomatis."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} permintaan dibatasi dalam 5 menit terakhir",
     "hourFilter": "Jam: {hour}",
     "serverLog": "Log server"
+=======
+    "curatedHint": "Model katalog baru tidak ditambahkan ke rantai ini secara otomatis.",
+    "renameHint": "Ganti nama rantai ini",
+    "renameConfirm": "Ganti nama rantai \"{oldName}\" menjadi \"{name}\"? Klien yang memanggil auto:{oldName} harus beralih ke auto:{name}.",
+    "renamePlaceholder": "Nama rantai baru",
+    "renameFailed": "Tidak dapat mengganti nama rantai."
+  },
+  "updates": {
+    "versionAvailable": "Versi {version} tersedia",
+    "versionReady": "Versi {version} siap dipasang",
+    "releaseNotes": "Catatan rilis",
+    "tryAgain": "Coba lagi",
+    "offline": "Periksa koneksi internet Anda lalu coba lagi."
+>>>>>>> upstream/main
   }
 }

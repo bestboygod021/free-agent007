@@ -16,8 +16,12 @@
     "modelsMenu": "Parcourir les types de modèles",
     "agents": "Agents",
     "logs": "Journaux",
+<<<<<<< HEAD
     "analyticsMenu": "Pages d'analytique",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Pages d'analytique"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Créez votre compte",
@@ -109,6 +113,7 @@
     "sectionCompression": "Compression",
     "sectionAdvanced": "Avancé",
     "sectionPreview": "Aperçu",
+<<<<<<< HEAD
     "sectionRateLimit": "Limites de débit",
     "rateLimitProxy": "Plafond proxy /v1 (req/min)",
     "rateLimitAdmin": "Plafond tableau de bord /api (req/min)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Plafond clé unifiée /v1 (req/min)",
     "rateLimitEnvLocked": "Fixé par {env} — retirez-le pour modifier",
     "rateLimitSaved": "Appliqué — prend effet à la prochaine requête",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Langue et apparence de ce tableau de bord.",
     "advancedDescription": "Seuils et interrupteurs de sécurité du pipeline de compression.",
     "compressionTitle": "Compression des prompts",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Lancer l'aperçu",
     "updatesTitle": "Mises à jour",
     "checkForUpdates": "Vérifier les mises à jour",
+<<<<<<< HEAD
     "lastChecked": "Dernière vérification : {when}",
     "currentVersion": "Build actuel :",
     "updateAvailable": "Une mise à jour est disponible",
     "changelog": "Nouveautés",
+=======
+    "updateAvailable": "Une mise à jour est disponible",
+>>>>>>> upstream/main
     "upToDate": "À jour",
     "buildAhead": "Ce build est en avance sur la branche main officielle.",
     "buildDiverged": "Ce build a divergé de la branche main officielle.",
     "buildUnknown": "Ce build personnalisé ne peut pas être comparé à la branche main officielle.",
     "notGitInstall": "Cette installation ne contient aucune information de commit.",
     "checkFailed": "Impossible de rechercher les mises à jour.",
+<<<<<<< HEAD
     "contactsGithub": "Les vérifications sont effectuées manuellement et contactent GitHub.",
     "autoUpdateCheck": "Vérification automatique des mises à jour",
     "autoUpdateCheckHelp": "Consulte GitHub une fois par jour pour détecter une nouvelle version et affiche un rappel. Désactivé par défaut.",
     "openReleases": "Ouvrir les versions GitHub",
     "restartAfterUpdate": "Redémarrez FreeLLMAPI une fois le build terminé."
+=======
+    "autoUpdateCheck": "Vérification automatique des mises à jour",
+    "restartAfterUpdate": "Redémarrez FreeLLMAPI une fois le build terminé.",
+    "downloadUpdate": "Télécharger la mise à jour",
+    "downloadingUpdate": "Téléchargement… {percent} %",
+    "restartToUpdate": "Redémarrer pour mettre à jour",
+    "updateReadyHint": "Téléchargée. FreeLLMAPI sauvegarde vos données, redémarre et ouvre la nouvelle version.",
+    "updateInstallFailed": "La mise à jour n’a pas pu être installée.",
+    "updateNow": "Mettre à jour maintenant",
+    "updatingContainer": "Téléchargement de la nouvelle image et redémarrage. Cette page se recharge quand FreeLLMAPI est de retour.",
+    "updateNowFailed": "Le service de mise à jour a refusé la demande. Vérifiez que le conteneur watchtower tourne.",
+    "updateNowTimeout": "FreeLLMAPI n’a pas redémarré après 5 minutes. Consultez les journaux du conteneur watchtower."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Modèles",
@@ -217,6 +242,10 @@
     "noKey": "aucune clé",
     "dragToReorder": "Glisser pour réordonner",
     "dragToReorderGroup": "Glisser pour réorganiser le modèle",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Aller au rang",
+>>>>>>> upstream/main
     "providerCount": "{count} fournisseurs",
     "servedBy": "Fourni par {providers}",
     "viewProviders": "Voir les fournisseurs",
@@ -231,6 +260,10 @@
     "settingsHint": "Les modifications locales apportées aux modèles du catalogue sont conservées lors des synchronisations du catalogue. Les modèles du catalogue supprimés restent supprimés jusqu'à ce que vous les rajoutiez via la configuration.",
     "catalogModel": "catalogue",
     "customModel": "personnalisé",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "découvert",
+>>>>>>> upstream/main
     "localOverride": "remplacement local",
     "displayName": "Nom affiché",
     "sizeLabel": "Niveau de capacité",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routage dégradé : {healthy} sur {total} fournisseurs sains (depuis {since})",
     "noProvider": "Aucun fournisseur",
     "enabledCount": "{count} activés",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Clés",
     "pageDescription": "Les identifiants des fournisseurs et la clé API unifiée à laquelle vos applications se connectent.",
     "tabProviders": "Fournisseurs",
     "checklistSummary": "{configured} fournisseurs sur {total} configurés",
     "checklistKeyless": "aucune clé requise",
     "checklistNoKeyTip": "Aucune clé ajoutée pour l'instant. Cliquez pour en ajouter une.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Ouvrir {provider} pour créer un compte et obtenir une clé",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Fonctionne sans clé.",
     "tabQuotaSignals": "Signaux de quota",
     "tabApiKey": "Clé d'API unifiée",
@@ -506,11 +546,19 @@
     "platform": "Plateforme",
     "hideAdded": "Masquer les fournisseurs ajoutés",
     "apiToken": "Jeton API",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Aucune clé API requise",
     "bearerTokenPlaceholder": "Jeton Bearer",
     "pasteKeyPlaceholder": "collez la clé ici",
     "pasteSeveral": "Coller plusieurs",
     "keylessHint": "Aucune clé API requise : l'offre gratuite de ce fournisseur est anonyme (limitée par IP).",
+=======
+    "keyOptionalPlaceholder": "Facultatif",
+    "bearerTokenPlaceholder": "Jeton Bearer",
+    "pasteKeyPlaceholder": "collez la clé ici",
+    "pasteSeveral": "Coller plusieurs",
+    "keyOptionalHint": "Facultatif : laissez vide pour utiliser l'offre gratuite anonyme (limitée par IP), ou collez votre propre clé pour utiliser votre compte.",
+>>>>>>> upstream/main
     "enable": "Activer",
     "noProviderKeys": "Aucune clé de fournisseur pour l'instant. Ajoutez-en une ci-dessus pour commencer le routage.",
     "filterPlaceholder": "Filtrer les fournisseurs ou les clés",
@@ -688,7 +736,18 @@
     "testFailed": "Échec du test du modèle",
     "testThrottled": "Veuillez attendre {seconds}s avant de tester à nouveau ce modèle.",
     "noModelsForProvider": "Aucun modèle configuré pour ce fournisseur.",
+<<<<<<< HEAD
     "testModels": "Tester les modèles"
+=======
+    "testModels": "Tester les modèles",
+    "monthlyRequestCapLabel": "Plafond mensuel de requêtes",
+    "monthlyTokenCapLabel": "Plafond mensuel de jetons",
+    "capUnlimitedPlaceholder": "Illimité",
+    "capEditHint": "Les plafonds sont réinitialisés le 1er à 00:00 UTC. Laissez vide pour illimité.",
+    "monthlyUsageLine": "{requests} requêtes, {tokens} jetons ce mois",
+    "quotaBalanceHint": "{remaining} sur {limit} {metric} restants",
+    "quotaBalanceLeft": "{remaining} restants"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Sauvegardes",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relatif au répertoire de la base de données. Les sauvegardes ne peuvent pas être écrites en dehors de ce répertoire.",
     "save": "Enregistrer la planification",
+<<<<<<< HEAD
     "saved": "Enregistré"
+=======
+    "saved": "Enregistré",
+    "preUpdate": "Avant mise à jour"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "sain",
@@ -1144,17 +1208,29 @@
       "generic": "Tout autre outil qui parle l'API OpenAI, configuré à la main avec l'URL de base et la clé.",
       "atomcode": "L'agent de terminal d'AtomGit, écrit en Rust, qui accepte tout endpoint compatible OpenAI.",
       "openclaw": "Un assistant personnel toujours actif qui répond sur WhatsApp, Telegram, Discord et plus encore, depuis votre propre machine.",
+<<<<<<< HEAD
       "hermes": "L'agent auto-améliorant de Nous Research, avec mémoire persistante et compétences, dans le terminal ou sur les applis de chat."
+=======
+      "hermes": "L'agent auto-améliorant de Nous Research, avec mémoire persistante et compétences, dans le terminal ou sur les applis de chat.",
+      "pi": "Un agent de terminal minimaliste que vous façonnez avec vos propres extensions, compétences et modèles de prompts.",
+      "reasonix": "Un agent de code pour le terminal pensé pour DeepSeek, bâti autour du cache de préfixe pour que les longues sessions restent bon marché."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "Nouvelle version disponible",
+<<<<<<< HEAD
     "whatsNew": "Nouveautés de la v{version}",
     "publishedOn": "Publié le {date}",
     "noNotes": "Aucune note de version n'a été publiée pour cette version.",
     "openRelease": "Ouvrir la page de la version",
     "dismissVersion": "Ignorer cette version",
     "dismiss": "Ignorer"
+=======
+    "dismiss": "Ignorer",
+    "newBuild": "Une version plus récente de FreeLLMAPI est installée.",
+    "reload": "Recharger"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Pools de l'offre gratuite ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Démarrer vide",
     "startEmptyHint": "Crée la chaîne sans aucun modèle et en tient les nouveaux modèles du catalogue à l'écart. Décoché, elle démarre comme une copie de la chaîne par défaut.",
     "curated": "Curatée",
+<<<<<<< HEAD
     "curatedHint": "Les nouveaux modèles du catalogue ne sont pas ajoutés automatiquement à cette chaîne."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} requêtes limitées au cours des 5 dernières minutes",
     "hourFilter": "Heure : {hour}",
     "serverLog": "Journal du serveur"
+=======
+    "curatedHint": "Les nouveaux modèles du catalogue ne sont pas ajoutés automatiquement à cette chaîne.",
+    "renameHint": "Renommer cette chaîne",
+    "renameConfirm": "Renommer la chaîne « {oldName} » en « {name} » ? Les clients appelant auto:{oldName} doivent passer à auto:{name}.",
+    "renamePlaceholder": "Nouveau nom de la chaîne",
+    "renameFailed": "Impossible de renommer cette chaîne."
+  },
+  "updates": {
+    "versionAvailable": "La version {version} est disponible",
+    "versionReady": "La version {version} est prête à être installée",
+    "releaseNotes": "Notes de version",
+    "tryAgain": "Réessayer",
+    "offline": "Vérifiez votre connexion internet et réessayez."
+>>>>>>> upstream/main
   }
 }

@@ -19,6 +19,13 @@ export interface DesktopConfig {
   // icon alone is a poor "is it running?" signal, and macOS 26 can hide it
   // outright (#807). Users who want the lean menu-bar-only look turn it off.
   showInDock?: boolean;
+<<<<<<< HEAD
+=======
+  // Set once the dashboard has been opened at startup to show a first-time
+  // Windows user the app is running; the tray icon starts out hidden in the
+  // overflow flyout there (#1353).
+  launchDashboardShown?: boolean;
+>>>>>>> upstream/main
 }
 
 function configPath(): string {

@@ -16,8 +16,12 @@
     "modelsMenu": "Navegar pelos tipos de modelos",
     "agents": "Agentes",
     "logs": "Registos",
+<<<<<<< HEAD
     "analyticsMenu": "Páginas de análise",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Páginas de análise"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Crie a sua conta",
@@ -109,6 +113,7 @@
     "sectionCompression": "Compressão",
     "sectionAdvanced": "Avançado",
     "sectionPreview": "Pré-visualização",
+<<<<<<< HEAD
     "sectionRateLimit": "Limites de taxa",
     "rateLimitProxy": "Limite do proxy /v1 (pedidos/min)",
     "rateLimitAdmin": "Limite do painel /api (pedidos/min)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Limite da chave unificada /v1 (pedidos/min)",
     "rateLimitEnvLocked": "Definido por {env} — remova para editar",
     "rateLimitSaved": "Aplicado — eficaz no próximo pedido",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Idioma e aspeto deste painel.",
     "advancedDescription": "Limiares e interruptores de segurança do pipeline de compressão.",
     "compressionTitle": "Compressão de prompts",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Executar pré-visualização",
     "updatesTitle": "Atualizações",
     "checkForUpdates": "Verifique atualizações",
+<<<<<<< HEAD
     "lastChecked": "Última verificação: {when}",
     "currentVersion": "Compilação atual:",
     "updateAvailable": "Atualização disponível",
     "changelog": "O que mudou",
+=======
+    "updateAvailable": "Atualização disponível",
+>>>>>>> upstream/main
     "upToDate": "Atualizado",
     "buildAhead": "Esta compilação está à frente do ramo main oficial.",
     "buildDiverged": "Esta compilação divergiu do ramo main oficial.",
     "buildUnknown": "Esta compilação personalizada não pode ser comparada com o ramo main oficial.",
     "notGitInstall": "Esta instalação não inclui informações do commit.",
     "checkFailed": "Não foi possível procurar atualizações.",
+<<<<<<< HEAD
     "contactsGithub": "As verificações são manuais e contactam o GitHub.",
     "autoUpdateCheck": "Verificação automática de atualizações",
     "autoUpdateCheckHelp": "Consulta o GitHub uma vez por dia à procura de uma nova versão e mostra um lembrete. Desativado por predefinição.",
     "openReleases": "Abrir lançamentos no GitHub",
     "restartAfterUpdate": "Reinicie o FreeLLMAPI após a conclusão da compilação."
+=======
+    "autoUpdateCheck": "Verificação automática de atualizações",
+    "restartAfterUpdate": "Reinicie o FreeLLMAPI após a conclusão da compilação.",
+    "downloadUpdate": "Transferir atualização",
+    "downloadingUpdate": "A transferir… {percent}%",
+    "restartToUpdate": "Reiniciar para atualizar",
+    "updateReadyHint": "Transferida. O FreeLLMAPI faz uma cópia de segurança dos seus dados, reinicia e abre a nova versão.",
+    "updateInstallFailed": "Não foi possível instalar a atualização.",
+    "updateNow": "Atualizar agora",
+    "updatingContainer": "A transferir a nova imagem e a reiniciar. Esta página recarrega quando o FreeLLMAPI voltar.",
+    "updateNowFailed": "O atualizador não aceitou o pedido. Verifique se o contentor watchtower está em execução.",
+    "updateNowTimeout": "O FreeLLMAPI não reiniciou ao fim de 5 minutos. Verifique os registos do contentor watchtower."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Modelos",
@@ -217,6 +242,10 @@
     "noKey": "sem chave",
     "dragToReorder": "Arrasto para reordenação",
     "dragToReorderGroup": "Arrasto para reordenar o modelo",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Ir para a posição",
+>>>>>>> upstream/main
     "providerCount": "{count} Prestadores",
     "servedBy": "Servido por {providers}",
     "viewProviders": "Ver fornecedores",
@@ -231,6 +260,10 @@
     "settingsHint": "As edições locais nos modelos de catálogo são mantidas entre as sincronizações do catálogo. Os modelos de catálogo apagados ficam eliminados até os adicionares novamente através da configuração.",
     "catalogModel": "Catálogo",
     "customModel": "Personalizado",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "descoberto",
+>>>>>>> upstream/main
     "localOverride": "Sobreposição local",
     "displayName": "Nome de exibição",
     "sizeLabel": "Escalão de capacidade",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Encaminhamento degradado: {healthy} de {total} fornecedores saudáveis (desde {since})",
     "noProvider": "Sem fornecedor",
     "enabledCount": "{count} ativos",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Chaves",
     "pageDescription": "Credenciais do fornecedor e a chave unificada de API com que as suas aplicações se ligam.",
     "tabProviders": "Fornecedores",
     "checklistSummary": "{configured} de {total} fornecedores configurados",
     "checklistKeyless": "não requer chave",
     "checklistNoKeyTip": "Ainda não foi adicionada nenhuma chave. Clique para adicionar uma.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Abra {provider} para criar uma conta e obter uma chave",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Funciona sem chave.",
     "tabQuotaSignals": "Sinais de quota",
     "tabApiKey": "Chave API unificada",
@@ -506,11 +546,19 @@
     "platform": "Plataforma",
     "hideAdded": "Ocultar fornecedores adicionados",
     "apiToken": "API token",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Não é preciso API chave",
     "bearerTokenPlaceholder": "Ficha de portador",
     "pasteKeyPlaceholder": "colar a chave aqui",
     "pasteSeveral": "Colar várias",
     "keylessHint": "Não é necessária API chave: o nível gratuito deste fornecedor é anónimo (limite de taxa por IP).",
+=======
+    "keyOptionalPlaceholder": "Opcional",
+    "bearerTokenPlaceholder": "Ficha de portador",
+    "pasteKeyPlaceholder": "colar a chave aqui",
+    "pasteSeveral": "Colar várias",
+    "keyOptionalHint": "Opcional: deixe em branco para usar o nível gratuito anónimo (limitado por IP) ou cole a sua própria chave para usar a sua conta.",
+>>>>>>> upstream/main
     "enable": "Permitir",
     "noProviderKeys": "Ainda não há chaves do fornecedor. Adicione um acima para começar a rotear.",
     "filterPlaceholder": "Fornecedores de filtros ou chaves",
@@ -688,7 +736,18 @@
     "testFailed": "Teste do modelo falhou",
     "testThrottled": "Aguarde {seconds}s antes de testar este modelo novamente.",
     "noModelsForProvider": "Nenhum modelo configurado para este fornecedor.",
+<<<<<<< HEAD
     "testModels": "Testar modelos"
+=======
+    "testModels": "Testar modelos",
+    "monthlyRequestCapLabel": "Limite mensal de pedidos",
+    "monthlyTokenCapLabel": "Limite mensal de tokens",
+    "capUnlimitedPlaceholder": "Ilimitado",
+    "capEditHint": "Os limites são repostos no dia 1 às 00:00 UTC. Deixe em branco para ilimitado.",
+    "monthlyUsageLine": "{requests} pedidos, {tokens} tokens este mês",
+    "quotaBalanceHint": "Restam {remaining} de {limit} {metric}",
+    "quotaBalanceLeft": "Restam {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Pré-atualização"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "Saudável",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "Um assistente pessoal sempre ligado que responde no WhatsApp, Telegram, Discord e mais, a partir da sua própria máquina.",
+<<<<<<< HEAD
       "hermes": "O agente da Nous Research que se aperfeiçoa a si próprio, com memória persistente e competências, no terminal ou em apps de chat."
+=======
+      "hermes": "O agente da Nous Research que se aperfeiçoa a si próprio, com memória persistente e competências, no terminal ou em apps de chat.",
+      "pi": "Um agente de terminal minimalista que molda com as suas próprias extensões, competências e modelos de prompt.",
+      "reasonix": "Um agente de programação para o terminal nativo do DeepSeek, construído em torno da cache de prefixos para que as sessões longas continuem baratas."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "Está instalada uma versão mais recente do FreeLLMAPI.",
+    "reload": "Recarregar"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Começar vazia",
     "startEmptyHint": "Cria a cadeia sem modelos e mantém de fora os novos modelos do catálogo. Sem marcar, começa como cópia da cadeia predefinida.",
     "curated": "Curada",
+<<<<<<< HEAD
     "curatedHint": "Os novos modelos do catálogo não são adicionados automaticamente a esta cadeia."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} pedidos limitados nos últimos 5 minutos",
     "hourFilter": "Hora: {hour}",
     "serverLog": "Registo do servidor"
+=======
+    "curatedHint": "Os novos modelos do catálogo não são adicionados automaticamente a esta cadeia.",
+    "renameHint": "Mudar o nome desta cadeia",
+    "renameConfirm": "Mudar o nome da cadeia \"{oldName}\" para \"{name}\"? Os clientes que chamam auto:{oldName} devem passar para auto:{name}.",
+    "renamePlaceholder": "Novo nome da cadeia",
+    "renameFailed": "Não foi possível mudar o nome da cadeia."
+  },
+  "updates": {
+    "versionAvailable": "A versão {version} está disponível",
+    "versionReady": "A versão {version} está pronta a instalar",
+    "releaseNotes": "Notas da versão",
+    "tryAgain": "Tentar novamente",
+    "offline": "Verifique a sua ligação à internet e tente novamente."
+>>>>>>> upstream/main
   }
 }

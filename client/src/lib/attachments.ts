@@ -33,7 +33,11 @@ export const ACCEPT_ATTRIBUTE = [...IMAGE_MIME_TYPES, ...TEXT_EXTENSIONS.map(e =
 
 export type AttachmentKind = 'image' | 'text'
 
+<<<<<<< HEAD
 export type Attachment = {
+=======
+export interface Attachment {
+>>>>>>> upstream/main
   id: string
   kind: AttachmentKind
   name: string

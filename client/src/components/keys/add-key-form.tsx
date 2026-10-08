@@ -12,13 +12,21 @@ import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
 import type { FallbackEntry } from '@/lib/routing'
 import { scopeCandidates, shouldOfferModelPicker, type ScopeCandidate } from '@/lib/model-scope-selection'
+<<<<<<< HEAD
 import { GetKeyLink } from './shared'
 import { PLATFORMS } from './platform-data'
+=======
+import { GetKeyLink, PLATFORMS } from './shared'
+>>>>>>> upstream/main
 
 /** A key that just landed, plus the models the picker should offer for it.
  *  Only produced when the picker is actually worth showing (#657) — otherwise
  *  the add stays as silent as it has always been. */
+<<<<<<< HEAD
 export type AddedKeyScopeOffer = {
+=======
+export interface AddedKeyScopeOffer {
+>>>>>>> upstream/main
   keyId: number
   platformLabel: string
   candidates: ScopeCandidate[]
@@ -77,12 +85,22 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: (offer?:
   // Whether the key that just landed is worth offering the picker for, and the
   // rows to offer. Anything missing — no id back, a keyless sentinel, a catalog
   // too small or not loaded — returns undefined, and the add stays silent.
+<<<<<<< HEAD
   function scopeOffer(keyId: number | undefined, added: string): AddedKeyScopeOffer | undefined {
     if (typeof keyId !== 'number') return undefined
     const provider = PLATFORMS.find(p => p.value === added)
     // Keyless gateways are excluded from scope editing on the key row too — no
     // credential means nothing was bought per model group.
     if (!provider || provider.keyless) return undefined
+=======
+  function scopeOffer(keyId: number | undefined, added: string, key: string): AddedKeyScopeOffer | undefined {
+    if (typeof keyId !== 'number') return undefined
+    const provider = PLATFORMS.find(p => p.value === added)
+    // An anonymous row on a key-optional gateway is excluded from scope editing
+    // on the key row too: no credential means nothing was bought per model
+    // group. A real key saved there is an ordinary key (#1331).
+    if (!provider || (provider.keyless && !key.trim())) return undefined
+>>>>>>> upstream/main
     const candidates = scopeCandidates(catalog, added)
     if (!shouldOfferModelPicker(candidates)) return undefined
     return { keyId, platformLabel: provider.label, candidates }
@@ -115,7 +133,11 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: (offer?:
       // current catalog tier yet (#438) — surfaced as a toast now that the
       // dialog closes on success.
       if (data?.notice) toast.info(data.notice)
+<<<<<<< HEAD
       onSuccess(scopeOffer(data?.id, variables.platform))
+=======
+      onSuccess(scopeOffer(data?.id, variables.platform, variables.key))
+>>>>>>> upstream/main
     },
   })
 
@@ -137,9 +159,17 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: (offer?:
   })
 
   const needsAccountId = platform === 'cloudflare'
+<<<<<<< HEAD
   const isKeyless = PLATFORMS.find(p => p.value === platform)?.keyless ?? false
   // Cloudflare pairs each token with an account id, and keyless providers have
   // nothing to paste, so neither can take a list.
+=======
+  // Key-optional providers (Kilo, OVH, AI Horde) work anonymously, but accept a
+  // real key too (#1331): the field stays editable and may be left blank.
+  const isKeyless = PLATFORMS.find(p => p.value === platform)?.keyless ?? false
+  // Cloudflare pairs each token with an account id, and a key-optional
+  // provider keeps a single anonymous row, so neither takes a list.
+>>>>>>> upstream/main
   const canPasteSeveral = !isKeyless && !needsAccountId
   const severalMode = several && canPasteSeveral
   // One per line or comma-separated, deduped, blanks dropped.
@@ -169,8 +199,14 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: (offer?:
       })
       return
     }
+<<<<<<< HEAD
     // Keyless providers submit an empty key; the backend stores a sentinel.
     const key = isKeyless ? '' : (needsAccountId ? `${accountId}:${apiKey}` : apiKey)
+=======
+    // A blank key on a key-optional provider enables its anonymous tier; the
+    // backend stores a sentinel and sends no Authorization header.
+    const key = isKeyless ? apiKey.trim() : (needsAccountId ? `${accountId}:${apiKey}` : apiKey)
+>>>>>>> upstream/main
     addKey.mutate({ platform, key, label: label || undefined })
   }
 
@@ -249,18 +285,29 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: (offer?:
           ) : (
             <Input
               type="password"
+<<<<<<< HEAD
               value={isKeyless ? '' : apiKey}
               onChange={e => setApiKey(e.target.value)}
               placeholder={isKeyless ? t('keys.noKeyNeededPlaceholder') : (needsAccountId ? t('keys.bearerTokenPlaceholder') : t('keys.pasteKeyPlaceholder'))}
               className="font-mono text-xs"
               disabled={isKeyless}
+=======
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              placeholder={isKeyless ? t('keys.keyOptionalPlaceholder') : (needsAccountId ? t('keys.bearerTokenPlaceholder') : t('keys.pasteKeyPlaceholder'))}
+              className="font-mono text-xs"
+>>>>>>> upstream/main
               aria-invalid={addAttempted && !!keyError}
             />
           )}
           {addAttempted && <FieldError error={keyError} />}
           {isKeyless && (
             <p className="text-[11px] text-muted-foreground">
+<<<<<<< HEAD
               {t('keys.keylessHint')}
+=======
+              {t('keys.keyOptionalHint')}
+>>>>>>> upstream/main
             </p>
           )}
         </div>
@@ -278,7 +325,11 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: (offer?:
                 ? t('keys.adding')
                 : severalMode && keyList.length > 1
                   ? t('keys.importSelected', { count: keyList.length })
+<<<<<<< HEAD
                   : isKeyless ? t('keys.enable') : t('keys.addKey')}
+=======
+                  : isKeyless && !apiKey.trim() ? t('keys.enable') : t('keys.addKey')}
+>>>>>>> upstream/main
             </Button>
           </div>
         </div>

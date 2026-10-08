@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useState } from 'react'
+=======
+import { useState, useEffect } from 'react'
+>>>>>>> upstream/main
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -10,7 +14,11 @@ import { useI18n } from '@/i18n'
 // a pinned catalog model. Mirrors services/anthropic-map.ts on the server.
 type ClaudeFamily = 'default' | 'opus' | 'sonnet' | 'haiku'
 type AnthropicMap = Record<ClaudeFamily, string>
+<<<<<<< HEAD
 type MappableModel = { modelId: string; displayName: string; enabled: boolean }
+=======
+interface MappableModel { modelId: string; displayName: string; enabled: boolean }
+>>>>>>> upstream/main
 const FAMILY_ORDER: { key: ClaudeFamily; labelKey: string }[] = [
   { key: 'default', labelKey: 'keys.familyDefault' },
   { key: 'opus', labelKey: 'keys.familyOpus' },
@@ -40,6 +48,7 @@ export function AnthropicSection() {
   })
 
   const [draft, setDraft] = useState<AnthropicMap | null>(null)
+<<<<<<< HEAD
   // Hydrate the editor from the server — a render-phase adjustment rather than
   // an effect: the draft adopts the fetched map before paint and re-adopts only
   // when the fetched map's identity changes (react-query structural sharing
@@ -50,6 +59,9 @@ export function AnthropicSection() {
     setSyncedMap(serverMap)
     setDraft(serverMap)
   }
+=======
+  useEffect(() => { if (mapData?.map) setDraft(mapData.map) }, [mapData])
+>>>>>>> upstream/main
 
   const save = useMutation({
     mutationFn: (map: AnthropicMap) => apiFetch('/api/settings/anthropic-map', { method: 'PUT', body: JSON.stringify(map) }),

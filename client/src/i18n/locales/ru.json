@@ -16,8 +16,12 @@
     "modelsMenu": "Просмотр типов моделей",
     "agents": "Агенты",
     "logs": "Журнал",
+<<<<<<< HEAD
     "analyticsMenu": "Страницы аналитики",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Страницы аналитики"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Создайте свою учетную запись",
@@ -109,6 +113,7 @@
     "sectionCompression": "Сжатие",
     "sectionAdvanced": "Дополнительно",
     "sectionPreview": "Предпросмотр",
+<<<<<<< HEAD
     "sectionRateLimit": "Лимиты запросов",
     "rateLimitProxy": "Лимит прокси /v1 (запросов/мин)",
     "rateLimitAdmin": "Лимит панели /api (запросов/мин)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Лимит объединённого ключа /v1 (запросов/мин)",
     "rateLimitEnvLocked": "Задано через {env} — уберите переменную для правки",
     "rateLimitSaved": "Применено — вступит в силу со следующего запроса",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Язык и внешний вид этой панели.",
     "advancedDescription": "Пороги и предохранители конвейера сжатия.",
     "compressionTitle": "Сжатие промптов",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Запустить предпросмотр",
     "updatesTitle": "Обновления",
     "checkForUpdates": "Проверьте наличие обновлений",
+<<<<<<< HEAD
     "lastChecked": "Последняя проверка: {when}",
     "currentVersion": "Текущая сборка:",
     "updateAvailable": "Доступно обновление",
     "changelog": "Что изменилось",
+=======
+    "updateAvailable": "Доступно обновление",
+>>>>>>> upstream/main
     "upToDate": "Установлена актуальная версия",
     "buildAhead": "Эта сборка опережает официальную ветку main.",
     "buildDiverged": "История этой сборки разошлась с официальной веткой main.",
     "buildUnknown": "Эту пользовательскую сборку невозможно сравнить с официальной веткой main.",
     "notGitInstall": "Эта установка не содержит сведений о коммите.",
     "checkFailed": "Не удалось проверить наличие обновлений.",
+<<<<<<< HEAD
     "contactsGithub": "Проверка запускается вручную и обращается к GitHub.",
     "autoUpdateCheck": "Автоматическая проверка обновлений",
     "autoUpdateCheckHelp": "Раз в день проверяет на GitHub наличие нового выпуска и показывает напоминание. По умолчанию выключено.",
     "openReleases": "Открыть релизы на GitHub",
     "restartAfterUpdate": "Перезапустите FreeLLMAPI после завершения сборки."
+=======
+    "autoUpdateCheck": "Автоматическая проверка обновлений",
+    "restartAfterUpdate": "Перезапустите FreeLLMAPI после завершения сборки.",
+    "downloadUpdate": "Скачать обновление",
+    "downloadingUpdate": "Загрузка… {percent}%",
+    "restartToUpdate": "Перезапустить для обновления",
+    "updateReadyHint": "Загружено. FreeLLMAPI создаёт резервную копию данных, перезапускается и открывает новую версию.",
+    "updateInstallFailed": "Не удалось установить обновление.",
+    "updateNow": "Обновить сейчас",
+    "updatingContainer": "Загружается новый образ и выполняется перезапуск. Страница перезагрузится, когда FreeLLMAPI вернётся.",
+    "updateNowFailed": "Служба обновления не приняла запрос. Проверьте, что контейнер watchtower запущен.",
+    "updateNowTimeout": "FreeLLMAPI не перезапустился за 5 минут. Проверьте журналы контейнера watchtower."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Модели",
@@ -217,6 +242,10 @@
     "noKey": "нет ключа",
     "dragToReorder": "Перетащите, чтобы изменить порядок",
     "dragToReorderGroup": "Перетащите, чтобы изменить порядок модели",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Перейти к рангу",
+>>>>>>> upstream/main
     "providerCount": "Поставщики {count}",
     "servedBy": "Обслуживает {providers}",
     "viewProviders": "Посмотреть поставщиков",
@@ -231,6 +260,10 @@
     "settingsHint": "Локальные изменения в моделях каталога сохраняются при синхронизации каталога. Удаленные модели из каталога остаются удаленными, пока вы не добавите их снова через конфигурацию.",
     "catalogModel": "каталог",
     "customModel": "обычай",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "обнаружен",
+>>>>>>> upstream/main
     "localOverride": "локальное переопределение",
     "displayName": "Отображаемое имя",
     "sizeLabel": "Уровень возможностей",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Маршрутизация деградировала: {healthy} из {total} провайдеров исправны (с {since})",
     "noProvider": "Нет провайдера",
     "enabledCount": "{count} включено",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Ключи",
     "pageDescription": "Учетные данные поставщика и единый ключ API, с помощью которого подключаются ваши приложения.",
     "tabProviders": "Провайдеры",
     "checklistSummary": "Настроено {configured} из {total} провайдеров",
     "checklistKeyless": "ключ не нужен",
     "checklistNoKeyTip": "Ключ ещё не добавлен. Нажмите, чтобы добавить.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Откройте {provider}, чтобы создать аккаунт и получить ключ",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Работает без ключа.",
     "tabQuotaSignals": "Сигналы квоты",
     "tabApiKey": "Единый ключ API",
@@ -506,11 +546,19 @@
     "platform": "Платформа",
     "hideAdded": "Скрыть добавленных провайдеров",
     "apiToken": "токен API",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Ключ API не требуется.",
     "bearerTokenPlaceholder": "Токен на предъявителя",
     "pasteKeyPlaceholder": "вставьте сюда ключ",
     "pasteSeveral": "Вставить несколько",
     "keylessHint": "Ключ API не требуется: уровень бесплатного пользования этого провайдера является анонимным (ограничение скорости для каждого IP-адреса).",
+=======
+    "keyOptionalPlaceholder": "Необязательно",
+    "bearerTokenPlaceholder": "Токен на предъявителя",
+    "pasteKeyPlaceholder": "вставьте сюда ключ",
+    "pasteSeveral": "Вставить несколько",
+    "keyOptionalHint": "Необязательно: оставьте пустым для анонимного бесплатного уровня (ограничение по IP) или вставьте свой ключ, чтобы использовать свой аккаунт.",
+>>>>>>> upstream/main
     "enable": "Включить",
     "noProviderKeys": "Ключей провайдера пока нет. Добавьте один выше, чтобы начать маршрутизацию.",
     "filterPlaceholder": "Фильтровать поставщиков или ключи",
@@ -688,7 +736,18 @@
     "testFailed": "Тест модели завершился с ошибкой",
     "testThrottled": "Пожалуйста, подождите {seconds}с перед повторным тестированием.",
     "noModelsForProvider": "Для этого провайдера нет настроенных моделей.",
+<<<<<<< HEAD
     "testModels": "Проверить модели"
+=======
+    "testModels": "Проверить модели",
+    "monthlyRequestCapLabel": "Месячный лимит запросов",
+    "monthlyTokenCapLabel": "Месячный лимит токенов",
+    "capUnlimitedPlaceholder": "Без ограничений",
+    "capEditHint": "Лимиты сбрасываются 1-го числа в 00:00 UTC. Оставьте пустым для безлимита.",
+    "monthlyUsageLine": "{requests} запросов, {tokens} токенов в этом месяце",
+    "quotaBalanceHint": "Осталось {remaining} из {limit} {metric}",
+    "quotaBalanceLeft": "Осталось {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Перед обновлением"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "здоровый",
@@ -1144,17 +1208,29 @@
       "generic": "Любой другой инструмент, говорящий по API OpenAI, — настраивается вручную по базовому URL и ключу.",
       "atomcode": "Терминальный агент AtomGit, написанный на Rust, принимает любой OpenAI-совместимый эндпоинт.",
       "openclaw": "Всегда доступный персональный ассистент, который отвечает в WhatsApp, Telegram, Discord и других мессенджерах прямо с вашего компьютера.",
+<<<<<<< HEAD
       "hermes": "Самосовершенствующийся агент от Nous Research с постоянной памятью и навыками — в терминале или в чат-приложениях."
+=======
+      "hermes": "Самосовершенствующийся агент от Nous Research с постоянной памятью и навыками — в терминале или в чат-приложениях.",
+      "pi": "Минималистичный терминальный агент, который вы настраиваете своими расширениями, навыками и шаблонами промптов.",
+      "reasonix": "Терминальный агент для программирования, созданный под DeepSeek и построенный вокруг кэширования префиксов, чтобы длинные сессии оставались дешёвыми."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "Установлена более новая версия FreeLLMAPI.",
+    "reload": "Перезагрузить"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Пулы бесплатного тарифа ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Создать пустой",
     "startEmptyHint": "Создаёт цепочку без моделей и не добавляет в неё новые модели каталога. Без флажка она начинается как копия цепочки по умолчанию.",
     "curated": "Ручная",
+<<<<<<< HEAD
     "curatedHint": "Новые модели каталога не добавляются в эту цепочку автоматически."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} запросов ограничено за последние 5 минут",
     "hourFilter": "Час: {hour}",
     "serverLog": "Журнал сервера"
+=======
+    "curatedHint": "Новые модели каталога не добавляются в эту цепочку автоматически.",
+    "renameHint": "Переименовать эту цепочку",
+    "renameConfirm": "Переименовать цепочку \"{oldName}\" в \"{name}\"? Клиенты, обращающиеся к auto:{oldName}, должны перейти на auto:{name}.",
+    "renamePlaceholder": "Новое имя цепочки",
+    "renameFailed": "Не удалось переименовать цепочку."
+  },
+  "updates": {
+    "versionAvailable": "Доступна версия {version}",
+    "versionReady": "Версия {version} готова к установке",
+    "releaseNotes": "Примечания к выпуску",
+    "tryAgain": "Повторить",
+    "offline": "Проверьте подключение к интернету и повторите попытку."
+>>>>>>> upstream/main
   }
 }

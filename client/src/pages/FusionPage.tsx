@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useMemo, useState } from 'react'
+=======
+import { useEffect, useMemo, useState } from 'react'
+>>>>>>> upstream/main
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Check, Layers, Search } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
@@ -13,6 +17,7 @@ import { PageHeader } from '@/components/page-header'
 import { FloatingBar } from '@/components/floating-bar'
 import { ModelsTabs } from '@/components/models-tabs'
 import { useI18n } from '@/i18n'
+<<<<<<< HEAD
 import type {
   FusionMode as Mode,
   FusionStrategy as Strategy,
@@ -20,6 +25,34 @@ import type {
   FusionConfigResponse,
   FallbackEntry,
 } from '../../../shared/types'
+=======
+
+type Mode = 'auto' | 'explicit'
+type Strategy = 'synthesize' | 'best_of'
+
+interface SavedFusionConfig {
+  mode: Mode
+  models: string[]
+  judge: string | null
+  k: number
+  strategy: Strategy
+  expose_panel: boolean
+}
+
+interface FusionConfigResponse {
+  config: SavedFusionConfig
+  maxK: number
+}
+
+interface FallbackEntry {
+  modelDbId: number
+  platform: string
+  modelId: string
+  displayName: string
+  enabled: boolean
+  keyCount: number
+}
+>>>>>>> upstream/main
 
 const JUDGE_AUTO = '__auto__'
 const PROVIDER_ALL = '__all__'
@@ -70,6 +103,7 @@ export default function FusionPage() {
     [modelOptions, panelQuery, panelProvider],
   )
 
+<<<<<<< HEAD
   // Hydrate local state from the server once it loads — a render-phase
   // adjustment rather than an effect: the config lands before paint, and only
   // when the fetched config's identity actually changes (structural sharing
@@ -78,13 +112,22 @@ export default function FusionPage() {
   const [syncedConfig, setSyncedConfig] = useState<FusionConfigResponse | undefined>(undefined)
   if (data && data !== syncedConfig) {
     setSyncedConfig(data)
+=======
+  // Hydrate local state from the server once it loads.
+  useEffect(() => {
+    if (!data) return
+>>>>>>> upstream/main
     setMode(data.config.mode)
     setModels(data.config.models)
     setJudge(data.config.judge ?? JUDGE_AUTO)
     setK(data.config.k)
     setStrategy(data.config.strategy)
     setExposePanel(data.config.expose_panel)
+<<<<<<< HEAD
   }
+=======
+  }, [data])
+>>>>>>> upstream/main
 
   const maxK = data?.maxK ?? 8
 

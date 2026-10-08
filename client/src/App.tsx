@@ -1,8 +1,15 @@
+<<<<<<< HEAD
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { prefetchHandlers, prefetchRoute, prefetchRoutes, prefetchWhenIdle, registerRouteLoaders } from '@/lib/route-prefetch'
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ChevronDown, KeyRound, Loader2, LogOut, Menu, MoreHorizontal, Search, Settings, Sparkles } from 'lucide-react'
+=======
+import { useEffect, useState, type ReactNode } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ChevronDown, KeyRound, LogOut, Menu, MoreHorizontal, RefreshCw, Search, Settings, Sparkles } from 'lucide-react'
+>>>>>>> upstream/main
 import { buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -20,6 +27,7 @@ import { CommandPalette } from '@/components/command-palette'
 import { openCommandPalette } from '@/components/command-palette-state'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { SettingsDialog } from '@/components/settings-dialog'
+<<<<<<< HEAD
 import { Toaster } from '@/components/toaster'
 import { RetryCountdownBar } from '@/components/retry-countdown-bar'
 import { KeysNavBadge } from '@/components/keys-nav-badge'
@@ -95,6 +103,34 @@ registerRouteLoaders({
 // is ~400 kB (recharts+d3) and Keys/Playground ~110-120 kB each, which is exactly
 // the first-click stall this removes. Light pages load on demand as before.
 const IDLE_WARM_ROUTES = ['/analytics', '/keys', '/playground'] as const
+=======
+import { UpdatesDialog } from '@/components/updates-dialog'
+import { OPEN_UPDATES_EVENT } from '@/lib/updates'
+import { Toaster } from '@/components/toaster'
+import { UpdateReminder } from '@/components/update-reminder'
+import { NewBuildPrompt } from '@/components/new-build-prompt'
+import { usePremium } from '@/hooks/use-premium'
+import { I18nProvider, useI18n } from '@/i18n'
+import { logout } from '@/lib/api'
+import { toast } from '@/lib/toast'
+import { ThemeProvider } from '@/theme'
+import KeysPage from '@/pages/KeysPage'
+import PlaygroundPage from '@/pages/PlaygroundPage'
+import FallbackPage from '@/pages/FallbackPage'
+import ModelDetailPage from '@/pages/ModelDetailPage'
+import FusionPage from '@/pages/FusionPage'
+import EmbeddingsPage from '@/pages/EmbeddingsPage'
+import ImagePage from '@/pages/ImagePage'
+import VideoPage from '@/pages/VideoPage'
+import AudioPage from '@/pages/AudioPage'
+import MediaDetailPage from '@/pages/MediaDetailPage'
+import EmbeddingDetailPage from '@/pages/EmbeddingDetailPage'
+import AnalyticsPage from '@/pages/AnalyticsPage'
+import LogsPage from '@/pages/LogsPage'
+import PremiumPage from '@/pages/PremiumPage'
+import NotFoundPage from '@/pages/NotFoundPage'
+import AgentsPage from '@/pages/AgentsPage'
+>>>>>>> upstream/main
 
 // Every failed mutation surfaces as an error toast, so no action fails
 // silently. A page that already shows the failure inline can opt out with
@@ -108,6 +144,7 @@ const queryClient = new QueryClient({
   // whether a background refetch follows. Thirty seconds is shorter than any
   // poller here (refetchInterval still fires on its own clock), and mutations
   // invalidate explicitly, so nothing user-visible goes stale.
+<<<<<<< HEAD
   defaultOptions: {
     queries: {
       staleTime: 30_000,
@@ -122,6 +159,12 @@ const queryClient = new QueryClient({
       // apiFetch already shows the ticking countdown for a 429 with
       // Retry-After — a second toast with a frozen second-count would fight it.
       if (hasRetryCountdown(error)) return
+=======
+  defaultOptions: { queries: { staleTime: 30_000 } },
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, mutation) => {
+      if (mutation.meta?.silenceToast) return
+>>>>>>> upstream/main
       toast.error(error instanceof Error ? error.message : String(error))
     },
   }),
@@ -132,7 +175,10 @@ const navItems = [
   { to: '/playground', labelKey: 'nav.playground' },
   { to: '/keys', labelKey: 'nav.keys' },
   { to: '/agents', labelKey: 'nav.agents' },
+<<<<<<< HEAD
   { to: '/forgepilot', labelKey: 'nav.forgepilot' },
+=======
+>>>>>>> upstream/main
   { to: '/analytics', labelKey: 'nav.analytics' },
   { to: '/premium', labelKey: 'nav.premium' },
 ]
@@ -182,7 +228,10 @@ function NavItem({ to, children }: { to: string; children: React.ReactNode }) {
   return (
     <NavLink
       to={to}
+<<<<<<< HEAD
       {...prefetchHandlers(to)}
+=======
+>>>>>>> upstream/main
       className={({ isActive }) =>
         `relative text-sm px-1 py-4 transition-colors ${
           isActive
@@ -234,22 +283,38 @@ function AccountMenuItems({
   showUpgrade,
   upgradeLabel,
   settingsLabel,
+<<<<<<< HEAD
+=======
+  updatesLabel,
+>>>>>>> upstream/main
   signOutLabel,
   changeEmailLabel,
   changePasswordLabel,
   onUpgrade,
   onOpenSettings,
+<<<<<<< HEAD
+=======
+  onOpenUpdates,
+>>>>>>> upstream/main
   onChangeEmail,
   onChangePassword,
 }: {
   showUpgrade: boolean
   upgradeLabel: string
   settingsLabel: string
+<<<<<<< HEAD
+=======
+  updatesLabel: string
+>>>>>>> upstream/main
   signOutLabel: string
   changeEmailLabel: string
   changePasswordLabel: string
   onUpgrade: () => void
   onOpenSettings: () => void
+<<<<<<< HEAD
+=======
+  onOpenUpdates: () => void
+>>>>>>> upstream/main
   onChangeEmail: () => void
   onChangePassword: () => void
 }) {
@@ -265,6 +330,13 @@ function AccountMenuItems({
         <Settings />
         {settingsLabel}
       </DropdownMenuItem>
+<<<<<<< HEAD
+=======
+      <DropdownMenuItem onClick={onOpenUpdates}>
+        <RefreshCw />
+        {updatesLabel}
+      </DropdownMenuItem>
+>>>>>>> upstream/main
       {/* Desktop signs in with a hidden local account, so it has no credentials
           to change and no session to end. */}
       {!isDesktopApp && (
@@ -293,6 +365,16 @@ function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
+<<<<<<< HEAD
+=======
+  const [updatesOpen, setUpdatesOpen] = useState(false)
+  // The update pill lives outside the navbar; it asks for this dialog by event.
+  useEffect(() => {
+    const open = () => setUpdatesOpen(true)
+    window.addEventListener(OPEN_UPDATES_EVENT, open)
+    return () => window.removeEventListener(OPEN_UPDATES_EVENT, open)
+  }, [])
+>>>>>>> upstream/main
   const [credentialsMode, setCredentialsMode] = useState<'password' | 'email' | null>(null)
   const { data: premium, licensed, isLoading: premiumLoading, isError: premiumError } = usePremium()
   const showUpgrade = Boolean(premium) && !licensed && !premiumLoading && !premiumError
@@ -323,6 +405,7 @@ function Navbar() {
                 // Split control: the label navigates, the chevron reveals the
                 // pages hiding behind it.
                 <div key={item.to} className="flex items-center gap-0.5">
+<<<<<<< HEAD
                   <NavItem to={item.to}>
                     {t(item.labelKey)}
                     {item.to === '/keys' && <KeysNavBadge />}
@@ -331,17 +414,27 @@ function Navbar() {
                     <DropdownMenuTrigger
                       aria-label={t(menu.ariaKey)}
                       onMouseEnter={() => prefetchRoutes(menu.items.map((entry) => entry.to))}
+=======
+                  <NavItem to={item.to}>{t(item.labelKey)}</NavItem>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      aria-label={t(menu.ariaKey)}
+>>>>>>> upstream/main
                       className="rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <ChevronDown className="size-3.5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-44">
                       {menu.items.map((entry) => (
+<<<<<<< HEAD
                         <DropdownMenuItem
                           key={entry.to}
                           onClick={() => navigate(entry.to)}
                           onMouseEnter={() => prefetchRoute(entry.to)}
                         >
+=======
+                        <DropdownMenuItem key={entry.to} onClick={() => navigate(entry.to)}>
+>>>>>>> upstream/main
                           {t(entry.labelKey)}
                         </DropdownMenuItem>
                       ))}
@@ -351,7 +444,10 @@ function Navbar() {
               ) : (
                 <NavItem key={item.to} to={item.to}>
                   {t(item.labelKey)}
+<<<<<<< HEAD
                   {item.to === '/keys' && <KeysNavBadge />}
+=======
+>>>>>>> upstream/main
                 </NavItem>
               )
             })}
@@ -381,11 +477,19 @@ function Navbar() {
                   showUpgrade={showUpgrade}
                   upgradeLabel={t('nav.upgrade')}
                   settingsLabel={t('nav.settings')}
+<<<<<<< HEAD
+=======
+                  updatesLabel={t('settings.checkForUpdates')}
+>>>>>>> upstream/main
                   signOutLabel={t('nav.signOut')}
                   changeEmailLabel={t('auth.changeEmail')}
                   changePasswordLabel={t('auth.changePassword')}
                   onUpgrade={() => navigate('/premium')}
                   onOpenSettings={() => setSettingsOpen(true)}
+<<<<<<< HEAD
+=======
+                  onOpenUpdates={() => setUpdatesOpen(true)}
+>>>>>>> upstream/main
                   onChangeEmail={() => setCredentialsMode('email')}
                   onChangePassword={() => setCredentialsMode('password')}
                 />
@@ -407,18 +511,25 @@ function Navbar() {
                     return menu ? (
                       <DropdownMenuSub key={item.to}>
                         <DropdownMenuSubTrigger
+<<<<<<< HEAD
                           onMouseEnter={() => prefetchRoutes(menu.items.map((entry) => entry.to))}
+=======
+>>>>>>> upstream/main
                           className={menu.isActive(location.pathname) ? 'bg-accent text-accent-foreground font-medium' : undefined}
                         >
                           {t(item.labelKey)}
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           {menu.items.map((entry) => (
+<<<<<<< HEAD
                             <DropdownMenuItem
                               key={entry.to}
                               onClick={() => navigate(entry.to)}
                               onMouseEnter={() => prefetchRoute(entry.to)}
                             >
+=======
+                            <DropdownMenuItem key={entry.to} onClick={() => navigate(entry.to)}>
+>>>>>>> upstream/main
                               {t(entry.labelKey)}
                             </DropdownMenuItem>
                           ))}
@@ -428,11 +539,17 @@ function Navbar() {
                       <DropdownMenuItem
                         key={item.to}
                         onClick={() => navigate(item.to)}
+<<<<<<< HEAD
                         onMouseEnter={() => prefetchRoute(item.to)}
                         className={location.pathname === item.to ? 'bg-accent text-accent-foreground font-medium' : undefined}
                       >
                         {t(item.labelKey)}
                         {item.to === '/keys' && <KeysNavBadge />}
+=======
+                        className={location.pathname === item.to ? 'bg-accent text-accent-foreground font-medium' : undefined}
+                      >
+                        {t(item.labelKey)}
+>>>>>>> upstream/main
                       </DropdownMenuItem>
                     )
                   })}
@@ -442,11 +559,19 @@ function Navbar() {
                   showUpgrade={showUpgrade}
                   upgradeLabel={t('nav.upgrade')}
                   settingsLabel={t('nav.settings')}
+<<<<<<< HEAD
+=======
+                  updatesLabel={t('settings.checkForUpdates')}
+>>>>>>> upstream/main
                   signOutLabel={t('nav.signOut')}
                   changeEmailLabel={t('auth.changeEmail')}
                   changePasswordLabel={t('auth.changePassword')}
                   onUpgrade={() => navigate('/premium')}
                   onOpenSettings={() => setSettingsOpen(true)}
+<<<<<<< HEAD
+=======
+                  onOpenUpdates={() => setUpdatesOpen(true)}
+>>>>>>> upstream/main
                   onChangeEmail={() => setCredentialsMode('email')}
                   onChangePassword={() => setCredentialsMode('password')}
                 />
@@ -456,6 +581,10 @@ function Navbar() {
         </div>
       </header>
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+<<<<<<< HEAD
+=======
+      <UpdatesDialog open={updatesOpen} onOpenChange={setUpdatesOpen} />
+>>>>>>> upstream/main
       {credentialsMode && (
         <ChangeCredentialsModal mode={credentialsMode} onClose={() => setCredentialsMode(null)} />
       )}
@@ -515,6 +644,7 @@ function AppShell({ children }: { children: ReactNode }) {
   )
 }
 
+<<<<<<< HEAD
 // Shown by Suspense while a route chunk streams in. Reuses the existing
 // auth.loading key — no new i18n entry for a spinner.
 function RouteFallback() {
@@ -550,6 +680,9 @@ function App() {
     return () => window.removeEventListener(RETRY_SUCCEEDED_EVENT, onRetried)
   }, [])
 
+=======
+function App() {
+>>>>>>> upstream/main
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -564,7 +697,10 @@ function App() {
                 <Navbar />
                 <PageContainer>
                   <PageBoundary>
+<<<<<<< HEAD
                     <Suspense fallback={<RouteFallback />}>
+=======
+>>>>>>> upstream/main
                     <Routes>
                       <Route path="/" element={<Navigate to="/models/chat" replace />} />
                       <Route path="/models" element={<Navigate to="/models/chat" replace />} />
@@ -583,7 +719,10 @@ function App() {
                       <Route path="/playground" element={<PlaygroundPage />} />
                       <Route path="/keys" element={<KeysPage />} />
                       <Route path="/agents" element={<AgentsPage />} />
+<<<<<<< HEAD
                       <Route path="/forgepilot" element={<ForgePilotPage />} />
+=======
+>>>>>>> upstream/main
                       <Route path="/fallback" element={<Navigate to="/models/chat" replace />} />
                       <Route path="/analytics" element={<AnalyticsPage />} />
                       <Route path="/logs" element={<LogsPage />} />
@@ -592,6 +731,7 @@ function App() {
                       <Route path="/health" element={<Navigate to="/keys" replace />} />
                       <Route path="*" element={<NotFoundPage />} />
                     </Routes>
+<<<<<<< HEAD
                     </Suspense>
                   </PageBoundary>
                 </PageContainer>
@@ -599,6 +739,14 @@ function App() {
                 <RetryCountdownBar />
                 <CommandPalette />
                 <UpdateReminder />
+=======
+                  </PageBoundary>
+                </PageContainer>
+                <Toaster />
+                <CommandPalette />
+                <UpdateReminder />
+                <NewBuildPrompt />
+>>>>>>> upstream/main
               </AppShell>
             </AuthGate>
           </BrowserRouter>

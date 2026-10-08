@@ -22,6 +22,10 @@ import type { ApiKey, ApiKeyModel } from '../../../../shared/types'
 import { formatSqliteUtcToLocalTime } from '@/lib/utils'
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
+<<<<<<< HEAD
+=======
+import { keyMatchesQuery } from '@/lib/key-search'
+>>>>>>> upstream/main
 import {
   PLATFORMS,
   CUSTOM_GROUP,
@@ -30,8 +34,14 @@ import {
   customModelDeletePath,
   statusDot,
   statusLabelKey,
+<<<<<<< HEAD
 } from './platform-data'
 import type { HealthData, HealthKeyRow } from './shared'
+=======
+} from './shared'
+import { balanceByKey } from './quota-balance'
+import type { HealthData } from './shared'
+>>>>>>> upstream/main
 import { DiscoverModelsDialog } from './discover-models-dialog'
 import { AddEndpointKeyDialog } from './add-endpoint-key-dialog'
 import { CopyKeyDialog } from './copy-key-dialog'
@@ -46,11 +56,27 @@ type StatusFilter = 'all' | 'healthy' | 'issues' | 'disabled'
 // #787: what the batch bar can do to the selected keys of one group.
 type BulkAction = 'enable' | 'disable' | 'delete'
 
+<<<<<<< HEAD
+=======
+// #1403 phase 3: the balance badge names its unit with the Free tier page's
+// already-translated metric words.
+const METRIC_LABEL_KEY = {
+  requests: 'freeTier.metricRequests',
+  tokens: 'freeTier.metricTokens',
+  credits: 'freeTier.metricCredits',
+  neurons: 'freeTier.metricNeurons',
+} as const
+
+>>>>>>> upstream/main
 // The Providers tab body: a filter toolbar over a list of collapsible provider
 // groups. Owns the keys/health/proxy queries and every per-key mutation so
 // KeysPage stays a thin shell. `onAddKey` opens the shared Add key dialog.
 export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
+<<<<<<< HEAD
   const { t } = useI18n()
+=======
+  const { t, locale } = useI18n()
+>>>>>>> upstream/main
   const queryClient = useQueryClient()
 
   const [editingKeyId, setEditingKeyId] = useState<number | null>(null)
@@ -61,7 +87,13 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   // Custom endpoint whose model list is being fetched (#488) — relays change
   // what they serve constantly, so this is a repeat action, not a one-off.
+<<<<<<< HEAD
   const [discoverKeyId, setDiscoverKeyId] = useState<number | null>(null)
+=======
+  // `builtin`: a built-in provider key the catalog has no models for (#1348),
+  // whose picks register as discovered rows instead of custom-endpoint models.
+  const [discoverTarget, setDiscoverTarget] = useState<{ keyId: number; builtin: boolean } | null>(null)
+>>>>>>> upstream/main
   // Custom endpoint taking another credential (#702). Keyed by base URL, since
   // a key joins the pool of an endpoint rather than of the row it was opened
   // from, and every key of that endpoint offers the same action.
@@ -250,10 +282,23 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
     })
   }
 
+<<<<<<< HEAD
   const healthKeyMap = new Map<number, HealthKeyRow>()
   for (const k of healthData?.keys ?? []) healthKeyMap.set(k.id, k)
   const statusOf = (k: ApiKey) => healthKeyMap.get(k.id)?.status ?? k.status
 
+=======
+  const healthKeyMap = new Map<number, { status: string; lastCheckedAt: string | null; lastHealthError: string | null }>()
+  for (const k of healthData?.keys ?? []) healthKeyMap.set(k.id, k)
+  const statusOf = (k: ApiKey) => healthKeyMap.get(k.id)?.status ?? k.status
+
+  // #1403 phase 3: the provider-reported balance for a key, from the same
+  // health poll the row's status already rides on. One badge per key: the
+  // lowest remaining fraction among that key's pools, since that pool is the
+  // one that runs dry first and starts routing around the key.
+  const balanceOf = balanceByKey(healthData?.quotaStates ?? [])
+
+>>>>>>> upstream/main
   const grouped = [...PLATFORMS, CUSTOM_GROUP].map(p => ({
     ...p,
     keys: keys.filter(k => k.platform === p.value),
@@ -276,15 +321,26 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
   }
 
   // Search narrows either whole groups (label match) or the keys within them
+<<<<<<< HEAD
   // (label / masked-key match); the status filter then trims the result set.
+=======
+  // (label / masked-key / endpoint-URL match); the status filter then trims
+  // the result set. The baseUrl term is #1056's lesson applied here: a custom
+  // row renders "api.unorouter.com" on screen, so searching that host must
+  // find the row the same way the fallback table's search does.
+>>>>>>> upstream/main
   const visibleGroups = grouped
     .map(group => {
       if (!q) return group
       if (group.label.toLowerCase().includes(q)) return group
+<<<<<<< HEAD
       const matchingKeys = group.keys.filter(k =>
         (k.label ?? '').toLowerCase().includes(q) ||
         (k.maskedKey ?? '').toLowerCase().includes(q),
       )
+=======
+      const matchingKeys = group.keys.filter(k => keyMatchesQuery(k, q))
+>>>>>>> upstream/main
       return { ...group, keys: matchingKeys }
     })
     .filter(group => group.keys.length > 0 && matchStatus(group))
@@ -359,12 +415,15 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
             const expanded = isGroupExpanded(group)
             const healthyCount = group.keys.filter(k => statusOf(k) === 'healthy').length
             const issueCount = group.keys.filter(k => statusOf(k) !== 'healthy').length
+<<<<<<< HEAD
             // Platform-level lanes from GET /api/health: the enabled count is
             // the server's truth (a sweep can differ from what the row shows),
             // and hasProvider=false means keys exist for a platform this build
             // cannot actually route through.
             const platformHealth = healthData?.platforms.find(pl => pl.platform === group.value)
             const enabledCount = platformHealth?.enabledKeys ?? group.keys.filter(k => k.enabled).length
+=======
+>>>>>>> upstream/main
             // #787: once a selection exists in this group the checkboxes stay
             // visible, so the rest of the selection can be built without hunting.
             const groupHasSelection = group.keys.some(k => selectedKeyIds.has(k.id))
@@ -399,6 +458,7 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
                           {t(issueCount === 1 ? 'keys.summaryIssueOne' : 'keys.summaryIssueOther', { count: issueCount })}
                         </span>
                       )}
+<<<<<<< HEAD
                       <span className="inline-flex items-center gap-1">
                         <span className="size-1.5 rounded-full bg-sky-500" />
                         {t('keys.enabledCount', { count: enabledCount })}
@@ -407,6 +467,9 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
                     {platformHealth && !platformHealth.hasProvider && (
                       <Badge variant="destructive" className="text-[10px]">{t('keys.noProvider')}</Badge>
                     )}
+=======
+                    </span>
+>>>>>>> upstream/main
                   </button>
                   <DropdownMenu>
                       <DropdownMenuTrigger
@@ -506,6 +569,10 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
                       const health = healthKeyMap.get(k.id)
                       const lastChecked = health?.lastCheckedAt ?? k.lastCheckedAt
                       const lastHealthError = health?.lastHealthError ?? k.lastHealthError
+<<<<<<< HEAD
+=======
+                      const balance = balanceOf.get(k.id)
+>>>>>>> upstream/main
                       const customModels = k.models ?? []
                       const hasCustomModels = customModels.length > 0
                       const isExpanded = expandedKeyIds.has(k.id)
@@ -588,6 +655,7 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
                                 {t(k.modelScope!.length === 1 ? 'keys.modelScopeBadgeOne' : 'keys.modelScopeBadgeOther', { count: k.modelScope!.length })}
                               </Badge>
                             )}
+<<<<<<< HEAD
                             <div className="flex-1" />
                             {lastChecked && (
                               <span
@@ -596,6 +664,34 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
                                   ? `${t('keys.keyAdded')}: ${formatSqliteUtcToLocalTime(health.createdAt, { dateStyle: 'medium', timeStyle: 'short' })}`
                                   : undefined}
                               >
+=======
+                            {/* #1403 phase 3: the provider-reported balance (#1403).
+                                Amber at ≤20% left — the same low-balance signal the
+                                Quota outlook panel gives, but visible where the operator
+                                actually scans keys instead of on a second tab. */}
+                            {balance && (
+                              <Tooltip
+                                text={balance.limit != null
+                                  ? t('keys.quotaBalanceHint', { remaining: new Intl.NumberFormat(locale).format(balance.remaining), limit: new Intl.NumberFormat(locale).format(balance.limit), metric: t(METRIC_LABEL_KEY[balance.metric]) })
+                                  : t('keys.quotaBalanceLeft', { remaining: new Intl.NumberFormat(locale).format(balance.remaining) })}
+                              >
+                                <Badge
+                                  variant="outline"
+                                  aria-label={t('keys.quotaBalanceLeft', { remaining: new Intl.NumberFormat(locale).format(balance.remaining) })}
+                                  className={`text-[10px] tabular-nums ${balance.fraction != null && balance.fraction <= 0.2
+                                    ? 'border-amber-600/30 text-amber-700 dark:text-amber-300'
+                                    : 'text-muted-foreground'} ${k.enabled ? '' : 'opacity-50'}`}
+                                >
+                                  {balance.limit != null && balance.fraction != null
+                                    ? `${Math.round(balance.fraction * 100)}% ${t(METRIC_LABEL_KEY[balance.metric])}`
+                                    : `${new Intl.NumberFormat(locale).format(balance.remaining)} ${t(METRIC_LABEL_KEY[balance.metric])}`}
+                                </Badge>
+                              </Tooltip>
+                            )}
+                            <div className="flex-1" />
+                            {lastChecked && (
+                              <span className="text-[11px] text-muted-foreground tabular-nums">
+>>>>>>> upstream/main
                                 {formatSqliteUtcToLocalTime(lastChecked, { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             )}
@@ -634,6 +730,21 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
                                   </Button>
                                 </Tooltip>
                               )}
+<<<<<<< HEAD
+=======
+                              {k.platform !== 'custom' && k.modelDiscovery && (
+                                <Tooltip text={t('keys.discoverModels')}>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    onClick={() => setDiscoverTarget({ keyId: k.id, builtin: true })}
+                                    aria-label={t('keys.discoverModels')}
+                                  >
+                                    <ListPlus className="size-3" />
+                                  </Button>
+                                </Tooltip>
+                              )}
+>>>>>>> upstream/main
                               {k.platform === 'custom' && k.baseUrl && (
                                 <>
                                   <Tooltip text={t('keys.addKey')}>
@@ -650,7 +761,11 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
                                     <Button
                                       variant="ghost"
                                       size="icon-xs"
+<<<<<<< HEAD
                                       onClick={() => setDiscoverKeyId(k.id)}
+=======
+                                      onClick={() => setDiscoverTarget({ keyId: k.id, builtin: false })}
+>>>>>>> upstream/main
                                       aria-label={t('keys.discoverModels')}
                                     >
                                       <ListPlus className="size-3" />
@@ -780,11 +895,20 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
         </div>
       )}
 
+<<<<<<< HEAD
       {discoverKeyId !== null && (
         <DiscoverModelsDialog
           open
           onOpenChange={(open) => { if (!open) setDiscoverKeyId(null) }}
           endpoint={{ keyId: discoverKeyId }}
+=======
+      {discoverTarget !== null && (
+        <DiscoverModelsDialog
+          open
+          onOpenChange={(open) => { if (!open) setDiscoverTarget(null) }}
+          endpoint={{ keyId: discoverTarget.keyId }}
+          builtin={discoverTarget.builtin}
+>>>>>>> upstream/main
         />
       )}
 

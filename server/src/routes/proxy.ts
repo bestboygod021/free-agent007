@@ -1,15 +1,28 @@
 import crypto from 'crypto';
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+<<<<<<< HEAD
+=======
+import { z } from 'zod';
+>>>>>>> upstream/main
 import type { ChatMessage, ChatToolCall, TokenUsage } from '@freellmapi/shared/types.js';
 import { type RouteResult, type ResolvedChain, type ChainRow, routeRequest, resolveRoutingChain, resolveModelGroupCandidates, resolveStickyPreference, hasEnabledVisionModel, hasEnabledToolsModel, routingReserveTokens } from '../services/router.js';
 import { secondsUntilNextMonth } from '../services/key-budget.js';
 import { runEmbeddings, EmbeddingsError } from '../services/embeddings.js';
+<<<<<<< HEAD
+=======
+import { retryAfterSeconds } from '../lib/retry-hint.js';
+>>>>>>> upstream/main
 import { runImageGeneration, runVideoGeneration, runSpeech, runTranscription, MediaError, MAX_TRANSCRIPTION_BYTES } from '../services/media.js';
 import multer from 'multer';
 import { getDb } from '../db/index.js';
 import { resolveAuth, prependSystemPrompt, type ResolvedAuth } from '../lib/system-prompt.js';
+<<<<<<< HEAD
 import { contentToString, messageHasImage, normalizeOutboundContent, sanitizeResponse, truncateMessagesForGithub } from '../lib/content.js';
+=======
+import { contentToString, estimateInputTokens, messageHasImage, normalizeOutboundContent, sanitizeResponse, truncateMessagesForGithub } from '../lib/content.js';
+import { routeOutputBudget } from '../lib/output-cap.js';
+>>>>>>> upstream/main
 import { resolveTaskType } from '../lib/task-type.js';
 import { normalizeMessageImages } from '../lib/image-normalize.js';
 import { repairToolArguments, toolSchemaMap } from '../lib/tool-args.js';
@@ -17,6 +30,7 @@ import { invalidToolArgumentsError, invalidToolCallReasons, isToolArgumentValida
 import { sanitizeProviderErrorMessage } from '../lib/error-redaction.js';
 import { rescueInlineToolCalls, startsWithDialectMarker, couldBecomeDialectMarker, containsDialectMarker } from '../lib/tool-call-rescue.js';
 import { getContextHandoffMode, recordIncomingMessages, maybeInjectContextHandoff, recordSuccessfulModel, hasPriorModel, HANDOFF_MAX_TOKENS } from '../services/context-handoff.js';
+<<<<<<< HEAD
 import { isFusionModel, runFusion, FusionError, FUSION_MODEL_ID } from '../services/fusion.js';
 import { isRetryableError, isPaymentRequiredError, isModelNotFoundError, isModelAccessForbiddenError, isClientAbortError, newClientAbortError, newHedgeAbortError, isUpstreamClassificationOutput } from '../lib/error-classify.js';
 import { logRequest } from '../lib/request-log.js';
@@ -30,11 +44,22 @@ import {
   rememberSemanticPrompt,
   forgetSemanticPrompt,
 } from '../services/semantic-cache.js';
+=======
+import { isFusionModel, runFusion, fusionConfigSchema, FusionError, FUSION_MODEL_ID } from '../services/fusion.js';
+import { isRetryableError, isPaymentRequiredError, isModelNotFoundError, isModelAccessForbiddenError, isClientAbortError, newClientAbortError, newHedgeAbortError, isUpstreamClassificationOutput } from '../lib/error-classify.js';
+import { logRequest } from '../lib/request-log.js';
+import { observeServedModel } from '../lib/served-model.js';
+import { parseCacheDirective, cacheActive, isCacheableTemperature, computeCacheKey, getCachedResponse, storeCachedResponse, getCachedStreamResponse, storeCachedStreamResponse, STREAM_CACHE_MAX_BYTES } from '../services/cache.js';
+>>>>>>> upstream/main
 import { normalizeIdempotencyKey, hashIdempotencyKey, computeIdempotencyFingerprint, lookupIdempotencyReplay, storeIdempotencyResult } from '../services/idempotency.js';
 import { runFallbackLoop, newFallbackState, fallbackRoutingTokens, recordUpstreamSuccess, exhaustedRetryError, setFallbackHeaders, exhaustionErrorPayload, setExhaustionHeaders, type AttemptRecord } from '../lib/fallback-loop.js';
 import { routedViaValue, safeHeaderValue } from '../lib/header-value.js';
 import { applyTokenBudget, tokenBudgetMessage } from '../lib/guardrails.js';
+<<<<<<< HEAD
 import { pickSamplingParams, supportedParametersForPlatforms } from '../lib/sampling-params.js';
+=======
+import { samplingParamSchemaFields, pickSamplingParams, supportedParametersForPlatforms } from '../lib/sampling-params.js';
+>>>>>>> upstream/main
 import { enforceJsonContent } from '../lib/structured-output.js';
 import type { Platform } from '@freellmapi/shared/types.js';
 import { inferQuotaPoolKey, type QuotaObservationContext } from '../services/provider-quota.js';
@@ -42,6 +67,7 @@ import { isUnifyEnabled, getModelGroups, resolveRequestedIdForDispatch } from '.
 import { buildModelListing, type NormalizedModel } from '../services/model-listing.js';
 import { claudeFamilyDiscoveryEntries } from '../services/anthropic-map.js';
 import { compressRequest, formatCompressionHeader } from '../services/compression/pipeline.js';
+<<<<<<< HEAD
 import {
   openaiChatCompletionSchema,
   openaiEmbeddingsBodySchema,
@@ -50,6 +76,8 @@ import {
   openaiSpeechBodySchema,
   openaiCompletionBodySchema,
 } from '@freellmapi/shared/schemas.js';
+=======
+>>>>>>> upstream/main
 
 export const proxyRouter = Router();
 
@@ -490,7 +518,19 @@ const MAX_RETRIES = 20;
 // be missing or empty (ids aren't a Gemini concept) — all get normalized
 // below rather than 400-ing the whole session. Missing ids are synthesized
 // and paired with their tool-result messages by order. (#200)
+<<<<<<< HEAD
 
+=======
+const toolCallSchema = z.object({
+  id: z.string().optional(),
+  type: z.literal('function').optional(),
+  function: z.object({
+    name: z.string().min(1),
+    arguments: z.union([z.string(), z.record(z.string(), z.unknown())]),
+  }),
+  thought_signature: z.string().optional(),
+});
+>>>>>>> upstream/main
 
 const toolCallArgsToString = (args: string | Record<string, unknown>): string =>
   typeof args === 'string' ? args : JSON.stringify(args);
@@ -502,17 +542,42 @@ const toolCallArgsToString = (args: string | Record<string, unknown>): string =>
 // string for providers that don't support arrays (Cohere, Cloudflare).
 // Non-text blocks pass z validation but get dropped by contentToString —
 // vision/audio still isn't supported. (#200)
+<<<<<<< HEAD
 
 
 
 
+=======
+const contentBlockSchema = z.union([z.string(), z.record(z.string(), z.unknown())]);
+const contentSchema = z.union([z.string(), z.array(contentBlockSchema)]);
+
+const systemMessageSchema = z.object({
+  role: z.literal('system'),
+  content: contentSchema,
+  name: z.string().optional(),
+});
+>>>>>>> upstream/main
 
 // OpenAI's newer SDKs send the system prompt as role:"developer"; accept it
 // and forward as "system" — none of the routed providers know the developer
 // role. (#200)
+<<<<<<< HEAD
 
 
 
+=======
+const developerMessageSchema = z.object({
+  role: z.literal('developer'),
+  content: contentSchema,
+  name: z.string().optional(),
+});
+
+const userMessageSchema = z.object({
+  role: z.literal('user'),
+  content: contentSchema,
+  name: z.string().optional(),
+});
+>>>>>>> upstream/main
 
 // Assistant turns may carry empty/null content and no tool_calls — OpenAI
 // accepts these in conversation history (a turn that produced no visible text,
@@ -520,11 +585,33 @@ const toolCallArgsToString = (args: string | Record<string, unknown>): string =>
 // them verbatim. We accept them too and coerce empty/null content to "" before
 // forwarding (see message build below) rather than 400-ing a payload OpenAI
 // would take. (#165)
+<<<<<<< HEAD
 
+=======
+const assistantMessageSchema = z.object({
+  role: z.literal('assistant'),
+  content: z.union([contentSchema, z.null()]).optional(),
+  name: z.string().optional(),
+  // tool_calls: null (not just missing) is what several agents replay for
+  // no-tool assistant turns — aionrs (AionUI's engine) writes it into every
+  // session-resumed assistant echo. Treated as absent. (#200)
+  tool_calls: z.array(toolCallSchema).nullable().optional(),
+  // Thinking trace echoed back by a client. DeepSeek thinking models on
+  // OpenCode Zen 400 ("reasoning_content in thinking mode must be passed back")
+  // unless the prior turn's reasoning_content is replayed, so keep it through
+  // validation instead of stripping it. See issue #255.
+  reasoning_content: z.string().nullable().optional(),
+  // Moonshot's "partial" prefill flag. A plain z.object (no .passthrough())
+  // would silently strip it; keep it through validation so it can be forwarded
+  // to Moonshot/Kimi models, which document it. See issue #1038.
+  partial: z.boolean().optional(),
+});
+>>>>>>> upstream/main
 
 // Tool results may arrive with null/missing content (a tool that returned
 // nothing) and a missing/empty tool_call_id (Gemini-lineage agents) — coerced
 // to "" and paired by order with the preceding tool_calls respectively. (#200)
+<<<<<<< HEAD
 
 
 // Legacy function-calling shape (pre-tools OpenAI API). Old clients still
@@ -536,13 +623,92 @@ const toolCallArgsToString = (args: string | Record<string, unknown>): string =>
 
 
 
+=======
+const toolMessageSchema = z.object({
+  role: z.literal('tool'),
+  content: z.union([contentSchema, z.null()]).optional(),
+  tool_call_id: z.string().optional(),
+  name: z.string().optional(),
+});
+
+// Legacy function-calling shape (pre-tools OpenAI API). Old clients still
+// replay these in history; forwarded as a tool message. (#200)
+const functionMessageSchema = z.object({
+  role: z.literal('function'),
+  name: z.string().min(1),
+  content: z.union([contentSchema, z.null()]).optional(),
+});
+
+const toolDefinitionSchema = z.object({
+  // Some agents omit `type` on tool definitions; re-defaulted to 'function'
+  // on forward. (#200)
+  type: z.literal('function').optional(),
+  function: z.object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    parameters: z.record(z.string(), z.unknown()).optional(),
+    strict: z.boolean().optional(),
+  }),
+});
+
+const toolChoiceSchema = z.union([
+  // 'any' is the Mistral/Gemini wording for OpenAI's 'required'; mapped on
+  // forward. (#200)
+  z.enum(['none', 'auto', 'required', 'any']),
+  z.object({
+    type: z.literal('function'),
+    function: z.object({
+      name: z.string().min(1),
+    }),
+  }),
+]);
+
+const stopSchema = z.union([z.string(), z.array(z.string()).min(1).max(64)]);
+>>>>>>> upstream/main
 
 function providerSafeStop(stop: string | string[] | undefined): string | string[] | undefined {
   if (!Array.isArray(stop)) return stop;
   return stop.slice(0, 4);
 }
 
+<<<<<<< HEAD
 
+=======
+const chatCompletionSchema = z.object({
+  messages: z.array(z.union([
+    systemMessageSchema,
+    developerMessageSchema,
+    userMessageSchema,
+    assistantMessageSchema,
+    toolMessageSchema,
+    functionMessageSchema,
+  ])).min(1),
+  model: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  // Some clients send max_tokens <= 0 (or -1) to mean "no limit"; accepted and
+  // treated as unset on forward. (#200)
+  max_tokens: z.number().int().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  stop: stopSchema.optional(),
+  stream: z.boolean().optional(),
+  stream_options: z.object({
+    include_usage: z.boolean().optional(),
+  }).optional(),
+  // Top-level tool knobs may arrive as explicit nulls from clients that
+  // serialize every field of their request struct; all treated as absent
+  // and never forwarded as null. (#200)
+  tools: z.array(toolDefinitionSchema).nullable().optional(),
+  tool_choice: toolChoiceSchema.nullable().optional(),
+  parallel_tool_calls: z.boolean().nullable().optional(),
+  // Fusion config — only meaningful when `model` is the virtual "fusion" id.
+  // Ignored for every other model. See services/fusion.ts.
+  fusion: fusionConfigSchema.optional(),
+  // Extended sampling + structured-output params (top_k, seed, penalties,
+  // logit_bias, logprobs, response_format, max_completion_tokens…), forwarded
+  // per the platform policy in lib/sampling-params.ts.
+  ...samplingParamSchemaFields,
+});
+>>>>>>> upstream/main
 
 // Upstream-error classifiers live in lib/error-classify.ts so the fusion
 // service can share them without an import cycle; imported above for internal
@@ -577,11 +743,27 @@ export function streamReasoningText(chunk: any): string {
 // family name or provider model id → that family's provider chain. Failover
 // only happens WITHIN a family (same model on another provider) — never across
 // models, since vectors from different models are incompatible.
+<<<<<<< HEAD
 
 
 proxyRouter.post('/embeddings', async (req: Request, res: Response) => {
   if (!requireInferenceAuth(req, res)) return;
   const parsed = openaiEmbeddingsBodySchema.safeParse(req.body);
+=======
+const EmbeddingsBody = z.object({
+  model: z.string().optional(),
+  input: z.union([z.string(), z.array(z.string())]),
+  // Optional output-dimension override forwarded to providers that support MRL
+  // truncation (NVIDIA NeMo NIM, Google Gemini Embedding, OpenAI v3). Validation
+  // only — bounds checking happens upstream (the provider rejects out-of-range
+  // values with a clear 400).
+  dimensions: z.number().int().positive().optional(),
+});
+
+proxyRouter.post('/embeddings', async (req: Request, res: Response) => {
+  if (!requireInferenceAuth(req, res)) return;
+  const parsed = EmbeddingsBody.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid request: `input` is required', type: 'invalid_request_error' } });
     return;
@@ -608,10 +790,27 @@ proxyRouter.post('/embeddings', async (req: Request, res: Response) => {
 // table, never the chat router): `model: "auto"` (or omitted) tries every enabled
 // image provider in order; a provider model id pins to that one. Failover is
 // across providers, never across modalities. See services/media.ts.
+<<<<<<< HEAD
 
 
 function inferenceBudgetCode(error: { code?: string }, res: Response): { code?: string } {
   if (error.code === 'quota_exceeded') res.setHeader('Retry-After', secondsUntilNextMonth());
+=======
+const ImageBody = z.object({
+  model: z.string().optional(),
+  prompt: z.string().min(1),
+  n: z.number().int().positive().max(4).optional(),
+  size: z.string().optional(),
+  response_format: z.enum(['url', 'b64_json']).optional(),
+});
+
+function inferenceBudgetCode(error: { code?: string; retryAfterMs?: number }, res: Response): { code?: string } {
+  // retryAfterMs is set by the embeddings/media services only when the whole
+  // chain was rate limited (soonest stated back-off, budget resets included),
+  // so it wins over the month-long budget reset when a sibling returns sooner.
+  if (error.retryAfterMs !== undefined) res.setHeader('Retry-After', retryAfterSeconds(error.retryAfterMs));
+  else if (error.code === 'quota_exceeded') res.setHeader('Retry-After', secondsUntilNextMonth());
+>>>>>>> upstream/main
   return error.code ? { code: error.code } : {};
 }
 
@@ -624,7 +823,11 @@ function mediaErrorType(status: number): string {
 
 proxyRouter.post('/images/generations', async (req: Request, res: Response) => {
   if (!requireInferenceAuth(req, res)) return;
+<<<<<<< HEAD
   const parsed = openaiImageBodySchema.safeParse(req.body);
+=======
+  const parsed = ImageBody.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid request: `prompt` is required', type: 'invalid_request_error' } });
     return;
@@ -650,11 +853,27 @@ proxyRouter.post('/images/generations', async (req: Request, res: Response) => {
 // Text-to-video generation. Providers may use a synchronous binary response
 // (Pollinations) or an asynchronous queue internally (Hugging Face/fal.ai), but
 // this gateway presents one bounded request and returns the completed MP4.
+<<<<<<< HEAD
 
 
 proxyRouter.post('/videos/generations', async (req: Request, res: Response) => {
   if (!requireInferenceAuth(req, res)) return;
   const parsed = openaiVideoBodySchema.safeParse(req.body);
+=======
+const VideoBody = z.object({
+  model: z.string().optional(),
+  prompt: z.string().min(1),
+  duration: z.number().int().min(1).max(120).optional(),
+  aspect_ratio: z.enum(['16:9', '9:16']).optional(),
+  image: z.string().url().optional(),
+  seed: z.number().int().min(-1).max(2_147_483_647).optional(),
+  audio: z.boolean().optional(),
+});
+
+proxyRouter.post('/videos/generations', async (req: Request, res: Response) => {
+  if (!requireInferenceAuth(req, res)) return;
+  const parsed = VideoBody.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({
       error: {
@@ -701,11 +920,24 @@ proxyRouter.post('/videos/generations', async (req: Request, res: Response) => {
 
 // OpenAI-compatible text-to-speech. Returns raw audio bytes (OpenAI's /audio/speech
 // shape). Same media-catalog routing as images.
+<<<<<<< HEAD
 
 
 proxyRouter.post('/audio/speech', async (req: Request, res: Response) => {
   if (!requireInferenceAuth(req, res)) return;
   const parsed = openaiSpeechBodySchema.safeParse(req.body);
+=======
+const SpeechBody = z.object({
+  model: z.string().optional(),
+  input: z.string().min(1),
+  voice: z.string().optional(),
+  response_format: z.string().optional(),
+});
+
+proxyRouter.post('/audio/speech', async (req: Request, res: Response) => {
+  if (!requireInferenceAuth(req, res)) return;
+  const parsed = SpeechBody.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid request: `input` is required', type: 'invalid_request_error' } });
     return;
@@ -848,7 +1080,20 @@ proxyRouter.post('/audio/transcriptions', (req: Request, res: Response, next) =>
   }
 });
 
+<<<<<<< HEAD
 
+=======
+const CompletionBody = z.object({
+  model: z.string().optional(),
+  prompt: z.string(),
+  suffix: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  max_tokens: z.number().int().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  stop: stopSchema.optional(),
+  stream: z.boolean().optional(),
+});
+>>>>>>> upstream/main
 
 function completionPromptToMessages(prompt: string, suffix?: string): ChatMessage[] {
   const hasSuffix = suffix !== undefined && suffix.length > 0;
@@ -915,7 +1160,11 @@ proxyRouter.post('/completions', async (req: Request, res: Response) => {
   const auth = requireInferenceAuth(req, res);
   if (!auth) return;
 
+<<<<<<< HEAD
   const parsed = openaiCompletionBodySchema.safeParse(req.body);
+=======
+  const parsed = CompletionBody.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     const detail = parsed.error.errors
       .map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message))
@@ -1067,6 +1316,10 @@ proxyRouter.post('/completions', async (req: Request, res: Response) => {
       );
     },
     dispatch: async (route, attempt, ctx) => {
+<<<<<<< HEAD
+=======
+      const contextBudget = routeOutputBudget(route, estimatedInputTokens);
+>>>>>>> upstream/main
       traceRouteEvent('Proxy', {
         event: attempt === 0 ? 'start' : 'next',
         requestId: requestGroupId,
@@ -1114,7 +1367,11 @@ proxyRouter.post('/completions', async (req: Request, res: Response) => {
             route.apiKey,
             dispatchMessages,
             route.modelId,
+<<<<<<< HEAD
             { temperature, max_tokens, top_p, stop, signal: AbortSignal.any([clientAbort.signal, hedgeAbort.signal]) },
+=======
+            { temperature, max_tokens, top_p, stop, contextBudget, signal: AbortSignal.any([clientAbort.signal, hedgeAbort.signal]) },
+>>>>>>> upstream/main
             quotaContextForRoute(route, 'chat/completions'),
           );
 
@@ -1214,7 +1471,11 @@ proxyRouter.post('/completions', async (req: Request, res: Response) => {
         route.apiKey,
         dispatchMessages,
         route.modelId,
+<<<<<<< HEAD
         { temperature, max_tokens, top_p, stop, signal: AbortSignal.any([clientAbort.signal, hedgeAbort.signal]) },
+=======
+        { temperature, max_tokens, top_p, stop, contextBudget, signal: AbortSignal.any([clientAbort.signal, hedgeAbort.signal]) },
+>>>>>>> upstream/main
         quotaContextForRoute(route, 'chat/completions'),
       );
 
@@ -1260,7 +1521,20 @@ proxyRouter.post('/completions', async (req: Request, res: Response) => {
           logprobs: null,
           finish_reason: result.choices?.[0]?.finish_reason ?? 'stop',
         }],
+<<<<<<< HEAD
         usage: result.usage,
+=======
+        // `usage` is required by the OpenAI completions spec. The fallback
+        // counts computed just above (chars/4 when the provider omits usage,
+        // #764) existed but were dropped here — clients like editor
+        // ghost-text plugins read usage to throttle and saw `undefined`.
+        usage: result.usage ?? {
+          prompt_tokens: promptTokens,
+          completion_tokens: completionTokens,
+          total_tokens: totalTokens,
+          estimated: true,
+        },
+>>>>>>> upstream/main
         execution_id: requestGroupId,
       });
 
@@ -1327,7 +1601,11 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
   if (!auth) return;
 
   // Validate request
+<<<<<<< HEAD
   const parsed = openaiChatCompletionSchema.safeParse(req.body);
+=======
+  const parsed = chatCompletionSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     // Path-qualified issues ("messages.1.content: Invalid input" beats a bare
     // "Invalid input") and a server-side breadcrumb — these rejections never
@@ -1414,7 +1692,11 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
         // reject both shapes. (#200)
         ...(hasToolCalls ? { tool_calls: m.tool_calls!.map(tc => {
           // Normalize echo-tolerant inputs back to the strict OpenAI shape
+<<<<<<< HEAD
           // before forwarding (see openaiToolCallSchema); synthesize missing ids
+=======
+          // before forwarding (see toolCallSchema); synthesize missing ids
+>>>>>>> upstream/main
           // and queue every id for order-based tool-result pairing. (#200)
           const id = tc.id && tc.id.length > 0 ? tc.id : `call_auto_${++syntheticIdCounter}`;
           pendingToolCallIds.push(id);
@@ -1494,10 +1776,14 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
   // Non-streaming requests reconcile against the provider's real `usage` block;
   // streaming does the same when stream_options.include_usage produces a final
   // usage frame, and otherwise falls back to this estimate.
+<<<<<<< HEAD
   const estimatedInputTokens = messages.reduce((sum, m) => {
     const text = contentToString(m.content);
     return sum + Math.ceil(text.length / 4);
   }, 0);
+=======
+  const estimatedInputTokens = estimateInputTokens(messages, tools);
+>>>>>>> upstream/main
 
   // Image requests must route to a vision-capable model. Reject up front with a
   // clear message when none is enabled, rather than silently dropping the image
@@ -1723,7 +2009,11 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
         model: requestedModel, messages, temperature, top_p, max_tokens, tools, tool_choice,
         // Normalized stop (providerSafeStop), i.e. what is actually forwarded.
         stop,
+<<<<<<< HEAD
         // The knobs below are NOT in openaiChatCompletionSchema, so zod strips them
+=======
+        // The knobs below are NOT in chatCompletionSchema, so zod strips them
+>>>>>>> upstream/main
         // from parsed.data; read them from the raw body. They still change what
         // answer the client is asking for, so requests differing only in one of
         // them must never collide on a cached entry. Explicit null is coerced
@@ -1743,6 +2033,7 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
         compression: compressionResult.cacheKey,
       })
     : null;
+<<<<<<< HEAD
 
   // Semantic cache (services/semantic-cache.ts): the exact key above hashes
   // the messages, so a reworded question misses. When enabled, the same
@@ -1773,6 +2064,8 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
     ? computeVariantKey(semanticKeyInput)
     : null;
 
+=======
+>>>>>>> upstream/main
   if (cacheKey) {
     if (stream) {
       // Streaming hit: replay the captured SSE frame sequence verbatim —
@@ -1801,6 +2094,7 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
         res.json(withExecutionId(hit.body, requestGroupId));
         return;
       }
+<<<<<<< HEAD
 
       // Exact miss. If the wording differs but the question does not, an
       // existing entry may still answer it. The match resolves to a real
@@ -1828,6 +2122,8 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
           forgetSemanticPrompt(near.cacheKey);
         }
       }
+=======
+>>>>>>> upstream/main
     }
   }
 
@@ -2043,6 +2339,10 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
       return routeRequest(routingEstimate, state.skipKeys.size > 0 ? state.skipKeys : undefined, preferredModel, hasImage, wantsTools, state.skipModels.size > 0 ? state.skipModels : undefined, groupChain ?? resolvedChain?.chain, samplingParams.response_format !== undefined, state.skipPlatforms.size > 0 ? state.skipPlatforms : undefined, outputReserve, taskType);
     },
     dispatch: async (route, attempt, ctx) => {
+<<<<<<< HEAD
+=======
+    const contextBudget = routeOutputBudget(route, estimatedInputTokens);
+>>>>>>> upstream/main
     const modelKey = `${route.platform}:${route.modelId}`;
     traceRouteEvent('Proxy', {
       event: attempt === 0 ? 'start' : 'next',
@@ -2185,7 +2485,11 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
         try {
           const gen = route.provider.streamChatCompletion(
             route.apiKey, outboundMessages, route.modelId,
+<<<<<<< HEAD
             { temperature, max_tokens, top_p, stop, tools, tool_choice, parallel_tool_calls, stream_options: parsed.data.stream_options, ...samplingParams, signal: AbortSignal.any([clientAbort.signal, hedgeAbort.signal]) },
+=======
+            { temperature, max_tokens, top_p, stop, tools, tool_choice, parallel_tool_calls, stream_options: parsed.data.stream_options, ...samplingParams, contextBudget, signal: AbortSignal.any([clientAbort.signal, hedgeAbort.signal]) },
+>>>>>>> upstream/main
             quotaContextForRoute(route, 'chat/completions'),
           );
 
@@ -2567,7 +2871,11 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
       } else {
         const result = await route.provider.chatCompletion(
           route.apiKey, outboundMessages, route.modelId,
+<<<<<<< HEAD
           { temperature, max_tokens, top_p, stop, tools, tool_choice, parallel_tool_calls, ...samplingParams, signal: AbortSignal.any([clientAbort.signal, hedgeAbort.signal]) },
+=======
+          { temperature, max_tokens, top_p, stop, tools, tool_choice, parallel_tool_calls, ...samplingParams, contextBudget, signal: AbortSignal.any([clientAbort.signal, hedgeAbort.signal]) },
+>>>>>>> upstream/main
           quotaContextForRoute(route, 'chat/completions'),
         );
 
@@ -2773,6 +3081,7 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
             promptTokens,
             completionTokens,
           });
+<<<<<<< HEAD
 
           // Record the prompt's embedding against the same key and expiry, so
           // a later rewording can find it. Fire-and-forget: the answer is
@@ -2785,6 +3094,8 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
               expiresAtMs: Date.now() + cacheTtlMs(),
             }).catch(() => { /* an optimisation that failed is not an error */ });
           }
+=======
+>>>>>>> upstream/main
         }
 
         traceRouteEvent('Proxy', {

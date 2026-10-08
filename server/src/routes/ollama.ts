@@ -9,10 +9,15 @@ import { getSetting, getUnifiedApiKey } from '../db/index.js';
 import { buildModelListing } from '../services/model-listing.js';
 import { extractApiToken, timingSafeStringEqual } from './proxy.js';
 import { runInboundChat, type InboundChatResult, type InboundChatWire } from '../lib/inbound-chat.js';
+<<<<<<< HEAD
 import { secondsUntilNextMonth } from '../services/key-budget.js';
 import { runEmbeddings, EmbeddingsError } from '../services/embeddings.js';
 import { validateSession } from '../services/auth.js';
 import { ollamaShowSchema, ollamaMessageSchema, ollamaChatSchema, ollamaGenerateSchema, ollamaEmbedSchema } from '@freellmapi/shared/schemas.js';
+=======
+import { runEmbeddings, embeddingsRetryAfterSec, EmbeddingsError } from '../services/embeddings.js';
+import { validateSession } from '../services/auth.js';
+>>>>>>> upstream/main
 
 export const ollamaRouter = Router();
 
@@ -125,10 +130,17 @@ ollamaRouter.get('/api/version', (req, res) => {
   res.json({ version: '0.9.9' });
 });
 
+<<<<<<< HEAD
 
 ollamaRouter.post('/api/show', (req, res) => {
   if (!authorize(req, res)) return;
   const parsed = ollamaShowSchema.safeParse(req.body);
+=======
+const showSchema = z.object({ model: z.string().optional(), name: z.string().optional() }).passthrough();
+ollamaRouter.post('/api/show', (req, res) => {
+  if (!authorize(req, res)) return;
+  const parsed = showSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success || !(parsed.data.model || parsed.data.name)) {
     res.status(400).json({ error: 'model is required' });
     return;
@@ -182,11 +194,32 @@ ollamaRouter.post('/api/show', (req, res) => {
   });
 });
 
+<<<<<<< HEAD
 
 
 
 
 function ollamaMessages(raw: z.infer<typeof ollamaMessageSchema>[]): ChatMessage[] {
+=======
+const messageSchema = z.object({
+  role: z.enum(['system', 'user', 'assistant', 'tool']),
+  content: z.union([z.string(), z.array(z.object({}).passthrough())]).optional(),
+  tool_name: z.string().optional(),
+  tool_calls: z.array(z.object({}).passthrough()).optional(),
+}).passthrough();
+
+const chatSchema = z.object({
+  model: z.string().optional(),
+  // Empty messages is a documented Ollama load/unload probe, not an error.
+  messages: z.array(messageSchema).default([]),
+  stream: z.boolean().optional(),
+  tools: z.array(z.object({}).passthrough()).optional(),
+  options: z.object({}).passthrough().optional(),
+  format: z.union([z.literal('json'), z.record(z.string(), z.unknown())]).optional(),
+}).passthrough();
+
+function ollamaMessages(raw: z.infer<typeof messageSchema>[]): ChatMessage[] {
+>>>>>>> upstream/main
   const pendingCalls = new Map<string, string[]>();
   const converted: ChatMessage[] = [];
   raw.forEach((message, messageIndex) => {
@@ -366,9 +399,21 @@ function ollamaWire(model: string): InboundChatWire {
   };
 }
 
+<<<<<<< HEAD
 ollamaRouter.post('/api/chat', (req, res) => {
   if (!authorize(req, res)) return;
   const parsed = ollamaChatSchema.safeParse(req.body);
+=======
+// Every handler below RETURNS its promise rather than voiding it, so Express
+// 5 forwards a rejection to errorHandler — the same treatment the OpenAI and
+// Anthropic surfaces get from their `async` handlers. A voided promise leaves
+// the router and resurfaces as an `unhandledRejection`, which the process
+// safety net classifies as fatal for anything that is not a transport error,
+// so one failing request exited the whole gateway instead of answering 500.
+ollamaRouter.post('/api/chat', (req, res) => {
+  if (!authorize(req, res)) return;
+  const parsed = chatSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: `invalid request: ${parsed.error.message}` });
     return;
@@ -391,7 +436,11 @@ ollamaRouter.post('/api/chat', (req, res) => {
   const options = body.options as Record<string, unknown> | undefined;
   const rawSession = req.headers['x-ollama-session-id'] ?? req.headers['x-session-id'];
   const sessionId = Array.isArray(rawSession) ? rawSession[0] : rawSession;
+<<<<<<< HEAD
   void runInboundChat(req, res, {
+=======
+  return runInboundChat(req, res, {
+>>>>>>> upstream/main
     model,
     messages: ollamaMessages(body.messages),
     stream: body.stream !== false,
@@ -413,7 +462,19 @@ ollamaRouter.post('/api/chat', (req, res) => {
   }, ollamaWire(model));
 });
 
+<<<<<<< HEAD
 
+=======
+const generateSchema = z.object({
+  model: z.string().optional(),
+  prompt: z.string().default(''),
+  system: z.string().optional(),
+  suffix: z.string().optional(),
+  stream: z.boolean().optional(),
+  options: z.object({}).passthrough().optional(),
+  format: z.union([z.literal('json'), z.record(z.string(), z.unknown())]).optional(),
+}).passthrough();
+>>>>>>> upstream/main
 
 function generateWire(model: string): InboundChatWire {
   const wire = ollamaWire(model);
@@ -475,7 +536,11 @@ function generateWire(model: string): InboundChatWire {
 
 ollamaRouter.post('/api/generate', (req, res) => {
   if (!authorize(req, res)) return;
+<<<<<<< HEAD
   const parsed = ollamaGenerateSchema.safeParse(req.body);
+=======
+  const parsed = generateSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: `invalid request: ${parsed.error.message}` });
     return;
@@ -503,7 +568,11 @@ ollamaRouter.post('/api/generate', (req, res) => {
       ? `${body.prompt}\n\nComplete the text before this suffix:\n${body.suffix}`
       : body.prompt,
   });
+<<<<<<< HEAD
   void runInboundChat(req, res, {
+=======
+  return runInboundChat(req, res, {
+>>>>>>> upstream/main
     model,
     messages,
     stream: body.stream !== false,
@@ -520,11 +589,28 @@ ollamaRouter.post('/api/generate', (req, res) => {
   }, generateWire(model));
 });
 
+<<<<<<< HEAD
 
 
 async function handleEmbed(req: Request, res: Response, legacy: boolean): Promise<void> {
   if (!authorize(req, res)) return;
   const parsed = ollamaEmbedSchema.safeParse(req.body);
+=======
+const embedSchema = z.object({
+  model: z.string().optional(),
+  // /api/embed sends `input`; the legacy /api/embeddings body — the whole
+  // reason that endpoint exists — sends `prompt`.
+  input: z.union([z.string(), z.array(z.string())]).optional(),
+  prompt: z.string().optional(),
+  dimensions: z.number().int().positive().optional(),
+}).passthrough().refine(data => data.input != null || data.prompt != null, {
+  message: 'input is required',
+});
+
+async function handleEmbed(req: Request, res: Response, legacy: boolean): Promise<void> {
+  if (!authorize(req, res)) return;
+  const parsed = embedSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: `invalid request: ${parsed.error.message}` });
     return;
@@ -550,15 +636,25 @@ async function handleEmbed(req: Request, res: Response, legacy: boolean): Promis
     }
   } catch (error: any) {
     const status = error instanceof EmbeddingsError ? error.status : 502;
+<<<<<<< HEAD
     if (error instanceof EmbeddingsError && error.code === 'quota_exceeded') {
       res.setHeader('Retry-After', secondsUntilNextMonth());
+=======
+    if (error instanceof EmbeddingsError) {
+      const retrySec = embeddingsRetryAfterSec(error);
+      if (retrySec !== undefined) res.setHeader('Retry-After', retrySec);
+>>>>>>> upstream/main
     }
     res.status(status).json({ error: error.message ?? 'embedding request failed' });
   }
 }
 
 ollamaRouter.post('/api/embed', (req, res) => {
+<<<<<<< HEAD
   void handleEmbed(req, res, false);
+=======
+  return handleEmbed(req, res, false);
+>>>>>>> upstream/main
 });
 
 // The dashboard already owns POST /api/embeddings. A valid dashboard session
@@ -578,5 +674,9 @@ ollamaRouter.post('/api/embeddings', (req: Request, res: Response, next: NextFun
     res.status(401).json({ error: { message: 'Authentication required', type: 'authentication_error' } });
     return;
   }
+<<<<<<< HEAD
   void handleEmbed(req, res, true);
+=======
+  return handleEmbed(req, res, true);
+>>>>>>> upstream/main
 });

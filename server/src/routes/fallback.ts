@@ -5,6 +5,7 @@
  */
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+<<<<<<< HEAD
 import { getDb } from '../db/index.js';
 import { getAllPenalties, getRoutingScores, getRoutingStrategy, setRoutingStrategy, setCustomWeights, getExploreEnabled, setExploreEnabled, getPeakHoursConfig, setPeakHoursConfig, getActiveRoutingWeights, getKeySelectionStrategy, setKeySelectionStrategy } from '../services/router.js';
 import { BANDIT_PRESETS, type RoutingStrategy } from '../services/scoring.js';
@@ -12,12 +13,25 @@ import { parseBudget } from '../lib/budget.js';
 import { getModelGroups } from '../services/model-groups.js';
 import { getPenaltyInspector, clearRouterPressure } from '../services/penalty-inspector.js';
 import { getCooldownCeilingMs, setCooldownCeilingMs } from '../services/ratelimit.js';
+=======
+import { z } from 'zod';
+import { getDb } from '../db/index.js';
+import { getAllPenalties, getRoutingScores, getRoutingStrategy, setRoutingStrategy, setCustomWeights, getExploreEnabled, setExploreEnabled, getPeakHoursConfig, setPeakHoursConfig, getActiveRoutingWeights, getKeySelectionStrategy, setKeySelectionStrategy } from '../services/router.js';
+import { BANDIT_PRESETS, isValidTimezone, type RoutingStrategy } from '../services/scoring.js';
+import { parseBudget, monthlyBudgetScore } from '../lib/budget.js';
+import { getModelGroups } from '../services/model-groups.js';
+import { getPenaltyInspector, clearRouterPressure } from '../services/penalty-inspector.js';
+import { getCooldownCeilingMs, setCooldownCeilingMs, MIN_COOLDOWN_CEILING_MS, MAX_COOLDOWN_CEILING_MS } from '../services/ratelimit.js';
+>>>>>>> upstream/main
 import { getActiveProfileId } from '../services/profile-models.js';
 import { qualifiedModelMemberId } from '../lib/endpoint-scope.js';
 import { overriddenFieldNames } from '../services/model-state.js';
 import { parseModelScope, scopeAllows } from '../lib/model-scope.js';
 import { getQuotaOutlook } from '../services/quota-outlook.js';
+<<<<<<< HEAD
 import { routingSchema, fallbackChainUpdateSchema } from '@freellmapi/shared/schemas.js';
+=======
+>>>>>>> upstream/main
 
 export const fallbackRouter = Router();
 
@@ -53,7 +67,39 @@ fallbackRouter.delete('/penalty-inspector', (_req: Request, res: Response) => {
   res.json(clearRouterPressure());
 });
 
+<<<<<<< HEAD
 
+=======
+const routingSchema = z.object({
+  strategy: z.enum(['priority', 'balanced', 'smartest', 'fastest', 'reliable', 'custom']),
+  // Only meaningful with strategy 'custom': the user's weight vector. Any
+  // non-negative vector is accepted; setCustomWeights renormalizes to sum 1.
+  weights: z.object({
+    reliability: z.number().nonnegative(),
+    speed: z.number().nonnegative(),
+    intelligence: z.number().nonnegative(),
+  }).optional(),
+  // Exploration toggle: give unmeasured models a guaranteed chance to be tried.
+  exploreEnabled: z.boolean().optional(),
+  // Peak-hours adjustment (#760), off by default. Hours are whole numbers in
+  // 0-23 and are read in `peakTimezone`, never the server's local clock, so the
+  // window means the same thing on a UTC container as on the operator's laptop.
+  peakHoursAdjust: z.boolean().optional(),
+  peakStartHour: z.number().int().min(0).max(23, { message: 'peakStartHour must be an integer between 0 and 23' }).optional(),
+  peakEndHour: z.number().int().min(0).max(23, { message: 'peakEndHour must be an integer between 0 and 23' }).optional(),
+  peakTimezone: z.string().refine(isValidTimezone, { message: 'peakTimezone must be a valid IANA timezone name' }).optional(),
+  // How to pick between several keys of one platform (#919). Independent of
+  // `strategy`, which ranks MODELS — the two are set from the same form, so
+  // they round-trip through the same request.
+  keySelectionStrategy: z.enum(['auto', 'least-remaining']).optional(),
+  // Ceiling on automatic cooldowns (#952): 1 min .. 24 h in ms, null = no cap
+  // (the escalation ladder keeps its 24h top step and 402/403 bench a day).
+  cooldownCeilingMs: z.number().int()
+    .min(MIN_COOLDOWN_CEILING_MS, { message: `cooldownCeilingMs must be at least ${MIN_COOLDOWN_CEILING_MS} (1 minute)` })
+    .max(MAX_COOLDOWN_CEILING_MS, { message: `cooldownCeilingMs must be at most ${MAX_COOLDOWN_CEILING_MS} (24 hours)` })
+    .nullable().optional(),
+});
+>>>>>>> upstream/main
 
 // PUT /routing → switch strategy. Presets are just weight vectors over the three
 // axes; 'priority' falls back to the legacy manual chain order; 'custom' uses
@@ -124,7 +170,11 @@ const MODEL_COLUMNS = `
            m.speed_rank, m.size_label, m.rpm_limit, m.rpd_limit,
            m.tpm_limit, m.tpd_limit, m.context_window,
            m.monthly_token_budget, m.supports_vision, m.supports_tools,
+<<<<<<< HEAD
            m.key_id, m.endpoint_scope, ak.label AS key_label,
+=======
+           m.key_id, m.endpoint_scope, m.source AS model_source, ak.label AS key_label,
+>>>>>>> upstream/main
            mo.overrides_json IS NOT NULL AS has_overrides,
            mo.overrides_json,
            ts.source AS tombstone_source, ts.reason AS tombstone_reason`;
@@ -270,7 +320,15 @@ fallbackRouter.get('/', (req: Request, res: Response) => {
       monthlyTokenBudgetTokens: parseBudget(r.monthly_token_budget) * Math.max(1, keyCountMap.get(r.platform) ?? 1),
       supportsVision: r.supports_vision === 1,
       supportsTools: r.supports_tools === 1,
+<<<<<<< HEAD
       source: r.platform === 'custom' || r.key_id != null ? 'custom' : 'catalog',
+=======
+      // 'discovered' (#1348): fetched from a built-in provider's /models because
+      // the catalog carries none for it. Routes like a catalog row.
+      source: r.platform === 'custom' || r.key_id != null
+        ? 'custom'
+        : r.model_source === 'discovered' ? 'discovered' : 'catalog',
+>>>>>>> upstream/main
       keyId: r.key_id ?? null,
       keyLabel: r.key_label ?? null,
       // Which relay endpoint a custom row belongs to, and the id that names it
@@ -296,7 +354,15 @@ fallbackRouter.get('/', (req: Request, res: Response) => {
   }));
 });
 
+<<<<<<< HEAD
 
+=======
+const updateSchema = z.array(z.object({
+  modelDbId: z.number(),
+  priority: z.number(),
+  enabled: z.boolean(),
+}));
+>>>>>>> upstream/main
 
 /**
  * Model ids that actually exist, so a stale row in a client's snapshot cannot
@@ -309,7 +375,11 @@ function knownModelIds(db: ReturnType<typeof getDb>): Set<number> {
 
 // Update fallback chain (full replace)
 fallbackRouter.put('/', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = fallbackChainUpdateSchema.safeParse(req.body);
+=======
+  const parsed = updateSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -365,6 +435,7 @@ const SORT_PRESETS: Record<string, string> = {
   speed: 'm.speed_rank ASC',
 };
 
+<<<<<<< HEAD
 function getBudgetScore(m: { monthly_token_budget: string; tpd_limit: number | null }): number {
   if (m.tpd_limit != null) return m.tpd_limit * 30;
   
@@ -388,6 +459,8 @@ function getBudgetScore(m: { monthly_token_budget: string; tpd_limit: number | n
   return maxNum * mult;
 }
 
+=======
+>>>>>>> upstream/main
 fallbackRouter.post('/sort/:preset', (req: Request, res: Response) => {
   const preset = String(req.params.preset);
   const db = getDb();
@@ -396,7 +469,11 @@ fallbackRouter.post('/sort/:preset', (req: Request, res: Response) => {
 
   if (preset === 'budget') {
     const allModels = db.prepare(`SELECT id, monthly_token_budget, tpd_limit FROM models`).all() as any[];
+<<<<<<< HEAD
     allModels.sort((a, b) => getBudgetScore(b) - getBudgetScore(a));
+=======
+    allModels.sort((a, b) => monthlyBudgetScore(b) - monthlyBudgetScore(a));
+>>>>>>> upstream/main
     models = allModels.map(m => ({ id: m.id }));
   } else {
     const orderBy = SORT_PRESETS[preset];

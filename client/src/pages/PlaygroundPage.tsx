@@ -2,7 +2,10 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, CircleAlert, FileText, X } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+<<<<<<< HEAD
 import type { ApiKeyResponse, FallbackEntry, FusionSseFrame } from '../../../shared/types'
+=======
+>>>>>>> upstream/main
 import { buildModelOptions } from '@/lib/model-groups'
 import type { Chain } from '@/components/chain-manager'
 import { Markdown } from '@/components/markdown'
@@ -67,14 +70,34 @@ import {
 } from '@/lib/playground-conversations'
 import { useI18n } from '@/i18n'
 
+<<<<<<< HEAD
+=======
+interface FallbackEntry {
+  modelDbId: number
+  priority: number
+  enabled: boolean
+  platform: string
+  modelId: string
+  canonicalId?: string
+  displayName: string
+  sizeLabel: string
+  intelligenceRank: number
+  supportsVision: boolean
+  keyCount: number
+}
+
+>>>>>>> upstream/main
 // ChatMessage / FusionPanelEntry now live in lib/playground-conversations.ts:
 // the transcript is persisted, so its shape is shared with the storage layer
 // rather than owned by this component.
 
+<<<<<<< HEAD
 // One parsed SSE frame from the fusion stream, as the server emits it: either
 // a panel/judge event under `_fusion`, an `error` object, or an OpenAI-shaped
 // `choices` delta. Typed at the boundary so the frame loop below doesn't need
 // `any` — JSON.parse is the trust point, the shape is asserted there.
+=======
+>>>>>>> upstream/main
 // Render a fusion panel/judge entry as "platform/model", but avoid doubling
 // the provider when the model id already carries it (e.g. openrouter/owl-alpha,
 // groq/compound) — those would otherwise read "openrouter/openrouter/owl-alpha".
@@ -254,7 +277,11 @@ export default function PlaygroundPage() {
     queryClient.invalidateQueries({ queryKey: ['playground-conversations'] })
   }
 
+<<<<<<< HEAD
   const { data: keyData } = useQuery<ApiKeyResponse>({
+=======
+  const { data: keyData } = useQuery<{ apiKey: string }>({
+>>>>>>> upstream/main
     queryKey: ['unified-key'],
     queryFn: () => apiFetch('/api/settings/api-key'),
   })
@@ -620,8 +647,13 @@ export default function PlaygroundPage() {
         if (!tl.startsWith('data:')) continue
         const d = tl.slice(5).trim()
         if (d === '[DONE]') continue
+<<<<<<< HEAD
         let obj: FusionSseFrame
         try { obj = JSON.parse(d) as FusionSseFrame } catch { continue }
+=======
+        let obj: any
+        try { obj = JSON.parse(d) } catch { continue }
+>>>>>>> upstream/main
         if (obj._fusion) {
           if (obj._fusion.event === 'panel') {
             panel.push({ platform: obj._fusion.platform, model: obj._fusion.model, status: obj._fusion.status, content: obj._fusion.content, error: obj._fusion.error })
@@ -774,7 +806,11 @@ export default function PlaygroundPage() {
 
       const isFusion = selectedModel === 'fusion'
       const sysPrompt = systemPrompt.trim()
+<<<<<<< HEAD
       const body: Record<string, unknown> = {
+=======
+      const body: any = {
+>>>>>>> upstream/main
         messages: [
           ...(sysPrompt ? [{ role: 'system', content: sysPrompt }] : []),
           ...newMessages.map(m => ({ role: m.role, content: toMessageContent(m.content, m.images) })),
@@ -863,6 +899,7 @@ export default function PlaygroundPage() {
       }]
       setMessages(answered)
       await persistConversation(answered)
+<<<<<<< HEAD
     } catch (err: unknown) {
       // Clearing the chat (or leaving the page) aborts the stream on purpose —
       // that is not a failure to report, and the transcript it belonged to is
@@ -872,6 +909,17 @@ export default function PlaygroundPage() {
         role: 'assistant',
         isError: true,
         content: err instanceof Error ? err.message : String(err),
+=======
+    } catch (err: any) {
+      // Clearing the chat (or leaving the page) aborts the stream on purpose —
+      // that is not a failure to report, and the transcript it belonged to is
+      // already gone.
+      if (err?.name === 'AbortError') return
+      const failed: ChatMessage[] = [...newMessages, {
+        role: 'assistant',
+        isError: true,
+        content: err.message,
+>>>>>>> upstream/main
       }]
       setMessages(failed)
       await persistConversation(failed)

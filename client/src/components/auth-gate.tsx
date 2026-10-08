@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+<<<<<<< HEAD
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
 import type { AuthStatus } from '../../../shared/types'
@@ -15,6 +16,14 @@ import { authErrors, credentialErrors, resetPasswordTooShort } from '@/lib/auth-
 // One floor for every password form in this file, taken from the shared
 // contract (signupInputSchema) instead of being hand-matched to the server.
 const PASSWORD_MIN = PASSWORD_MIN_LENGTH
+=======
+import { isEmail } from '@/lib/validate'
+import { useI18n } from '@/i18n'
+import { toast } from '@/lib/toast'
+
+// Matches the server rule (routes/auth.ts zod schema).
+const PASSWORD_MIN = 8
+>>>>>>> upstream/main
 
 // Inside the desktop shell the dashboard runs as a hidden machine account with
 // a random password nobody knows (desktop/src/server-host.ts). There are no
@@ -33,6 +42,14 @@ function desktopSessionBridge(): (() => Promise<string>) | null {
     : null
 }
 
+<<<<<<< HEAD
+=======
+interface AuthStatus {
+  needsSetup: boolean
+  authenticated: boolean
+  email: string | null
+}
+>>>>>>> upstream/main
 
 function Centered({ children }: { children: ReactNode }) {
   // dvh, not vh: on mobile the collapsing URL bar and the software keyboard both
@@ -59,6 +76,7 @@ function AuthForm({ mode, onAuthed }: { mode: 'setup' | 'login'; onAuthed: () =>
 
   const isSetup = mode === 'setup'
 
+<<<<<<< HEAD
   // Inline field feedback; the server stays authoritative. The RULES come
   // from the shared auth schemas via authErrors() (setup enforces format +
   // floor, login is presence-only so desktop@localhost still signs in —
@@ -72,6 +90,22 @@ function AuthForm({ mode, onAuthed }: { mode: 'setup' | 'login'; onAuthed: () =>
   const passwordError = passwordCode === 'required'
     ? t('validation.required')
     : passwordCode === 'passwordTooShort'
+=======
+  // Inline field feedback; the server stays authoritative. Only the setup form
+  // enforces the password minimum client-side (an existing password of any
+  // length must still be able to log in). The same goes for the email shape:
+  // the desktop app's hidden account is `desktop@localhost` (no TLD), which
+  // the login route accepts on purpose (server/src/routes/auth.ts), so a
+  // browser tab must be able to submit it after a password reset (#1250).
+  const emailError = !email.trim()
+    ? t('validation.required')
+    : isSetup && !isEmail(email)
+      ? t('validation.email')
+      : null
+  const passwordError = !password
+    ? t('validation.required')
+    : isSetup && password.length < PASSWORD_MIN
+>>>>>>> upstream/main
       ? t('validation.passwordMin', { min: PASSWORD_MIN })
       : null
 
@@ -87,9 +121,13 @@ function AuthForm({ mode, onAuthed }: { mode: 'setup' | 'login'; onAuthed: () =>
     setBusy(true)
     setError('')
     try {
+<<<<<<< HEAD
       // Typed against the shared request contracts (login and setup share the
       // same field set; setup optionally carries the one-time code).
       const payload: (SignupInput | LoginInput) & { setupCode?: string } = { email, password }
+=======
+      const payload: Record<string, string> = { email, password }
+>>>>>>> upstream/main
       // Only the setup flow carries a code, and only once the server has asked
       // for it. The server ignores it for local (loopback) setup.
       if (isSetup && setupCode) payload.setupCode = setupCode.trim()
@@ -214,7 +252,11 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
 
   const passwordError = !newPassword
     ? t('validation.required')
+<<<<<<< HEAD
     : resetPasswordTooShort(newPassword)
+=======
+    : newPassword.length < PASSWORD_MIN
+>>>>>>> upstream/main
       ? t('validation.passwordMin', { min: PASSWORD_MIN })
       : null
   const codeError = !resetCode.trim() ? t('validation.required') : null
@@ -342,6 +384,7 @@ export function ChangeCredentialsModal({ mode, onClose }: ChangeCredentialsModal
 
   const isPassword = mode === 'password'
 
+<<<<<<< HEAD
   // Rules from the shared credential contracts; wording stays localized.
   const { current: currentCode, value: valueCode } = credentialErrors(isPassword ? 'password' : 'email', currentPassword, newValue)
   const newValueError = valueCode === 'required'
@@ -352,6 +395,16 @@ export function ChangeCredentialsModal({ mode, onClose }: ChangeCredentialsModal
         ? t('validation.email')
         : null
   const currentPwError = currentCode === 'required' ? t('validation.required') : null
+=======
+  const newValueError = !newValue.trim()
+    ? t('validation.required')
+    : isPassword && newValue.length < PASSWORD_MIN
+      ? t('validation.passwordMin', { min: PASSWORD_MIN })
+      : !isPassword && !isEmail(newValue)
+        ? t('validation.email')
+        : null
+  const currentPwError = !currentPassword ? t('validation.required') : null
+>>>>>>> upstream/main
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()

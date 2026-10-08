@@ -10,9 +10,15 @@ import type { ImportKey, ImportSelectedResponse, Platform, PreviewKey, PreviewRe
 import { Upload } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
+<<<<<<< HEAD
 import { CUSTOM_GROUP, PLATFORMS } from './platform-data'
 
 type ImportRow = PreviewKey & {
+=======
+import { CUSTOM_GROUP, PLATFORMS } from './shared'
+
+interface ImportRow extends PreviewKey {
+>>>>>>> upstream/main
   selected: boolean
   platform: Platform | ''
   visible: boolean

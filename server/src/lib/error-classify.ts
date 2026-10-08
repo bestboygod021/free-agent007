@@ -352,8 +352,22 @@ export function isKeyAuthError(err: any): boolean {
 // makes the router re-pick a dead-for-the-day provider all day, so the caller
 // benches until the next UTC midnight instead. Requires BOTH a daily marker and
 // a quota/allocation marker so an ordinary per-minute 429 never matches.
+<<<<<<< HEAD
 export function isDailyQuotaExhaustedError(err: any): boolean {
   const msg = (err?.message ?? '').toLowerCase();
+=======
+//
+// Groq ends every limit error, per-minute and request-too-large alike, with
+// "Need more tokens? Upgrade to Dev Tier today at …". That "today" is sales
+// copy, not a window, so it is cut before looking for a daily marker; and a
+// request too big for the model is never a spent allowance.
+const UPGRADE_UPSELL = /\bupgrade to [^.?!]*?\btoday\b/g;
+
+export function isDailyQuotaExhaustedError(err: any): boolean {
+  if (err?.dailyQuotaExhausted === true) return true;
+  if (isContextTooLargeError(err)) return false;
+  const msg = (err?.message ?? '').toLowerCase().replace(UPGRADE_UPSELL, '');
+>>>>>>> upstream/main
   if (!/daily|per[ -_]?day|\btoday\b/.test(msg)) return false;
   return /allocation|quota|limit|exhaust|used up/.test(msg);
 }
@@ -485,11 +499,34 @@ export function isContextTooLargeError(err: any): boolean {
 // A 402 Payment Required / out-of-credits error. Distinct from a transient 429:
 // it won't recover on the next window, so the caller benches the model+key with
 // PAYMENT_REQUIRED_COOLDOWN_MS (a full day) rather than the 90s transient cooldown.
+<<<<<<< HEAD
 export function isPaymentRequiredError(err: any): boolean {
   const msg = (err.message ?? '').toLowerCase();
   return msg.includes('402') || msg.includes('payment required')
     || msg.includes('insufficient_quota') || msg.includes('insufficient credit')
     || msg.includes('insufficient balance');
+=======
+//
+// The digits 402 only count as the STATUS. A bare `includes('402')` also
+// matched token counts and request ids ("Limit 30000, Requested 34026",
+// "14023 tokens used"), and since the 402 bench covers the key on every model
+// of the platform for a day (#1239), one unlucky number took a whole provider
+// out. So: an error that states another status is never a 402 by its digits,
+// and otherwise 402 has to stand alone rather than sit inside a longer number.
+const STATED_STATUS = /\bapi error (\d{3})\b|\(http (\d{3})\)/;
+const STANDALONE_402 = /(?<![\w.])402(?![\w.])/;
+
+export function isPaymentRequiredError(err: any): boolean {
+  const msg = String(err?.message ?? '').toLowerCase();
+  if (msg.includes('payment required')
+    || msg.includes('insufficient_quota') || msg.includes('insufficient credit')
+    || msg.includes('insufficient balance')) return true;
+
+  const stated = msg.match(STATED_STATUS);
+  const status = typeof err?.status === 'number' ? err.status : Number(stated?.[1] ?? stated?.[2]);
+  if (Number.isFinite(status)) return status === 402;
+  return STANDALONE_402.test(msg);
+>>>>>>> upstream/main
 }
 
 // "model 'x' does not exist" / "model \"x\" does not exist" / "model x does not

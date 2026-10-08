@@ -17,7 +17,15 @@ function sha256(s: string): string {
   return crypto.createHash('sha256').update(s).digest('hex');
 }
 
+<<<<<<< HEAD
 function normalizeEmail(email: string): string {
+=======
+/** The one spelling of an address the DB is keyed on. Exported so callers that
+ *  bucket by email (the login throttle in routes/auth.ts) key on exactly what
+ *  verifyCredentials will look up — keying on anything else lets a padded
+ *  address authenticate against the real row while landing in its own bucket. */
+export function normalizeEmail(email: string): string {
+>>>>>>> upstream/main
   return email.trim().toLowerCase();
 }
 
@@ -41,6 +49,7 @@ export function createUser(email: string, password: string): SessionUser {
   return { userId: Number(result.lastInsertRowid), email: normalized };
 }
 
+<<<<<<< HEAD
 /** Look up an account by address. Used when an invite lands on an email that
  *  already has one. */
 export function findUserByEmail(email: string): SessionUser | null {
@@ -50,6 +59,8 @@ export function findUserByEmail(email: string): SessionUser | null {
   return row ? { userId: row.id, email: row.email } : null;
 }
 
+=======
+>>>>>>> upstream/main
 /** Verify credentials. Returns the user on success, null on failure. */
 export function verifyCredentials(email: string, password: string): SessionUser | null {
   const db = getDb();

@@ -84,5 +84,13 @@ linux:
       arch:
         - x64
 nsis:
+<<<<<<< HEAD
+=======
+  # electron-builder's default NSIS name has spaces ("FreeLLMAPI Setup x.y.z.exe")
+  # and latest.yml records it with dashes, while GitHub stores the upload with
+  # dots — so the updater asked for a file the release did not have. A name with
+  # no spaces is the same string in all three places.
+  artifactName: "${productName}-Setup-${version}.${ext}"
+>>>>>>> upstream/main
   oneClick: true
   deleteAppDataOnUninstall: false

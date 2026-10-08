@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+<<<<<<< HEAD
 import { getDb, getSetting, getUnifiedApiKey, setSetting } from '../db/index.js';
 import { getClientContext } from '../lib/client-context.js';
 import { decrypt } from '../lib/crypto.js';
@@ -17,6 +18,20 @@ import { createHash } from 'node:crypto';
 // 429 and (b) recorded for the operator: a 200-entry in-memory ring for the
 // hot path, mirrored into the rate_limit_events table (7-day retention) so
 // the trail survives a restart. GET /api/health/rate-limits serves both.
+=======
+
+// Per-IP fixed-window rate limiter for the public /v1 proxy (#35, item #6).
+//
+// The /v1 surface authenticates with the unified API key but has no password
+// login like the dashboard does, so without this an attacker who can reach the
+// server could brute-force the key or flood upstream providers. This caps how
+// many requests a single client IP can make per minute and returns a standard
+// OpenAI-shaped 429 once the cap is exceeded.
+//
+// FreeLLMAPI is a single-user tool, so the default ceiling is generous. Tune it
+// with PROXY_RATE_LIMIT_RPM (requests per minute per IP); set it to 0 to turn
+// rate limiting off entirely.
+>>>>>>> upstream/main
 
 const WINDOW_MS = 60_000;
 const DEFAULT_RPM = 120;
@@ -29,6 +44,7 @@ interface WindowState {
   resetAt: number;
 }
 
+<<<<<<< HEAD
 /** One rejected request, as surfaced on GET /api/health/rate-limits. `scope`
  *  names the limiter that rejected it: 'proxy' guards /v1 (+ siblings),
  *  'admin' guards the dashboard /api surface, 'key' is the per-API-key bucket
@@ -435,13 +451,32 @@ export function createProxyRateLimiter(rpmLimit?: number) {
 
   return function proxyRateLimit(req: Request, res: Response, next: NextFunction): void {
     const limit = resolveLimit('proxy', fallback);
+=======
+function parseLimit(): number {
+  const raw = process.env.PROXY_RATE_LIMIT_RPM;
+  if (raw === undefined || raw.trim() === '') return DEFAULT_RPM;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return DEFAULT_RPM;
+  return Math.floor(n);
+}
+
+export function createProxyRateLimiter(rpmLimit?: number) {
+  const limit = rpmLimit !== undefined ? Math.floor(Math.max(0, rpmLimit)) : parseLimit();
+  const windows = new Map<string, WindowState>();
+
+  return function proxyRateLimit(req: Request, res: Response, next: NextFunction): void {
+>>>>>>> upstream/main
     if (limit === 0) {
       next();
       return;
     }
 
     const now = Date.now();
+<<<<<<< HEAD
     const ip = callerIp(req) ?? 'unknown';
+=======
+    const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+>>>>>>> upstream/main
 
     let state = windows.get(ip);
     if (!state || now >= state.resetAt) {
@@ -463,6 +498,7 @@ export function createProxyRateLimiter(rpmLimit?: number) {
     if (state.count > limit) {
       const retryAfter = Math.max(1, Math.ceil((state.resetAt - now) / 1000));
       res.setHeader('Retry-After', String(retryAfter));
+<<<<<<< HEAD
       // Keep a short operator-visible trail of what the limiter rejected —
       // surfaced on GET /api/health/rate-limits (admin dashboard).
       recordRateLimitEvent({
@@ -475,6 +511,8 @@ export function createProxyRateLimiter(rpmLimit?: number) {
         limit,
         retryAfter,
       });
+=======
+>>>>>>> upstream/main
       res.status(429).json({
         error: {
           message: `Rate limit exceeded: more than ${limit} requests per minute. Retry in ${retryAfter}s.`,
@@ -501,6 +539,7 @@ export function createProxyRateLimiter(rpmLimit?: number) {
 // Tune with ADMIN_RATE_LIMIT_RPM (requests per minute per IP); 0 disables it.
 const ADMIN_DEFAULT_RPM = 600;
 
+<<<<<<< HEAD
 
 export function createAdminRateLimiter(
   rpm?: number,
@@ -516,13 +555,32 @@ export function createAdminRateLimiter(
 
   return function adminRateLimit(req: Request, res: Response, next: NextFunction): void {
     const limit = settingKind ? resolveLimit(settingKind, fallback) : fallback;
+=======
+function parseAdminLimit(): number {
+  const raw = process.env.ADMIN_RATE_LIMIT_RPM;
+  if (raw === undefined || raw.trim() === '') return ADMIN_DEFAULT_RPM;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return ADMIN_DEFAULT_RPM;
+  return Math.floor(n);
+}
+
+export function createAdminRateLimiter(rpm?: number) {
+  const limit = rpm !== undefined ? Math.floor(Math.max(0, rpm)) : parseAdminLimit();
+  const windows = new Map<string, WindowState>();
+
+  return function adminRateLimit(req: Request, res: Response, next: NextFunction): void {
+>>>>>>> upstream/main
     if (limit === 0) {
       next();
       return;
     }
 
     const now = Date.now();
+<<<<<<< HEAD
     const ip = callerIp(req) ?? 'unknown';
+=======
+    const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+>>>>>>> upstream/main
 
     let state = windows.get(ip);
     if (!state || now >= state.resetAt) {
@@ -544,6 +602,7 @@ export function createAdminRateLimiter(
     if (state.count > limit) {
       const retryAfter = Math.max(1, Math.ceil((state.resetAt - now) / 1000));
       res.setHeader('Retry-After', String(retryAfter));
+<<<<<<< HEAD
       recordRateLimitEvent({
         ts: now,
         scope,
@@ -554,6 +613,8 @@ export function createAdminRateLimiter(
         limit,
         retryAfter,
       });
+=======
+>>>>>>> upstream/main
       res.status(429).json({
         error: {
           message: `Rate limit exceeded: more than ${limit} requests per minute. Retry in ${retryAfter}s.`,
@@ -566,6 +627,7 @@ export function createAdminRateLimiter(
     next();
   };
 }
+<<<<<<< HEAD
 
 // ── Per-API-key burst bucket for the proxy ──────────────────────────────────
 //
@@ -734,3 +796,5 @@ export function clearRateLimitEventsForTests(): void {
     return undefined;
   });
 }
+=======
+>>>>>>> upstream/main

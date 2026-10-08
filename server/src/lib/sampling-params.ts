@@ -21,6 +21,10 @@
 // provider-invalid request and shows up in the attempt trail — and its
 // droplist entry is one line to add.
 
+<<<<<<< HEAD
+=======
+import { z } from 'zod';
+>>>>>>> upstream/main
 import type { Platform } from '@freellmapi/shared/types.js';
 import { getSetting } from '../db/index.js';
 
@@ -85,6 +89,43 @@ function clampEffortTo(effort: ReasoningEffort, supported: readonly ReasoningEff
 // Every field is `.nullable()` because real clients serialize their whole
 // request struct and send explicit nulls for unset knobs (#200); null is
 // treated as absent and never forwarded.
+<<<<<<< HEAD
+=======
+export const samplingParamSchemaFields = {
+  top_k: z.number().int().min(1).nullable().optional(),
+  min_p: z.number().min(0).max(1).nullable().optional(),
+  seed: z.number().int().nullable().optional(),
+  presence_penalty: z.number().min(-2).max(2).nullable().optional(),
+  frequency_penalty: z.number().min(-2).max(2).nullable().optional(),
+  repetition_penalty: z.number().positive().nullable().optional(),
+  logit_bias: z.record(z.string(), z.number()).nullable().optional(),
+  logprobs: z.boolean().nullable().optional(),
+  top_logprobs: z.number().int().min(0).max(20).nullable().optional(),
+  response_format: z.object({
+    type: z.enum(['text', 'json_object', 'json_schema']),
+    json_schema: z.object({
+      name: z.string().optional(),
+      strict: z.boolean().nullable().optional(),
+      schema: z.record(z.string(), z.unknown()).optional(),
+    }).passthrough().optional(),
+  }).passthrough().nullable().optional(),
+  // Accepted as free-form and normalized by pickSamplingParams rather than
+  // validated against the enum: clients invent effort values ('max', 'xhigh')
+  // and rejecting them made an advisory knob fatal (#619).
+  reasoning_effort: z.unknown().optional(),
+  // Object-form alias some clients send (OpenRouter-style chat clients, and
+  // the Responses API's native shape): `reasoning: { effort }`. Resolved into
+  // reasoning_effort by pickSamplingParams; the wrapper object itself is never
+  // forwarded. Extra keys (summary, max_tokens…) are tolerated and ignored.
+  reasoning: z.object({
+    effort: z.unknown().optional(),
+  }).passthrough().nullable().optional(),
+  // OpenAI's newer alias for max_tokens; surfaces resolve it into max_tokens
+  // themselves (it is not a forwarded param of its own).
+  max_completion_tokens: z.number().int().nullable().optional(),
+} as const;
+
+>>>>>>> upstream/main
 export interface ResponseFormat {
   type: 'json_object' | 'json_schema';
   json_schema?: {
@@ -207,6 +248,22 @@ export const GITHUB_MAX_OUTPUT_TOKENS = 400;
 // silently no-op'ing the policy; the string-typed accessors below cast at the
 // boundary since routes carry platform ids as plain strings.
 export const PLATFORM_PARAM_POLICIES: Partial<Record<Platform, PlatformParamPolicy>> = {
+<<<<<<< HEAD
+=======
+  // Gizmo rejects all unlisted fields; reflect its text-only API in discovery
+  // as well as the adapter. This is the upstream ceiling, not a new quota.
+  gizmo: { drop: [...EXTENDED_SAMPLING_KEYS], defaultMaxTokens: 1024, maxTokensCap: 32768 },
+  // Moondream maps reasoning effort to a boolean and max_tokens to
+  // max_completion_tokens. 4096 is the documented upstream output ceiling.
+  moondream: {
+    drop: ['top_k', 'min_p', 'seed', 'presence_penalty', 'frequency_penalty', 'repetition_penalty', 'logit_bias', 'logprobs', 'top_logprobs', 'response_format'],
+    maxTokensCap: 4096,
+  },
+  // ACLIDE uses Responses; these Chat Completions parameters have no mapping.
+  aclide: {
+    drop: ['top_k', 'min_p', 'seed', 'presence_penalty', 'frequency_penalty', 'repetition_penalty', 'logit_bias', 'logprobs', 'top_logprobs'],
+  },
+>>>>>>> upstream/main
   // Sail's stable Responses API accepts temperature/top_p, JSON Schema output,
   // tools and reasoning effort. The remaining Chat Completions knobs are not
   // supported and are intentionally omitted by the dedicated adapter.
@@ -341,13 +398,22 @@ export function maxTokensCapFor(platform: string): number | undefined {
  * openai-compat (and its subclasses), cloudflare, cohere, google and aihorde
  * all do.
  */
+<<<<<<< HEAD
 export function resolveMaxTokens(platform: string, requested: number | undefined): number | undefined {
+=======
+export function resolveMaxTokens(platform: string, requested: number | undefined, contextBudget?: number): number | undefined {
+>>>>>>> upstream/main
   const resolved = requested ?? defaultMaxTokensFor(platform);
   if (resolved == null) return resolved;
   // The tighter ceiling wins: a platform's hard reject applies even with the
   // operator cap off, and an operator cap below it applies everywhere.
+<<<<<<< HEAD
   const caps = [unifiedMaxTokensCap(), maxTokensCapFor(platform)].filter((c): c is number => c != null);
   return caps.length === 0 ? resolved : Math.min(resolved, ...caps);
+=======
+  const caps = [unifiedMaxTokensCap(), maxTokensCapFor(platform), contextBudget].filter((c): c is number => c != null && c > 0);
+  return caps.length === 0 ? resolved : Math.max(1, Math.min(resolved, ...caps));
+>>>>>>> upstream/main
 }
 
 // ── Unified output-token cap ─────────────────────────────────────────────────
@@ -395,6 +461,11 @@ export function platformDropsResponseFormat(platform: string): boolean {
  *  every surface supports, plus tools when the model does, minus the
  *  platform's droplist. */
 export function supportedParametersFor(platform: string, caps: { tools?: boolean } = {}): string[] {
+<<<<<<< HEAD
+=======
+  // Unlike the generic base set, Moondream has neither stop nor tools.
+  if (platform === 'moondream') return ['temperature', 'top_p', 'max_tokens', 'max_completion_tokens', 'stream', 'reasoning_effort'];
+>>>>>>> upstream/main
   const policy = PLATFORM_PARAM_POLICIES[platform as Platform];
   const dropped = new Set<string>(policy?.drop ?? []);
   const params = [

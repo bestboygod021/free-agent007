@@ -16,8 +16,12 @@
     "modelsMenu": "تصفح أنواع النماذج",
     "agents": "الوكلاء",
     "logs": "السجلات",
+<<<<<<< HEAD
     "analyticsMenu": "صفحات التحليلات",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "صفحات التحليلات"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "أنشئ حسابك",
@@ -109,6 +113,7 @@
     "sectionCompression": "الضغط",
     "sectionAdvanced": "متقدم",
     "sectionPreview": "المعاينة",
+<<<<<<< HEAD
     "sectionRateLimit": "حدود المعدل",
     "rateLimitProxy": "حد الوكيل /v1 (طلب/دقيقة)",
     "rateLimitAdmin": "حد لوحة التحكم /api (طلب/دقيقة)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "حد المفتاح الموحد /v1 (طلب/دقيقة)",
     "rateLimitEnvLocked": "مثبّت عبر {env} — أزله للتعديل",
     "rateLimitSaved": "طُبّق — يسري في الطلب التالي",
+=======
+>>>>>>> upstream/main
     "generalDescription": "لغة لوحة التحكم هذه ومظهرها.",
     "advancedDescription": "الحدود ومفاتيح الأمان الخاصة بمسار الضغط.",
     "compressionTitle": "ضغط الموجه",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "تشغيل المعاينة",
     "updatesTitle": "التحديثات",
     "checkForUpdates": "التحقق من وجود تحديثات",
+<<<<<<< HEAD
     "lastChecked": "آخر فحص: {when}",
     "currentVersion": "البنية الحالية:",
     "updateAvailable": "يتوفر تحديث",
     "changelog": "ما الذي تغيّر",
+=======
+    "updateAvailable": "يتوفر تحديث",
+>>>>>>> upstream/main
     "upToDate": "محدّث",
     "buildAhead": "هذه البنية متقدمة على الفرع main الرسمي.",
     "buildDiverged": "تباعدت هذه البنية عن الفرع main الرسمي.",
     "buildUnknown": "لا يمكن مقارنة هذه البنية المخصصة بالفرع main الرسمي.",
     "notGitInstall": "لا يتضمن هذا التثبيت معلومات الالتزام.",
     "checkFailed": "تعذر التحقق من وجود تحديثات.",
+<<<<<<< HEAD
     "contactsGithub": "تُجرى عمليات التحقق يدويًا وتتصل بـ GitHub.",
     "autoUpdateCheck": "التحقق التلقائي من التحديثات",
     "autoUpdateCheckHelp": "يتحقق من GitHub مرة واحدة يوميًا بحثًا عن إصدار جديد ويعرض تذكيرًا. مُعطَّل افتراضيًا.",
     "openReleases": "فتح إصدارات GitHub",
     "restartAfterUpdate": "أعد تشغيل FreeLLMAPI بعد اكتمال البنية."
+=======
+    "autoUpdateCheck": "التحقق التلقائي من التحديثات",
+    "restartAfterUpdate": "أعد تشغيل FreeLLMAPI بعد اكتمال البنية.",
+    "downloadUpdate": "تنزيل التحديث",
+    "downloadingUpdate": "جارٍ التنزيل… {percent}%",
+    "restartToUpdate": "أعد التشغيل للتحديث",
+    "updateReadyHint": "اكتمل التنزيل. يحفظ FreeLLMAPI نسخة احتياطية من بياناتك ثم يعيد التشغيل ويفتح الإصدار الجديد.",
+    "updateInstallFailed": "تعذّر تثبيت التحديث.",
+    "updateNow": "حدّث الآن",
+    "updatingContainer": "جارٍ سحب الصورة الجديدة وإعادة التشغيل. ستُعاد تحميل هذه الصفحة عند عودة FreeLLMAPI.",
+    "updateNowFailed": "لم يقبل المحدِّث الطلب. تحقّق من أن حاوية watchtower تعمل.",
+    "updateNowTimeout": "لم يُعد FreeLLMAPI التشغيل بعد 5 دقائق. راجع سجلات حاوية watchtower."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "نماذج",
@@ -217,6 +242,10 @@
     "noKey": "لا يوجد مفتاح",
     "dragToReorder": "اسحب لإعادة الترتيب",
     "dragToReorderGroup": "اسحب لإعادة ترتيب النموذج",
+<<<<<<< HEAD
+=======
+    "moveToRank": "الانتقال إلى الترتيب",
+>>>>>>> upstream/main
     "providerCount": "مقدمي {count}",
     "servedBy": "يخدمها {providers}",
     "viewProviders": "عرض مقدمي الخدمة",
@@ -231,6 +260,10 @@
     "settingsHint": "يتم الاحتفاظ بالتحريرات المحلية لنماذج الكتالوج عبر عمليات مزامنة الكتالوج. تظل نماذج الكتالوج المحذوفة محذوفة حتى تقوم بإضافتها مرة أخرى من خلال التكوين.",
     "catalogModel": "كتالوج",
     "customModel": "مخصص",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "مُكتشَف",
+>>>>>>> upstream/main
     "localOverride": "التجاوز المحلي",
     "displayName": "اسم العرض",
     "sizeLabel": "فئة القدرة",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "تم خفض التوجيه: {healthy} من {total} مزودين بصحة جيدة (منذ {since})",
     "noProvider": "بدون مزود",
     "enabledCount": "{count} مفعّل",
+=======
+>>>>>>> upstream/main
     "pageTitle": "مفاتيح",
     "pageDescription": "بيانات اعتماد الموفر ومفتاح API الموحد الذي تتصل به تطبيقاتك.",
     "tabProviders": "مقدمي الخدمات",
     "checklistSummary": "تم إعداد {configured} من {total} من مقدمي الخدمات",
     "checklistKeyless": "لا حاجة لمفتاح",
     "checklistNoKeyTip": "لم تتم إضافة أي مفتاح بعد. انقر لإضافة مفتاح.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "افتح {provider} لإنشاء حساب والحصول على مفتاح",
+>>>>>>> upstream/main
     "checklistKeylessTip": "يعمل بدون مفتاح.",
     "tabQuotaSignals": "إشارات الحصص",
     "tabApiKey": "مفتاح API الموحد",
@@ -506,11 +546,19 @@
     "platform": "منصة",
     "hideAdded": "إخفاء الموفرين المضافين",
     "apiToken": "الرمز المميز API",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "لا حاجة لمفتاح API",
     "bearerTokenPlaceholder": "رمز حامل",
     "pasteKeyPlaceholder": "الصق المفتاح هنا",
     "pasteSeveral": "لصق عدة مفاتيح",
     "keylessHint": "لا حاجة إلى مفتاح API: الطبقة المجانية لهذا الموفر مجهولة (معدل محدود لكل IP).",
+=======
+    "keyOptionalPlaceholder": "اختياري",
+    "bearerTokenPlaceholder": "رمز حامل",
+    "pasteKeyPlaceholder": "الصق المفتاح هنا",
+    "pasteSeveral": "لصق عدة مفاتيح",
+    "keyOptionalHint": "اختياري: اتركه فارغًا لاستخدام الفئة المجانية المجهولة (محدودة المعدل لكل IP)، أو الصق مفتاحك الخاص لاستخدام حسابك.",
+>>>>>>> upstream/main
     "enable": "تمكين",
     "noProviderKeys": "لا توجد مفاتيح موفر حتى الآن. أضف واحدًا أعلاه لبدء التوجيه.",
     "filterPlaceholder": "تصفية مقدمي الخدمات أو المفاتيح",
@@ -688,7 +736,18 @@
     "testFailed": "فشل اختبار النموذج",
     "testThrottled": "يرجى الانتظار {seconds} ثانية قبل اختبار هذا النموذج مرة أخرى.",
     "noModelsForProvider": "لا توجد نماذج مهيأة لهذا المزود.",
+<<<<<<< HEAD
     "testModels": "اختبار النماذج"
+=======
+    "testModels": "اختبار النماذج",
+    "monthlyRequestCapLabel": "الحد الشهري للطلبات",
+    "monthlyTokenCapLabel": "الحد الشهري للرموز",
+    "capUnlimitedPlaceholder": "غير محدود",
+    "capEditHint": "تُصفَّر الحدود في 1 من الشهر 00:00 بتوقيت UTC. اتركه فارغًا بلا حد.",
+    "monthlyUsageLine": "{requests} طلبًا، {tokens} رمز هذا الشهر",
+    "quotaBalanceHint": "متبقٍ {remaining} من {limit} {metric}",
+    "quotaBalanceLeft": "متبقٍ {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "قبل التحديث"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "صحي",
@@ -1144,17 +1208,29 @@
       "generic": "أي أداة أخرى تتحدث واجهة OpenAI، تُضبط يدويًا بعنوان أساسي ومفتاح.",
       "atomcode": "وكيل الطرفية من AtomGit، مكتوب بلغة Rust، يقبل أي نقطة نهاية متوافقة مع OpenAI.",
       "openclaw": "مساعد شخصي يعمل على مدار الساعة ويرد على WhatsApp وTelegram وDiscord وغيرها من جهازك الخاص.",
+<<<<<<< HEAD
       "hermes": "وكيل Nous Research ذاتي التحسين، بذاكرة دائمة ومهارات، في الطرفية أو على تطبيقات الدردشة."
+=======
+      "hermes": "وكيل Nous Research ذاتي التحسين، بذاكرة دائمة ومهارات، في الطرفية أو على تطبيقات الدردشة.",
+      "pi": "إطار وكيل بسيط في الطرفية تُشكّله بإضافاتك ومهاراتك وقوالب أوامرك الخاصة.",
+      "reasonix": "وكيل برمجة للطرفية مصمّم أصلًا لـ DeepSeek، مبني حول التخزين المؤقت للبادئات لتبقى الجلسات الطويلة رخيصة."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "تم تثبيت إصدار أحدث من FreeLLMAPI.",
+    "reload": "إعادة التحميل"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "مجمّعات الطبقة المجانية ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "ابدأ فارغة",
     "startEmptyHint": "ينشئ السلسلة بلا أي نماذج، ولا يضيف إليها نماذج الفهرس الجديدة. عند إلغاء التحديد تبدأ كنسخة من السلسلة الافتراضية.",
     "curated": "مُنسّقة يدويًا",
+<<<<<<< HEAD
     "curatedHint": "لا تُضاف نماذج الفهرس الجديدة إلى هذه السلسلة تلقائيًا."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} طلبات تمت حصرتها خلال آخر 5 دقائق",
     "hourFilter": "الساعة: {hour}",
     "serverLog": "سجل الخادم"
+=======
+    "curatedHint": "لا تُضاف نماذج الفهرس الجديدة إلى هذه السلسلة تلقائيًا.",
+    "renameHint": "إعادة تسمية هذه السلسلة",
+    "renameConfirm": "إعادة تسمية السلسلة \"{oldName}\" إلى \"{name}\"؟ يجب على العملاء الذين يستدعون auto:{oldName} التحول إلى auto:{name}.",
+    "renamePlaceholder": "الاسم الجديد للسلسلة",
+    "renameFailed": "تعذّرت إعادة تسمية السلسلة."
+  },
+  "updates": {
+    "versionAvailable": "الإصدار {version} متاح",
+    "versionReady": "الإصدار {version} جاهز للتثبيت",
+    "releaseNotes": "ملاحظات الإصدار",
+    "tryAgain": "أعد المحاولة",
+    "offline": "تحقّق من اتصالك بالإنترنت ثم أعد المحاولة."
+>>>>>>> upstream/main
   }
 }

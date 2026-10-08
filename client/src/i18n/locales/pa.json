@@ -16,8 +16,12 @@
     "modelsMenu": "ਮਾਡਲ ਕਿਸਮਾਂ ਨੂੰ ਬ੍ਰਾਊਜ਼ ਕਰੋ",
     "agents": "ਏਜੰਟ",
     "logs": "ਲੌਗ",
+<<<<<<< HEAD
     "analyticsMenu": "ਵਿਸ਼ਲੇਸ਼ਣ ਪੰਨੇ",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "ਵਿਸ਼ਲੇਸ਼ਣ ਪੰਨੇ"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "ਆਪਣਾ ਖਾਤਾ ਬਣਾਓ",
@@ -109,6 +113,7 @@
     "sectionCompression": "ਕੰਪਰੈਸ਼ਨ",
     "sectionAdvanced": "ਉੱਨਤ",
     "sectionPreview": "ਝਲਕ",
+<<<<<<< HEAD
     "sectionRateLimit": "ਦਰ ਸੀਮਾਵਾਂ",
     "rateLimitProxy": "ਪ੍ਰੋਕਸੀ /v1 ਸੀਮਾ (ਪ੍ਰਤੀ ਮਿੰਟ ਬੇਨਤੀਆਂ)",
     "rateLimitAdmin": "ਡੈਸ਼ਬੋਰਡ /api ਸੀਮਾ (ਪ੍ਰਤੀ ਮਿੰਟ ਬੇਨਤੀਆਂ)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "ਏਕੀਕ੍ਰਿਤ-ਕੁੰਜੀ /v1 ਸੀਮਾ (ਪ੍ਰਤੀ ਮਿੰਟ ਬੇਨਤੀਆਂ)",
     "rateLimitEnvLocked": "{env} ਨਾਲ ਸੈੱਟ — ਸੰਪਾਦਨ ਲਈ ਹਟਾਓ",
     "rateLimitSaved": "ਲਾਗੂ — ਅਗਲੀ ਬੇਨਤੀ ਤੋਂ ਪ੍ਰਭਾਵੀ",
+=======
+>>>>>>> upstream/main
     "generalDescription": "ਇਸ ਡੈਸ਼ਬੋਰਡ ਦੀ ਭਾਸ਼ਾ ਅਤੇ ਦਿੱਖ।",
     "advancedDescription": "ਕੰਪਰੈਸ਼ਨ ਪਾਈਪਲਾਈਨ ਲਈ ਹੱਦਾਂ ਅਤੇ ਸੁਰੱਖਿਆ ਸਵਿੱਚ।",
     "compressionTitle": "ਪ੍ਰੋਂਪਟ ਕੰਪਰੈਸ਼ਨ",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "ਝਲਕ ਚਲਾਓ",
     "updatesTitle": "ਅੱਪਡੇਟ",
     "checkForUpdates": "ਅੱਪਡੇਟ ਲਈ ਚੈੱਕ ਕਰੋ",
+<<<<<<< HEAD
     "lastChecked": "ਪਿਛਲੀ ਵਾਰ ਜਾਂਚ ਕੀਤੀ ਗਈ: {when}",
     "currentVersion": "ਮੌਜੂਦਾ ਬਿਲਡ:",
     "updateAvailable": "ਅੱਪਡੇਟ ਉਪਲਬਧ ਹੈ",
     "changelog": "ਕੀ ਬਦਲਿਆ ਹੈ",
+=======
+    "updateAvailable": "ਅੱਪਡੇਟ ਉਪਲਬਧ ਹੈ",
+>>>>>>> upstream/main
     "upToDate": "ਨਵੀਨਤਮ ਹੈ",
     "buildAhead": "ਇਹ ਬਿਲਡ ਅਧਿਕਾਰਤ main ਸ਼ਾਖਾ ਤੋਂ ਅੱਗੇ ਹੈ।",
     "buildDiverged": "ਇਹ ਬਿਲਡ ਅਧਿਕਾਰਤ main ਸ਼ਾਖਾ ਤੋਂ ਵੱਖ ਹੋ ਗਿਆ ਹੈ।",
     "buildUnknown": "ਇਸ ਕਸਟਮ ਬਿਲਡ ਦੀ ਤੁਲਨਾ ਅਧਿਕਾਰਤ main ਸ਼ਾਖਾ ਨਾਲ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕਦੀ।",
     "notGitInstall": "ਇਸ ਇੰਸਟਾਲੇਸ਼ਨ ਵਿੱਚ commit ਜਾਣਕਾਰੀ ਸ਼ਾਮਲ ਨਹੀਂ ਹੈ।",
     "checkFailed": "ਅੱਪਡੇਟਾਂ ਦੀ ਜਾਂਚ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ।",
+<<<<<<< HEAD
     "contactsGithub": "ਜਾਂਚਾਂ ਹੱਥੀਂ ਚਲਾਈਆਂ ਜਾਂਦੀਆਂ ਹਨ ਅਤੇ GitHub ਨਾਲ ਸੰਪਰਕ ਕਰਦੀਆਂ ਹਨ।",
     "autoUpdateCheck": "ਆਪਣੇ-ਆਪ ਅੱਪਡੇਟ ਜਾਂਚ",
     "autoUpdateCheckHelp": "ਦਿਨ ਵਿੱਚ ਇੱਕ ਵਾਰ ਨਵੀਂ ਰਿਲੀਜ਼ ਲਈ GitHub ਦੀ ਜਾਂਚ ਕਰਦਾ ਹੈ ਅਤੇ ਯਾਦ-ਦਹਾਨੀ ਦਿਖਾਉਂਦਾ ਹੈ। ਮੂਲ ਰੂਪ ਵਿੱਚ ਬੰਦ।",
     "openReleases": "GitHub Releases ਖੋਲ੍ਹੋ",
     "restartAfterUpdate": "ਬਿਲਡ ਪੂਰਾ ਹੋਣ ਤੋਂ ਬਾਅਦ FreeLLMAPI ਨੂੰ ਮੁੜ ਚਾਲੂ ਕਰੋ।"
+=======
+    "autoUpdateCheck": "ਆਪਣੇ-ਆਪ ਅੱਪਡੇਟ ਜਾਂਚ",
+    "restartAfterUpdate": "ਬਿਲਡ ਪੂਰਾ ਹੋਣ ਤੋਂ ਬਾਅਦ FreeLLMAPI ਨੂੰ ਮੁੜ ਚਾਲੂ ਕਰੋ।",
+    "downloadUpdate": "ਅੱਪਡੇਟ ਡਾਊਨਲੋਡ ਕਰੋ",
+    "downloadingUpdate": "ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ… {percent}%",
+    "restartToUpdate": "ਅੱਪਡੇਟ ਲਈ ਮੁੜ ਚਾਲੂ ਕਰੋ",
+    "updateReadyHint": "ਡਾਊਨਲੋਡ ਹੋ ਗਿਆ। FreeLLMAPI ਤੁਹਾਡੇ ਡੇਟਾ ਦਾ ਬੈਕਅੱਪ ਲੈਂਦਾ ਹੈ, ਮੁੜ ਚਾਲੂ ਹੁੰਦਾ ਹੈ ਅਤੇ ਨਵਾਂ ਸੰਸਕਰਣ ਖੋਲ੍ਹਦਾ ਹੈ।",
+    "updateInstallFailed": "ਅੱਪਡੇਟ ਇੰਸਟਾਲ ਨਹੀਂ ਹੋ ਸਕਿਆ।",
+    "updateNow": "ਹੁਣੇ ਅੱਪਡੇਟ ਕਰੋ",
+    "updatingContainer": "ਨਵੀਂ ਇਮੇਜ ਖਿੱਚੀ ਜਾ ਰਹੀ ਹੈ ਅਤੇ ਮੁੜ ਚਾਲੂ ਹੋ ਰਿਹਾ ਹੈ। FreeLLMAPI ਵਾਪਸ ਆਉਣ 'ਤੇ ਇਹ ਪੰਨਾ ਮੁੜ ਲੋਡ ਹੋਵੇਗਾ।",
+    "updateNowFailed": "ਅੱਪਡੇਟਰ ਨੇ ਬੇਨਤੀ ਸਵੀਕਾਰ ਨਹੀਂ ਕੀਤੀ। ਜਾਂਚੋ ਕਿ watchtower ਕੰਟੇਨਰ ਚੱਲ ਰਿਹਾ ਹੈ।",
+    "updateNowTimeout": "5 ਮਿੰਟ ਬਾਅਦ ਵੀ FreeLLMAPI ਮੁੜ ਚਾਲੂ ਨਹੀਂ ਹੋਇਆ। watchtower ਕੰਟੇਨਰ ਦੇ ਲੌਗ ਵੇਖੋ।"
+>>>>>>> upstream/main
   },
   "models": {
     "title": "ਮਾਡਲ",
@@ -217,6 +242,10 @@
     "noKey": "ਕੋਈ ਕੁੰਜੀ ਨਹੀਂ",
     "dragToReorder": "ਮੁੜ ਕ੍ਰਮਬੱਧ ਕਰਨ ਲਈ ਘਸੀਟੋ",
     "dragToReorderGroup": "ਮਾਡਲ ਨੂੰ ਮੁੜ ਕ੍ਰਮਬੱਧ ਕਰਨ ਲਈ ਘਸੀਟੋ",
+<<<<<<< HEAD
+=======
+    "moveToRank": "ਰੈਂਕ ਤੇ ਜਾਓ",
+>>>>>>> upstream/main
     "providerCount": "{count} ਪ੍ਰਦਾਤਾ",
     "servedBy": "{providers} ਦੁਆਰਾ ਸੇਵਾ ਕੀਤੀ ਗਈ",
     "viewProviders": "ਪ੍ਰਦਾਤਾ ਦੇਖੋ",
@@ -231,6 +260,10 @@
     "settingsHint": "ਕੈਟਾਲਾਗ ਮਾਡਲਾਂ ਦੇ ਸਥਾਨਕ ਸੰਪਾਦਨਾਂ ਨੂੰ ਕੈਟਾਲਾਗ ਸਮਕਾਲੀਕਰਨ ਵਿੱਚ ਰੱਖਿਆ ਜਾਂਦਾ ਹੈ। ਮਿਟਾਏ ਗਏ ਕੈਟਾਲਾਗ ਮਾਡਲ ਉਦੋਂ ਤੱਕ ਮਿਟਾਏ ਜਾਂਦੇ ਹਨ ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਉਹਨਾਂ ਨੂੰ ਸੰਰਚਨਾ ਰਾਹੀਂ ਦੁਬਾਰਾ ਨਹੀਂ ਜੋੜਦੇ।",
     "catalogModel": "ਕੈਟਾਲਾਗ",
     "customModel": "ਕਸਟਮ",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "ਲੱਭਿਆ ਗਿਆ",
+>>>>>>> upstream/main
     "localOverride": "ਸਥਾਨਕ ਓਵਰਰਾਈਡ",
     "displayName": "ਡਿਸਪਲੇ ਨਾਮ",
     "sizeLabel": "ਸਮਰੱਥਾ ਪੱਧਰ",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "ਕੁੰਜੀਆਂ",
     "pageDescription": "ਪ੍ਰਦਾਤਾ ਪ੍ਰਮਾਣ ਪੱਤਰ ਅਤੇ ਯੂਨੀਫਾਈਡ API ਕੁੰਜੀ ਜਿਸ ਨਾਲ ਤੁਹਾਡੀਆਂ ਐਪਾਂ ਜੁੜਦੀਆਂ ਹਨ।",
     "tabProviders": "ਪ੍ਰਦਾਤਾ",
     "checklistSummary": "{total} ਵਿੱਚੋਂ {configured} ਪ੍ਰਦਾਤਾ ਸੰਰਚਿਤ ਕੀਤੇ ਗਏ",
     "checklistKeyless": "ਕੁੰਜੀ ਦੀ ਲੋੜ ਨਹੀਂ",
     "checklistNoKeyTip": "ਅਜੇ ਤੱਕ ਕੋਈ ਕੁੰਜੀ ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ। ਸ਼ਾਮਲ ਕਰਨ ਲਈ ਕਲਿੱਕ ਕਰੋ।",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "ਖਾਤਾ ਬਣਾਉਣ ਅਤੇ ਕੁੰਜੀ ਪ੍ਰਾਪਤ ਕਰਨ ਲਈ {provider} ਖੋਲ੍ਹੋ",
+>>>>>>> upstream/main
     "checklistKeylessTip": "ਕੁੰਜੀ ਤੋਂ ਬਿਨਾਂ ਕੰਮ ਕਰਦਾ ਹੈ।",
     "tabQuotaSignals": "ਕੋਟਾ ਸਿਗਨਲ",
     "tabApiKey": "ਯੂਨੀਫਾਈਡ API ਕੁੰਜੀ",
@@ -506,11 +546,19 @@
     "platform": "ਪਲੇਟਫਾਰਮ",
     "hideAdded": "ਸ਼ਾਮਲ ਕੀਤੇ ਪ੍ਰਦਾਤਾ ਲੁਕਾਓ",
     "apiToken": "API ਟੋਕਨ",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "API ਕੁੰਜੀ ਦੀ ਲੋੜ ਨਹੀਂ ਹੈ",
     "bearerTokenPlaceholder": "ਬੇਅਰਰ ਟੋਕਨ",
     "pasteKeyPlaceholder": "ਇੱਥੇ ਕੁੰਜੀ ਪੇਸਟ ਕਰੋ",
     "pasteSeveral": "ਕਈ ਪੇਸਟ ਕਰੋ",
     "keylessHint": "ਕੋਈ API ਕੁੰਜੀ ਦੀ ਲੋੜ ਨਹੀਂ: ਇਸ ਪ੍ਰਦਾਤਾ ਦਾ ਮੁਫਤ ਟੀਅਰ ਅਗਿਆਤ ਹੈ (ਦਰ-ਸੀਮਤ ਪ੍ਰਤੀ IP)।",
+=======
+    "keyOptionalPlaceholder": "ਵਿਕਲਪਿਕ",
+    "bearerTokenPlaceholder": "ਬੇਅਰਰ ਟੋਕਨ",
+    "pasteKeyPlaceholder": "ਇੱਥੇ ਕੁੰਜੀ ਪੇਸਟ ਕਰੋ",
+    "pasteSeveral": "ਕਈ ਪੇਸਟ ਕਰੋ",
+    "keyOptionalHint": "ਵਿਕਲਪਿਕ: ਗੁਮਨਾਮ ਮੁਫ਼ਤ ਪੱਧਰ ਲਈ ਖਾਲੀ ਛੱਡੋ (ਪ੍ਰਤੀ IP ਦਰ-ਸੀਮਤ), ਜਾਂ ਆਪਣਾ ਖਾਤਾ ਵਰਤਣ ਲਈ ਆਪਣੀ ਕੁੰਜੀ ਪੇਸਟ ਕਰੋ।",
+>>>>>>> upstream/main
     "enable": "ਯੋਗ ਕਰੋ",
     "noProviderKeys": "ਅਜੇ ਤੱਕ ਕੋਈ ਪ੍ਰਦਾਤਾ ਕੁੰਜੀਆਂ ਨਹੀਂ ਹਨ। ਰੂਟਿੰਗ ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਉੱਪਰ ਇੱਕ ਜੋੜੋ।",
     "filterPlaceholder": "ਫਿਲਟਰ ਪ੍ਰਦਾਤਾ ਜਾਂ ਕੁੰਜੀਆਂ",
@@ -688,7 +736,18 @@
     "testFailed": "ਮਾਡਲ ਟੈਸਟ ਅਸਫਲ ਰਿਹਾ",
     "testThrottled": "ਇਸ ਮਾਡਲ ਦੀ ਦੁਬਾਰਾ ਜਾਂਚ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਕਿਰਪਾ ਕਰਕੇ {seconds} ਸਕਿੰਟ ਉਡੀਕ ਕਰੋ।",
     "noModelsForProvider": "ਇਸ ਪ੍ਰਦਾਤਾ ਲਈ ਕੋਈ ਮਾਡਲ ਕੌਂਫਿਗਰ ਨਹੀਂ ਕੀਤਾ ਗਿਆ ਹੈ।",
+<<<<<<< HEAD
     "testModels": "ਮਾਡਲ ਟੈਸਟ ਕਰੋ"
+=======
+    "testModels": "ਮਾਡਲ ਟੈਸਟ ਕਰੋ",
+    "monthlyRequestCapLabel": "ਮਹੀਨਾਵਾਰੀ ਬੇਨਤੀ ਸੀਮਾ",
+    "monthlyTokenCapLabel": "ਮਹੀਨਾਵਾਰੀ ਟੋਕਨ ਸੀਮਾ",
+    "capUnlimitedPlaceholder": "ਅਸੀਮਤ",
+    "capEditHint": "ਸੀਮਾਵਾਂ ਹਰ ਮਹੀਨੇ 1 ਤਾਰੀਖ਼ ਨੂੰ 00:00 UTC 'ਤੇ ਰੀਸੈੱਟ ਹੁੰਦੀਆਂ ਹਨ। ਅਸੀਮਤ ਲਈ ਖਾਲੀ ਛੱਡੋ।",
+    "monthlyUsageLine": "ਇਸ ਮਹੀਨੇ {requests} ਬੇਨਤੀਆਂ, {tokens} ਟੋਕਨ",
+    "quotaBalanceHint": "{limit} {metric} ਵਿੱਚੋਂ {remaining} ਬਾਕੀ",
+    "quotaBalanceLeft": "{remaining} ਬਾਕੀ"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "ਅੱਪਡੇਟ ਤੋਂ ਪਹਿਲਾਂ"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "ਸਿਹਤਮੰਦ",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "ਇੱਕ ਹਮੇਸ਼ਾ ਚਾਲੂ ਰਹਿਣ ਵਾਲਾ ਨਿੱਜੀ ਸਹਾਇਕ ਜੋ ਤੁਹਾਡੀ ਆਪਣੀ ਮਸ਼ੀਨ ਤੋਂ WhatsApp, Telegram, Discord ਅਤੇ ਹੋਰਾਂ 'ਤੇ ਜਵਾਬ ਦਿੰਦਾ ਹੈ।",
+<<<<<<< HEAD
       "hermes": "Nous Research ਦਾ ਆਪਣੇ ਆਪ ਨੂੰ ਬਿਹਤਰ ਬਣਾਉਣ ਵਾਲਾ ਏਜੰਟ, ਸਥਾਈ ਮੈਮੋਰੀ ਅਤੇ ਹੁਨਰਾਂ ਨਾਲ, ਟਰਮੀਨਲ ਵਿੱਚ ਜਾਂ ਚੈਟ ਐਪਾਂ 'ਤੇ।"
+=======
+      "hermes": "Nous Research ਦਾ ਆਪਣੇ ਆਪ ਨੂੰ ਬਿਹਤਰ ਬਣਾਉਣ ਵਾਲਾ ਏਜੰਟ, ਸਥਾਈ ਮੈਮੋਰੀ ਅਤੇ ਹੁਨਰਾਂ ਨਾਲ, ਟਰਮੀਨਲ ਵਿੱਚ ਜਾਂ ਚੈਟ ਐਪਾਂ 'ਤੇ।",
+      "pi": "ਇੱਕ ਘੱਟੋ-ਘੱਟ ਟਰਮੀਨਲ ਏਜੰਟ, ਜਿਸਨੂੰ ਤੁਸੀਂ ਆਪਣੇ ਐਕਸਟੈਂਸ਼ਨਾਂ, ਹੁਨਰਾਂ ਅਤੇ ਪ੍ਰੌਂਪਟ ਟੈਮਪਲੇਟਾਂ ਨਾਲ ਘੜਦੇ ਹੋ।",
+      "reasonix": "DeepSeek ਲਈ ਬਣਿਆ ਟਰਮੀਨਲ ਕੋਡਿੰਗ ਏਜੰਟ, ਪ੍ਰੀਫਿਕਸ ਕੈਸ਼ਿੰਗ ਦੁਆਲੇ ਬਣਾਇਆ ਗਿਆ ਤਾਂ ਜੋ ਲੰਬੇ ਸੈਸ਼ਨ ਵੀ ਸਸਤੇ ਰਹਿਣ।"
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "FreeLLMAPI ਦਾ ਨਵਾਂ ਸੰਸਕਰਣ ਇੰਸਟਾਲ ਹੈ।",
+    "reload": "ਮੁੜ ਲੋਡ ਕਰੋ"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "ਪਿਛਲੇ 5 ਮਿੰਟ ਵਿੱਚ {count} ਬੇਨਤੀਆਂ ਸੀਮਿਤ",
     "hourFilter": "ਘੰਟਾ: {hour}",
     "serverLog": "ਸਰਵਰ ਲੌਗ"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "ਇਸ ਚੇਨ ਦਾ ਨਾਂ ਬਦਲੋ",
+    "renameConfirm": "ਚੇਨ \"{oldName}\" ਦਾ ਨਾਂ \"{name}\" ਕਰਨਾ? auto:{oldName} ਕਾਲ ਕਰਦੇ ਕਲਾਇੰਟਾਂ ਨੂੰ auto:{name} 'ਤੇ ਜਾਣਾ ਪਵੇਗਾ।",
+    "renamePlaceholder": "ਨਵਾਂ ਚੇਨ ਨਾਂ",
+    "renameFailed": "ਚੇਨ ਦਾ ਨਾਂ ਨਹੀਂ ਬਦਲਿਆ ਜਾ ਸਕਿਆ।"
+  },
+  "updates": {
+    "versionAvailable": "ਸੰਸਕਰਣ {version} ਉਪਲਬਧ ਹੈ",
+    "versionReady": "ਸੰਸਕਰਣ {version} ਇੰਸਟਾਲ ਲਈ ਤਿਆਰ ਹੈ",
+    "releaseNotes": "ਰਿਲੀਜ਼ ਨੋਟਸ",
+    "tryAgain": "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
+    "offline": "ਆਪਣਾ ਇੰਟਰਨੈੱਟ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+>>>>>>> upstream/main
   }
 }

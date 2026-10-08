@@ -1,5 +1,9 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+<<<<<<< HEAD
+=======
+import { z } from 'zod';
+>>>>>>> upstream/main
 import { getDb } from '../db/index.js';
 import {
   assertBackupPathAllowed,
@@ -13,6 +17,7 @@ import {
   writeBackupSchedule,
   type BackupSchedule,
 } from '../services/backups.js';
+<<<<<<< HEAD
 import { backupCreateSchema, backupScheduleInputSchema } from '@freellmapi/shared/schemas.js';
 
 export const backupsRouter = Router();
@@ -23,6 +28,24 @@ export const backupsRouter = Router();
 
 function parseSchedule(body: unknown): { schedule?: BackupSchedule; error?: string } {
   const parsed = backupScheduleInputSchema.safeParse(body);
+=======
+
+export const backupsRouter = Router();
+
+const createSchema = z.object({
+  tables: z.array(z.string().trim().min(1).max(200)).max(500).optional(),
+}).strict();
+
+const scheduleSchema = z.object({
+  enabled: z.boolean(),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'time must be HH:mm'),
+  intervalDays: z.number().int().min(1).max(365),
+  backupPath: z.string().max(2000),
+}).strict();
+
+function parseSchedule(body: unknown): { schedule?: BackupSchedule; error?: string } {
+  const parsed = scheduleSchema.safeParse(body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     return { error: parsed.error.errors.map((e) => e.message).join(', ') };
   }
@@ -75,7 +98,11 @@ backupsRouter.get('/', (req: Request, res: Response) => {
 });
 
 backupsRouter.post('/', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = backupCreateSchema.safeParse(req.body ?? {});
+=======
+  const parsed = createSchema.safeParse(req.body ?? {});
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map((e) => e.message).join(', ') } });
     return;

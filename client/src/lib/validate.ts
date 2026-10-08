@@ -9,3 +9,11 @@ export function isHttpUrl(value: string): boolean {
     return false
   }
 }
+<<<<<<< HEAD
+=======
+
+// Deliberately loose: enough to catch "no @" or trailing dots, not RFC 5322.
+export function isEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim())
+}
+>>>>>>> upstream/main

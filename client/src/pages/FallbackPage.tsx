@@ -21,6 +21,10 @@ import { useI18n } from '@/i18n'
 import { apiFetch } from '@/lib/api'
 import {
   buildGroups,
+<<<<<<< HEAD
+=======
+  clampRankToIndex,
+>>>>>>> upstream/main
   isGroupDepleted,
   groupMatchesQuery,
   groupMaxContext,
@@ -132,6 +136,7 @@ export default function FallbackPage() {
   // Staged edits are DISCARDED when the active chain changes, not just hidden
   // (#1047): merely masking them meant switching A→B→A resurrected A's stale
   // unsaved rows over freshly fetched data, with only a refresh clearing them.
+<<<<<<< HEAD
   // A render-phase adjustment (not an effect) so the stale entry is gone in
   // the same render that noticed the switch.
   const [syncedProfileId, setSyncedProfileId] = useState<number | null>(activeProfileId)
@@ -139,6 +144,11 @@ export default function FallbackPage() {
     setSyncedProfileId(activeProfileId)
     if (staged && staged.profileId !== activeProfileId) setStaged(null)
   }
+=======
+  useEffect(() => {
+    setStaged(prev => (prev && prev.profileId !== activeProfileId ? null : prev))
+  }, [activeProfileId])
+>>>>>>> upstream/main
 
   const localEntries = staged && staged.profileId === activeProfileId ? staged.entries : null
   const setLocalEntries = (entries: FallbackEntry[] | null) =>
@@ -308,6 +318,22 @@ export default function FallbackPage() {
     setLocalEntries(allEntries.map(e => ({ ...e, priority: prio.get(e.modelDbId) ?? e.priority })))
   }
 
+<<<<<<< HEAD
+=======
+  // Jump-to-rank (#1317): type a target rank instead of dragging a model across
+  // a long chain. Same staging path as drag — persistGroupOrder serializes the
+  // new display order into localEntries and Save commits it. The typed rank is
+  // clamped to the chain, so 1 means "front of the queue" and an over-the-end
+  // number means "last" without needing a validation error.
+  function handleMoveGroupRank(key: string, toRank: number) {
+    const oldI = orderedGroups.findIndex(g => g.key === key)
+    if (oldI < 0) return
+    const newI = clampRankToIndex(toRank, orderedGroups.length)
+    if (newI === oldI) return
+    persistGroupOrder(arrayMove(orderedGroups, oldI, newI))
+  }
+
+>>>>>>> upstream/main
   // Reorder models (the failover priority order). Providers within a model are
   // ordered by the active strategy and managed on the model's own page.
   function handleGroupedDragEnd(event: DragEndEvent) {
@@ -603,7 +629,11 @@ export default function FallbackPage() {
                     <SortableContext items={renderedGroups.map(g => `grp:${g.key}`)} strategy={verticalListSortingStrategy}>
                       <tbody>
                         {renderedGroups.map(g => (
+<<<<<<< HEAD
                           <SortableGroupRow key={g.key} group={g} rank={rankByKey.get(g.key) ?? 0} onToggleGroup={handleGroupToggle} allRows={rows} rateUsage={rateUsageByModel} />
+=======
+                          <SortableGroupRow key={g.key} group={g} rank={rankByKey.get(g.key) ?? 0} editableRank onMoveRank={r => handleMoveGroupRank(g.key, r)} onToggleGroup={handleGroupToggle} allRows={rows} rateUsage={rateUsageByModel} />
+>>>>>>> upstream/main
                         ))}
                       </tbody>
                     </SortableContext>

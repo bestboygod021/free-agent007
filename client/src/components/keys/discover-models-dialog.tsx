@@ -11,6 +11,7 @@ import { formatContext } from '@/lib/routing'
 // list current by hand means re-running `curl .../v1/models | jq` every so
 // often. Ask the endpoint instead, tick the ones to keep, register them in one
 // call. Reads only the user's OWN endpoint with the user's OWN key.
+<<<<<<< HEAD
 
 export type { DiscoveredModel, DiscoverResponse } from '../../../../shared/types'
 import type { DiscoverResponse } from '../../../../shared/types'
@@ -20,6 +21,43 @@ import type { DiscoverResponse } from '../../../../shared/types'
 // How the endpoint is named to the server (request body discriminator) —
 // an input shape, not a response contract, so it stays a local type.
 export type EndpointRef = {
+=======
+//
+// #1348: the same dialog serves built-in provider keys whose platform the
+// catalog carries no models for. The list comes from that provider's own
+// /models, picks register as discovered rows, and only chat models can be
+// picked (the catalog owns media and embedding rows for built-in platforms).
+
+export interface DiscoveredModel {
+  id: string
+  ownedBy: string | null
+  registered: boolean
+  /** Approximate context window in tokens when the upstream advertises one. */
+  contextWindow?: number
+  /** Human-readable price hint ("free", "$1.25/M in $2/M out") when present (#685). */
+  priceNote?: string
+  /** The server's verdict on whether the note means free — the only thing this
+   *  picker badges green, so "$10/M in" can never read as free. */
+  isFree?: boolean
+  /** True when the upstream advertises image input. */
+  vision?: boolean
+  /** Present only when the model is discernibly NOT a chat model (#1051). The
+   *  server routes it to the matching table on register; video is skipped. */
+  kind?: 'embedding' | 'image' | 'audio' | 'transcription' | 'video'
+}
+
+interface DiscoverResponse {
+  baseUrl: string
+  keyId: number | null
+  models: DiscoveredModel[]
+  total: number
+  registeredCount: number
+}
+
+/** How the endpoint is named to the server: a saved key row, or a base URL the
+ *  user is still typing (with the key they typed alongside it). */
+export interface EndpointRef {
+>>>>>>> upstream/main
   keyId?: number
   baseUrl?: string
   apiKey?: string
@@ -30,11 +68,20 @@ export function DiscoverModelsDialog({
   onOpenChange,
   endpoint,
   onRegistered,
+<<<<<<< HEAD
+=======
+  builtin = false,
+>>>>>>> upstream/main
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   endpoint: EndpointRef
   onRegistered?: () => void
+<<<<<<< HEAD
+=======
+  /** A built-in provider key rather than a custom endpoint (#1348). */
+  builtin?: boolean
+>>>>>>> upstream/main
 }) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
@@ -46,7 +93,11 @@ export function DiscoverModelsDialog({
   // A query, not a mutation: the dialog is mounted only while open, so the
   // fetch fires on mount and the component needs no reset effect.
   const discover = useQuery<DiscoverResponse>({
+<<<<<<< HEAD
     queryKey: ['custom-endpoint-models', endpoint.keyId ?? null, endpoint.baseUrl ?? null],
+=======
+    queryKey: ['custom-endpoint-models', builtin, endpoint.keyId ?? null, endpoint.baseUrl ?? null],
+>>>>>>> upstream/main
     queryFn: () => apiFetch('/api/keys/custom/discover-models', {
       method: 'POST',
       body: JSON.stringify(endpoint),
@@ -59,6 +110,7 @@ export function DiscoverModelsDialog({
 
   const register = useMutation<{ created: number }>({
     meta: { silenceToast: true },
+<<<<<<< HEAD
     mutationFn: () => apiFetch('/api/keys/custom', {
       method: 'POST',
       body: JSON.stringify({
@@ -67,6 +119,21 @@ export function DiscoverModelsDialog({
         models: [...selected],
       }),
     }),
+=======
+    mutationFn: () => builtin
+      ? apiFetch('/api/keys/discovered-models', {
+        method: 'POST',
+        body: JSON.stringify({ keyId: endpoint.keyId, models: [...selected] }),
+      })
+      : apiFetch('/api/keys/custom', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...(endpoint.keyId === undefined ? { baseUrl: endpoint.baseUrl } : { keyId: endpoint.keyId }),
+          ...(endpoint.apiKey ? { apiKey: endpoint.apiKey } : {}),
+          models: [...selected],
+        }),
+      }),
+>>>>>>> upstream/main
     onSuccess: (data) => {
       for (const key of ['keys', 'health', 'fallback', 'models']) {
         queryClient.invalidateQueries({ queryKey: [key] })
@@ -86,7 +153,13 @@ export function DiscoverModelsDialog({
     })
   }
 
+<<<<<<< HEAD
   const selectable = models.filter(m => !m.registered)
+=======
+  // Built-in picks are chat-only, so a media or embedding row stays locked.
+  const locked = (m: DiscoveredModel) => m.registered || (builtin && m.kind !== undefined)
+  const selectable = models.filter(m => !locked(m))
+>>>>>>> upstream/main
   const allSelected = selectable.length > 0 && selectable.every(m => selected.has(m.id))
   const toggleAll = () => {
     setSelected(prev => {
@@ -135,12 +208,20 @@ export function DiscoverModelsDialog({
               {models.map(model => (
                 <label
                   key={model.id}
+<<<<<<< HEAD
                   className={`flex items-center gap-2 px-3 py-2 text-xs ${model.registered ? 'bg-muted/40' : 'cursor-pointer hover:bg-muted/30'}`}
+=======
+                  className={`flex items-center gap-2 px-3 py-2 text-xs ${locked(model) ? 'bg-muted/40' : 'cursor-pointer hover:bg-muted/30'}`}
+>>>>>>> upstream/main
                 >
                   <input
                     type="checkbox"
                     checked={model.registered || selected.has(model.id)}
+<<<<<<< HEAD
                     disabled={model.registered}
+=======
+                    disabled={locked(model)}
+>>>>>>> upstream/main
                     onChange={() => toggle(model.id)}
                     className="size-4 accent-primary"
                   />

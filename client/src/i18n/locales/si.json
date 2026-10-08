@@ -16,8 +16,12 @@
     "modelsMenu": "ආකෘති වර්ග පිරික්සන්න",
     "agents": "නියෝජිතයන්",
     "logs": "ලොග",
+<<<<<<< HEAD
     "analyticsMenu": "විශ්ලේෂණ පිටු",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "විශ්ලේෂණ පිටු"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "ඔබගේ ගිණුම සාදන්න",
@@ -109,6 +113,7 @@
     "sectionCompression": "සම්පීඩනය",
     "sectionAdvanced": "උසස්",
     "sectionPreview": "පෙරදසුන",
+<<<<<<< HEAD
     "sectionRateLimit": "වේග සීමා",
     "rateLimitProxy": "ප්‍රොක්සි /v1 සීමාව (මිනිත්තුවකට ඉල්ලීම්)",
     "rateLimitAdmin": "පුවරුව /api සීමාව (මිනිත්තුවකට ඉල්ලීම්)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "එකම යතුර /v1 සීමාව (මිනිත්තුවකට ඉල්ලීම්)",
     "rateLimitEnvLocked": "{env} මගින් නියම කර ඇත — සංස්කරණයට ඉවත් කරන්න",
     "rateLimitSaved": "අදාළ කළා — ඊළඟ ඉල්ලීමේදී බලාත්මක වේ",
+=======
+>>>>>>> upstream/main
     "generalDescription": "මෙම උපකරණ පුවරුවේ භාෂාව සහ පෙනුම.",
     "advancedDescription": "සම්පීඩන නල මාර්ගය සඳහා සීමා සහ ආරක්ෂක ස්විච.",
     "compressionTitle": "ප්‍රොම්ප්ට් සම්පීඩනය",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "පෙරදසුන ධාවනය කරන්න",
     "updatesTitle": "යාවත්කාලීන",
     "checkForUpdates": "යාවත්කාලීන සඳහා පරීක්ෂා කරන්න",
+<<<<<<< HEAD
     "lastChecked": "අවසන් වරට පරීක්ෂා කළේ: {when}",
     "currentVersion": "වත්මන් ගොඩනැගීම:",
     "updateAvailable": "යාවත්කාලීනයක් තිබේ",
     "changelog": "වෙනස් වූ දේ",
+=======
+    "updateAvailable": "යාවත්කාලීනයක් තිබේ",
+>>>>>>> upstream/main
     "upToDate": "යාවත්කාලීනයි",
     "buildAhead": "මෙම ගොඩනැගීම නිල main ශාඛාවට වඩා ඉදිරියෙන් ඇත.",
     "buildDiverged": "මෙම ගොඩනැගීම නිල main ශාඛාවෙන් අපගමනය වී ඇත.",
     "buildUnknown": "මෙම අභිරුචි ගොඩනැගීම නිල main ශාඛාව සමඟ සැසඳිය නොහැක.",
     "notGitInstall": "මෙම ස්ථාපනයේ commit තොරතුරු ඇතුළත් නොවේ.",
     "checkFailed": "යාවත්කාලීන පරීක්ෂා කිරීමට නොහැකි විය.",
+<<<<<<< HEAD
     "contactsGithub": "පරීක්ෂා කිරීම් අතින් ක්‍රියාත්මක කරන අතර GitHub සමඟ සම්බන්ධ වේ.",
     "autoUpdateCheck": "ස්වයංක්‍රීය යාවත්කාලීන පරීක්ෂාව",
     "autoUpdateCheckHelp": "නව නිකුතුවක් සඳහා දිනකට වරක් GitHub පරීක්ෂා කර මතක් කිරීමක් පෙන්වයි. පෙරනිමියෙන් ක්‍රියාවිරහිතයි.",
     "openReleases": "GitHub Releases විවෘත කරන්න",
     "restartAfterUpdate": "ගොඩනැගීම සම්පූර්ණ වූ පසු FreeLLMAPI නැවත ආරම්භ කරන්න."
+=======
+    "autoUpdateCheck": "ස්වයංක්‍රීය යාවත්කාලීන පරීක්ෂාව",
+    "restartAfterUpdate": "ගොඩනැගීම සම්පූර්ණ වූ පසු FreeLLMAPI නැවත ආරම්භ කරන්න.",
+    "downloadUpdate": "යාවත්කාලීනය බාගන්න",
+    "downloadingUpdate": "බාගනිමින්… {percent}%",
+    "restartToUpdate": "යාවත්කාලීන කිරීමට නැවත අරඹන්න",
+    "updateReadyHint": "බාගත විය. FreeLLMAPI ඔබගේ දත්ත උපස්ථ කර, නැවත ආරම්භ වී නව අනුවාදය විවෘත කරයි.",
+    "updateInstallFailed": "යාවත්කාලීනය ස්ථාපනය කළ නොහැකි විය.",
+    "updateNow": "දැන් යාවත්කාලීන කරන්න",
+    "updatingContainer": "නව image එක ලබාගෙන නැවත ආරම්භ කරමින්. FreeLLMAPI නැවත පැමිණි විට මෙම පිටුව නැවත පූරණය වේ.",
+    "updateNowFailed": "යාවත්කාලීනකරු ඉල්ලීම පිළිගත්තේ නැත. watchtower container එක ධාවනය වන්නේදැයි පරීක්ෂා කරන්න.",
+    "updateNowTimeout": "මිනිත්තු 5කට පසුවත් FreeLLMAPI නැවත ආරම්භ වී නැත. watchtower container හි ලොග් පරීක්ෂා කරන්න."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "ආකෘති",
@@ -217,6 +242,10 @@
     "noKey": "යතුරක් නැත",
     "dragToReorder": "නැවත ඇණවුම් කිරීමට අදින්න",
     "dragToReorderGroup": "ආකෘතිය නැවත ඇණවුම් කිරීමට අදින්න",
+<<<<<<< HEAD
+=======
+    "moveToRank": "රැන්ක් එකට යන්න",
+>>>>>>> upstream/main
     "providerCount": "{count} සපයන්නන්",
     "servedBy": "{providers} විසින් සේවය කරන ලදී",
     "viewProviders": "සපයන්නන් බලන්න",
@@ -231,6 +260,10 @@
     "settingsHint": "නාමාවලි ආකෘති වෙත දේශීය සංස්කරණ නාමාවලි සමමුහුර්ත කිරීම් හරහා තබා ඇත. මකා දැමූ නාමාවලි ආකෘති ඔබ නැවත වින්‍යාසය හරහා එකතු කරන තෙක් මකා දැමෙනු ඇත.",
     "catalogModel": "නාමාවලිය",
     "customModel": "චාරිත්රය",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "සොයාගත්",
+>>>>>>> upstream/main
     "localOverride": "දේශීය අභිබවා යාම",
     "displayName": "සංදර්ශක නම",
     "sizeLabel": "හැකියා මට්ටම",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "යතුරු",
     "pageDescription": "සපයන්නාගේ අක්තපත්‍ර සහ ඒකාබද්ධ API යතුර ඔබගේ යෙදුම් සම්බන්ධ වේ.",
     "tabProviders": "සපයන්නන්",
     "checklistSummary": "සපයන්නන් {total} දෙනාගෙන් {configured} ක් වින්‍යාස කර ඇත",
     "checklistKeyless": "යතුරක් අවශ්‍ය නැත",
     "checklistNoKeyTip": "තවම යතුරක් එක් කර නැත. එක් කිරීමට ක්ලික් කරන්න.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "ගණනයක් සාදා යතුරක් ලබා ගැනීමට {provider} විවෘත කරන්න",
+>>>>>>> upstream/main
     "checklistKeylessTip": "යතුරක් නොමැතිව ක්‍රියා කරයි.",
     "tabQuotaSignals": "කෝටා සංඥා",
     "tabApiKey": "ඒකාබද්ධ API යතුර",
@@ -506,11 +546,19 @@
     "platform": "වේදිකාව",
     "hideAdded": "එකතු කළ සපයන්නන් සඟවන්න",
     "apiToken": "API ටෝකනය",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "API යතුර අවශ්‍ය නොවේ",
     "bearerTokenPlaceholder": "දරන්නා සංකේතය",
     "pasteKeyPlaceholder": "මෙහි යතුර අලවන්න",
     "pasteSeveral": "කිහිපයක් අලවන්න",
     "keylessHint": "API යතුරක් අවශ්‍ය නොවේ: මෙම සැපයුම්කරුගේ නිදහස් ස්ථරය නිර්නාමිකයි (IP එකකට අනුපාතය-සීමිත).",
+=======
+    "keyOptionalPlaceholder": "විකල්ප",
+    "bearerTokenPlaceholder": "දරන්නා සංකේතය",
+    "pasteKeyPlaceholder": "මෙහි යතුර අලවන්න",
+    "pasteSeveral": "කිහිපයක් අලවන්න",
+    "keyOptionalHint": "විකල්ප: නිර්නාමික නොමිලේ ස්ථරය සඳහා හිස්ව තබන්න (IP එකකට අනුපාත සීමිත), නැතහොත් ඔබේ ගිණුම භාවිත කිරීමට ඔබේම යතුර අලවන්න.",
+>>>>>>> upstream/main
     "enable": "සබල කරන්න",
     "noProviderKeys": "තවමත් සපයන්නාගේ යතුරු නොමැත. මාර්ගගත කිරීම ආරම්භ කිරීමට ඉහත එකක් එක් කරන්න.",
     "filterPlaceholder": "පෙරහන් සපයන්නන් හෝ යතුරු",
@@ -688,7 +736,18 @@
     "testFailed": "ආකෘති පරීක්ෂණය අසමත් විය",
     "testThrottled": "මෙම ආකෘතිය නැවත පරීක්ෂා කිරීමට පෙර කරුණාකර තත්පර {seconds} ක් රැඳී සිටින්න.",
     "noModelsForProvider": "මෙම සපයන්නා සඳහා ආකෘති වින්‍යාස කර නොමැත.",
+<<<<<<< HEAD
     "testModels": "මාදිලි පරීක්ෂා කරන්න"
+=======
+    "testModels": "මාදිලි පරීක්ෂා කරන්න",
+    "monthlyRequestCapLabel": "මාසික ඉල්ලීම් සීමාව",
+    "monthlyTokenCapLabel": "මාසික ටෝකන් සීමාව",
+    "capUnlimitedPlaceholder": "සීමා රහිත",
+    "capEditHint": "සීමාවන් සෑම මාසයකම 1 වන දා 00:00 UTC ට යළි සකසයි. සීමා රහිතට හිස්ව තබන්න.",
+    "monthlyUsageLine": "මෙම මාසය ඉල්ලීම් {requests}, ටෝකන් {tokens}",
+    "quotaBalanceHint": "{limit} {metric} න් {remaining} ඉතිරියි",
+    "quotaBalanceLeft": "{remaining} ඉතිරියි"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "යාවත්කාලීනයට පෙර"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "සෞඛ්ය සම්පන්න",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "ඔබේම යන්ත්‍රයෙන් WhatsApp, Telegram, Discord සහ තවත් ඒවායේ පිළිතුරු දෙන, සැමවිටම ක්‍රියාත්මක පුද්ගලික සහායකයෙක්.",
+<<<<<<< HEAD
       "hermes": "Nous Research හි ස්වයං-වැඩිදියුණු වන ඒජන්තය, ස්ථිර මතකය සහ කුසලතා සමඟ, ටර්මිනලයේ හෝ චැට් යෙදුම්වල."
+=======
+      "hermes": "Nous Research හි ස්වයං-වැඩිදියුණු වන ඒජන්තය, ස්ථිර මතකය සහ කුසලතා සමඟ, ටර්මිනලයේ හෝ චැට් යෙදුම්වල.",
+      "pi": "ඔබේම දිගු, කුසලතා සහ prompt සැකිලි සමඟ හැඩගස්වන අවම ටර්මිනල් ඒජන්තයක්.",
+      "reasonix": "DeepSeek සඳහා සාදන ලද ටර්මිනල් කේතන නියෝජිතයෙක්; දිගු සැසි ලාභදායීව තබා ගැනීමට prefix caching මත ගොඩනගා ඇත."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "FreeLLMAPI හි නවතම අනුවාදයක් ස්ථාපනය කර ඇත.",
+    "reload": "නැවත පූරණය"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "පසුගිය මිනිත්තු 5 තුළ ඉල්ලීම් {count} ක් සීමා කෙරිණි",
     "hourFilter": "පැය: {hour}",
     "serverLog": "සේවාදායක ලොගය"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "මෙම දාමයේ නම වෙනස් කරන්න",
+    "renameConfirm": "දාමය \"{oldName}\" හි නම \"{name}\" ලෙස වෙනස් කරන්නද? auto:{oldName} අමතන සේවාදායකයින් auto:{name} වෙත යා යුතුය.",
+    "renamePlaceholder": "නව දාම නම",
+    "renameFailed": "එම දාමයේ නම වෙනස් කළ නොහැකි විය."
+  },
+  "updates": {
+    "versionAvailable": "අනුවාදය {version} ලබා ගත හැක",
+    "versionReady": "අනුවාදය {version} ස්ථාපනයට සූදානම්",
+    "releaseNotes": "නිකුතු සටහන්",
+    "tryAgain": "නැවත උත්සාහ කරන්න",
+    "offline": "ඔබගේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න."
+>>>>>>> upstream/main
   }
 }

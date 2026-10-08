@@ -6,7 +6,11 @@ import { useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+<<<<<<< HEAD
 import { PLATFORMS } from './platform-data'
+=======
+import { PLATFORMS } from './shared'
+>>>>>>> upstream/main
 
 function OutlookPool({ pool, generatedAt, windowMinutes, minimumRequests }: {
   pool: QuotaOutlookPool; generatedAt: string; windowMinutes: number; minimumRequests: number

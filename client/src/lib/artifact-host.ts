@@ -5,7 +5,11 @@ import type { ArtifactKind } from './artifacts'
 // for a runnable fence then renders as a card that opens it instead of the
 // raw source, which lives in the panel's Code tab. Without a host, blocks
 // render as plain code everywhere else Markdown is used.
+<<<<<<< HEAD
 export type ArtifactHost = {
+=======
+export interface ArtifactHost {
+>>>>>>> upstream/main
   open: (kind: ArtifactKind, language: string, code: string) => void
   /** The artifact currently open in the host, by its code, to mark the card active. */
   activeCode?: string | null

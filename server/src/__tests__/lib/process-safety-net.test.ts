@@ -3,7 +3,14 @@ import {
   isTransportError,
   classifyProcessError,
   handleProcessError,
+<<<<<<< HEAD
 } from '../../lib/process-safety-net.js';
+=======
+  isBrokenPipeWrite,
+  guardStdio,
+} from '../../lib/process-safety-net.js';
+import { EventEmitter } from 'node:events';
+>>>>>>> upstream/main
 import type { SafetyNetHooks } from '../../lib/process-safety-net.js';
 
 describe('isTransportError', () => {
@@ -79,3 +86,33 @@ describe('handleProcessError', () => {
     expect(exit).toHaveBeenCalledExactlyOnceWith(1);
   });
 });
+<<<<<<< HEAD
+=======
+
+describe('dead stdio', () => {
+  const epipeWrite = () => Object.assign(new Error('write EPIPE'), { code: 'EPIPE', syscall: 'write' });
+
+  it('swallows a broken-pipe write without logging it (logging would write to the same dead pipe)', () => {
+    const log = vi.fn();
+    const exit = vi.fn();
+    expect(isBrokenPipeWrite(epipeWrite())).toBe(true);
+    expect(handleProcessError('uncaughtException', epipeWrite(), { log, exit })).toBe('swallow');
+    expect(log).not.toHaveBeenCalled();
+    expect(exit).not.toHaveBeenCalled();
+  });
+
+  it('still logs other swallowed transport errors', () => {
+    const log = vi.fn();
+    handleProcessError('uncaughtException', Object.assign(new Error('x'), { code: 'EPIPE', syscall: 'read' }), { log, exit: vi.fn() });
+    expect(log).toHaveBeenCalledTimes(1);
+  });
+
+  it('guardStdio drops dead-pipe stream errors and rethrows anything else', () => {
+    const stream = new EventEmitter();
+    guardStdio([stream]);
+    expect(() => stream.emit('error', epipeWrite())).not.toThrow();
+    expect(() => stream.emit('error', Object.assign(new Error('gone'), { code: 'ERR_STREAM_DESTROYED' }))).not.toThrow();
+    expect(() => stream.emit('error', Object.assign(new Error('odd'), { code: 'EACCES' }))).toThrow('odd');
+  });
+});
+>>>>>>> upstream/main

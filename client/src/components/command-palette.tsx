@@ -18,15 +18,26 @@ import {
   SquareTerminal,
   Zap,
 } from 'lucide-react'
+<<<<<<< HEAD
 import { apiFetch, apiBaseUrl } from '@/lib/api'
 import { copyText } from '@/lib/clipboard'
 import { toast } from '@/lib/toast'
+=======
+import { apiFetch } from '@/lib/api'
+import { copyText } from '@/lib/clipboard'
+import { toast } from '@/lib/toast'
+import { apiBaseUrl } from '@/components/api-usage'
+>>>>>>> upstream/main
 import { COMMAND_PALETTE_EVENT } from '@/components/command-palette-state'
 import { useI18n } from '@/i18n'
 import type { FallbackEntry } from '@/lib/routing'
 import { useTheme } from '@/theme-context'
 
+<<<<<<< HEAD
 type Command = {
+=======
+interface Command {
+>>>>>>> upstream/main
   id: string
   group: 'pages' | 'actions' | 'models'
   label: string

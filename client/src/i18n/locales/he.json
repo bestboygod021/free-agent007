@@ -16,8 +16,12 @@
     "modelsMenu": "דפדוף בסוגי דגמים",
     "agents": "סוכנים",
     "logs": "יומן",
+<<<<<<< HEAD
     "analyticsMenu": "דפי אנליטיקה",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "דפי אנליטיקה"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "צור את החשבון שלך",
@@ -109,6 +113,7 @@
     "sectionCompression": "דחיסה",
     "sectionAdvanced": "מתקדם",
     "sectionPreview": "תצוגה מקדימה",
+<<<<<<< HEAD
     "sectionRateLimit": "מגבלות קצב",
     "rateLimitProxy": "מגבלת פרוקסי /v1 (בקשות/דקה)",
     "rateLimitAdmin": "מגבלת לוח בקרה /api (בקשות/דקה)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "מגבלת מפתח מאוחד /v1 (בקשות/דקה)",
     "rateLimitEnvLocked": "נקבע על ידי {env} — הסר את המשתנה כדי לערוך",
     "rateLimitSaved": "הוחל — ייכנס לתוקף בבקשה הבאה",
+=======
+>>>>>>> upstream/main
     "generalDescription": "שפה ומראה של לוח הבקרה הזה.",
     "advancedDescription": "ספים ומתגי בטיחות עבור צינור הדחיסה.",
     "compressionTitle": "דחיסת פרומפטים",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "הרץ תצוגה מקדימה",
     "updatesTitle": "עדכונים",
     "checkForUpdates": "בדוק עדכונים",
+<<<<<<< HEAD
     "lastChecked": "נבדק לאחרונה: {when}",
     "currentVersion": "גרסה נוכחית:",
     "updateAvailable": "עדכון זמין",
     "changelog": "מה השתנה",
+=======
+    "updateAvailable": "עדכון זמין",
+>>>>>>> upstream/main
     "upToDate": "מעודכן",
     "buildAhead": "גרסה זו מקדימה את ענף main הרשמי.",
     "buildDiverged": "גרסה זו התפצלה מענף main הרשמי.",
     "buildUnknown": "לא ניתן להשוות גרסה מותאמת אישית זו לענף main הרשמי.",
     "notGitInstall": "התקנה זו אינה כוללת מידע על קומיטים.",
     "checkFailed": "לא ניתן היה לבדוק אם קיימים עדכונים.",
+<<<<<<< HEAD
     "contactsGithub": "הבדיקות מתבצעות ידנית ויוצרות קשר עם GitHub.",
     "autoUpdateCheck": "בדיקת עדכונים אוטומטית",
     "autoUpdateCheckHelp": "בודקת ב-GitHub פעם ביום אם יצאה גרסה חדשה ומציגה תזכורת. כבויה כברירת מחדל.",
     "openReleases": "פתיחת מהדורות GitHub",
     "restartAfterUpdate": "הפעל מחדש את FreeLLMAPI לאחר השלמת הבנייה."
+=======
+    "autoUpdateCheck": "בדיקת עדכונים אוטומטית",
+    "restartAfterUpdate": "הפעל מחדש את FreeLLMAPI לאחר השלמת הבנייה.",
+    "downloadUpdate": "הורדת העדכון",
+    "downloadingUpdate": "מוריד… {percent}%",
+    "restartToUpdate": "הפעלה מחדש לעדכון",
+    "updateReadyHint": "ההורדה הושלמה. FreeLLMAPI מגבה את הנתונים שלך, מופעל מחדש ופותח את הגרסה החדשה.",
+    "updateInstallFailed": "לא ניתן היה להתקין את העדכון.",
+    "updateNow": "עדכן עכשיו",
+    "updatingContainer": "מושך את האימג׳ החדש ומפעיל מחדש. הדף ייטען מחדש כש-FreeLLMAPI יחזור.",
+    "updateNowFailed": "המעדכן לא קיבל את הבקשה. ודאו שמכולת watchtower פועלת.",
+    "updateNowTimeout": "FreeLLMAPI לא הופעל מחדש אחרי 5 דקות. בדקו את היומנים של מכולת watchtower."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "דגמים",
@@ -217,6 +242,10 @@
     "noKey": "אין מפתח",
     "dragToReorder": "גרר לסידור מחדש",
     "dragToReorderGroup": "גרור לסדר מחדש מודל",
+<<<<<<< HEAD
+=======
+    "moveToRank": "קפיצה לדירוג",
+>>>>>>> upstream/main
     "providerCount": "ספקי {count}",
     "servedBy": "משרת על ידי {providers}",
     "viewProviders": "הצג ספקים",
@@ -231,6 +260,10 @@
     "settingsHint": "עריכות מקומיות למודלים של קטלוג נשמרות לאורך סנכרוני קטלוג. דגמי קטלוג שנמחקו נשארים מחוקים עד שמוסיפים אותם שוב דרך ההגדרה.",
     "catalogModel": "קטלוג",
     "customModel": "מנהג",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "שהתגלה",
+>>>>>>> upstream/main
     "localOverride": "עקיפה מקומית",
     "displayName": "שם תצוגה",
     "sizeLabel": "דרגת יכולת",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "מפתחות",
     "pageDescription": "פרטי הספקים ומפתח API המאוחד שאליו האפליקציות שלך מתחברות.",
     "tabProviders": "ספקים",
     "checklistSummary": "{configured} מתוך {total} ספקים הוגדרו",
     "checklistKeyless": "אין צורך במפתח",
     "checklistNoKeyTip": "עדיין לא נוסף מפתח. לחץ כדי להוסיף.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "פתח את {provider} ליצירת חשבון וקבלת מפתח",
+>>>>>>> upstream/main
     "checklistKeylessTip": "עובד ללא מפתח.",
     "tabQuotaSignals": "אותות מכסה",
     "tabApiKey": "מפתח API מאוחד",
@@ -506,11 +546,19 @@
     "platform": "פלטפורמה",
     "hideAdded": "הסתר ספקים שנוספו",
     "apiToken": "אסימון API",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "אין צורך במפתח API",
     "bearerTokenPlaceholder": "אסימון נושא",
     "pasteKeyPlaceholder": "הדביק כאן מקש",
     "pasteSeveral": "הדבקת כמה",
     "keylessHint": "אין צורך במפתח API: השכבה החינמית של הספק הזה היא אנונימית (מוגבלת בקצב לכל כתובת IP).",
+=======
+    "keyOptionalPlaceholder": "אופציונלי",
+    "bearerTokenPlaceholder": "אסימון נושא",
+    "pasteKeyPlaceholder": "הדביק כאן מקש",
+    "pasteSeveral": "הדבקת כמה",
+    "keyOptionalHint": "אופציונלי: השאירו ריק לשימוש בשכבה החינמית האנונימית (מוגבלת לפי IP), או הדביקו מפתח משלכם כדי להשתמש בחשבון שלכם.",
+>>>>>>> upstream/main
     "enable": "הפעל",
     "noProviderKeys": "עדיין אין מפתחות לספק. הוסף אחד למעלה כדי להתחיל לנתב.",
     "filterPlaceholder": "ספקי סינון או מפתחות",
@@ -688,7 +736,18 @@
     "testFailed": "בדיקת הדגם נכשלה",
     "testThrottled": "אנא המתן {seconds} שניות לפני בדיקת דגם זה שוב.",
     "noModelsForProvider": "לא הוגדרו דגמים עבור ספק זה.",
+<<<<<<< HEAD
     "testModels": "בדיקת מודלים"
+=======
+    "testModels": "בדיקת מודלים",
+    "monthlyRequestCapLabel": "מכסת בקשות חודשית",
+    "monthlyTokenCapLabel": "מכסת טוקנים חודשית",
+    "capUnlimitedPlaceholder": "ללא הגבלה",
+    "capEditHint": "המכסות מתאפסות ב-1 בחודש ב-00:00 UTC. השאירו ריק כדי להישאר ללא הגבלה.",
+    "monthlyUsageLine": "{requests} בקשות, {tokens} טוקנים החודש",
+    "quotaBalanceHint": "נותרו {remaining} מתוך {limit} {metric}",
+    "quotaBalanceLeft": "נותרו {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "לפני עדכון"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "בריא",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "עוזר אישי שפועל תמיד ועונה ב-WhatsApp, Telegram, Discord ועוד מהמחשב שלכם.",
+<<<<<<< HEAD
       "hermes": "הסוכן המשתפר-מעצמו של Nous Research עם זיכרון מתמשך וכישורים, בטרמינל או באפליקציות צ'אט."
+=======
+      "hermes": "הסוכן המשתפר-מעצמו של Nous Research עם זיכרון מתמשך וכישורים, בטרמינל או באפליקציות צ'אט.",
+      "pi": "סוכן טרמינל מינימלי שאתם מעצבים בעזרת הרחבות, כישורים ותבניות פרומפט משלכם.",
+      "reasonix": "סוכן קוד לטרמינל שנבנה במיוחד עבור DeepSeek, סביב מטמון קידומות כדי שסשנים ארוכים יישארו זולים."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "הותקנה גרסה חדשה יותר של FreeLLMAPI.",
+    "reload": "טעינה מחדש"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} בקשות הוגבלו ב־5 הדקות האחרונות",
     "hourFilter": "שעה: {hour}",
     "serverLog": "יומן השרת"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "שנה שם של שרשרת זו",
+    "renameConfirm": "לשנות שם השרשרת \"{oldName}\" ל‑\"{name}\"? לקוחות שקוראים ל‑auto:{oldName} יצטרכו לעבור ל‑auto:{name}.",
+    "renamePlaceholder": "שם שרשרת חדש",
+    "renameFailed": "לא ניתן לשנות את שם השרשרת."
+  },
+  "updates": {
+    "versionAvailable": "גרסה {version} זמינה",
+    "versionReady": "גרסה {version} מוכנה להתקנה",
+    "releaseNotes": "הערות גרסה",
+    "tryAgain": "נסו שוב",
+    "offline": "בדקו את החיבור לאינטרנט ונסו שוב."
+>>>>>>> upstream/main
   }
 }

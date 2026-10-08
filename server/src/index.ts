@@ -1,6 +1,7 @@
 import './env.js';
 import { createApp } from './app.js';
 import { initDb, getDb } from './db/index.js';
+<<<<<<< HEAD
 import { registerBuiltinTools, ensureWorkspaceRoot } from './services/agent-tools-builtin.js';
 import { registerGitTools } from './services/agent-tools-git.js';
 import { registerCodeTools } from './services/agent-tools-code.js';
@@ -8,12 +9,18 @@ import { registerDataTools } from './services/agent-tools-data.js';
 import { registerWebTools } from './services/agent-tools-web.js';
 import { registerRenameTools } from './services/agent-tools-rename.js';
 import { registerForgeTools } from './services/agent-tools-forge.js';
+=======
+>>>>>>> upstream/main
 import { startHealthChecker, checkAllKeys } from './services/health.js';
 import { restoreProxySettings, flushProxyCache } from './lib/proxy.js';
 import { startWakeDetect } from './lib/wake-detect.js';
 import { startCatalogSync } from './services/catalog-sync.js';
 import { startCooldownProbe } from './services/cooldown-probe.js';
 import { startCustomModelSync } from './services/custom-model-sync.js';
+<<<<<<< HEAD
+=======
+import { startBuiltinModelDiscovery } from './services/builtin-model-discovery.js';
+>>>>>>> upstream/main
 import { installProcessSafetyNet } from './lib/process-safety-net.js';
 import { NodeScheduler } from './lib/scheduler.js';
 import { loadConfig } from './lib/config.js';
@@ -27,6 +34,10 @@ import { warnOnRoutingOverrideDrift } from './services/model-weight-overrides.js
 import { installLogRedaction } from './lib/log-redaction.js';
 import { cleanupExpiredCooldowns } from './services/ratelimit.js';
 import { loadCacheFromDb } from './services/cache.js';
+<<<<<<< HEAD
+=======
+import { installGracefulShutdown } from './lib/graceful-shutdown.js';
+>>>>>>> upstream/main
 
 // Before any other statement runs, so no provider key can reach stdout — users
 // paste server output into bug reports. Module scope, not inside main(), so it
@@ -51,6 +62,7 @@ async function main() {
   }
   initDb(config.dbPath ?? undefined);
   applyDeclarativeConfigFromEnv();
+<<<<<<< HEAD
 
   // Tools an agent may call. Registration is explicit and happens once, so the
   // catalogue a model is shown is exactly what the server is prepared to run.
@@ -66,6 +78,8 @@ async function main() {
       `[agent] could not create the tool workspace: ${err instanceof Error ? err.message : String(err)}`,
     );
   });
+=======
+>>>>>>> upstream/main
   // After initDb: the unknown-model half of this check reads the catalog.
   warnOnRoutingOverrideDrift();
 
@@ -107,6 +121,10 @@ async function main() {
     startDbBackupPump(getDb(), scheduler, config.dbPath ?? undefined);
     startBackupScheduler(scheduler);
     startCustomModelSync(getDb(), scheduler);
+<<<<<<< HEAD
+=======
+    startBuiltinModelDiscovery(getDb(), scheduler);
+>>>>>>> upstream/main
 
     // Post-sleep recovery: while the host was suspended (laptop lid, VM
     // pause) timers and keep-alive sockets froze, so the first requests after
@@ -144,6 +162,11 @@ async function main() {
 
   const server = app.listen(Number(PORT), HOST, onReady(HOST));
   tuneKeepAlive(server);
+<<<<<<< HEAD
+=======
+  const servers = [server];
+  installGracefulShutdown({ servers: () => servers.filter(s => s.listening), closeDb: () => getDb().close?.() });
+>>>>>>> upstream/main
   server.on('error', (err: NodeJS.ErrnoException) => {
     // The default '::' bind fails where IPv6 is disabled (kernel
     // ipv6.disable=1 and the like) — retry IPv4-only rather than dying.
@@ -151,7 +174,13 @@ async function main() {
     // fail-fast posture documented in main().catch below.
     if (!process.env.HOST && (err.code === 'EAFNOSUPPORT' || err.code === 'EADDRNOTAVAIL')) {
       console.warn('[server] IPv6 unavailable on this host — falling back to 0.0.0.0 (IPv4-only)');
+<<<<<<< HEAD
       tuneKeepAlive(app.listen(Number(PORT), '0.0.0.0', onReady('0.0.0.0')));
+=======
+      const fallback = app.listen(Number(PORT), '0.0.0.0', onReady('0.0.0.0'));
+      tuneKeepAlive(fallback);
+      servers.push(fallback);
+>>>>>>> upstream/main
       return;
     }
     console.error('\n[server] Failed to start:\n  ' + (err?.message ?? err) + '\n');

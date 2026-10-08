@@ -1,12 +1,26 @@
 import fs from 'fs';
 import { z } from 'zod';
 import type { Db } from '../db/types.js';
+<<<<<<< HEAD
 import { getDb } from '../db/index.js';
+=======
+import { getDb, getSetting, setSetting } from '../db/index.js';
+>>>>>>> upstream/main
 import { encrypt } from '../lib/crypto.js';
 import { resolveProvider } from '../providers/index.js';
 import { setCustomWeights, setRoutingStrategy, setKeySelectionStrategy } from './router.js';
 import { ensureModelInProfiles } from './profile-models.js';
 import { customModelSeed } from './custom-model-seed.js';
+<<<<<<< HEAD
+=======
+import { createUser, userCount } from './auth.js';
+import {
+  SETTING_LICENSE_KEY,
+  refreshLicenseStatus,
+  syncCatalog,
+  validateLicenseKey,
+} from './catalog-sync.js';
+>>>>>>> upstream/main
 import { endpointRefMatches, endpointScopeForBaseUrl } from '../lib/endpoint-scope.js';
 import {
   clearCatalogModelTombstone,
@@ -77,7 +91,26 @@ const fallbackEntrySchema = z.object({
   enabled: z.boolean().optional(),
 });
 
+<<<<<<< HEAD
 const declarativeConfigSchema = z.object({
+=======
+// First-run dashboard account. Created only while the users table is empty —
+// since declarative config is applied before the HTTP listener starts, an
+// `admin` entry closes the unauthenticated POST /api/auth/setup window
+// entirely (no setup code is even minted). Once an account exists the entry
+// degrades to a warning, so config can never take over a claimed install.
+// Minimums mirror the signup schema in routes/auth.ts.
+const adminSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+const declarativeConfigSchema = z.object({
+  admin: adminSchema.optional(),
+  // Premium license key (freellmapi.co). Same minimum as the dashboard's
+  // POST /api/premium/key length gate.
+  license: z.string().min(8).optional(),
+>>>>>>> upstream/main
   keys: z.array(keySchema).optional(),
   customProviders: z.array(customProviderSchema).optional(),
   models: z.array(modelSchema).optional(),
@@ -100,6 +133,13 @@ export type DeclarativeConfig = z.infer<typeof declarativeConfigSchema>;
 export interface DeclarativeConfigResult {
   applied: boolean;
   source?: string;
+<<<<<<< HEAD
+=======
+  /** True when the `admin` entry created the first dashboard account. */
+  admin: boolean;
+  /** True when a `license` entry was handed to background activation. */
+  license: boolean;
+>>>>>>> upstream/main
   keys: number;
   customModels: number;
   models: number;
@@ -447,6 +487,11 @@ export function applyDeclarativeConfig(input: unknown, source = 'inline'): Decla
   const result: DeclarativeConfigResult = {
     applied: true,
     source,
+<<<<<<< HEAD
+=======
+    admin: false,
+    license: false,
+>>>>>>> upstream/main
     keys: 0,
     customModels: 0,
     models: 0,
@@ -456,6 +501,19 @@ export function applyDeclarativeConfig(input: unknown, source = 'inline'): Decla
   };
 
   const apply = db.transaction(() => {
+<<<<<<< HEAD
+=======
+    if (parsed.data.admin) {
+      if (userCount() === 0) {
+        createUser(parsed.data.admin.email, parsed.data.admin.password);
+        result.admin = true;
+      } else {
+        const warning = 'admin: a dashboard account already exists — entry ignored';
+        result.warnings.push(warning);
+        console.warn(`[config] ${warning}`);
+      }
+    }
+>>>>>>> upstream/main
     for (const key of parsed.data.keys ?? []) {
       const warning = missingKeyWarning(key);
       if (warning) {
@@ -486,6 +544,7 @@ export function applyDeclarativeConfig(input: unknown, source = 'inline'): Decla
     }
   });
   apply();
+<<<<<<< HEAD
   return result;
 }
 
@@ -493,11 +552,63 @@ export function applyDeclarativeConfigFromEnv(): DeclarativeConfigResult {
   const loaded = readConfigFromEnv();
   if (!loaded) {
     return { applied: false, keys: 0, customModels: 0, models: 0, fallback: 0, routing: false, warnings: [] };
+=======
+
+  // License activation needs the license service — network I/O has no place in
+  // the synchronous DB apply. It runs detached so a slow or unreachable
+  // service never delays boot; a failure logs a warning and leaves settings
+  // untouched, the same contract as the dashboard's POST /api/premium/key.
+  if (parsed.data.license) {
+    result.license = true;
+    void activateConfiguredLicense(parsed.data.license);
+  }
+  return result;
+}
+
+/**
+ * Activate a Premium license key from declarative config. Idempotent across
+ * boots: a stored key identical to the configured one short-circuits before
+ * any network call, while a different key re-activates (rotation). Exported
+ * for tests.
+ */
+export async function activateConfiguredLicense(key: string): Promise<void> {
+  const trimmed = key.trim();
+  try {
+    if (getSetting(SETTING_LICENSE_KEY) === trimmed) return;
+    const result = await validateLicenseKey(trimmed);
+    if (result === null) {
+      console.warn('[config] license: could not reach the license service — key left unconfigured');
+      return;
+    }
+    if (!result.valid) {
+      console.warn(`[config] license: key rejected (${result.reason ?? 'invalid'}) — left unconfigured`);
+      return;
+    }
+    setSetting(SETTING_LICENSE_KEY, trimmed);
+    await refreshLicenseStatus();
+    // Live-tier sync kicks off right away so the upgrade is visible within
+    // seconds; its own catch-all logs failures.
+    void syncCatalog(true);
+    console.log('[config] license activated — live catalog sync started');
+  } catch (err) {
+    console.warn(`[config] license activation failed: ${err instanceof Error ? err.message : err}`);
+  }
+}
+
+export function applyDeclarativeConfigFromEnv(): DeclarativeConfigResult {
+  const loaded = readConfigFromEnv();
+  if (!loaded) {
+    return { applied: false, admin: false, license: false, keys: 0, customModels: 0, models: 0, fallback: 0, routing: false, warnings: [] };
+>>>>>>> upstream/main
   }
   const result = applyDeclarativeConfig(loaded.value, loaded.source);
   console.log(
     `[config] applied ${loaded.source}: ${result.keys} keys, ${result.customModels} custom models, ` +
       `${result.models} model edits, ${result.fallback} fallback rows${result.routing ? ', routing' : ''}` +
+<<<<<<< HEAD
+=======
+      `${result.admin ? ', admin account created' : ''}${result.license ? ', license activation started' : ''}` +
+>>>>>>> upstream/main
       `${result.warnings.length > 0 ? `, ${result.warnings.length} entries skipped` : ''}`,
   );
   return result;

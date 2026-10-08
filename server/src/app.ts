@@ -32,9 +32,14 @@ import { geminiRouter } from './routes/gemini.js';
 import { ollamaRouter } from './routes/ollama.js';
 import { urlTokenRouter } from './routes/url-tokens.js';
 import { updateRouter } from './routes/update.js';
+<<<<<<< HEAD
 import { agentRouter } from './routes/agent.js';
 import { requireAuth } from './middleware/requireAuth.js';
 import { createProxyRateLimiter, createAdminRateLimiter, createKeyRateLimiter } from './middleware/rateLimit.js';
+=======
+import { requireAuth } from './middleware/requireAuth.js';
+import { createProxyRateLimiter, createAdminRateLimiter } from './middleware/rateLimit.js';
+>>>>>>> upstream/main
 
 // Password-guess ceiling for GET /api/keys/export. Deliberately low: a real
 // user exports keys occasionally, never ten times a minute.
@@ -213,15 +218,36 @@ export function createApp(config?: Config) {
   app.use(
     ['/api/tags', '/api/version', '/api/show', '/api/chat', '/api/generate', '/api/embed', '/api/embeddings'],
     createProxyRateLimiter(cfg.proxyRateLimitRpm),
+<<<<<<< HEAD
     createKeyRateLimiter(),
   );
   app.use(ollamaRouter);
 
+=======
+  );
+  app.use(ollamaRouter);
+
+  // Admin API — all routes share an IP-based rate limiter to throttle
+  // brute-force attempts (auth, key export, etc). The limiter is mounted
+  // broadly on /api; requireAuth gates each sub-path individually so that
+  // unauthenticated endpoints under /api (like /api/ping) are not blocked.
+  //
+  // This MUST stay above the /api/auth mount below. Express runs middleware in
+  // registration order, so while the limiter was registered after authRouter,
+  // authRouter answered and ended /api/auth/login before the limiter was ever
+  // entered — leaving the password endpoint this comment names as the reason
+  // for the limiter as the one /api path it did not cover. It still sits below
+  // the Ollama /api/* mount above, which carries its own proxy limiter.
+  const adminRateLimiter = createAdminRateLimiter();
+  app.use('/api', adminRateLimiter);
+
+>>>>>>> upstream/main
   // Dashboard auth (#35): /api/auth/{status,setup,login} bootstrap without a
   // session; everything else under /api/* requires a logged-in dashboard user.
   // The /v1 proxy keeps its own unified-API-key auth and is NOT gated here.
   app.use('/api/auth', authRouter);
 
+<<<<<<< HEAD
   // Admin API — all routes share an IP-based rate limiter to throttle
   // brute-force attempts (auth, key export, etc). The limiter is mounted
   // broadly on /api; requireAuth gates each sub-path individually so that
@@ -229,11 +255,17 @@ export function createApp(config?: Config) {
   const adminRateLimiter = createAdminRateLimiter();
   app.use('/api', adminRateLimiter);
 
+=======
+>>>>>>> upstream/main
   // Key export re-verifies the dashboard password, which makes it the one admin
   // endpoint a guesser can attack. The broad limiter above is sized for normal
   // dashboard traffic and far too loose for that, so this path gets its own
   // tight per-IP bucket on top of it.
+<<<<<<< HEAD
   app.use('/api/keys/export', createAdminRateLimiter(EXPORT_RATE_LIMIT_RPM, { settingKind: null }));
+=======
+  app.use('/api/keys/export', createAdminRateLimiter(EXPORT_RATE_LIMIT_RPM));
+>>>>>>> upstream/main
 
   app.use('/api/keys', requireAuth, keysRouter);
   // Per-client key management (#411). Dashboard-session gated like the rest of
@@ -264,10 +296,13 @@ export function createApp(config?: Config) {
   app.use('/api/cache', requireAuth, cacheRouter);
   app.use('/api/compression', requireAuth, compressionRouter);
   app.use('/api/update', requireAuth, updateRouter);
+<<<<<<< HEAD
   // ForgePilot deterministic agent kernel (compute modes, routing decisions,
   // tool-call policy, run state machine, task DAG, redaction, evidence audit,
   // output contracts and the prompt library).
   app.use('/api/agent', requireAuth, agentRouter);
+=======
+>>>>>>> upstream/main
 
   // Health check — no auth required.
   app.get('/api/ping', (_req, res) => {
@@ -287,13 +322,21 @@ export function createApp(config?: Config) {
   app.use('/v1', providersRouter);
 
   // Separately revocable URL tokens for clients that cannot set headers.
+<<<<<<< HEAD
   app.use('/v1/t/:token', createProxyRateLimiter(cfg.proxyRateLimitRpm), createKeyRateLimiter());
+=======
+  app.use('/v1/t/:token', createProxyRateLimiter(cfg.proxyRateLimitRpm));
+>>>>>>> upstream/main
   app.use('/v1/t/:token', urlTokenRouter);
 
   // OpenAI-compatible proxy. Per-IP rate limiting (#35 item #6) runs first so
   // it throttles unauthenticated brute-force / flood attempts before any
   // routing work. Tune via PROXY_RATE_LIMIT_RPM; 0 disables it.
+<<<<<<< HEAD
   app.use('/v1', createProxyRateLimiter(cfg.proxyRateLimitRpm), createKeyRateLimiter());
+=======
+  app.use('/v1', createProxyRateLimiter(cfg.proxyRateLimitRpm));
+>>>>>>> upstream/main
   // Anthropic-compatible Messages API (`POST /v1/messages`, `/count_tokens`) for
   // Claude Code and anything else speaking the Anthropic SDK. Mounted BEFORE the
   // OpenAI router so it can content-negotiate `GET /v1/models` (Anthropic shape
@@ -305,7 +348,11 @@ export function createApp(config?: Config) {
   app.use('/v1', responsesRouter);
 
   // Native Gemini wire surface for Gemini CLI and Gemini-lineage agents.
+<<<<<<< HEAD
   app.use('/v1beta', createProxyRateLimiter(cfg.proxyRateLimitRpm), createKeyRateLimiter());
+=======
+  app.use('/v1beta', createProxyRateLimiter(cfg.proxyRateLimitRpm));
+>>>>>>> upstream/main
   app.use('/v1beta', geminiRouter);
 
   // MCP server (Model Context Protocol over stateless Streamable HTTP):
@@ -313,7 +360,11 @@ export function createApp(config?: Config) {
   // like /v1 — NOT behind the dashboard session gate. Same per-IP limiter as
   // /v1 (its own bucket): both surfaces guard the same unified key, so an
   // unauthenticated brute-force must not get a free throttle-less oracle here.
+<<<<<<< HEAD
   app.use('/mcp', createProxyRateLimiter(cfg.proxyRateLimitRpm), createKeyRateLimiter());
+=======
+  app.use('/mcp', createProxyRateLimiter(cfg.proxyRateLimitRpm));
+>>>>>>> upstream/main
   app.use('/mcp', mcpRouter);
 
   // Liveness / readiness probes for orchestrators (GET /livez, /readyz, #433).
@@ -370,6 +421,7 @@ export function createApp(config?: Config) {
     });
   }
 
+<<<<<<< HEAD
   // Unknown API/inference paths get the JSON error envelope instead of
   // Express's default HTML — agents and apiFetch both parse
   // `{ error: { message } }`. Non-API paths keep the SPA/HTML handling above,
@@ -391,5 +443,7 @@ export function createApp(config?: Config) {
     });
   });
 
+=======
+>>>>>>> upstream/main
   return app;
 }

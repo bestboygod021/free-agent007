@@ -4,6 +4,10 @@ import { apiFetch } from '@/lib/api'
 import { copyText } from '@/lib/clipboard'
 import { toast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
+<<<<<<< HEAD
+=======
+import { ConfirmButton } from '@/components/confirm-button'
+>>>>>>> upstream/main
 import { useI18n } from '@/i18n'
 
 export function UnifiedKeySection() {
@@ -18,8 +22,23 @@ export function UnifiedKeySection() {
   })
 
   const regenerate = useMutation({
+<<<<<<< HEAD
     mutationFn: () => apiFetch('/api/settings/api-key/regenerate', { method: 'POST' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['unified-key'] }),
+=======
+    mutationFn: () => apiFetch<{ apiKey: string }>('/api/settings/api-key/regenerate', { method: 'POST' }),
+    onSuccess: (res) => {
+      // Write the fresh key into the cache BEFORE unmasking: invalidating
+      // alone would leave the old, now-revoked key in the cache until the
+      // refetch lands, and it would flash unmasked in the meantime.
+      queryClient.setQueryData<{ apiKey: string }>(['unified-key'], { apiKey: res.apiKey })
+      // Reveal the fresh key right away: the whole point of regenerating is
+      // to move apps to the new value, and a masked box hides exactly the
+      // string they need to copy next. Showing it doubles as the success
+      // feedback, so no toast (and no new key in 60 locale files) is needed.
+      setShowKey(true)
+    },
+>>>>>>> upstream/main
   })
 
   const apiKey = data?.apiKey ?? ''
@@ -46,6 +65,7 @@ export function UnifiedKeySection() {
             {t('keys.unifiedKeyDescBefore')}<code className="font-mono">api_key</code>{t('keys.unifiedKeyDescAfter')}
           </p>
         </div>
+<<<<<<< HEAD
         <Button
           variant="ghost"
           size="sm"
@@ -54,6 +74,21 @@ export function UnifiedKeySection() {
         >
           {t('keys.regenerate')}
         </Button>
+=======
+        {/* Regenerating revokes the key every running app authenticates with,
+            so it goes through the dashboard's two-step destructive idiom
+            (ConfirmButton) instead of firing on a single click. */}
+        <ConfirmButton
+          variant="ghost"
+          size="sm"
+          // Armed label stays the shared "Confirm" — the same destructive
+          // idiom every other ConfirmButton on the dashboard uses.
+          disabled={regenerate.isPending || isError}
+          onConfirm={() => regenerate.mutate()}
+        >
+          {t('keys.regenerate')}
+        </ConfirmButton>
+>>>>>>> upstream/main
       </div>
 
       {isError ? (

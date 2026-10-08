@@ -1,14 +1,26 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { app, dialog, ipcMain, clipboard, nativeTheme, screen, shell, type Tray } from 'electron';
+<<<<<<< HEAD
 import { startServer, ensureSessionToken, getUnifiedApiKey } from './server.mjs';
+=======
+import { startServer, ensureSessionToken, getUnifiedApiKey, isAutoUpdateCheckEnabled, backupBeforeUpdate, outboundProxyUrl } from './server.mjs';
+>>>>>>> upstream/main
 import { loadConfig, saveConfig } from './config.js';
 import { installFileLogger } from './logger.js';
 import { buildTray, refreshTrayLocale } from './tray.js';
 import { trayIsInMenuBar } from './tray-visibility.js';
+<<<<<<< HEAD
 import { openDashboard } from './window.js';
 import { todayStats, hourlyRequests, successRateToday } from './stats.js';
 import { normalizeLocale, nativeStrings, type NativeLocale } from './i18n.js';
+=======
+import { shouldOpenDashboardOnLaunch } from './tray-platform.js';
+import { openDashboard } from './window.js';
+import { todayStats, hourlyRequests, successRateToday } from './stats.js';
+import { normalizeLocale, nativeStrings, type NativeLocale } from './i18n.js';
+import { initUpdater, getUpdateState, checkForUpdates, downloadUpdate, installUpdate, checkFromTray } from './updater.js';
+>>>>>>> upstream/main
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_PORT = 31415;
@@ -152,6 +164,15 @@ if (!app.requestSingleInstanceLock()) {
   ipcMain.handle('freeapi:copy-api-key', () => clipboard.writeText(getUnifiedApiKey()));
   ipcMain.handle('freeapi:set-login-item', (_e, open: boolean) => app.setLoginItemSettings({ openAtLogin: open }));
   ipcMain.handle('freeapi:quit', () => app.quit());
+<<<<<<< HEAD
+=======
+  // Dashboard → the in-app updater (preload __FREEAPI_UPDATER__). Each call
+  // returns the new state; progress arrives as 'freeapi:update-state' events.
+  ipcMain.handle('freeapi:update-state', () => getUpdateState());
+  ipcMain.handle('freeapi:update-check', () => checkForUpdates());
+  ipcMain.handle('freeapi:update-download', () => downloadUpdate());
+  ipcMain.handle('freeapi:update-install', () => installUpdate());
+>>>>>>> upstream/main
   // Dashboard → a fresh session for the hidden machine account (preload
   // __FREEAPI_SESSION__). The window never shows a login form: its account has
   // a random password nobody knows, so when the boot-time session is gone the
@@ -268,6 +289,20 @@ if (!app.requestSingleInstanceLock()) {
     // the app the user actually launched (#703).
     process.env.FREEAPI_VERSION = app.getVersion();
 
+<<<<<<< HEAD
+=======
+    initUpdater({
+      autoCheckEnabled: () => {
+        try { return isAutoUpdateCheckEnabled(); } catch { return false; }
+      },
+      backupBeforeUpdate,
+      outboundProxyUrl: () => {
+        try { return outboundProxyUrl(); } catch { return ''; }
+      },
+      getLocale: () => locale,
+    });
+
+>>>>>>> upstream/main
     try {
       const { port } = await startServer({
         dbPath,
@@ -278,6 +313,7 @@ if (!app.requestSingleInstanceLock()) {
       resolvedPort = port;
       saveConfig({ ...cfg, port });
       sessionToken = ensureSessionToken();
+<<<<<<< HEAD
       const tray = buildTray(
         port,
         sessionToken,
@@ -291,12 +327,52 @@ if (!app.requestSingleInstanceLock()) {
       // A tray that macOS refuses to draw still constructs cleanly, so the only
       // way to notice is to look at where the item landed (#807).
       if (process.platform === 'darwin') setTimeout(() => reportHiddenTray(tray, port), TRAY_PROBE_DELAY_MS);
+=======
+      // The server is already up, so a tray that fails to build must not take
+      // the app down with it: fall back to the dashboard window (#1353).
+      let tray: Tray | null = null;
+      try {
+        tray = buildTray(
+          port,
+          sessionToken,
+          () => locale,
+          () => loadConfig().lanAccess ?? false,
+          toggleLanAccess,
+          () => loadConfig().showInDock ?? true,
+          toggleShowInDock,
+          getUpdateState,
+          () => void checkFromTray(),
+        );
+      } catch (err) {
+        console.warn('[desktop] could not create the tray icon:', err);
+      }
+      console.log(`[desktop] FreeLLMAPI running on http://${host}:${port}${cfg.lanAccess ? ' (LAN access enabled)' : ''}`);
+      // A tray that macOS refuses to draw still constructs cleanly, so the only
+      // way to notice is to look at where the item landed (#807).
+      if (tray && process.platform === 'darwin') {
+        const built = tray;
+        setTimeout(() => reportHiddenTray(built, port), TRAY_PROBE_DELAY_MS);
+      }
+
+      const welcomedBefore = loadConfig().launchDashboardShown ?? false;
+      if (
+        !process.env.FREEAPI_SHOT
+        && shouldOpenDashboardOnLaunch(process.platform, { trayBuilt: tray !== null, welcomedBefore })
+      ) {
+        openDashboard(port, sessionToken);
+        if (!welcomedBefore) saveConfig({ ...loadConfig(), launchDashboardShown: true });
+      }
+>>>>>>> upstream/main
 
       // Dev-only UI verification: FREEAPI_SHOT=1 opens the popover and the
       // dashboard, captures both to /tmp, and quits. FREEAPI_SHOT=hold opens
       // the popover and keeps it pinned (blur ignored) so a real screen
       // capture can include the compositor's vibrancy. Never set when packaged.
+<<<<<<< HEAD
       if (process.env.FREEAPI_SHOT && !app.isPackaged) {
+=======
+      if (tray && process.env.FREEAPI_SHOT && !app.isPackaged) {
+>>>>>>> upstream/main
         const fs = await import('node:fs');
         const { togglePopover, getPopoverWindow } = await import('./popover.js');
         const { getDashboardWindow } = await import('./window.js');

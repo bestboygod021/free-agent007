@@ -3,9 +3,13 @@
 // — the parts that are easy to get subtly wrong and impossible to eyeball in a
 // scrolling tail — can be unit-tested without a running server.
 
+<<<<<<< HEAD
 
 import type { LogEntry, LogCounts, LogLevel, LogsResponse } from '../../../shared/types'
 export type { LogEntry, LogCounts, LogLevel, LogsResponse }
+=======
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+>>>>>>> upstream/main
 
 /** Canonical order: quietest first. Pills, CSVs and counts all follow it. */
 export const LOG_LEVELS: readonly LogLevel[] = ['debug', 'info', 'warn', 'error'] as const
@@ -25,12 +29,47 @@ export const LOG_POLL_MS = 3000
 /** Messages longer than this render clamped behind a click-to-expand. */
 export const LOG_MESSAGE_CLAMP = 400
 
+<<<<<<< HEAD
 
 
 export const EMPTY_LOG_COUNTS: LogCounts = { debug: 0, info: 0, warn: 0, error: 0 }
 
 
 export type LogQuery = {
+=======
+/** One row as served by GET /api/logs. */
+export interface LogEntry {
+  id: number
+  /** ISO-8601 timestamp. */
+  ts: string
+  level: LogLevel
+  source?: string
+  provider?: string
+  model?: string
+  event?: string
+  requestId?: string
+  message: string
+}
+
+/** Ring-wide totals per level — NOT filtered by the current query. */
+export interface LogCounts {
+  debug: number
+  info: number
+  warn: number
+  error: number
+}
+
+export const EMPTY_LOG_COUNTS: LogCounts = { debug: 0, info: 0, warn: 0, error: 0 }
+
+export interface LogsResponse {
+  entries: LogEntry[]
+  /** Highest id the ring holds — the cursor for the next poll, even when `entries` is empty. */
+  nextId: number
+  counts: LogCounts
+}
+
+export interface LogQuery {
+>>>>>>> upstream/main
   levels: readonly LogLevel[]
   /** Free-text search; blank means "no q param". */
   q?: string

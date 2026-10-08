@@ -16,8 +16,12 @@
     "modelsMenu": "Blader door modeltypes",
     "agents": "Agenten",
     "logs": "Logs",
+<<<<<<< HEAD
     "analyticsMenu": "Analytics-pagina's",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Analytics-pagina's"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Maak je account aan",
@@ -109,6 +113,7 @@
     "sectionCompression": "Compressie",
     "sectionAdvanced": "Geavanceerd",
     "sectionPreview": "Voorbeeld",
+<<<<<<< HEAD
     "sectionRateLimit": "Snelheidslimieten",
     "rateLimitProxy": "Proxy-/v1-limiet (verzoeken/min)",
     "rateLimitAdmin": "Dashboard-/api-limiet (verzoeken/min)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Uniforme-sleutel-/v1-limiet (verzoeken/min)",
     "rateLimitEnvLocked": "Vastgezet door {env} — verwijder deze om aan te passen",
     "rateLimitSaved": "Toegepast — geldt bij het volgende verzoek",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Taal en uiterlijk van dit dashboard.",
     "advancedDescription": "Drempelwaarden en veiligheidsschakelaars voor de compressiepipeline.",
     "compressionTitle": "Promptcompressie",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Voorbeeld uitvoeren",
     "updatesTitle": "Updates",
     "checkForUpdates": "Controleer op updates",
+<<<<<<< HEAD
     "lastChecked": "Laatst gecontroleerd: {when}",
     "currentVersion": "Huidige build:",
     "updateAvailable": "Update beschikbaar",
     "changelog": "Wat is er veranderd",
+=======
+    "updateAvailable": "Update beschikbaar",
+>>>>>>> upstream/main
     "upToDate": "Up-to-date",
     "buildAhead": "Deze build loopt voor op de officiële main-branch.",
     "buildDiverged": "Deze build is afgeweken van de officiële main-branch.",
     "buildUnknown": "Deze aangepaste build kan niet worden vergeleken met de officiële main-branch.",
     "notGitInstall": "Deze installatie bevat geen commitinformatie.",
     "checkFailed": "Kan niet controleren op updates.",
+<<<<<<< HEAD
     "contactsGithub": "Controles worden handmatig uitgevoerd en maken contact met GitHub.",
     "autoUpdateCheck": "Automatische updatecontrole",
     "autoUpdateCheckHelp": "Controleert GitHub eenmaal per dag op een nieuwe release en toont een herinnering. Standaard uitgeschakeld.",
     "openReleases": "GitHub Releases openen",
     "restartAfterUpdate": "Start FreeLLMAPI opnieuw nadat de build is voltooid."
+=======
+    "autoUpdateCheck": "Automatische updatecontrole",
+    "restartAfterUpdate": "Start FreeLLMAPI opnieuw nadat de build is voltooid.",
+    "downloadUpdate": "Update downloaden",
+    "downloadingUpdate": "Downloaden… {percent}%",
+    "restartToUpdate": "Herstarten om bij te werken",
+    "updateReadyHint": "Gedownload. FreeLLMAPI maakt een back-up van je gegevens, herstart en opent de nieuwe versie.",
+    "updateInstallFailed": "De update kon niet worden geïnstalleerd.",
+    "updateNow": "Nu bijwerken",
+    "updatingContainer": "De nieuwe image wordt opgehaald en herstart. Deze pagina laadt opnieuw zodra FreeLLMAPI terug is.",
+    "updateNowFailed": "De updater heeft het verzoek niet geaccepteerd. Controleer of de watchtower-container draait.",
+    "updateNowTimeout": "FreeLLMAPI is na 5 minuten niet herstart. Bekijk de logs van de watchtower-container."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Modellen",
@@ -217,6 +242,10 @@
     "noKey": "Geen sleutel",
     "dragToReorder": "Slepen om te herschikken",
     "dragToReorderGroup": "Sleep om model te herschikken",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Ga naar positie",
+>>>>>>> upstream/main
     "providerCount": "{count} aanbieders",
     "servedBy": "Bediend door {providers}",
     "viewProviders": "Bekijk aanbieders",
@@ -231,6 +260,10 @@
     "settingsHint": "Lokale bewerkingen van catalogusmodellen worden behouden over catalogus-synchronisaties. Verwijderde catalogusmodellen blijven verwijderd totdat je ze opnieuw toevoegt via de configuratie.",
     "catalogModel": "Catalogus",
     "customModel": "Gewoonte",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "ontdekt",
+>>>>>>> upstream/main
     "localOverride": "Lokale overruling",
     "displayName": "Weergavenaam",
     "sizeLabel": "Capaciteitsniveau",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routering aangetast: {healthy} van {total} providers gezond (sinds {since})",
     "noProvider": "Geen provider",
     "enabledCount": "{count} ingeschakeld",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Sleutels",
     "pageDescription": "Providergegevens en de unified API sleutel waarmee je apps verbinding maken.",
     "tabProviders": "Aanbieders",
     "checklistSummary": "{configured} van {total} aanbieders ingesteld",
     "checklistKeyless": "geen sleutel nodig",
     "checklistNoKeyTip": "Nog geen sleutel toegevoegd. Klik om er een toe te voegen.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Open {provider} om een account aan te maken en een sleutel te krijgen",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Werkt zonder sleutel.",
     "tabQuotaSignals": "Quotasignalen",
     "tabApiKey": "Unified API sleutel",
@@ -506,11 +546,19 @@
     "platform": "Platform",
     "hideAdded": "Toegevoegde providers verbergen",
     "apiToken": "API token",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Geen API sleutel nodig",
     "bearerTokenPlaceholder": "Dragertoken",
     "pasteKeyPlaceholder": "Hier plak de toets",
     "pasteSeveral": "Meerdere plakken",
     "keylessHint": "Geen API sleutel nodig: de gratis laag van deze provider is anoniem (tariefbeperkt per IP).",
+=======
+    "keyOptionalPlaceholder": "Optioneel",
+    "bearerTokenPlaceholder": "Dragertoken",
+    "pasteKeyPlaceholder": "Hier plak de toets",
+    "pasteSeveral": "Meerdere plakken",
+    "keyOptionalHint": "Optioneel: laat leeg voor de anonieme gratis laag (rate-limited per IP), of plak je eigen sleutel om je account te gebruiken.",
+>>>>>>> upstream/main
     "enable": "Enable",
     "noProviderKeys": "Nog geen provider-sleutels. Voeg er hierboven één toe om te beginnen met routeren.",
     "filterPlaceholder": "Filterproviders of sleutels",
@@ -688,7 +736,18 @@
     "testFailed": "Modeltest mislukt",
     "testThrottled": "Wacht {seconds}s voordat u dit model opnieuw test.",
     "noModelsForProvider": "Geen modellen geconfigureerd voor deze provider.",
+<<<<<<< HEAD
     "testModels": "Modellen testen"
+=======
+    "testModels": "Modellen testen",
+    "monthlyRequestCapLabel": "Maandelijke limiet verzoeken",
+    "monthlyTokenCapLabel": "Maandelijke limiet tokens",
+    "capUnlimitedPlaceholder": "Onbeperkt",
+    "capEditHint": "Limieten worden op de 1e om 00:00 UTC gereset. Laat leeg voor onbeperkt.",
+    "monthlyUsageLine": "{requests} verzoeken, {tokens} tokens deze maand",
+    "quotaBalanceHint": "{remaining} van {limit} {metric} over",
+    "quotaBalanceLeft": "{remaining} over"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Vóór update"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "Gezond",
@@ -1144,17 +1208,29 @@
       "generic": "Elk ander hulpmiddel dat de OpenAI-API spreekt, met de hand ingesteld via basis-URL en sleutel.",
       "atomcode": "AtomGit's terminalagent, geschreven in Rust, die elk OpenAI-compatibel endpoint aankan.",
       "openclaw": "Een altijd actieve persoonlijke assistent die vanaf je eigen machine antwoordt op WhatsApp, Telegram, Discord en meer.",
+<<<<<<< HEAD
       "hermes": "De zelfverbeterende agent van Nous Research met blijvend geheugen en skills, in de terminal of in chat-apps."
+=======
+      "hermes": "De zelfverbeterende agent van Nous Research met blijvend geheugen en skills, in de terminal of in chat-apps.",
+      "pi": "Een minimalistische terminal-agent die je vormgeeft met je eigen extensies, skills en promptsjablonen.",
+      "reasonix": "Een terminal-codeeragent gebouwd voor DeepSeek, rond prefix-caching, zodat lange sessies goedkoop blijven."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "Er is een nieuwere versie van FreeLLMAPI geïnstalleerd.",
+    "reload": "Opnieuw laden"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Gratis-tierpools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Leeg beginnen",
     "startEmptyHint": "Maakt de keten zonder modellen aan en houdt nieuwe catalogusmodellen erbuiten. Niet aangevinkt begint hij als kopie van de standaardketen.",
     "curated": "Handmatig",
+<<<<<<< HEAD
     "curatedHint": "Nieuwe catalogusmodellen worden niet automatisch aan deze keten toegevoegd."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} verzoeken beperkt in de afgelopen 5 minuten",
     "hourFilter": "Uur: {hour}",
     "serverLog": "Serverlogboek"
+=======
+    "curatedHint": "Nieuwe catalogusmodellen worden niet automatisch aan deze keten toegevoegd.",
+    "renameHint": "Deze keten hernoemen",
+    "renameConfirm": "Keten \"{oldName}\" hernoemen naar \"{name}\"? Clients die auto:{oldName} aanroepen moeten overstappen op auto:{name}.",
+    "renamePlaceholder": "Nieuwe ketennaam",
+    "renameFailed": "Kan de naam van die keten niet wijzigen."
+  },
+  "updates": {
+    "versionAvailable": "Versie {version} is beschikbaar",
+    "versionReady": "Versie {version} is klaar om te installeren",
+    "releaseNotes": "Release-opmerkingen",
+    "tryAgain": "Opnieuw proberen",
+    "offline": "Controleer je internetverbinding en probeer het opnieuw."
+>>>>>>> upstream/main
   }
 }

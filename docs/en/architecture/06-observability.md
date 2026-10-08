@@ -87,9 +87,19 @@ the cache. Streamed frames omit it (the header carries it there).
 
 `requests.caller` records the surface: today every inference path writes `http`
 (the OpenAI-compatible proxy, `/v1/responses`, `/v1/messages`, the Ollama and
+<<<<<<< HEAD
 Gemini wires, and fusion sub-calls). `/mcp` is introspection-only and runs no
 inference, and the dashboard playground calls the same HTTP endpoints as any
 other client. The column is free-form, so a new surface needs no migration.
+=======
+Gemini wires, fusion sub-calls, and `ask_freellmapi`). The MCP inference tool
+deliberately loops through the same local `/v1/chat/completions` route, so it
+inherits identical routing, fallback, cache, token accounting, and error
+handling instead of maintaining a second inference implementation. The other
+`/mcp` tools are local introspection/control calls. The dashboard playground
+also calls the same HTTP endpoints as any other client. The column is free-form,
+so a new surface needs no migration.
+>>>>>>> upstream/main
 
 ### Attempt Trail (`request_attempts` table)
 
@@ -305,4 +315,8 @@ CREATE TABLE request_attempts (
 
 -- Materialized aggregates (refreshed periodically)
 CREATE VIEW request_aggregates AS ...;
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> upstream/main

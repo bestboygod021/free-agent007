@@ -16,8 +16,12 @@
     "modelsMenu": "የሞዴል አይነቶችን ያስሱ",
     "agents": "ወኪሎች",
     "logs": "መዝገቦች",
+<<<<<<< HEAD
     "analyticsMenu": "የአፈጻጸም ገጾች",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "የአፈጻጸም ገጾች"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "መለያዎን ይፍጠሩ",
@@ -109,6 +113,7 @@
     "sectionCompression": "ጭመቃ",
     "sectionAdvanced": "የላቀ",
     "sectionPreview": "ቅድመ-እይታ",
+<<<<<<< HEAD
     "sectionRateLimit": "የደረጃ ቁጥር መጠኖች",
     "rateLimitProxy": "የፕሮክሲ /v1 ገደብ (በደቂቃ ጥያቄዎች)",
     "rateLimitAdmin": "የዳሽቦርድ /api ገደብ (በደቂቃ ጥያቄዎች)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "የተዋሃደ ቁልፍ /v1 ገደብ (በደቂቃ ጥያቄዎች)",
     "rateLimitEnvLocked": "በ {env} ተሰክቷል — ለማስተካከል አንሰት",
     "rateLimitSaved": "ተተግብሯል — በሚቀጥለው ጥያቄ ይሠራል",
+=======
+>>>>>>> upstream/main
     "generalDescription": "የዚህ ዳሽቦርድ ቋንቋ እና አቀራረብ።",
     "advancedDescription": "የጭመቃ ሂደት ገደቦች እና የደህንነት መቀየሪያዎች።",
     "compressionTitle": "የፕሮምፕት ጭመቃ",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "ቅድመ-እይታ አሂድ",
     "updatesTitle": "ዝማኔዎች",
     "checkForUpdates": "ዝማኔዎችን ያረጋግጡ",
+<<<<<<< HEAD
     "lastChecked": "ለመጨረሻ ጊዜ የተፈተሸው {when}",
     "currentVersion": "የአሁኑ ግንባታ:",
     "updateAvailable": "ዝማኔ አለ",
     "changelog": "ምን ተለውጧል",
+=======
+    "updateAvailable": "ዝማኔ አለ",
+>>>>>>> upstream/main
     "upToDate": "ወቅታዊ ነው",
     "buildAhead": "ይህ ግንባታ ከይፋዊው main ቀድሟል።",
     "buildDiverged": "ይህ ግንባታ ከይፋዊው main ተለይቷል።",
     "buildUnknown": "ይህ ብጁ ግንባታ ከይፋዊው main ጋር ሊነጻጸር አይችልም።",
     "notGitInstall": "ይህ ጭነት የcommit መረጃን አያካትትም።",
     "checkFailed": "ዝማኔዎችን መፈተሽ አልተቻለም።",
+<<<<<<< HEAD
     "contactsGithub": "ፍተሻዎች በእጅ የሚከናወኑ ሲሆን GitHubን ያገናኛሉ።",
     "autoUpdateCheck": "ራስ-ሰር የዝማኔ ፍተሻ",
     "autoUpdateCheckHelp": "በቀን አንድ ጊዜ ለአዲስ ልቀት GitHubን ይፈትሻል እና ማስታወሻ ያሳያል። በነባሪነት ጠፍቷል።",
     "openReleases": "የGitHub ልቀቶችን ክፈት",
     "restartAfterUpdate": "ግንባታው ከተጠናቀቀ በኋላ FreeLLMAPIን እንደገና ያስጀምሩ።"
+=======
+    "autoUpdateCheck": "ራስ-ሰር የዝማኔ ፍተሻ",
+    "restartAfterUpdate": "ግንባታው ከተጠናቀቀ በኋላ FreeLLMAPIን እንደገና ያስጀምሩ።",
+    "downloadUpdate": "ዝማኔ አውርድ",
+    "downloadingUpdate": "በማውረድ ላይ… {percent}%",
+    "restartToUpdate": "ለማዘመን እንደገና አስጀምር",
+    "updateReadyHint": "ወርዷል። FreeLLMAPI ውሂብዎን ያስቀምጣል፣ እንደገና ይጀምራል እና አዲሱን ስሪት ይከፍታል።",
+    "updateInstallFailed": "ዝማኔው ሊጫን አልቻለም።",
+    "updateNow": "አሁን አዘምን",
+    "updatingContainer": "አዲሱን ምስል እያወረደ እንደገና በመጀመር ላይ። FreeLLMAPI ሲመለስ ይህ ገጽ እንደገና ይጫናል።",
+    "updateNowFailed": "አዘማኙ ጥያቄውን አልተቀበለም። የwatchtower ኮንቴይነር እየሰራ መሆኑን ያረጋግጡ።",
+    "updateNowTimeout": "FreeLLMAPI ከ5 ደቂቃ በኋላም እንደገና አልጀመረም። የwatchtower ኮንቴይነርን ምዝግብ ማስታወሻዎች ይመልከቱ።"
+>>>>>>> upstream/main
   },
   "models": {
     "title": "ሞዴሎች",
@@ -217,6 +242,10 @@
     "noKey": "ቁልፍ የለም",
     "dragToReorder": "እንደገና ለማዘዝ ይጎትቱ",
     "dragToReorderGroup": "ሞዴሉን እንደገና ለማዘዝ ይጎትቱ",
+<<<<<<< HEAD
+=======
+    "moveToRank": "ወደ ደረጃ ዘልለው",
+>>>>>>> upstream/main
     "providerCount": "{count} አቅራቢዎች",
     "servedBy": "በ {providers} አገልግሏል",
     "viewProviders": "አቅራቢዎችን ይመልከቱ",
@@ -231,6 +260,10 @@
     "settingsHint": "በካታሎግ ሞዴሎች ላይ የአካባቢ አርትዖቶች በካታሎግ ማመሳሰል ላይ ይቀመጣሉ። የተሰረዙ የካታሎግ ሞዴሎች በማዋቀር እንደገና እስኪጨምሯቸው ድረስ ተሰርዘዋል።",
     "catalogModel": "የመጽሐፍ ዓይነት ዝርዝር",
     "customModel": "ብጁ",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "የተገኘ",
+>>>>>>> upstream/main
     "localOverride": "የአካባቢ መሻር",
     "displayName": "የማሳያ ስም",
     "sizeLabel": "የአቅም ደረጃ",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "ቁልፎች",
     "pageDescription": "የአቅራቢ ምስክርነቶች እና መተግበሪያዎችዎ የሚያገናኙት የተዋሃደ API ቁልፍ።",
     "tabProviders": "አቅራቢዎች",
     "checklistSummary": "ከ{total} አቅራቢዎች {configured} ተዋቅረዋል",
     "checklistKeyless": "ቁልፍ አያስፈልግም",
     "checklistNoKeyTip": "እስካሁን ቁልፍ አልታከለም። ለመጨመር ጠቅ ያድርጉ።",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "መለያ ለመፍጠር እና ቁልፍ ለማግኘት {provider} ክፈት",
+>>>>>>> upstream/main
     "checklistKeylessTip": "ያለ ቁልፍ ይሠራል።",
     "tabQuotaSignals": "የኮታ ምልክቶች",
     "tabApiKey": "የተዋሃደ API ቁልፍ",
@@ -506,11 +546,19 @@
     "platform": "መድረክ",
     "hideAdded": "የተጨመሩ አቅራቢዎችን ደብቅ",
     "apiToken": "API ማስመሰያ",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "ምንም API ቁልፍ አያስፈልግም",
     "bearerTokenPlaceholder": "ተሸካሚ ማስመሰያ",
     "pasteKeyPlaceholder": "ቁልፍ እዚህ ይለጥፉ",
     "pasteSeveral": "ብዙ ለጥፍ",
     "keylessHint": "ምንም API ቁልፍ አያስፈልግም የዚህ አቅራቢ ነፃ ደረጃ ስም-አልባ ነው (በአይፒ ተመን የተገደበ)።",
+=======
+    "keyOptionalPlaceholder": "አማራጭ",
+    "bearerTokenPlaceholder": "ተሸካሚ ማስመሰያ",
+    "pasteKeyPlaceholder": "ቁልፍ እዚህ ይለጥፉ",
+    "pasteSeveral": "ብዙ ለጥፍ",
+    "keyOptionalHint": "አማራጭ: ለስም-አልባ ነፃ ደረጃ (በእያንዳንዱ IP የተገደበ) ባዶ ይተዉት፣ ወይም መለያዎን ለመጠቀም የራስዎን ቁልፍ ይለጥፉ።",
+>>>>>>> upstream/main
     "enable": "አንቃ",
     "noProviderKeys": "እስካሁን ምንም የአቅራቢ ቁልፎች የሉም። ማዘዋወር ለመጀመር ከላይ ያለውን ያክሉ።",
     "filterPlaceholder": "አቅራቢዎችን ወይም ቁልፎችን አጣራ",
@@ -688,7 +736,18 @@
     "testFailed": "የሞዴል ሙከራ አልተሳካም",
     "testThrottled": "ይህን ሞዴል እንደገና ከመሞከርዎ በፊት እባክዎ {seconds} ሰከንድ ይጠብቁ።",
     "noModelsForProvider": "ለዚህ አቅራቢ የተዋቀረ ሞዴል የለም።",
+<<<<<<< HEAD
     "testModels": "ሞዴሎችን ይሞክሩ"
+=======
+    "testModels": "ሞዴሎችን ይሞክሩ",
+    "monthlyRequestCapLabel": "ወርሃዊ የጥያቄ ገደብ",
+    "monthlyTokenCapLabel": "ወርሃዊ የቶከን ገደብ",
+    "capUnlimitedPlaceholder": "ወሰን የለሽ",
+    "capEditHint": "ገደቦች በእያንዳንዱ ወር 1 ቀን 00:00 UTC ዳግም ይጀምራሉ። ለወሰን አልባ ባዶ ይተዉ።",
+    "monthlyUsageLine": "በዚህ ወር {requests} ጥያቄዎች፣ {tokens} ቶከኖች",
+    "quotaBalanceHint": "ከ{limit} {metric} {remaining} ቀርቷል",
+    "quotaBalanceLeft": "{remaining} ቀርቷል"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "ከዝማኔ በፊት"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "ጤናማ",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "ከራስዎ ማሽን ሆኖ በ WhatsApp፣ Telegram፣ Discord እና በሌሎችም ላይ የሚመልስ፣ ሁልጊዜ የሚሠራ የግል ረዳት።",
+<<<<<<< HEAD
       "hermes": "የ Nous Research ራሱን የሚያሻሽል ኤጀንት፣ ቋሚ ማህደረ ትውስታ እና ክህሎቶች ያሉት፣ በተርሚናል ወይም በቻት መተግበሪያዎች ላይ።"
+=======
+      "hermes": "የ Nous Research ራሱን የሚያሻሽል ኤጀንት፣ ቋሚ ማህደረ ትውስታ እና ክህሎቶች ያሉት፣ በተርሚናል ወይም በቻት መተግበሪያዎች ላይ።",
+      "pi": "በራስዎ ቅጥያዎች፣ ክህሎቶች እና የጥያቄ አብነቶች የሚቀርጹት አነስተኛ የተርሚናል ኤጀንት።",
+      "reasonix": "ለDeepSeek የተሰራ የተርሚናል ኮዲንግ ወኪል፤ ረጅም ክፍለ ጊዜዎች ርካሽ እንዲሆኑ በprefix caching ዙሪያ የተገነባ።"
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "አዲስ የFreeLLMAPI ስሪት ተጭኗል።",
+    "reload": "እንደገና ጫን"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "በየቅርብ ወቅቱ 5 ደቂቃ ውስጥ {count} ጥያቄዎች ተደምቀዋል",
     "hourFilter": "ሰዓት: {hour}",
     "serverLog": "የአገልጋይ መዝገብ"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "የዚህ ሰንሰለት ስም ቀይር",
+    "renameConfirm": "ሰንሰለት \"{oldName}\" ስሙን ወደ \"{name}\" ቀይር? auto:{oldName} የሚጠሩ ደንበኞች ወደ auto:{name} ማለፍ አለባቸው።",
+    "renamePlaceholder": "አዲስ የሰንሰለት ስም",
+    "renameFailed": "የሰንሰለቱን ስም መቀየር አልተቻለም።"
+  },
+  "updates": {
+    "versionAvailable": "ስሪት {version} ይገኛል",
+    "versionReady": "ስሪት {version} ለመጫን ዝግጁ ነው",
+    "releaseNotes": "የልቀት ማስታወሻዎች",
+    "tryAgain": "እንደገና ሞክር",
+    "offline": "የበይነመረብ ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።"
+>>>>>>> upstream/main
   }
 }

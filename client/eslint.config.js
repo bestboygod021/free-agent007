@@ -19,6 +19,7 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+<<<<<<< HEAD
     rules: {
       // shadcn's generated components ship with their variant factory in the
       // same file (`export { Button, buttonVariants }`) — that pairing is the
@@ -62,5 +63,7 @@ export default defineConfig([
         message: 'API/response shapes live in shared/schemas.ts — import the type from shared/types. Other local shapes use a `type` alias; only *Props/*State component contracts stay interfaces.',
       }],
     },
+=======
+>>>>>>> upstream/main
   },
 ])

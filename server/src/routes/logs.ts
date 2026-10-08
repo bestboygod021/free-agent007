@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import {
+<<<<<<< HEAD
+=======
+  LOG_LEVELS,
+>>>>>>> upstream/main
   clearLogs,
   currentMaxId,
   levelCounts,
@@ -8,7 +12,10 @@ import {
   type ServerLogEntry,
   type ServerLogLevel,
 } from '../lib/server-logs.js';
+<<<<<<< HEAD
 import { logQuerySchema } from '@freellmapi/shared/schemas.js';
+=======
+>>>>>>> upstream/main
 
 // The dashboard's server-log viewer. Mounted under /api/logs behind the
 // dashboard session gate like every other admin route — the unified /v1 key
@@ -25,10 +32,26 @@ import { logQuerySchema } from '@freellmapi/shared/schemas.js';
 
 export const logsRouter = Router();
 
+<<<<<<< HEAD
+=======
+const KNOWN_LEVELS = new Set<string>(LOG_LEVELS);
+
+>>>>>>> upstream/main
 function badRequest(res: Response, message: string): void {
   res.status(400).json({ error: { message } });
 }
 
+<<<<<<< HEAD
+=======
+/** First value only — Express hands back an array for a repeated param, and a
+ *  repeated cursor is a client bug, not two cursors. */
+function firstParam(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+  return undefined;
+}
+
+>>>>>>> upstream/main
 function toJson(entry: ServerLogEntry) {
   return {
     id: entry.id,
@@ -44,6 +67,7 @@ function toJson(entry: ServerLogEntry) {
 }
 
 logsRouter.get('/', (req: Request, res: Response) => {
+<<<<<<< HEAD
   // The shared contract owns the query rules (first-value wins, unknown levels
   // and bad cursors are hard errors, `limit` stays a preference). On failure
   // only the FIRST issue is reported, matching the manual parser's short
@@ -58,6 +82,45 @@ logsRouter.get('/', (req: Request, res: Response) => {
   const entries = queryLogs({
     ...parsed.data,
     levels: parsed.data.levels as ServerLogLevel[] | undefined,
+=======
+  const rawLevels = firstParam(req.query.levels);
+  let levels: ServerLogLevel[] | undefined;
+  if (rawLevels !== undefined && rawLevels.trim() !== '') {
+    const parts = rawLevels.split(',').map(part => part.trim()).filter(part => part !== '');
+    // An unknown level is rejected rather than ignored: silently dropping it
+    // would show the user a filtered view that does not match the filter they
+    // asked for, which is worse than an error.
+    const unknown = parts.find(part => !KNOWN_LEVELS.has(part));
+    if (unknown !== undefined) {
+      badRequest(res, `Unknown log level '${unknown}'. Known levels: ${LOG_LEVELS.join(', ')}`);
+      return;
+    }
+    levels = parts as ServerLogLevel[];
+  }
+
+  const rawSinceId = firstParam(req.query.sinceId);
+  let sinceId: number | undefined;
+  if (rawSinceId !== undefined && rawSinceId.trim() !== '') {
+    const parsed = Number(rawSinceId);
+    if (!Number.isInteger(parsed) || parsed < 0) {
+      badRequest(res, 'sinceId must be a non-negative integer');
+      return;
+    }
+    sinceId = parsed;
+  }
+
+  // Deliberately lenient, unlike the two above: a limit is a preference, and
+  // clamping an out-of-range one to the ceiling is what the caller wanted.
+  const rawLimit = firstParam(req.query.limit);
+  const limit = rawLimit !== undefined && rawLimit.trim() !== '' ? Number(rawLimit) : undefined;
+
+  const entries = queryLogs({
+    levels,
+    q: firstParam(req.query.q),
+    provider: firstParam(req.query.provider),
+    sinceId,
+    limit,
+>>>>>>> upstream/main
   });
 
   res.json({

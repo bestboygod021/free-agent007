@@ -447,13 +447,35 @@ export async function discoverEndpointModels(baseUrl: string, apiKey: string): P
     // inherit the 120s custom-provider chat timeout.
     timeoutMs: 30_000,
   });
+<<<<<<< HEAD
 
+=======
+  return discoverProviderModels(provider, apiKey, baseUrl);
+}
+
+/**
+ * The shared half of discovery: GET `${provider}/models` through the adapter
+ * and parse whatever envelope comes back. Built-in OpenAI-compatible platforms
+ * (#1348) call this with their REGISTERED adapter, so the registry's base URL,
+ * extra headers (User-Agent quirks) and auth scheme apply exactly as they do
+ * for health checks. `label` only names the endpoint in error messages.
+ */
+export async function discoverProviderModels(
+  provider: OpenAICompatProvider,
+  apiKey: string,
+  label: string,
+): Promise<DiscoveredModel[]> {
+>>>>>>> upstream/main
   let res: Response;
   try {
     res = await provider.fetchModelCatalog(apiKey);
   } catch (err) {
     const reason = isAbortLikeError(err) ? 'timed out' : ((err as Error)?.message ?? 'unknown error');
+<<<<<<< HEAD
     throw new ModelDiscoveryError(502, `Could not reach ${baseUrl}/models: ${reason}`);
+=======
+    throw new ModelDiscoveryError(502, `Could not reach ${label}/models: ${reason}`);
+>>>>>>> upstream/main
   }
 
   const bodyText = await readCappedBody(res);
@@ -463,20 +485,32 @@ export async function discoverEndpointModels(baseUrl: string, apiKey: string): P
     if (res.status === 401 || res.status === 403) {
       throw new ModelDiscoveryError(401, `The endpoint rejected the key (HTTP ${res.status})${detail ? `: ${detail}` : ''}`);
     }
+<<<<<<< HEAD
     throw new ModelDiscoveryError(502, `${baseUrl}/models returned HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
+=======
+    throw new ModelDiscoveryError(502, `${label}/models returned HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
+>>>>>>> upstream/main
   }
 
   let payload: unknown;
   try {
     payload = JSON.parse(bodyText);
   } catch {
+<<<<<<< HEAD
     throw new ModelDiscoveryError(502, `${baseUrl}/models did not return a model list (response was not JSON).`);
+=======
+    throw new ModelDiscoveryError(502, `${label}/models did not return a model list (response was not JSON).`);
+>>>>>>> upstream/main
   }
 
   // An endpoint that genuinely serves nothing answers `{"data": []}` and that
   // is a valid (if disappointing) result; an unreadable envelope is an error.
   if (!hasModelList(payload)) {
+<<<<<<< HEAD
     throw new ModelDiscoveryError(502, `${baseUrl}/models did not return a model list in a format this gateway understands.`);
+=======
+    throw new ModelDiscoveryError(502, `${label}/models did not return a model list in a format this gateway understands.`);
+>>>>>>> upstream/main
   }
   return parseModelCatalog(payload);
 }

@@ -1,5 +1,9 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+<<<<<<< HEAD
+=======
+import { z } from 'zod';
+>>>>>>> upstream/main
 import { getDb, setSetting } from '../db/index.js';
 import { decrypt, maskKey } from '../lib/crypto.js';
 import { deleteUnusedCustomEndpointKey } from '../lib/custom-provider-cleanup.js';
@@ -12,7 +16,10 @@ import {
   EmbeddingsError,
   type EmbeddingModelRow,
 } from '../services/embeddings.js';
+<<<<<<< HEAD
 import { customEmbeddingSchema, embeddingsUpdateSchema } from '@freellmapi/shared/schemas.js';
+=======
+>>>>>>> upstream/main
 
 export const embeddingsRouter = Router();
 
@@ -62,7 +69,20 @@ embeddingsRouter.get('/', (_req: Request, res: Response) => {
   });
 });
 
+<<<<<<< HEAD
 
+=======
+const customEmbeddingSchema = z.object({
+  baseUrl: z.string().url('baseUrl must be a valid URL'),
+  model: z.string().min(1),
+  displayName: z.string().optional(),
+  family: z.string().optional(),
+  apiKey: z.string().optional(),
+  label: z.string().optional(),
+  quotaLabel: z.string().optional(),
+  maxInputTokens: z.number().int().positive().optional(),
+});
+>>>>>>> upstream/main
 
 function decryptExistingKey(row: { encrypted_key: string; iv: string; auth_tag: string } | undefined): string | null {
   if (!row) return null;
@@ -73,6 +93,7 @@ function decryptExistingKey(row: { encrypted_key: string; iv: string; auth_tag: 
   }
 }
 
+<<<<<<< HEAD
 // POST on the collection is not the dashboard's: the dashboard GETs the list
 // and PUTs rows below. Ollama's legacy POST /api/embeddings falls through to
 // this router whenever the caller carries a valid dashboard session (see
@@ -92,6 +113,8 @@ embeddingsRouter.post('/', (_req: Request, res: Response) => {
   });
 });
 
+=======
+>>>>>>> upstream/main
 embeddingsRouter.post('/custom', async (req: Request, res: Response) => {
   const parsed = customEmbeddingSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -181,10 +204,24 @@ embeddingsRouter.post('/custom', async (req: Request, res: Response) => {
   });
 });
 
+<<<<<<< HEAD
 
 
 embeddingsRouter.put('/', (req: Request, res: Response) => {
   const parsed = embeddingsUpdateSchema.safeParse(req.body);
+=======
+const updateSchema = z.object({
+  defaultFamily: z.string().optional(),
+  providers: z.array(z.object({
+    id: z.number(),
+    priority: z.number(),
+    enabled: z.boolean(),
+  })).optional(),
+});
+
+embeddingsRouter.put('/', (req: Request, res: Response) => {
+  const parsed = updateSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid request body' } });
     return;

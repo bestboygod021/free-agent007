@@ -1,5 +1,9 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+<<<<<<< HEAD
+=======
+import { z } from 'zod';
+>>>>>>> upstream/main
 import type { Platform } from '@freellmapi/shared/types.js';
 import { getDb } from '../db/index.js';
 import { hasProvider } from '../providers/index.js';
@@ -22,7 +26,10 @@ import { logRequest } from '../lib/request-log.js';
 import { withKeyProxy } from '../lib/proxy.js';
 import { sanitizeProviderErrorMessage } from '../lib/error-redaction.js';
 import { recordRequest, recordTokens } from '../services/ratelimit.js';
+<<<<<<< HEAD
 import { modelUpdateSchema, createModelSchema } from '@freellmapi/shared/schemas.js';
+=======
+>>>>>>> upstream/main
 
 export const modelsRouter = Router();
 
@@ -31,7 +38,29 @@ const modelTestCooldowns = new Map<number, number>();
 const MODEL_TEST_THROTTLE_MS = 5000;
 
 
+<<<<<<< HEAD
 
+=======
+const modelUpdateSchema = z.object({
+  displayName: z.string().min(1).max(200).optional(),
+  intelligenceRank: z.number().int().min(1).max(1000).optional(),
+  speedRank: z.number().int().min(1).max(1000).optional(),
+  // '' is a legal value: size_label is TEXT NOT NULL DEFAULT '' and the empty
+  // string is the canonical "unscored" tier (scores 0 on the intelligence
+  // axis), so the dashboard's "None" option must be able to send it.
+  sizeLabel: z.string().max(40).optional(),
+  rpmLimit: z.number().int().positive().nullable().optional(),
+  rpdLimit: z.number().int().positive().nullable().optional(),
+  tpmLimit: z.number().int().positive().nullable().optional(),
+  tpdLimit: z.number().int().positive().nullable().optional(),
+  monthlyTokenBudget: z.string().max(80).optional(),
+  contextWindow: z.number().int().positive().nullable().optional(),
+  enabled: z.boolean().optional(),
+  supportsVision: z.boolean().optional(),
+  supportsTools: z.boolean().optional(),
+  fallbackEnabled: z.boolean().optional(),
+}).strict();
+>>>>>>> upstream/main
 
 const MODEL_FIELD_COLUMNS: Record<keyof ModelOverridePatch | 'enabled', string> = {
   displayName: 'display_name',
@@ -68,7 +97,24 @@ function fetchModelRow(id: number): ModelRow | undefined {
     .get(id) as ModelRow | undefined;
 }
 
+<<<<<<< HEAD
 
+=======
+const createModelSchema = z.object({
+  platform: z.string().min(1).max(50),
+  modelId: z.string().min(1).max(200),
+  displayName: z.string().min(1).max(200).optional(),
+  contextWindow: z.number().int().positive().nullable().optional(),
+  rpmLimit: z.number().int().positive().nullable().optional(),
+  rpdLimit: z.number().int().positive().nullable().optional(),
+  tpmLimit: z.number().int().positive().nullable().optional(),
+  tpdLimit: z.number().int().positive().nullable().optional(),
+  supportsVision: z.boolean().optional(),
+  supportsTools: z.boolean().optional(),
+  keyId: z.number().int().positive().nullable().optional(),
+  endpointScope: z.string().nullable().optional(),
+}).strict();
+>>>>>>> upstream/main
 
 modelsRouter.post('/', (req: Request, res: Response) => {
   const parsed = createModelSchema.safeParse(req.body);
@@ -454,7 +500,13 @@ modelsRouter.get('/', (_req: Request, res: Response) => {
     // existing vocabulary for user-added rows is 'custom', so map 1:1 here —
     // this now also flags user models on native platforms (declarative
     // config / admin adds), which the old platform/key_id heuristic missed.
+<<<<<<< HEAD
     source: m.source === 'user' ? 'custom' : 'catalog',
+=======
+    // 'discovered' (#1348) marks rows fetched from a built-in provider's own
+    // /models because the catalog carries none for it.
+    source: m.source === 'user' ? 'custom' : m.source === 'discovered' ? 'discovered' : 'catalog',
+>>>>>>> upstream/main
     keyId: m.key_id ?? null,
     keyLabel: m.key_label ?? null,
     // Endpoint identity for custom rows (#651); null for catalog models and for

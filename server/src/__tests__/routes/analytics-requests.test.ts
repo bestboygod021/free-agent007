@@ -152,6 +152,7 @@ describe('GET /api/analytics/requests', () => {
     const row = getDb().prepare('SELECT client_ip, client_user_agent FROM requests ORDER BY id DESC LIMIT 1').get() as any;
     expect(row).toEqual({ client_ip: '192.168.0.99', client_user_agent: 'vitest-client/1.0' });
   });
+<<<<<<< HEAD
   it('filters by clientIp — the pivot from a rate-limit event to a caller\'s history', async () => {
     insertCall(recentUtcTimestamp(10).sql, '203.0.113.9', 'curl/8.6.0');
     insertCall(recentUtcTimestamp(11).sql, '198.51.100.2', 'python-httpx/0.27');
@@ -174,4 +175,6 @@ describe('GET /api/analytics/requests', () => {
     expect(invalid.status).toBe(400);
   });
 
+=======
+>>>>>>> upstream/main
 });

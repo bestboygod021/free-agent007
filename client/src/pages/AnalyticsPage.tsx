@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
+<<<<<<< HEAD
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { hourRangeFromBucket } from '@/lib/timeline-marker'
+=======
+>>>>>>> upstream/main
 import { useQuery } from '@tanstack/react-query'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -45,6 +48,7 @@ import { sortRows, useTableSort, type SortValueFn } from '@/lib/table-sort'
 import { platformColors } from '@/lib/routing'
 import { categoryAxisProps, verticalCategoryAxisProps } from '@/lib/chart-axis'
 import { useI18n } from '@/i18n'
+<<<<<<< HEAD
 // Response contracts come from the shared Zod schemas (shared/schemas.ts):
 // type-only imports, zero bundle cost. SummaryResponse keeps its local name
 // via the alias so the page diff stays small.
@@ -62,6 +66,8 @@ import type {
   RecentCallsResponse,
   RequestDetail,
 } from '../../../shared/types'
+=======
+>>>>>>> upstream/main
 
 type TimeRange = '24h' | '7d' | '30d' | '90d'
 
@@ -144,6 +150,181 @@ const byKeyValue: SortValueFn<ByKeyRow, ByKeyCol> = (k, col) => {
   }
 }
 
+<<<<<<< HEAD
+=======
+// Response shapes mirror the JSON emitted by server/src/routes/analytics.ts.
+// Latency percentiles and TTFT are null when the raw window is empty (pruned).
+interface SummaryResponse {
+  totalRequests: number
+  successRate: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  avgLatencyMs: number
+  p50LatencyMs: number | null
+  p95LatencyMs: number | null
+  avgTtfbMs: number | null
+  requestTypeCounts: { chat: number; embedding: number }
+  estimatedCostSavings: number
+  pinnedRequests: number
+  pinHonoredRequests: number
+  firstRequestAt: string | null
+  lifetimeTotalRequests: number
+}
+
+interface CacheStatsResponse {
+  enabled: boolean
+  entries: number
+  // Hits carried by the entries currently held (restored from SQLite), and the
+  // provider round-trips / tokens they represent.
+  totalHits: number
+  estimatedRequestsSaved: number
+  savedTokens: number
+  // Lookups since the server started — the ratio's two halves. Kept separate
+  // from totalHits, which shrinks when entries are evicted.
+  lookupHits: number
+  lookupMisses: number
+  hitRate: number
+}
+
+interface ByPlatformRow {
+  platform: string
+  // Stable identity for the filter dropdown. For a catalog platform it equals
+  // `platform`; for a custom endpoint it is `custom:<base_url>` (#889), so each
+  // relay is filterable on its own instead of collapsing into 'custom'.
+  providerId: string
+  // Human display name. Catalog: the platform id. Custom: the endpoint host
+  // (e.g. 'relay.example.com') so several relays are distinguishable.
+  endpoint?: string
+  requests: number
+  successRate: number
+  avgLatencyMs: number
+  p95LatencyMs: number | null
+  avgTtfbMs: number | null
+  errorCount: number
+  avgTokensPerSecond: number | null
+  totalInputTokens: number
+  totalOutputTokens: number
+}
+
+interface ByClientRow {
+  clientAgent: string
+  requests: number
+  successRate: number
+  avgLatencyMs: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  lastSeenAt: string | null
+}
+
+interface TimelineBucket {
+  timestamp: string
+  requests: number
+  successCount: number
+  failureCount: number
+  inputTokens: number
+  outputTokens: number
+}
+
+interface ByModelRow {
+  platform: string
+  // Endpoint identity of the row (#889). The same model id served by two
+  // custom relays is two rows, one per relay, so the name has to say which.
+  // Same id/name pair /by-platform returns for that endpoint.
+  providerId?: string
+  endpoint?: string
+  modelId: string
+  displayName: string
+  requests: number
+  successRate: number
+  avgLatencyMs: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  pinnedRequests: number
+  estimatedCost: number
+}
+
+interface ByKeyRow {
+  keyId: number
+  label: string | null
+  platform: string | null
+  requests: number
+  successRate: number
+  avgLatencyMs: number
+  totalInputTokens: number
+  totalOutputTokens: number
+}
+
+interface ErrorDistribution {
+  byCategory: Array<{ category: string; count: number }>
+  // One entry per provider — per custom ENDPOINT, not one pooled 'custom'
+  // entry (#889); `platform` is kept for the dot coloring.
+  byPlatform: Array<{ platform: string; providerId?: string; endpoint?: string; count: number }>
+  detailed: Array<{ platform: string; model_id: string; error_category: string; count: number }>
+}
+
+interface RecentErrorRow {
+  id: number
+  platform: string
+  // Which endpoint produced the error: the platform slug for catalog
+  // providers, the custom endpoint's host/path for a relay (#889).
+  providerId?: string
+  endpoint?: string
+  modelId: string
+  error: string
+  latencyMs: number
+  createdAt: string
+}
+
+interface RecentCallRow {
+  id: number
+  platform: string
+  modelId: string
+  requestedModel: string | null
+  requestType: string
+  status: string
+  inputTokens: number
+  outputTokens: number
+  latencyMs: number
+  error: string | null
+  clientIp: string | null
+  clientUserAgent: string | null
+  createdAt: string
+  // #785: custom endpoints all share the generic 'custom' platform id; the
+  // user's key label ("Ollama box") names the real provider. Null when the
+  // key was deleted or never labelled.
+  keyLabel: string | null
+  // Failover-ladder length: attempts hang off the TERMINAL row of a proxied
+  // request, so mid-ladder failure rows report 0.
+  attemptCount: number
+}
+
+interface RecentCallsResponse {
+  total: number
+  rows: RecentCallRow[]
+}
+
+// One hop of the failover ladder, from GET /api/analytics/requests/:id.
+interface RequestAttempt {
+  ordinal: number
+  platform: string
+  modelId: string
+  keyOrdinal: number
+  // Operator-facing key label captured at attempt time (#869); null when the
+  // key had no label. Shown in a tooltip on the key badge so a multi-key
+  // provider's ladder says WHICH key was tried, not just key1/key2.
+  keyLabel: string | null
+  outcome: string
+  startOffsetMs: number
+  durationMs: number
+  errorSummary: string | null
+}
+
+interface RequestDetail extends Omit<RecentCallRow, 'attemptCount'> {
+  ttfbMs: number | null
+  attempts: RequestAttempt[]
+}
+
+>>>>>>> upstream/main
 type StatusFilter = 'all' | 'success' | 'error' | 'canceled'
 
 // 'canceled' (#752 — the client hung up mid-request) is neither success nor
@@ -394,10 +575,13 @@ const chartVars = `
 
 export default function AnalyticsPage() {
   const { t } = useI18n()
+<<<<<<< HEAD
   // The rate-limit card on the Keys page pivots here via ?clientIp=<ip>; the
   // param feeds the recent-calls query below and shows as a clearable chip.
   const [searchParams, setSearchParams] = useSearchParams()
   const clientIpFilter = searchParams.get('clientIp') ?? ''
+=======
+>>>>>>> upstream/main
   const [range, setRange] = useState<TimeRange>(storedRange)
   const updateRange = (r: TimeRange) => {
     setRange(r)
@@ -438,6 +622,7 @@ export default function AnalyticsPage() {
   // Browser's offset from UTC in minutes (480 = UTC+8), so the server buckets
   // timeline hours/days on the viewer's wall clock instead of UTC.
   const tzOffset = -new Date().getTimezoneOffset()
+<<<<<<< HEAD
   const navigate = useNavigate()
 
   // Clicking the dashed 429 overlay jumps to the Keys-page event list pinned
@@ -449,6 +634,8 @@ export default function AnalyticsPage() {
     if (!range) return
     navigate(`/keys?rlHour=${range.start}&rlSpan=${range.span}`)
   }
+=======
+>>>>>>> upstream/main
 
   const { data: timeline = [] } = useQuery({
     queryKey: ['analytics', 'timeline', range, tzOffset],
@@ -483,14 +670,21 @@ export default function AnalyticsPage() {
   const [detailId, setDetailId] = useState<number | null>(null)
 
   const { data: recentCalls } = useQuery({
+<<<<<<< HEAD
     queryKey: ['analytics', 'requests', range, statusFilter, platformFilter, clientIpFilter],
+=======
+    queryKey: ['analytics', 'requests', range, statusFilter, platformFilter],
+>>>>>>> upstream/main
     queryFn: () => {
       const params = new URLSearchParams({ range, limit: '100' })
       if (statusFilter !== 'all') params.set('status', statusFilter)
       // provider (not platform) so a selected custom relay filters to itself
       // instead of every custom endpoint (#889). Catalog ids equal the platform.
       if (platformFilter !== 'all') params.set('provider', platformFilter)
+<<<<<<< HEAD
       if (clientIpFilter) params.set('clientIp', clientIpFilter)
+=======
+>>>>>>> upstream/main
       return apiFetch<RecentCallsResponse>(`/api/analytics/requests?${params}`)
     },
   })
@@ -642,6 +836,7 @@ export default function AnalyticsPage() {
                     <Legend wrapperStyle={{ fontSize: 12 }} iconType="line" />
                     <Line type="monotone" dataKey="successCount" name={t('common.success')} stroke={primaryFill} strokeWidth={1.5} dot={false} />
                     <Line type="monotone" dataKey="failureCount" name={t('common.failures')} stroke="var(--destructive)" strokeWidth={1.5} dot={false} />
+<<<<<<< HEAD
                     <Line
                       type="monotone"
                       dataKey="rateLimitCount"
@@ -658,6 +853,8 @@ export default function AnalyticsPage() {
                       }}
                       connectNulls={false}
                     />
+=======
+>>>>>>> upstream/main
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -864,6 +1061,7 @@ export default function AnalyticsPage() {
                 </div>
               }
             >
+<<<<<<< HEAD
               {clientIpFilter && (
                 <p className="pb-2">
                   <button
@@ -881,6 +1079,8 @@ export default function AnalyticsPage() {
                   </button>
                 </p>
               )}
+=======
+>>>>>>> upstream/main
               {recentCallsSortHint && (
                 <p className="pb-2 text-xs text-muted-foreground">{recentCallsSortHint}</p>
               )}

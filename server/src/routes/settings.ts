@@ -6,7 +6,11 @@ import { getProvider } from '../providers/index.js';
 import type { Platform } from '@freellmapi/shared/types.js';
 import type { ProxyMode } from '@freellmapi/shared/types.js';
 import { getSavedFusionConfig, setSavedFusionConfig, savedFusionConfigSchema, getFusionMaxK } from '../services/fusion.js';
+<<<<<<< HEAD
 import { isUnifyEnabled, setUnifyEnabled, getUnifyOverrides, setUnifyOverrides } from '../services/model-groups.js';
+=======
+import { isUnifyEnabled, setUnifyEnabled, getUnifyOverrides, setUnifyOverrides, unifyOverridesSchema } from '../services/model-groups.js';
+>>>>>>> upstream/main
 import { getClaudeModelMap, setClaudeModelMap } from '../services/anthropic-map.js';
 import { getGeminiModelMap, setGeminiModelMap } from '../services/gemini-map.js';
 import { getOllamaEmulationMode } from './ollama.js';
@@ -25,12 +29,17 @@ import {
 } from '../services/compression/config.js';
 import { getHeadroomThresholds, setHeadroomThresholds, getTaskWeightShare, setTaskWeightShare } from '../services/router.js';
 import { MCP_ENABLED_SETTING, isMcpServerEnabled } from './mcp.js';
+<<<<<<< HEAD
+=======
+import { z } from 'zod';
+>>>>>>> upstream/main
 import { getAppVersion } from '../lib/app-version.js';
 import {
   UNIFIED_MAX_TOKENS_SETTING,
   UNIFIED_MAX_TOKENS_AUTO,
   unifiedMaxTokensCap,
 } from '../lib/sampling-params.js';
+<<<<<<< HEAD
 import {
   rateLimitSettingsSchema,
   settingsCompatibilitySchema,
@@ -45,6 +54,8 @@ import {
 } from '@freellmapi/shared/schemas.js';
 
 import { getRateLimitSettings, setRateLimitSettings } from '../middleware/rateLimit.js';
+=======
+>>>>>>> upstream/main
 
 export const settingsRouter = Router();
 
@@ -61,14 +72,22 @@ settingsRouter.get('/version', (_req: Request, res: Response) => {
 // operator turns it on: a self-hosted install must not contact GitHub on page
 // load on behalf of someone who never asked it to. The manual checker in
 // Settings is a separate surface and is unaffected by this flag.
+<<<<<<< HEAD
 
+=======
+const updateCheckSchema = z.object({ enabled: z.boolean() }).strict();
+>>>>>>> upstream/main
 
 settingsRouter.get('/update-check', (_req: Request, res: Response) => {
   res.json({ enabled: isAutoUpdateCheckEnabled() });
 });
 
 settingsRouter.put('/update-check', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = settingsUpdateCheckSchema.safeParse(req.body);
+=======
+  const parsed = updateCheckSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({
       error: {
@@ -108,12 +127,23 @@ settingsRouter.get('/unify', (_req: Request, res: Response) => {
   res.json({ enabled: isUnifyEnabled(), overrides: getUnifyOverrides() });
 });
 
+<<<<<<< HEAD
 
+=======
+const unifyPutSchema = z.object({
+  enabled: z.boolean().optional(),
+  overrides: unifyOverridesSchema.optional(),
+});
+>>>>>>> upstream/main
 
 // Update the unify toggle and/or overrides. Partial: send just `enabled` to
 // flip the switch, or `overrides` to adjust grouping, or both.
 settingsRouter.put('/unify', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = settingsUnifyPutSchema.safeParse(req.body);
+=======
+  const parsed = unifyPutSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     const detail = parsed.error.errors.map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message)).slice(0, 5).join(', ');
     res.status(400).json({ error: { message: `Invalid unify settings: ${detail}`, type: 'invalid_request_error' } });
@@ -151,10 +181,17 @@ settingsRouter.get('/enable-mcp', (_req: Request, res: Response) => {
   res.json({ enabled: isMcpServerEnabled() });
 });
 
+<<<<<<< HEAD
 
 
 settingsRouter.put('/enable-mcp', (req: Request, res: Response) => {
   const parsed = settingsEnableMcpSchema.safeParse(req.body);
+=======
+const enableMcpSchema = z.object({ enabled: z.boolean() });
+
+settingsRouter.put('/enable-mcp', (req: Request, res: Response) => {
+  const parsed = enableMcpSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid MCP setting: enabled must be a boolean.', type: 'invalid_request_error' } });
     return;
@@ -198,7 +235,14 @@ settingsRouter.put('/gemini-map', (req: Request, res: Response) => {
   }
 });
 
+<<<<<<< HEAD
 
+=======
+const compatibilitySchema = z.object({
+  ollamaEmulation: z.enum(['off', 'open-loopback', 'key-required']).optional(),
+  exposeClaudeDiscoveryAliases: z.boolean().optional(),
+}).strict();
+>>>>>>> upstream/main
 
 settingsRouter.get('/agent-compatibility', (_req: Request, res: Response) => {
   res.json({
@@ -208,7 +252,11 @@ settingsRouter.get('/agent-compatibility', (_req: Request, res: Response) => {
 });
 
 settingsRouter.put('/agent-compatibility', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = settingsCompatibilitySchema.safeParse(req.body);
+=======
+  const parsed = compatibilitySchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({
       error: {
@@ -233,7 +281,11 @@ settingsRouter.get('/url-tokens', (_req: Request, res: Response) => {
 });
 
 settingsRouter.post('/url-tokens', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = urlTokenCreateSchema.safeParse(req.body);
+=======
+  const parsed = z.object({ label: z.string().max(120).optional() }).safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid URL token label', type: 'invalid_request_error' } });
     return;
@@ -272,13 +324,27 @@ settingsRouter.get('/output-limit', (_req: Request, res: Response) => {
   res.json(outputLimitState());
 });
 
+<<<<<<< HEAD
 
+=======
+const outputLimitPutSchema = z.object({
+  mode: z.union([
+    z.literal('off'),
+    z.literal('auto'),
+    z.number().int().min(1),
+  ]),
+});
+>>>>>>> upstream/main
 
 // Update the unified output-token cap. 'off' restores pass-through behaviour;
 // 'auto' clamps every request's max_tokens to UNIFIED_MAX_TOKENS_AUTO; an
 // integer clamps to that value. Takes effect on the next request.
 settingsRouter.put('/output-limit', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = settingsOutputLimitSchema.safeParse(req.body);
+=======
+  const parsed = outputLimitPutSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     const detail = parsed.error.errors
       .map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message))
@@ -300,7 +366,14 @@ settingsRouter.get('/guardrails', (_req: Request, res: Response) => {
   });
 });
 
+<<<<<<< HEAD
 
+=======
+const guardrailsPutSchema = z.object({
+  requestMaxTokensBudget: z.number().int().min(0).optional(),
+  maxConsecutiveUpstreamFails: z.number().int().min(0).optional(),
+});
+>>>>>>> upstream/main
 
 // Get the headroom guardrail thresholds (#899): the remaining-budget fraction
 // at which proactive demotion begins and the score floor at 0 remaining. Both
@@ -310,12 +383,23 @@ settingsRouter.get('/headroom', (_req: Request, res: Response) => {
   res.json({ rampStart: rampStart ?? null, floor: floor ?? null });
 });
 
+<<<<<<< HEAD
 
+=======
+const headroomPutSchema = z.object({
+  rampStart: z.number().min(0).max(1).nullable().optional(),
+  floor: z.number().min(0).max(1).nullable().optional(),
+});
+>>>>>>> upstream/main
 
 // Update the headroom guardrail thresholds. null clears a threshold back to the
 // scoring.ts default. Takes effect on the next request — no restart needed.
 settingsRouter.put('/headroom', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = settingsHeadroomSchema.safeParse(req.body);
+=======
+  const parsed = headroomPutSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     const detail = parsed.error.errors
       .map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message))
@@ -340,12 +424,22 @@ settingsRouter.get('/task-weight-share', (_req: Request, res: Response) => {
   res.json({ share: getTaskWeightShare() });
 });
 
+<<<<<<< HEAD
 
+=======
+const taskWeightSharePutSchema = z.object({
+  share: z.number().min(0).max(1).nullable().optional(),
+});
+>>>>>>> upstream/main
 
 // Update the task-type weight share. null clears back to the default. Takes
 // effect on the next request — no restart needed.
 settingsRouter.put('/task-weight-share', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = settingsTaskWeightShareSchema.safeParse(req.body);
+=======
+  const parsed = taskWeightSharePutSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success || parsed.data.share === undefined) {
     res.status(400).json({ error: { message: 'Invalid task-weight-share: send {"share": 0..1 | null}', type: 'invalid_request_error' } });
     return;
@@ -361,7 +455,11 @@ settingsRouter.put('/task-weight-share', (req: Request, res: Response) => {
 // Update the guardrails. Partial: send just the knob you want to change.
 // Takes effect on the next request — no restart needed. 0 disables a knob.
 settingsRouter.put('/guardrails', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = settingsGuardrailsSchema.safeParse(req.body);
+=======
+  const parsed = guardrailsPutSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     const detail = parsed.error.errors.map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message)).slice(0, 5).join(', ');
     res.status(400).json({ error: { message: `Invalid guardrail settings: ${detail}`, type: 'invalid_request_error' } });
@@ -379,6 +477,7 @@ settingsRouter.put('/guardrails', (req: Request, res: Response) => {
   });
 });
 
+<<<<<<< HEAD
 // Rate-limit caps (proxy /v1, admin /api, per-key). Precedence lives in the
 // middleware: env > this setting > default. Values are requests-per-minute;
 // 0 disables that limiter entirely. Saving applies to the NEXT request — the
@@ -403,6 +502,8 @@ settingsRouter.put('/rate-limits', (req: Request, res: Response) => {
   res.json(setRateLimitSettings(parsed.data));
 });
 
+=======
+>>>>>>> upstream/main
 // Get the unified API key
 settingsRouter.get('/api-key', (_req: Request, res: Response) => {
   res.json({ apiKey: getUnifiedApiKey() });
@@ -447,12 +548,16 @@ function proxyUrlError(proxyUrl: string, proxyMode: ProxyMode): string | undefin
 
 // Set the proxy settings. Accepts partial updates.
 settingsRouter.put('/proxy', (req: Request, res: Response) => {
+<<<<<<< HEAD
   // Express 5 leaves req.body undefined when nothing was parsed (no JSON
   // content-type, empty body); destructuring that crashed the handler with a
   // 500. Treat an unparsed body as an empty patch — every field stays
   // undefined, every block below skips, and the response reports the current
   // settings, which is the same contract an all-undefined body already had.
   const { proxyUrl, proxyMode, fetchRelayToken, enabled, bypassPlatforms } = (req.body ?? {}) as {
+=======
+  const { proxyUrl, proxyMode, fetchRelayToken, enabled, bypassPlatforms } = req.body as {
+>>>>>>> upstream/main
     proxyUrl?: string;
     proxyMode?: ProxyMode;
     fetchRelayToken?: string;

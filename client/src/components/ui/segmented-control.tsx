@@ -3,7 +3,11 @@ import { cn } from '@/lib/utils'
 // The dashboard's one segmented-control idiom (pill bar with a solid active
 // segment), shared by the Keys tabs and the Analytics range toggle. ModelsTabs
 // renders the same visual with NavLinks for routed tabs.
+<<<<<<< HEAD
 export type SegmentOption<T extends string> = {
+=======
+export interface SegmentOption<T extends string> {
+>>>>>>> upstream/main
   value: T
   label: string
 }

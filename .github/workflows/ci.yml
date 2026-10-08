@@ -40,13 +40,19 @@ jobs:
           COVERAGE: ${{ matrix.node-version == '22' && '1' || '' }}
         run: npm test
 
+<<<<<<< HEAD
       # server + cli + client — the client backlog is cleared, so it is held to
       # the same gate as the rest of the repo.
+=======
+      # server + cli only; the client has its own backlog of ESLint violations
+      # and is brought in under a separate change.
+>>>>>>> upstream/main
       - name: Lint
         run: npm run lint
 
       - name: Build workspaces
         run: npm run build
+<<<<<<< HEAD
 
   audit:
     name: Dependency audit
@@ -77,3 +83,5 @@ jobs:
 
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
+=======
+>>>>>>> upstream/main

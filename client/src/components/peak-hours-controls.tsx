@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useState } from 'react'
+=======
+import { useEffect, useState } from 'react'
+>>>>>>> upstream/main
 import { useI18n } from '@/i18n'
 import { Tooltip } from '@/components/tooltip'
 import { PEAK_EXEMPT_STRATEGIES, type RoutingData, type RoutingStrategy } from '@/lib/routing'
@@ -21,7 +25,11 @@ function isKnownTimezone(name: string): boolean {
   }
 }
 
+<<<<<<< HEAD
 export type PeakHoursPatch = {
+=======
+export interface PeakHoursPatch {
+>>>>>>> upstream/main
   peakHoursAdjust?: boolean
   peakStartHour?: number
   peakEndHour?: number
@@ -45,6 +53,7 @@ export function PeakHoursControls({ routing, strategy, saving, onSave }: {
   const [tzError, setTzError] = useState(false)
 
   // Re-sync when the server's value changes under us (poll, or another tab).
+<<<<<<< HEAD
   // Render-phase adjustment instead of an effect: `tz` is born from the same
   // value, so there is nothing to do until routing.peakTimezone actually
   // differs, and the reset applies before paint.
@@ -54,6 +63,9 @@ export function PeakHoursControls({ routing, strategy, saving, onSave }: {
     setTz(routing.peakTimezone)
     setTzError(false)
   }
+=======
+  useEffect(() => { setTz(routing.peakTimezone); setTzError(false) }, [routing.peakTimezone])
+>>>>>>> upstream/main
 
   const enabled = routing.peakHoursAdjust
   const exempt = PEAK_EXEMPT_STRATEGIES.includes(strategy)

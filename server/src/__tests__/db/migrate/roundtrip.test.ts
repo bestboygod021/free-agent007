@@ -39,6 +39,7 @@ const ANALYTICS_LATENCY_PERCENTILE_INDEX_FILENAME = '20260902_000001_analytics_l
 const MCP_ENABLED_DEFAULT_FILENAME = '20260903_000001_mcp_enabled_default.ts';
 const RESPONSE_CACHE_FILENAME = '20260903_000002_response_cache.ts';
 const KEY_MONTHLY_BUDGET_FILENAME = '20260904_000001_key_monthly_budget.ts';
+<<<<<<< HEAD
 const KEY_MONTHLY_USAGE_FILENAME = '20260914_000001_key_monthly_usage.ts';
 const QUOTA_SNAPSHOT_FRESHNESS_FILENAME = '20260915_000001_quota_snapshot_freshness.ts';
 const AGENT_MEMORY_AND_JOBS_FILENAME = '20260921_000001_agent_memory_and_jobs.ts';
@@ -50,6 +51,11 @@ const RAG_DOCUMENTS_FILENAME = '20260921_000006_rag_documents.ts';
 const SEMANTIC_CACHE_FILENAME = '20260921_000007_semantic_cache.ts';
 const RAG_KEYWORD_INDEX_FILENAME = '20260924_000001_rag_keyword_index.ts';
 const RATE_LIMIT_EVENTS_FILENAME = '20261008_000001_rate_limit_events.ts';
+=======
+const REQUEST_MODEL_ATTRIBUTION_FILENAME = '20260913_000001_request_model_attribution.ts';
+const KEY_MONTHLY_USAGE_FILENAME = '20260914_000001_key_monthly_usage.ts';
+const QUOTA_SNAPSHOT_FRESHNESS_FILENAME = '20260915_000001_quota_snapshot_freshness.ts';
+>>>>>>> upstream/main
 
 interface SchemaRow {
   type: string;
@@ -135,6 +141,7 @@ describe('migration round trip', () => {
         MCP_ENABLED_DEFAULT_FILENAME,
         RESPONSE_CACHE_FILENAME,
         KEY_MONTHLY_BUDGET_FILENAME,
+<<<<<<< HEAD
         KEY_MONTHLY_USAGE_FILENAME,
         QUOTA_SNAPSHOT_FRESHNESS_FILENAME,
         AGENT_MEMORY_AND_JOBS_FILENAME,
@@ -146,6 +153,11 @@ describe('migration round trip', () => {
         SEMANTIC_CACHE_FILENAME,
         RAG_KEYWORD_INDEX_FILENAME,
         RATE_LIMIT_EVENTS_FILENAME,
+=======
+        REQUEST_MODEL_ATTRIBUTION_FILENAME,
+        KEY_MONTHLY_USAGE_FILENAME,
+        QUOTA_SNAPSHOT_FRESHNESS_FILENAME,
+>>>>>>> upstream/main
       ]);
     } finally {
       db.close();

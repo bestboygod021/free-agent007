@@ -1,5 +1,9 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+<<<<<<< HEAD
+=======
+import { z } from 'zod';
+>>>>>>> upstream/main
 import { getUnifiedApiKey } from '../db/index.js';
 import { buildModelListing, type NormalizedModel } from '../services/model-listing.js';
 import { extractApiToken, timingSafeStringEqual } from './proxy.js';
@@ -17,6 +21,7 @@ import {
   type GeminiInboundRequest,
 } from '../lib/gemini-wire.js';
 import { resolveGeminiModel } from '../services/gemini-map.js';
+<<<<<<< HEAD
 import { geminiGenerateSchema } from '@freellmapi/shared/schemas.js';
 
 export const geminiRouter = Router();
@@ -24,6 +29,23 @@ export const geminiRouter = Router();
 
 
 
+=======
+
+export const geminiRouter = Router();
+
+const partSchema = z.object({}).passthrough();
+const contentSchema = z.object({
+  role: z.enum(['user', 'model']).optional(),
+  parts: z.array(partSchema).optional(),
+}).passthrough();
+const generateSchema = z.object({
+  contents: z.array(contentSchema).min(1),
+  systemInstruction: z.object({ parts: z.array(partSchema).optional() }).passthrough().optional(),
+  tools: z.array(z.object({}).passthrough()).optional(),
+  toolConfig: z.object({}).passthrough().optional(),
+  generationConfig: z.object({}).passthrough().optional(),
+}).passthrough();
+>>>>>>> upstream/main
 
 function sendError(res: Response, status: number, message: string, code = 'INVALID_ARGUMENT'): void {
   res.status(status).json({
@@ -100,7 +122,11 @@ geminiRouter.get(/^\/models\/(.+)$/, (req, res) => {
 });
 
 function parseGenerateBody(req: Request, res: Response): GeminiInboundRequest | null {
+<<<<<<< HEAD
   const parsed = geminiGenerateSchema.safeParse(req.body);
+=======
+  const parsed = generateSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     const detail = parsed.error.errors
       .slice(0, 5)
@@ -208,6 +234,7 @@ async function handleGenerate(req: Request, res: Response, stream: boolean): Pro
   }, streamWire(String(req.query.alt ?? '').toLowerCase() === 'sse'));
 }
 
+<<<<<<< HEAD
 geminiRouter.post(/^\/models\/(.+):generateContent$/, (req, res) => {
   void handleGenerate(req, res, false);
 });
@@ -215,6 +242,18 @@ geminiRouter.post(/^\/models\/(.+):generateContent$/, (req, res) => {
 geminiRouter.post(/^\/models\/(.+):streamGenerateContent$/, (req, res) => {
   void handleGenerate(req, res, true);
 });
+=======
+// The handler promise is RETURNED, not voided, so Express 5 forwards a
+// rejection to errorHandler like it already does for the OpenAI (/v1) and
+// Anthropic (/v1/messages) surfaces, whose handlers are `async` and so hand
+// Express their promise. A voided promise escapes the router entirely and
+// resurfaces as an `unhandledRejection`, which the process safety net
+// classifies as fatal for anything that is not a transport error — so one
+// failing request exited the whole gateway instead of answering 500.
+geminiRouter.post(/^\/models\/(.+):generateContent$/, (req, res) => handleGenerate(req, res, false));
+
+geminiRouter.post(/^\/models\/(.+):streamGenerateContent$/, (req, res) => handleGenerate(req, res, true));
+>>>>>>> upstream/main
 
 geminiRouter.post(/^\/models\/(.+):countTokens$/, (req, res) => {
   if (!authenticate(req, res)) return;

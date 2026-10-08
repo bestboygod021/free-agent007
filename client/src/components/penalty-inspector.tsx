@@ -3,7 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, ChevronDown, Clock3, Eraser, Gauge, RefreshCcw } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { apiFetch } from '@/lib/api'
+<<<<<<< HEAD
 import type { PenaltyInspectorData } from '../../../shared/types'
+=======
+>>>>>>> upstream/main
 
 // Collapse state persists so a returning user keeps their last choice; a fresh
 // install (no stored value) defaults to collapsed to keep the routing page calm.
@@ -18,6 +21,49 @@ function readCollapsed(): boolean {
   }
 }
 
+<<<<<<< HEAD
+=======
+type InspectorReason = 'penalty' | 'cooldown' | 'recent_errors'
+
+interface PenaltyInspectorRow {
+  modelDbId: number | null
+  platform: string
+  modelId: string
+  displayName: string
+  enabled: boolean
+  fallbackEnabled: boolean
+  priority: number | null
+  penalty: {
+    hits: number
+    value: number
+    rateLimitFactor: number
+  }
+  cooldowns: Array<{
+    keyId: number
+    keyLabel: string | null
+    keyStatus: string | null
+    expiresAtMs: number
+    expiresInMs: number
+  }>
+  recentErrors: Array<{
+    id: number
+    keyId: number | null
+    keyLabel: string | null
+    error: string
+    latencyMs: number
+    createdAt: string
+  }>
+  recentErrorCount: number
+  reasons: InspectorReason[]
+}
+
+interface PenaltyInspectorData {
+  generatedAtMs: number
+  lookbackMinutes: number
+  rows: PenaltyInspectorRow[]
+}
+
+>>>>>>> upstream/main
 function formatDuration(ms: number): string {
   const seconds = Math.max(0, Math.ceil(ms / 1000))
   if (seconds < 60) return `${seconds}s`

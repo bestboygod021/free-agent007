@@ -1,7 +1,10 @@
+<<<<<<< HEAD
 import type { ErrorResponse } from '../../../shared/types'
 import { dismissToast, getToasts, toast, updateToast, type ToastAction } from './toast'
 import { formatCount, translate } from '../i18n/translate'
 
+=======
+>>>>>>> upstream/main
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 const TOKEN_KEY = 'freellmapi_dashboard_token';
 
@@ -17,6 +20,7 @@ export function clearToken(): void {
   try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
 }
 
+<<<<<<< HEAD
 export const UNAUTHORIZED_EVENT = 'freellmapi:unauthorized'
 
 // The /v1 base URL for ready-to-run snippets, derived the same way as the chat
@@ -260,6 +264,15 @@ function startRetryCountdown(seconds: number, retry?: () => Promise<unknown>): v
 export function hasRetryCountdown(error: unknown): boolean {
   const apiError = error as ApiError;
   return apiError?.status === 429 && typeof apiError.retryAfterSec === 'number';
+=======
+export const UNAUTHORIZED_EVENT = 'freellmapi:unauthorized';
+
+// Error thrown by apiFetch on a non-2xx response. Carries the HTTP status and
+// the server's machine-readable `error.type` so callers can branch on them.
+export interface ApiError extends Error {
+  status?: number;
+  code?: string;
+>>>>>>> upstream/main
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -280,7 +293,11 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     headers,
   });
   if (!res.ok) {
+<<<<<<< HEAD
     const body = (await res.json().catch(() => ({ error: { message: res.statusText } }))) as ErrorResponse;
+=======
+    const body = await res.json().catch(() => ({ error: { message: res.statusText } }));
+>>>>>>> upstream/main
     // A 401 ends the dashboard session ONLY when it is OUR auth saying so.
     // Discover/probe endpoints deliberately relay an upstream provider's 401
     // ("the endpoint rejected the key") with its status intact; treating those
@@ -297,6 +314,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     const err = new Error(body.error?.message ?? `HTTP ${res.status}`) as ApiError;
     err.status = res.status;
     err.code = body.error?.type;
+<<<<<<< HEAD
     if (res.status === 429) {
       const retryAfterSec = parseRetryAfter(res.headers.get('Retry-After'));
       if (retryAfterSec !== null) {
@@ -305,6 +323,8 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
         startRetryCountdown(retryAfterSec, () => apiFetch(path, options));
       }
     }
+=======
+>>>>>>> upstream/main
     throw err;
   }
   if (res.status === 204) return undefined as T;

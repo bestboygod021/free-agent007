@@ -17,10 +17,23 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import toolCatalog from '@/data/agent-tools.json'
+<<<<<<< HEAD
 // Subset views of the shared response contracts (shared/schemas.ts): the
 // by-client row AgentsPage renders is the SAME row AnalyticsPage charts, and
 // the api-key envelope is just { apiKey }.
 import type { ByClientRow as ClientAnalytics, ApiKeyResponse as KeyResponse } from '../../../shared/types'
+=======
+
+interface ClientAnalytics {
+  clientAgent: string
+  requests: number
+  lastSeenAt: string | null
+}
+
+interface KeyResponse {
+  apiKey: string
+}
+>>>>>>> upstream/main
 
 const analyticsIds: Record<string, string> = {
   claude: 'claude-code',
@@ -39,6 +52,11 @@ const analyticsIds: Record<string, string> = {
   atomcode: 'atomcode',
   openclaw: 'openclaw',
   hermes: 'hermes-agent',
+<<<<<<< HEAD
+=======
+  pi: 'pi',
+  reasonix: 'reasonix',
+>>>>>>> upstream/main
   cursor: 'cursor',
 }
 
@@ -54,17 +72,26 @@ export default function AgentsPage() {
     queryKey: ['api-key'],
     queryFn: () => apiFetch('/api/settings/api-key'),
   })
+<<<<<<< HEAD
   const { data: byClient = [], dataUpdatedAt } = useQuery<ClientAnalytics[]>({
+=======
+  const { data: byClient = [] } = useQuery<ClientAnalytics[]>({
+>>>>>>> upstream/main
     queryKey: ['analytics', 'by-client', '30d'],
     queryFn: () => apiFetch('/api/analytics/by-client?range=30d'),
   })
   // "Seen recently" means traffic within the last 7 days, not merely any row
+<<<<<<< HEAD
   // in the fetched 30-day window. Anchored to the fetch time (dataUpdatedAt)
   // instead of Date.now(): the clock read would be impure during render, and
   // the fetched-at moment is the more honest reference for fetched data anyway.
   // Before the first fetch dataUpdatedAt is 0 and byClient is empty, so the
   // cutoff's value cannot surface a row.
   const seenCutoff = dataUpdatedAt - 7 * 24 * 60 * 60 * 1000
+=======
+  // in the fetched 30-day window.
+  const seenCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000
+>>>>>>> upstream/main
   const seen = new Map(byClient
     .filter(row => row.lastSeenAt && Date.parse(row.lastSeenAt) >= seenCutoff)
     .map(row => [row.clientAgent, row]))

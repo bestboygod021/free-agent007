@@ -8,7 +8,11 @@ export type ModelMakerId =
   | 'nvidia' | 'moonshot' | 'zhipu' | 'minimax' | 'baidu' | 'perplexity' | 'cohere'
   | 'microsoft' | 'xai' | 'tencent' | 'ibm' | 'ai21' | 'thinkingmachines'
 
+<<<<<<< HEAD
 export type ModelMaker = {
+=======
+export interface ModelMaker {
+>>>>>>> upstream/main
   id: ModelMakerId
   name: string
 }

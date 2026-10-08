@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   AlertTriangle,
@@ -6,12 +7,19 @@ import {
   CheckCircle2,
   ChevronsUpDown,
   ExternalLink,
+=======
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  Check,
+  ChevronsUpDown,
+>>>>>>> upstream/main
   FlaskConical,
   Gauge,
   Info,
   Loader2,
   Monitor,
   Moon,
+<<<<<<< HEAD
   RefreshCw,
   Search,
   SlidersHorizontal,
@@ -19,6 +27,11 @@ import {
   SquareTerminal,
   Sun,
   Timer,
+=======
+  Search,
+  SlidersHorizontal,
+  Sun,
+>>>>>>> upstream/main
   Wrench,
   X,
 } from 'lucide-react'
@@ -29,12 +42,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+<<<<<<< HEAD
 import { UPDATE_CHECK_CHANGED_EVENT } from '@/components/update-reminder'
+=======
+>>>>>>> upstream/main
 import { Switch } from '@/components/ui/switch'
 import { Tooltip } from '@/components/tooltip'
 import { SUPPORTED_LOCALES, type Locale, useI18n } from '@/i18n'
 import { type Theme, useTheme } from '@/theme-context'
 import { apiFetch } from '@/lib/api'
+<<<<<<< HEAD
 // Compression/update contracts live in shared/schemas.ts (type-only).
 import type {
   CompressionMode,
@@ -43,6 +60,8 @@ import type {
   UpdateStatusInfo,
   UpdateCheckInfo,
 } from '../../../shared/types'
+=======
+>>>>>>> upstream/main
 
 // Small info affordance used next to labels a first-time user can't be expected
 // to understand. It's a real <button> so it reaches the tooltip by keyboard
@@ -259,7 +278,32 @@ const themeIcons = {
   dark: Moon,
 } satisfies Record<Theme, typeof Monitor>
 
+<<<<<<< HEAD
 
+=======
+type CompressionMode = 'off' | 'lossless' | 'standard' | 'aggressive'
+
+interface CompressionEngineConfig {
+  enabled: boolean
+  [key: string]: unknown
+}
+
+interface CompressionConfig {
+  mode: CompressionMode
+  engines: Record<string, CompressionEngineConfig>
+  autoTriggerEstTokens?: number | null
+  targetTokens?: number | null
+  trustProjectFilters: boolean
+  prefixFreeze: boolean
+}
+
+interface CompressionStats {
+  requests: number
+  compressedRequests: number
+  estSavedTokens: number
+  savingsPercent: number
+}
+>>>>>>> upstream/main
 
 // Engine ids as registered on the server (server/src/services/compression/engines),
 // in pipeline priority order. `lossless` mirrors each engine's own flag so the
@@ -275,11 +319,18 @@ const ENGINES = [
   { id: 'hard-budget', tKey: 'engineHardBudget', lossless: false },
 ] as const
 
+<<<<<<< HEAD
 type SectionId = 'general' | 'ratelimit' | 'compression' | 'advanced' | 'preview'
 
 const SECTIONS = [
   { id: 'general', tKey: 'sectionGeneral', icon: SlidersHorizontal },
   { id: 'ratelimit', tKey: 'sectionRateLimit', icon: Timer },
+=======
+type SectionId = 'general' | 'compression' | 'advanced' | 'preview'
+
+const SECTIONS = [
+  { id: 'general', tKey: 'sectionGeneral', icon: SlidersHorizontal },
+>>>>>>> upstream/main
   { id: 'compression', tKey: 'sectionCompression', icon: Gauge },
   { id: 'advanced', tKey: 'sectionAdvanced', icon: Wrench },
   { id: 'preview', tKey: 'sectionPreview', icon: FlaskConical },
@@ -542,6 +593,7 @@ function PreviewSection({ state }: { state: CompressionState }) {
   )
 }
 
+<<<<<<< HEAD
 const RELEASES_URL = 'https://github.com/tashfeenahmed/freellmapi/releases'
 
 // GET/PUT /api/settings/rate-limits: the three requests-per-minute caps an
@@ -693,6 +745,9 @@ export function RateLimitSection() {
 }
 
 function GeneralSection({ active }: { active: boolean }) {
+=======
+function GeneralSection() {
+>>>>>>> upstream/main
   const { t } = useI18n()
   const { theme, setTheme } = useTheme()
 
@@ -719,6 +774,7 @@ function GeneralSection({ active }: { active: boolean }) {
           />
         )}
       />
+<<<<<<< HEAD
       <UpdateChecker active={active} />
     </>
   )
@@ -1099,6 +1155,8 @@ function UpdateChecker({ active }: { active: boolean }) {
           </div>
         </DialogPopup>
       </Dialog>
+=======
+>>>>>>> upstream/main
     </>
   )
 }
@@ -1114,7 +1172,11 @@ export function SettingsDialog({
   const [section, setSection] = useState<SectionId>('general')
   const state = useCompressionSettings(open)
   const { config, busy, error, save } = state
+<<<<<<< HEAD
   const compressionSection = section !== 'general' && section !== 'ratelimit'
+=======
+  const compressionSection = section !== 'general'
+>>>>>>> upstream/main
   const loading = compressionSection && !config && busy === 'load'
 
   return (
@@ -1161,8 +1223,12 @@ export function SettingsDialog({
 
           {/* min-height keeps the popup from resizing as sections are switched. */}
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:min-h-[27rem] sm:px-6 sm:py-6">
+<<<<<<< HEAD
             {section === 'general' && <GeneralSection active={open} />}
             {section === 'ratelimit' && <RateLimitSection />}
+=======
+            {section === 'general' && <GeneralSection />}
+>>>>>>> upstream/main
             {loading && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />

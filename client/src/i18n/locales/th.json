@@ -16,8 +16,12 @@
     "modelsMenu": "เรียกดูประเภทโมเดล",
     "agents": "เอเจนต์",
     "logs": "บันทึก",
+<<<<<<< HEAD
     "analyticsMenu": "หน้าการวิเคราะห์",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "หน้าการวิเคราะห์"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "สร้างบัญชีของคุณ",
@@ -109,6 +113,7 @@
     "sectionCompression": "การบีบอัด",
     "sectionAdvanced": "ขั้นสูง",
     "sectionPreview": "ดูตัวอย่าง",
+<<<<<<< HEAD
     "sectionRateLimit": "ขีดจำกัดอัตรา",
     "rateLimitProxy": "ขีดจำกัดพร็อกซี /v1 (คำขอ/นาที)",
     "rateLimitAdmin": "ขีดจำกัดแดชบอร์ด /api (คำขอ/นาที)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "ขีดจำกัดคีย์รวม /v1 (คำขอ/นาที)",
     "rateLimitEnvLocked": "ถูกล็อกด้วย {env} — ลบตัวแปรเพื่อแก้ไข",
     "rateLimitSaved": "นำไปใช้แล้ว — จะมีผลกับคำขอถัดไป",
+=======
+>>>>>>> upstream/main
     "generalDescription": "ภาษาและรูปลักษณ์ของแดชบอร์ดนี้",
     "advancedDescription": "ค่าเกณฑ์และสวิตช์ความปลอดภัยสำหรับไปป์ไลน์การบีบอัด",
     "compressionTitle": "การบีบอัดพร้อมท์",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "รันตัวอย่าง",
     "updatesTitle": "การอัปเดต",
     "checkForUpdates": "ตรวจสอบการอัปเดต",
+<<<<<<< HEAD
     "lastChecked": "ตรวจสอบล่าสุด: {when}",
     "currentVersion": "บิลด์ปัจจุบัน:",
     "updateAvailable": "มีการอัปเดต",
     "changelog": "มีอะไรเปลี่ยนแปลง",
+=======
+    "updateAvailable": "มีการอัปเดต",
+>>>>>>> upstream/main
     "upToDate": "เป็นเวอร์ชันล่าสุด",
     "buildAhead": "บิลด์นี้ล้ำหน้า main อย่างเป็นทางการ",
     "buildDiverged": "บิลด์นี้แยกออกจาก main อย่างเป็นทางการ",
     "buildUnknown": "ไม่สามารถเปรียบเทียบบิลด์ที่ปรับแต่งนี้กับ main อย่างเป็นทางการได้",
     "notGitInstall": "การติดตั้งนี้ไม่มีข้อมูล commit",
     "checkFailed": "ไม่สามารถตรวจสอบการอัปเดตได้",
+<<<<<<< HEAD
     "contactsGithub": "การตรวจสอบเป็นแบบดำเนินการเองและมีการติดต่อ GitHub",
     "autoUpdateCheck": "ตรวจสอบการอัปเดตอัตโนมัติ",
     "autoUpdateCheckHelp": "ตรวจสอบ GitHub วันละครั้งว่ามีเวอร์ชันใหม่หรือไม่ และแสดงการแจ้งเตือน ปิดไว้ตามค่าเริ่มต้น",
     "openReleases": "เปิด GitHub Releases",
     "restartAfterUpdate": "รีสตาร์ต FreeLLMAPI หลังจากบิลด์เสร็จสิ้น"
+=======
+    "autoUpdateCheck": "ตรวจสอบการอัปเดตอัตโนมัติ",
+    "restartAfterUpdate": "รีสตาร์ต FreeLLMAPI หลังจากบิลด์เสร็จสิ้น",
+    "downloadUpdate": "ดาวน์โหลดอัปเดต",
+    "downloadingUpdate": "กำลังดาวน์โหลด… {percent}%",
+    "restartToUpdate": "รีสตาร์ตเพื่ออัปเดต",
+    "updateReadyHint": "ดาวน์โหลดแล้ว FreeLLMAPI จะสำรองข้อมูลของคุณ รีสตาร์ต และเปิดเวอร์ชันใหม่",
+    "updateInstallFailed": "ไม่สามารถติดตั้งอัปเดตได้",
+    "updateNow": "อัปเดตตอนนี้",
+    "updatingContainer": "กำลังดึงอิมเมจใหม่และรีสตาร์ต หน้านี้จะโหลดใหม่เมื่อ FreeLLMAPI กลับมา",
+    "updateNowFailed": "ตัวอัปเดตไม่รับคำขอ ตรวจสอบว่าคอนเทนเนอร์ watchtower กำลังทำงาน",
+    "updateNowTimeout": "FreeLLMAPI ยังไม่รีสตาร์ตหลังผ่านไป 5 นาที ตรวจสอบบันทึกของคอนเทนเนอร์ watchtower"
+>>>>>>> upstream/main
   },
   "models": {
     "title": "โมเดล",
@@ -217,6 +242,10 @@
     "noKey": "ไม่มีกุญแจ",
     "dragToReorder": "ลากเพื่อเรียงลำดับใหม่",
     "dragToReorderGroup": "ลากเพื่อจัดลำดับโมเดลใหม่",
+<<<<<<< HEAD
+=======
+    "moveToRank": "ไปที่อันดับ",
+>>>>>>> upstream/main
     "providerCount": "ผู้ให้บริการ {count}",
     "servedBy": "ให้บริการโดย {providers}",
     "viewProviders": "ดูผู้ให้บริการ",
@@ -231,6 +260,10 @@
     "settingsHint": "การแก้ไขโมเดลแค็ตตาล็อกในเครื่องจะถูกเก็บไว้ระหว่างการซิงค์แค็ตตาล็อก โมเดลแคตตาล็อกที่ถูกลบจะถูกลบจนกว่าคุณจะเพิ่มอีกครั้งผ่านการกำหนดค่า",
     "catalogModel": "แคตตาล็อก",
     "customModel": "กำหนดเอง",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "ค้นพบ",
+>>>>>>> upstream/main
     "localOverride": "การแทนที่ในท้องถิ่น",
     "displayName": "ชื่อที่แสดง",
     "sizeLabel": "ระดับความสามารถ",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "การกำหนดเส้นทางเสื่อมสภาพ: {healthy} จาก {total} ผู้ให้บริการพร้อมใช้งาน (ตั้งแต่ {since})",
     "noProvider": "ไม่มีผู้ให้บริการ",
     "enabledCount": "{count} เปิดใช้งาน",
+=======
+>>>>>>> upstream/main
     "pageTitle": "กุญแจ",
     "pageDescription": "ข้อมูลประจำตัวของผู้ให้บริการและคีย์ API แบบรวมที่แอปของคุณเชื่อมต่อด้วย",
     "tabProviders": "ผู้ให้บริการ",
     "checklistSummary": "กำหนดค่าผู้ให้บริการแล้ว {configured} จาก {total} ราย",
     "checklistKeyless": "ไม่ต้องใช้คีย์",
     "checklistNoKeyTip": "ยังไม่ได้เพิ่มคีย์ คลิกเพื่อเพิ่ม",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "เปิด {provider} เพื่อสร้างบัญชีและรับคีย์",
+>>>>>>> upstream/main
     "checklistKeylessTip": "ใช้งานได้โดยไม่ต้องใช้คีย์",
     "tabQuotaSignals": "สัญญาณโควต้า",
     "tabApiKey": "คีย์ API แบบรวม",
@@ -506,11 +546,19 @@
     "platform": "แพลตฟอร์ม",
     "hideAdded": "ซ่อนผู้ให้บริการที่เพิ่มแล้ว",
     "apiToken": "โทเค็น API",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "ไม่จำเป็นต้องใช้คีย์ API",
     "bearerTokenPlaceholder": "โทเค็นผู้ถือ",
     "pasteKeyPlaceholder": "วางคีย์ที่นี่",
     "pasteSeveral": "วางหลายรายการ",
     "keylessHint": "ไม่จำเป็นต้องมีคีย์ API: Free Tier ของผู้ให้บริการรายนี้ไม่เปิดเผยตัวตน (จำกัดอัตราต่อ IP)",
+=======
+    "keyOptionalPlaceholder": "ไม่บังคับ",
+    "bearerTokenPlaceholder": "โทเค็นผู้ถือ",
+    "pasteKeyPlaceholder": "วางคีย์ที่นี่",
+    "pasteSeveral": "วางหลายรายการ",
+    "keyOptionalHint": "ไม่บังคับ: เว้นว่างไว้เพื่อใช้ระดับฟรีแบบไม่ระบุตัวตน (จำกัดอัตราต่อ IP) หรือวางคีย์ของคุณเองเพื่อใช้บัญชีของคุณ",
+>>>>>>> upstream/main
     "enable": "เปิดใช้งาน",
     "noProviderKeys": "ยังไม่มีคีย์ผู้ให้บริการ เพิ่มหนึ่งรายการด้านบนเพื่อเริ่มการกำหนดเส้นทาง",
     "filterPlaceholder": "กรองผู้ให้บริการหรือคีย์",
@@ -688,7 +736,18 @@
     "testFailed": "การทดสอบโมเดลล้มเหลว",
     "testThrottled": "โปรดรอ {seconds} วินาทีก่อนที่จะทดสอบโมเดลนี้อีกครั้ง",
     "noModelsForProvider": "ไม่มีการกำหนดค่าโมเดลสำหรับผู้ให้บริการนี้",
+<<<<<<< HEAD
     "testModels": "ทดสอบโมเดล"
+=======
+    "testModels": "ทดสอบโมเดล",
+    "monthlyRequestCapLabel": "ขีดจำกัดคำขอรายเดือน",
+    "monthlyTokenCapLabel": "ขีดจำกัดโทเคนรายเดือน",
+    "capUnlimitedPlaceholder": "ไม่จำกัด",
+    "capEditHint": "ขีดจำกัดจะรีเซ็ตวันที่ 1 เวลา 00:00 UTC เว้นว่างไว้หากไม่จำกัด",
+    "monthlyUsageLine": "เดือนนี้ {requests} คำขอ {tokens} โทเคน",
+    "quotaBalanceHint": "เหลือ {remaining} จาก {limit} {metric}",
+    "quotaBalanceLeft": "เหลือ {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "ก่อนอัปเดต"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "มีสุขภาพดี",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "ผู้ช่วยส่วนตัวที่พร้อมตลอดเวลา ตอบกลับบน WhatsApp, Telegram, Discord และอื่น ๆ จากเครื่องของคุณเอง",
+<<<<<<< HEAD
       "hermes": "เอเจนต์ที่พัฒนาตัวเองได้ของ Nous Research พร้อมหน่วยความจำถาวรและทักษะ ใช้ได้ทั้งในเทอร์มินัลและบนแอปแชต"
+=======
+      "hermes": "เอเจนต์ที่พัฒนาตัวเองได้ของ Nous Research พร้อมหน่วยความจำถาวรและทักษะ ใช้ได้ทั้งในเทอร์มินัลและบนแอปแชต",
+      "pi": "เอเจนต์เทอร์มินัลแบบมินิมอลที่คุณปรับแต่งได้ด้วยส่วนขยาย ทักษะ และเทมเพลตพรอมต์ของคุณเอง",
+      "reasonix": "เอเจนต์เขียนโค้ดบนเทอร์มินัลที่สร้างมาเพื่อ DeepSeek โดยออกแบบรอบ prefix caching ให้เซสชันยาว ๆ ยังคงประหยัด"
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "ติดตั้ง FreeLLMAPI เวอร์ชันใหม่กว่าแล้ว",
+    "reload": "โหลดใหม่"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} คำขอถูกจำกัดในช่วง 5 นาทีที่ผ่านมา",
     "hourFilter": "ชั่วโมง: {hour}",
     "serverLog": "บันทึกเซิร์ฟเวอร์"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "เปลี่ยนชื่อเชนนี้",
+    "renameConfirm": "เปลี่ยนชื่อเชน \"{oldName}\" เป็น \"{name}\"? ไคลเอนต์ที่เรียก auto:{oldName} ต้องเปลี่ยนไปใช้ auto:{name} แทน",
+    "renamePlaceholder": "ชื่อเชนใหม่",
+    "renameFailed": "ไม่สามารถเปลี่ยนชื่อเชนได้"
+  },
+  "updates": {
+    "versionAvailable": "มีเวอร์ชัน {version} แล้ว",
+    "versionReady": "เวอร์ชัน {version} พร้อมติดตั้งแล้ว",
+    "releaseNotes": "บันทึกประจำรุ่น",
+    "tryAgain": "ลองอีกครั้ง",
+    "offline": "ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองอีกครั้ง"
+>>>>>>> upstream/main
   }
 }

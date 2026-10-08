@@ -16,8 +16,12 @@
     "modelsMenu": "Gennemse modeltyper",
     "agents": "Agenter",
     "logs": "Log",
+<<<<<<< HEAD
     "analyticsMenu": "Analysesider",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Analysesider"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Opret din konto",
@@ -109,6 +113,7 @@
     "sectionCompression": "Komprimering",
     "sectionAdvanced": "Avanceret",
     "sectionPreview": "Forhåndsvisning",
+<<<<<<< HEAD
     "sectionRateLimit": "Hastighedsgrænser",
     "rateLimitProxy": "Proxy-/v1-grænse (forespørgsler/min)",
     "rateLimitAdmin": "Dashboard-/api-grænse (forespørgsler/min)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Enhedsnøgle-/v1-grænse (forespørgsler/min)",
     "rateLimitEnvLocked": "Sat af {env} — fjern den for at redigere",
     "rateLimitSaved": "Anvendt — træder i kraft ved næste forespørgsel",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Sprog og udseende for dette dashboard.",
     "advancedDescription": "Tærskler og sikkerhedskontakter for komprimeringspipelinen.",
     "compressionTitle": "Promptkomprimering",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Kør forhåndsvisning",
     "updatesTitle": "Opdateringer",
     "checkForUpdates": "Tjek for opdateringer",
+<<<<<<< HEAD
     "lastChecked": "Sidst tjekket: {when}",
     "currentVersion": "Nuværende build:",
     "updateAvailable": "Opdatering tilgængelig",
     "changelog": "Hvad er ændret",
+=======
+    "updateAvailable": "Opdatering tilgængelig",
+>>>>>>> upstream/main
     "upToDate": "Opdateret",
     "buildAhead": "Denne build er foran den officielle main-gren.",
     "buildDiverged": "Denne build er divergeret fra den officielle main-gren.",
     "buildUnknown": "Denne tilpassede build kan ikke sammenlignes med den officielle main-gren.",
     "notGitInstall": "Denne installation indeholder ikke commit-oplysninger.",
     "checkFailed": "Det var ikke muligt at søge efter opdateringer.",
+<<<<<<< HEAD
     "contactsGithub": "Tjek udføres manuelt og kontakter GitHub.",
     "autoUpdateCheck": "Automatisk opdateringstjek",
     "autoUpdateCheckHelp": "Tjekker GitHub én gang om dagen for en ny udgivelse og viser en påmindelse. Slået fra som standard.",
     "openReleases": "Åbn GitHub-udgivelser",
     "restartAfterUpdate": "Genstart FreeLLMAPI, når buildet er færdigt."
+=======
+    "autoUpdateCheck": "Automatisk opdateringstjek",
+    "restartAfterUpdate": "Genstart FreeLLMAPI, når buildet er færdigt.",
+    "downloadUpdate": "Hent opdatering",
+    "downloadingUpdate": "Henter… {percent} %",
+    "restartToUpdate": "Genstart for at opdatere",
+    "updateReadyHint": "Hentet. FreeLLMAPI tager backup af dine data, genstarter og åbner den nye version.",
+    "updateInstallFailed": "Opdateringen kunne ikke installeres.",
+    "updateNow": "Opdater nu",
+    "updatingContainer": "Henter det nye image og genstarter. Siden genindlæses, når FreeLLMAPI er tilbage.",
+    "updateNowFailed": "Opdateringstjenesten afviste anmodningen. Tjek at watchtower-containeren kører.",
+    "updateNowTimeout": "FreeLLMAPI er ikke genstartet efter 5 minutter. Tjek logfilerne for watchtower-containeren."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Modeller",
@@ -217,6 +242,10 @@
     "noKey": "Ingen nøgle",
     "dragToReorder": "Træk for at omorganisere",
     "dragToReorderGroup": "Træk for at omarrangere modellen",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Hop til rang",
+>>>>>>> upstream/main
     "providerCount": "{count} udbydere",
     "servedBy": "Betjent af {providers}",
     "viewProviders": "Se udbydere",
@@ -231,6 +260,10 @@
     "settingsHint": "Lokale redigeringer af katalogmodeller gemmes på tværs af katalogsynkroniseringer. Slettede katalogmodeller forbliver slettede, indtil du tilføjer dem igen via konfigurationen.",
     "catalogModel": "Katalog",
     "customModel": "skik",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "fundet",
+>>>>>>> upstream/main
     "localOverride": "Lokal overstyring",
     "displayName": "Visningsnavn",
     "sizeLabel": "Kapacitetsniveau",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Nøgler",
     "pageDescription": "Udbyderoplysninger og den samlede API nøgle, som dine apps forbinder med.",
     "tabProviders": "Udbydere",
     "checklistSummary": "{configured} af {total} udbydere er konfigureret",
     "checklistKeyless": "ingen nøgle påkrævet",
     "checklistNoKeyTip": "Der er endnu ikke tilføjet en nøgle. Klik for at tilføje en.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Åbn {provider} for at oprette en konto og få en nøgle",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Virker uden nøgle.",
     "tabQuotaSignals": "Kvotesignaler",
     "tabApiKey": "Unified API nøgle",
@@ -506,11 +546,19 @@
     "platform": "Platform",
     "hideAdded": "Skjul tilføjede udbydere",
     "apiToken": "API token",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Ingen API nøgle nødvendig",
     "bearerTokenPlaceholder": "Bærertoken",
     "pasteKeyPlaceholder": "Afsæt nøgle her",
     "pasteSeveral": "Indsæt flere",
     "keylessHint": "Ingen API nøgle nødvendig: denne udbyders gratis niveau er anonymt (prisbegrænset pr. IP).",
+=======
+    "keyOptionalPlaceholder": "Valgfri",
+    "bearerTokenPlaceholder": "Bærertoken",
+    "pasteKeyPlaceholder": "Afsæt nøgle her",
+    "pasteSeveral": "Indsæt flere",
+    "keyOptionalHint": "Valgfri: lad feltet stå tomt for det anonyme gratisniveau (begrænset pr. IP), eller indsæt din egen nøgle for at bruge din konto.",
+>>>>>>> upstream/main
     "enable": "Enable",
     "noProviderKeys": "Ingen udbydernøgler endnu. Tilføj en ovenfor for at starte ruten.",
     "filterPlaceholder": "Filterudbydere eller nøgler",
@@ -688,7 +736,18 @@
     "testFailed": "Modeltest fejlede",
     "testThrottled": "Vent venligst {seconds}s, før du tester denne model igen.",
     "noModelsForProvider": "Ingen modeller konfigureret for denne udbyder.",
+<<<<<<< HEAD
     "testModels": "Test modeller"
+=======
+    "testModels": "Test modeller",
+    "monthlyRequestCapLabel": "Månedlig grænse for anmodninger",
+    "monthlyTokenCapLabel": "Månedlig grænse for tokens",
+    "capUnlimitedPlaceholder": "Ubegrænset",
+    "capEditHint": "Grænser nulstilles den 1. kl. 00:00 UTC. Lad være tomt for ubegrænset.",
+    "monthlyUsageLine": "{requests} anmodninger, {tokens} tokens denne måned",
+    "quotaBalanceHint": "{remaining} af {limit} {metric} tilbage",
+    "quotaBalanceLeft": "{remaining} tilbage"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Før opdatering"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "sundt",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "En altid tilgængelig personlig assistent, der svarer på WhatsApp, Telegram, Discord og mere fra din egen maskine.",
+<<<<<<< HEAD
       "hermes": "Nous Researchs selvforbedrende agent med vedvarende hukommelse og færdigheder, i terminalen eller i chat-apps."
+=======
+      "hermes": "Nous Researchs selvforbedrende agent med vedvarende hukommelse og færdigheder, i terminalen eller i chat-apps.",
+      "pi": "En minimal terminalagent, du former med dine egne udvidelser, færdigheder og prompt-skabeloner.",
+      "reasonix": "En terminalbaseret kodeagent bygget til DeepSeek omkring prefix-caching, så lange sessioner forbliver billige."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "En nyere version af FreeLLMAPI er installeret.",
+    "reload": "Genindlæs"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} forespørgsler blev begrænset inden for de seneste 5 minutter",
     "hourFilter": "Time: {hour}",
     "serverLog": "Serverlog"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "Omdøb denne kæde",
+    "renameConfirm": "Omdøb kæden \"{oldName}\" til \"{name}\"? Klients, der kalder auto:{oldName}, skal skifte til auto:{name}.",
+    "renamePlaceholder": "Nyt kædenavn",
+    "renameFailed": "Kæden kunne ikke omdøbes."
+  },
+  "updates": {
+    "versionAvailable": "Version {version} er tilgængelig",
+    "versionReady": "Version {version} er klar til installation",
+    "releaseNotes": "Udgivelsesnoter",
+    "tryAgain": "Prøv igen",
+    "offline": "Tjek din internetforbindelse, og prøv igen."
+>>>>>>> upstream/main
   }
 }

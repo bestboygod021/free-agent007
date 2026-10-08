@@ -18,7 +18,12 @@ import {
   recordRetryableFailure,
   resetModelFailureWindows,
 } from '../../lib/fallback-loop.js';
+<<<<<<< HEAD
 import { resetKeyLocalityCache } from '../../services/ratelimit.js';
+=======
+import { isOnCooldown, resetKeyLocalityCache } from '../../services/ratelimit.js';
+import { resetLearnedOutputCaps } from '../../lib/output-cap.js';
+>>>>>>> upstream/main
 import {
   setRoutingStrategy,
   clearAllPenalties,
@@ -236,3 +241,45 @@ describe('FallbackState.observedTotalTokens (#507)', () => {
     expect(routingTotal).toBe(localEstimate);
   });
 });
+<<<<<<< HEAD
+=======
+
+describe('request-too-large failures', () => {
+  it('skip the model for this request without benching it for smaller ones', () => {
+    // An oversized agent turn says nothing about the model's health; a
+    // cooldown here made the next ordinary request find the pool rate limited.
+    // A key of its own: earlier cases leave in-memory cooldowns on `keyId`.
+    const freshKey = insertKey('size-no-bench');
+    resetKeyLocalityCache();
+    const state = newFallbackState();
+    const err = Object.assign(new Error('Groq API error 413: Request too large for model `x` on tokens per minute (TPM): Limit 8000, Requested 17679, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing'), { status: 413 });
+    recordRetryableFailure(routeFor(modelSmall, freshKey), err, state);
+    expect(state.skipModels.has(modelSmall.id)).toBe(true);
+    expect(state.observedTotalTokens).toBe(17679);
+    expect(isOnCooldown(PLATFORM, modelSmall.model_id, freshKey)).toBe(false);
+  });
+});
+
+describe('max_tokens above the model output ceiling', () => {
+  const msg = 'Groq API error 400: `max_tokens` must be less than or equal to `65536`, the maximum value for `max_tokens` is less than the `context_window` for this model';
+
+  it('retries the same route once the ceiling is learned, then rules the model out if it still rejects', () => {
+    resetLearnedOutputCaps();
+    const freshKey = insertKey('output-cap');
+    resetKeyLocalityCache();
+    const route = routeFor(modelSmall, freshKey);
+    const routeKey = `${PLATFORM}:${modelSmall.model_id}:${freshKey}`;
+    const state = newFallbackState();
+    state.wantsTools = true;
+
+    recordRetryableFailure(route, Object.assign(new Error(msg), { status: 400 }), state);
+    expect(state.skipKeys.has(routeKey)).toBe(false);
+    expect(state.skipModels.has(modelSmall.id)).toBe(false);
+    expect(isOnCooldown(PLATFORM, modelSmall.model_id, freshKey)).toBe(false);
+
+    recordRetryableFailure(route, Object.assign(new Error(msg), { status: 400 }), state);
+    expect(state.skipModels.has(modelSmall.id)).toBe(true);
+    expect(isOnCooldown(PLATFORM, modelSmall.model_id, freshKey)).toBe(false);
+  });
+});
+>>>>>>> upstream/main

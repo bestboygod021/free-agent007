@@ -14,6 +14,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities'
 import { ArrowDown, ArrowUp, Layers } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+<<<<<<< HEAD
 // Response contracts from shared/schemas.ts (type-only, zero bundle cost).
 import type {
   EmbeddingsData,
@@ -22,6 +23,9 @@ import type {
   EmbeddingsFamily as Family,
 } from '../../../shared/types'
 import { dragDots } from '@/components/drag-dots'
+=======
+import { dragDots } from '@/components/model-table'
+>>>>>>> upstream/main
 import { Button } from '@/components/ui/button'
 import { ConfirmButton } from '@/components/confirm-button'
 import { EmptyState } from '@/components/empty-state'
@@ -33,6 +37,46 @@ import { ModelsTabs } from '@/components/models-tabs'
 import { UsageSummaryCard } from '@/components/usage-summary-card'
 import { useI18n } from '@/i18n'
 
+<<<<<<< HEAD
+=======
+interface ProviderEntry {
+  id: number
+  platform: string
+  modelId: string
+  displayName: string
+  priority: number
+  enabled: boolean
+  quotaLabel: string
+  keyCount: number
+  isCustom?: boolean
+}
+
+interface Family {
+  family: string
+  dimensions: number
+  maxInputTokens: number | null
+  isDefault: boolean
+  providers: ProviderEntry[]
+}
+
+interface EmbeddingsData {
+  defaultFamily: string
+  families: Family[]
+}
+
+interface UsageData {
+  families: {
+    family: string
+    requestsToday: number
+    tokensMonth: number
+    platform?: string | null
+    quotaLabel?: string | null
+  }[]
+  totalTokensMonth?: number
+  totalRequestsToday?: number
+}
+
+>>>>>>> upstream/main
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`

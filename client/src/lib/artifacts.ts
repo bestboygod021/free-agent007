@@ -6,7 +6,11 @@
 
 export type ArtifactKind = 'html' | 'svg'
 
+<<<<<<< HEAD
 export type Artifact = {
+=======
+export interface Artifact {
+>>>>>>> upstream/main
   /** Stable within a message: `${messageIndex}:${blockIndex}`. */
   id: string
   kind: ArtifactKind

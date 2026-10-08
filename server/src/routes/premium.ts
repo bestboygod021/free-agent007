@@ -9,6 +9,10 @@ import {
   getSyncState,
   refreshLicenseStatus,
   syncCatalog,
+<<<<<<< HEAD
+=======
+  validateLicenseKey,
+>>>>>>> upstream/main
 } from '../services/catalog-sync.js';
 
 export const premiumRouter = Router();
@@ -44,6 +48,7 @@ premiumRouter.get('/', (_req: Request, res: Response) => {
 premiumRouter.post('/key', async (req: Request, res: Response) => {
   const key = typeof req.body?.key === 'string' ? req.body.key.trim() : '';
   if (key.length < 8) {
+<<<<<<< HEAD
     res.status(400).json({ error: { message: 'Enter the license key from your purchase email.' } });
     return;
   }
@@ -59,6 +64,15 @@ premiumRouter.post('/key', async (req: Request, res: Response) => {
     result = (await r.json()) as typeof result;
   } catch {
     res.status(502).json({ error: { message: 'Could not reach the license service. Check your connection and try again.' } });
+=======
+    res.status(400).json({ error: 'Enter the license key from your purchase email.' });
+    return;
+  }
+
+  const result = await validateLicenseKey(key, 15000);
+  if (!result) {
+    res.status(502).json({ error: 'Could not reach the license service. Check your connection and try again.' });
+>>>>>>> upstream/main
     return;
   }
 
@@ -104,7 +118,11 @@ premiumRouter.post('/sync', async (_req: Request, res: Response) => {
 premiumRouter.post('/portal', async (_req: Request, res: Response) => {
   const key = getSetting(SETTING_LICENSE_KEY);
   if (!key) {
+<<<<<<< HEAD
     res.status(400).json({ error: { message: 'No license key configured.' } });
+=======
+    res.status(400).json({ error: 'No license key configured.' });
+>>>>>>> upstream/main
     return;
   }
   try {
@@ -121,6 +139,10 @@ premiumRouter.post('/portal', async (_req: Request, res: Response) => {
     }
     res.json({ url: body.url });
   } catch {
+<<<<<<< HEAD
     res.status(502).json({ error: { message: 'Could not reach the billing service. Try again shortly.' } });
+=======
+    res.status(502).json({ error: 'Could not reach the billing service. Try again shortly.' });
+>>>>>>> upstream/main
   }
 });

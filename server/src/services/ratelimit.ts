@@ -3,7 +3,10 @@
 import { getDb, getSetting, setSetting } from '../db/index.js';
 import { isLoopbackOrPrivateUrl } from '../lib/url-guard.js';
 import { parseModelScope, scopeAllows } from '../lib/model-scope.js';
+<<<<<<< HEAD
 import { MIN_COOLDOWN_CEILING_MS, MAX_COOLDOWN_CEILING_MS } from '@freellmapi/shared/schemas.js';
+=======
+>>>>>>> upstream/main
 
 interface Window {
   timestamps: number[];
@@ -565,6 +568,15 @@ const DEFAULT_PROVIDER_DAILY_REQUEST_CAPS: Record<string, number> = {
   // models share it). 1800 leaves margin for validation probes and for drift
   // between our ledger and the provider's own daily boundary (#581).
   modelscope: 1800,
+<<<<<<< HEAD
+=======
+  // Requesty's free tier is 200 requests/day per account, shared by every free
+  // model (requesty.ai/free-models, no card). The catalog rows each carry
+  // rpd 200, so without this gate the router could spend 200 per model. 180
+  // leaves the same margin as ModelScope for cooldown probes and drift from
+  // Requesty's own daily reset.
+  requesty: 180,
+>>>>>>> upstream/main
 };
 
 const DEFAULT_PROVIDER_DAILY_TOKEN_CAPS: Record<string, number> = {
@@ -886,6 +898,11 @@ const COOLDOWN_DURATIONS = [
 // provider that told us when to come back would only burn quota. Unset =
 // unchanged behaviour (the ladder tops out at a day).
 export const COOLDOWN_CEILING_KEY = 'routing_cooldown_ceiling_ms';
+<<<<<<< HEAD
+=======
+export const MIN_COOLDOWN_CEILING_MS = MINUTE;
+export const MAX_COOLDOWN_CEILING_MS = DAY;
+>>>>>>> upstream/main
 
 /** The configured ceiling in ms, or null when unset/invalid (no cap). Read
  *  through a try/catch like every other DB touch in this module so a failure

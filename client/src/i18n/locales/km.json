@@ -16,8 +16,12 @@
     "modelsMenu": "រុករកប្រភេទម៉ូដែល",
     "agents": "ភ្នាក់ងារ",
     "logs": "កំណត់ហេតុ",
+<<<<<<< HEAD
     "analyticsMenu": "ទំព័រវិភាគ",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "ទំព័រវិភាគ"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "បង្កើតគណនីរបស់អ្នក",
@@ -109,6 +113,7 @@
     "sectionCompression": "ការបង្ហាប់",
     "sectionAdvanced": "កម្រិតខ្ពស់",
     "sectionPreview": "មើលជាមុន",
+<<<<<<< HEAD
     "sectionRateLimit": "កំណត់ល្បឿន",
     "rateLimitProxy": "កំណត់ proxy /v1 (សំណើ/នាទី)",
     "rateLimitAdmin": "កំណត់ផ្ទាំងគ្រប់គ្រង /api (សំណើ/នាទី)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "កូនសោរួម /v1 កំណត់ (សំណើ/នាទី)",
     "rateLimitEnvLocked": "បានកំណត់ដោយ {env} — លុបវាដើម្បីកែ",
     "rateLimitSaved": "បានអនុវត្ត — នឹងមានប្រសិទ្ធភាពក្នុងសំណើបន្ទាប់",
+=======
+>>>>>>> upstream/main
     "generalDescription": "ភាសា និងរូបរាងរបស់ផ្ទាំងគ្រប់គ្រងនេះ។",
     "advancedDescription": "កម្រិតកំណត់ និងកុងតាក់សុវត្ថិភាពសម្រាប់ដំណើរការបង្ហាប់។",
     "compressionTitle": "ការបង្ហាប់ prompt",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "ដំណើរការមើលជាមុន",
     "updatesTitle": "ការអាប់ដេត",
     "checkForUpdates": "ពិនិត្យមើលការអាប់ដេត",
+<<<<<<< HEAD
     "lastChecked": "ពិនិត្យចុងក្រោយ៖ {when}",
     "currentVersion": "ប៊ីលបច្ចុប្បន្ន៖",
     "updateAvailable": "មានការអាប់ដេត",
     "changelog": "អ្វីដែលបានផ្លាស់ប្តូរ",
+=======
+    "updateAvailable": "មានការអាប់ដេត",
+>>>>>>> upstream/main
     "upToDate": "ទាន់សម័យ",
     "buildAhead": "ប៊ីលនេះនាំមុខសាខា main ផ្លូវការ។",
     "buildDiverged": "ប៊ីលនេះបានបែកចេញពីសាខា main ផ្លូវការ។",
     "buildUnknown": "មិនអាចប្រៀបធៀបប៊ីលផ្ទាល់ខ្លួននេះជាមួយសាខា main ផ្លូវការបានទេ។",
     "notGitInstall": "ការដំឡើងនេះមិនមានព័ត៌មាន commit ទេ។",
     "checkFailed": "មិនអាចពិនិត្យរកការអាប់ដេតបានទេ។",
+<<<<<<< HEAD
     "contactsGithub": "ការពិនិត្យធ្វើឡើងដោយដៃ និងភ្ជាប់ទៅ GitHub។",
     "autoUpdateCheck": "ការពិនិត្យអាប់ដេតដោយស្វ័យប្រវត្តិ",
     "autoUpdateCheckHelp": "ពិនិត្យ GitHub ម្ដងក្នុងមួយថ្ងៃរកមើលការចេញផ្សាយថ្មី ហើយបង្ហាញការរំលឹក។ បិទតាមលំនាំដើម។",
     "openReleases": "បើក GitHub Releases",
     "restartAfterUpdate": "ចាប់ផ្តើម FreeLLMAPI ឡើងវិញ បន្ទាប់ពីការបង្កើតបានបញ្ចប់។"
+=======
+    "autoUpdateCheck": "ការពិនិត្យអាប់ដេតដោយស្វ័យប្រវត្តិ",
+    "restartAfterUpdate": "ចាប់ផ្តើម FreeLLMAPI ឡើងវិញ បន្ទាប់ពីការបង្កើតបានបញ្ចប់។",
+    "downloadUpdate": "ទាញយកបច្ចុប្បន្នភាព",
+    "downloadingUpdate": "កំពុងទាញយក… {percent}%",
+    "restartToUpdate": "ចាប់ផ្ដើមឡើងវិញដើម្បីធ្វើបច្ចុប្បន្នភាព",
+    "updateReadyHint": "បានទាញយករួច។ FreeLLMAPI បម្រុងទុកទិន្នន័យរបស់អ្នក ចាប់ផ្ដើមឡើងវិញ ហើយបើកកំណែថ្មី។",
+    "updateInstallFailed": "មិនអាចដំឡើងបច្ចុប្បន្នភាពបានទេ។",
+    "updateNow": "ធ្វើបច្ចុប្បន្នភាពឥឡូវនេះ",
+    "updatingContainer": "កំពុងទាញរូបភាពថ្មី ហើយចាប់ផ្ដើមឡើងវិញ។ ទំព័រនេះនឹងផ្ទុកឡើងវិញពេល FreeLLMAPI ត្រឡប់មកវិញ។",
+    "updateNowFailed": "កម្មវិធីធ្វើបច្ចុប្បន្នភាពមិនបានទទួលសំណើទេ។ ពិនិត្យថា container watchtower កំពុងដំណើរការ។",
+    "updateNowTimeout": "FreeLLMAPI មិនទាន់ចាប់ផ្ដើមឡើងវិញក្រោយ ៥ នាទី។ ពិនិត្យកំណត់ហេតុរបស់ container watchtower។"
+>>>>>>> upstream/main
   },
   "models": {
     "title": "ម៉ូដែល",
@@ -217,6 +242,10 @@
     "noKey": "គ្មានសោ",
     "dragToReorder": "អូសដើម្បីរៀបចំឡើងវិញ",
     "dragToReorderGroup": "អូសដើម្បីរៀបចំម៉ូដែលឡើងវិញ",
+<<<<<<< HEAD
+=======
+    "moveToRank": "ទៅកាន់ចំណាត់",
+>>>>>>> upstream/main
     "providerCount": "{count}",
     "servedBy": "បម្រើដោយ {providers}",
     "viewProviders": "មើលអ្នកផ្តល់សេវា",
@@ -231,6 +260,10 @@
     "settingsHint": "ការកែសម្រួលមូលដ្ឋានទៅលើម៉ូដែលកាតាឡុកត្រូវបានរក្សាទុកឆ្លងកាត់ការសមកាលកម្មកាតាឡុក។ ម៉ូដែលកាតាឡុកដែលបានលុបនឹងនៅតែត្រូវបានលុបរហូតដល់អ្នកបន្ថែមវាឡើងវិញតាមរយៈការកំណត់រចនាសម្ព័ន្ធ។",
     "catalogModel": "កាតាឡុក",
     "customModel": "ទម្លាប់",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "បានរកឃើញ",
+>>>>>>> upstream/main
     "localOverride": "ការបដិសេធមូលដ្ឋាន",
     "displayName": "ឈ្មោះបង្ហាញ",
     "sizeLabel": "កម្រិតសមត្ថភាព",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "សោ",
     "pageDescription": "ព័ត៌មានសម្ងាត់អ្នកផ្តល់សេវា និងកូនសោ API ដែលកម្មវិធីរបស់អ្នកភ្ជាប់ជាមួយ។",
     "tabProviders": "អ្នកផ្តល់សេវា",
     "checklistSummary": "បានកំណត់រចនាសម្ព័ន្ធអ្នកផ្តល់សេវា {configured} ក្នុងចំណោម {total}",
     "checklistKeyless": "មិនត្រូវការសោ",
     "checklistNoKeyTip": "មិនទាន់បានបន្ថែមសោនៅឡើយទេ។ ចុចដើម្បីបន្ថែម។",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "បើក {provider} ដើម្បីបង្កើតគណនី និងទទួលយកគ្រាប់ចុច",
+>>>>>>> upstream/main
     "checklistKeylessTip": "ដំណើរការដោយមិនចាំបាច់ប្រើសោ។",
     "tabQuotaSignals": "សញ្ញាកូតា",
     "tabApiKey": "កូនសោ API រួម",
@@ -506,11 +546,19 @@
     "platform": "វេទិកា",
     "hideAdded": "លាក់អ្នកផ្គត់ផ្គង់ដែលបានបន្ថែម",
     "apiToken": "API",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "មិនចាំបាច់ប្រើកូនសោ API",
     "bearerTokenPlaceholder": "សញ្ញាអ្នកកាន់",
     "pasteKeyPlaceholder": "បិទសោនៅទីនេះ",
     "pasteSeveral": "បិទភ្ជាប់ច្រើន",
     "keylessHint": "មិនចាំបាច់មានកូនសោ API ទេ៖ ថ្នាក់ឥតគិតថ្លៃរបស់អ្នកផ្គត់ផ្គង់នេះគឺអនាមិក (កំណត់អត្រាតាម IP)។",
+=======
+    "keyOptionalPlaceholder": "ស្រេចចិត្ត",
+    "bearerTokenPlaceholder": "សញ្ញាអ្នកកាន់",
+    "pasteKeyPlaceholder": "បិទសោនៅទីនេះ",
+    "pasteSeveral": "បិទភ្ជាប់ច្រើន",
+    "keyOptionalHint": "ស្រេចចិត្ត៖ ទុកទទេសម្រាប់កម្រិតឥតគិតថ្លៃអនាមិក (កំណត់អត្រាតាម IP) ឬបិទភ្ជាប់សោផ្ទាល់ខ្លួនរបស់អ្នកដើម្បីប្រើគណនីរបស់អ្នក។",
+>>>>>>> upstream/main
     "enable": "បើក",
     "noProviderKeys": "មិនទាន់មានកូនសោអ្នកផ្គត់ផ្គង់ទេ។ បន្ថែមមួយខាងលើដើម្បីចាប់ផ្តើមផ្លូវ។",
     "filterPlaceholder": "តម្រងអ្នកផ្គត់ផ្គង់ ឬកូនសោ",
@@ -688,7 +736,18 @@
     "testFailed": "ការសាកល្បងម៉ូដែលបានបរាជ័យ",
     "testThrottled": "សូមរង់ចាំ {seconds}វិនាទី មុនពេលសាកល្បងម៉ូដែលនេះម្តងទៀត។",
     "noModelsForProvider": "មិនមានម៉ូដែលត្រូវបានកំណត់រចនាសម្ព័ន្ធសម្រាប់អ្នកផ្តល់សេវានេះទេ។",
+<<<<<<< HEAD
     "testModels": "សាកល្បងម៉ូដែល"
+=======
+    "testModels": "សាកល្បងម៉ូដែល",
+    "monthlyRequestCapLabel": "ដែនកំណត់ស្នើសុំប្រចាំខែ",
+    "monthlyTokenCapLabel": "ដែនកំណត់តូខិនប្រចាំខែ",
+    "capUnlimitedPlaceholder": "គ្មានដែនកំណត់",
+    "capEditHint": "ដែនកំណត់កំណត់ឡើងវិញនៅថ្ងៃទី 1 ម៉ោង 00:00 UTC ទុកទទេប្រសិនបើគ្មានដែនកំណត់។",
+    "monthlyUsageLine": "ខែនេះ {requests} ស្នើសុំ {tokens} តូខិន",
+    "quotaBalanceHint": "នៅសល់ {remaining} ក្នុងចំណោម {limit} {metric}",
+    "quotaBalanceLeft": "នៅសល់ {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "មុនបច្ចុប្បន្នភាព"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "មានសុខភាពល្អ",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "ជំនួយការផ្ទាល់ខ្លួនដែលដំណើរការជានិច្ច ហើយឆ្លើយតបនៅលើ WhatsApp, Telegram, Discord និងផ្សេងទៀត ពីម៉ាស៊ីនរបស់អ្នកផ្ទាល់។",
+<<<<<<< HEAD
       "hermes": "ភ្នាក់ងាររបស់ Nous Research ដែលកែលម្អខ្លួនឯង មានអង្គចងចាំអចិន្ត្រៃយ៍ និងជំនាញ នៅក្នុង terminal ឬលើកម្មវិធីជជែក។"
+=======
+      "hermes": "ភ្នាក់ងាររបស់ Nous Research ដែលកែលម្អខ្លួនឯង មានអង្គចងចាំអចិន្ត្រៃយ៍ និងជំនាញ នៅក្នុង terminal ឬលើកម្មវិធីជជែក។",
+      "pi": "ភ្នាក់ងារ terminal តូចចង្អៀត ដែលអ្នករៀបចំដោយផ្នែកបន្ថែម ជំនាញ និងគំរូ prompt ផ្ទាល់ខ្លួន។",
+      "reasonix": "ភ្នាក់ងារសរសេរកូដលើ terminal ដែលបង្កើតឡើងសម្រាប់ DeepSeek ផ្អែកលើ prefix caching ដើម្បីឱ្យវគ្គវែងៗនៅតែថោក។"
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "កំណែថ្មីជាងរបស់ FreeLLMAPI ត្រូវបានដំឡើង។",
+    "reload": "ផ្ទុកឡើងវិញ"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} សំណើត្រូវបានកំណត់ក្នុងរយៈពេល 5 នាទីចុងក្រោយ",
     "hourFilter": "ម៉ោង: {hour}",
     "serverLog": "កំណត់ត្រាដេមិន"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "ប្តូរឈ្មោះខ្សែសង្វាក់នេះ",
+    "renameConfirm": "ប្តូរឈ្មោះខ្សែសង្វាក់ \"{oldName}\" ទៅ \"{name}\"? កម្មវិធីដែលហៅ auto:{oldName} ត្រូវផ្លាស់ប្តូរទៅ auto:{name} ។",
+    "renamePlaceholder": "ឈ្មោះខ្សែសង្វាក់ថ្មី",
+    "renameFailed": "មិនអាចប្តូរឈ្មោះខ្សែសង្វាក់បានទេ។"
+  },
+  "updates": {
+    "versionAvailable": "កំណែ {version} មានហើយ",
+    "versionReady": "កំណែ {version} រួចរាល់សម្រាប់ដំឡើង",
+    "releaseNotes": "កំណត់ចំណាំការចេញផ្សាយ",
+    "tryAgain": "ព្យាយាមម្ដងទៀត",
+    "offline": "សូមពិនិត្យការតភ្ជាប់អ៊ីនធឺណិត ហើយព្យាយាមម្ដងទៀត។"
+>>>>>>> upstream/main
   }
 }

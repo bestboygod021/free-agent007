@@ -16,8 +16,12 @@
     "modelsMenu": "Explorează tipurile de modele",
     "agents": "Agenți",
     "logs": "Jurnale",
+<<<<<<< HEAD
     "analyticsMenu": "Pagini de analiză",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Pagini de analiză"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Creează-ți contul",
@@ -109,6 +113,7 @@
     "sectionCompression": "Comprimare",
     "sectionAdvanced": "Avansat",
     "sectionPreview": "Previzualizare",
+<<<<<<< HEAD
     "sectionRateLimit": "Limite de viteză",
     "rateLimitProxy": "Limită proxy /v1 (cereri/min)",
     "rateLimitAdmin": "Limită panou /api (cereri/min)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Limită cheie unificată /v1 (cereri/min)",
     "rateLimitEnvLocked": "Fixat de {env} — eliminați variabila pentru editare",
     "rateLimitSaved": "Aplicat — intră în vigoare la următoarea cerere",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Limba și aspectul acestui panou.",
     "advancedDescription": "Praguri și comutatoare de siguranță pentru lanțul de comprimare.",
     "compressionTitle": "Comprimarea prompturilor",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Rulează previzualizarea",
     "updatesTitle": "Actualizări",
     "checkForUpdates": "Verifică actualizările",
+<<<<<<< HEAD
     "lastChecked": "Ultima verificare: {when}",
     "currentVersion": "Versiunea curentă:",
     "updateAvailable": "Actualizare disponibilă",
     "changelog": "Ce s-a schimbat",
+=======
+    "updateAvailable": "Actualizare disponibilă",
+>>>>>>> upstream/main
     "upToDate": "La zi",
     "buildAhead": "Această versiune este înaintea ramurii main oficiale.",
     "buildDiverged": "Această versiune a deviat de la ramura main oficială.",
     "buildUnknown": "Această versiune personalizată nu poate fi comparată cu ramura main oficială.",
     "notGitInstall": "Această instalare nu include informații despre commit.",
     "checkFailed": "Nu s-au putut verifica actualizările.",
+<<<<<<< HEAD
     "contactsGithub": "Verificările sunt inițiate manual și contactează GitHub.",
     "autoUpdateCheck": "Verificare automată a actualizărilor",
     "autoUpdateCheckHelp": "Verifică GitHub o dată pe zi dacă există o versiune nouă și afișează o notificare. Dezactivat implicit.",
     "openReleases": "Deschide versiunile GitHub",
     "restartAfterUpdate": "Repornește FreeLLMAPI după finalizarea compilării."
+=======
+    "autoUpdateCheck": "Verificare automată a actualizărilor",
+    "restartAfterUpdate": "Repornește FreeLLMAPI după finalizarea compilării.",
+    "downloadUpdate": "Descarcă actualizarea",
+    "downloadingUpdate": "Se descarcă… {percent}%",
+    "restartToUpdate": "Repornește pentru actualizare",
+    "updateReadyHint": "Descărcat. FreeLLMAPI face o copie de rezervă a datelor, repornește și deschide noua versiune.",
+    "updateInstallFailed": "Actualizarea nu a putut fi instalată.",
+    "updateNow": "Actualizează acum",
+    "updatingContainer": "Se descarcă noua imagine și se repornește. Pagina se reîncarcă când FreeLLMAPI revine.",
+    "updateNowFailed": "Actualizatorul nu a acceptat cererea. Verifică dacă containerul watchtower rulează.",
+    "updateNowTimeout": "FreeLLMAPI nu a repornit după 5 minute. Verifică jurnalele containerului watchtower."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Modele",
@@ -217,6 +242,10 @@
     "noKey": "fără cheie",
     "dragToReorder": "Rezistența la reordonare",
     "dragToReorderGroup": "Drag la reordonare a modelului",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Sari la poziția",
+>>>>>>> upstream/main
     "providerCount": "{count} furnizori",
     "servedBy": "Deservit de {providers}",
     "viewProviders": "Vezi furnizorii",
@@ -231,6 +260,10 @@
     "settingsHint": "Editările locale la modelele de catalog sunt păstrate între sincronizările de catalog. Modelele șterse din catalog rămân șterse până când le adaugi din nou prin configurare.",
     "catalogModel": "Catalog",
     "customModel": "Personalizat",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "descoperit",
+>>>>>>> upstream/main
     "localOverride": "Suprascriere locală",
     "displayName": "Nume afișat",
     "sizeLabel": "Nivel de capacitate",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Chei",
     "pageDescription": "Acreditările furnizorului și cheia unificată API cu care se conectează aplicațiile tale.",
     "tabProviders": "Furnizori",
     "checklistSummary": "{configured} din {total} furnizori configurați",
     "checklistKeyless": "nu necesită cheie",
     "checklistNoKeyTip": "Nicio cheie adăugată încă. Faceți clic pentru a adăuga una.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Deschideți {provider} pentru a crea un cont și a obține o cheie",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Funcționează fără cheie.",
     "tabQuotaSignals": "Semnale de cotă",
     "tabApiKey": "Cheia API unificată",
@@ -506,11 +546,19 @@
     "platform": "Peronul",
     "hideAdded": "Ascunde furnizorii adăugați",
     "apiToken": "API token",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Nu e nevoie de API cheie",
     "bearerTokenPlaceholder": "Jeton de purtător",
     "pasteKeyPlaceholder": "Lipește cheia aici",
     "pasteSeveral": "Lipiți mai multe",
     "keylessHint": "Nu este nevoie de API cheie: nivelul gratuit al acestui furnizor este anonim (cu tarif limitat pe IP).",
+=======
+    "keyOptionalPlaceholder": "Opțional",
+    "bearerTokenPlaceholder": "Jeton de purtător",
+    "pasteKeyPlaceholder": "Lipește cheia aici",
+    "pasteSeveral": "Lipiți mai multe",
+    "keyOptionalHint": "Opțional: lăsați gol pentru nivelul gratuit anonim (limitat per IP) sau lipiți propria cheie pentru a folosi contul dvs.",
+>>>>>>> upstream/main
     "enable": "Activează",
     "noProviderKeys": "Încă nu am chei de furnizor. Adaugă unul mai sus pentru a începe rutarea.",
     "filterPlaceholder": "Furnizori sau chei de filtrare",
@@ -688,7 +736,18 @@
     "testFailed": "Testul modelului a eșuat",
     "testThrottled": "Așteptați {seconds}s înainte de a retesta acest model.",
     "noModelsForProvider": "Niciun model configurat pentru acest furnizor.",
+<<<<<<< HEAD
     "testModels": "Testează modelele"
+=======
+    "testModels": "Testează modelele",
+    "monthlyRequestCapLabel": "Limită lunară de cereri",
+    "monthlyTokenCapLabel": "Limită lunară de tokeni",
+    "capUnlimitedPlaceholder": "Nelimitat",
+    "capEditHint": "Limitele se resetează în ziua 1 la 00:00 UTC. Lasă gol pentru nelimitat.",
+    "monthlyUsageLine": "{requests} cereri, {tokens} tokeni luna aceasta",
+    "quotaBalanceHint": "Au rămas {remaining} din {limit} {metric}",
+    "quotaBalanceLeft": "Au rămas {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Înainte de actualizare"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "Sănătos",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "Un asistent personal mereu activ care răspunde pe WhatsApp, Telegram, Discord și altele, de pe propria ta mașină.",
+<<<<<<< HEAD
       "hermes": "Agentul auto-perfecționabil de la Nous Research, cu memorie persistentă și abilități, în terminal sau în aplicațiile de chat."
+=======
+      "hermes": "Agentul auto-perfecționabil de la Nous Research, cu memorie persistentă și abilități, în terminal sau în aplicațiile de chat.",
+      "pi": "Un agent de terminal minimalist pe care îl modelezi cu propriile extensii, abilități și șabloane de prompturi.",
+      "reasonix": "Un agent de programare pentru terminal, nativ DeepSeek, construit în jurul cache-ului de prefix, ca sesiunile lungi să rămână ieftine."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "Este instalată o versiune mai nouă de FreeLLMAPI.",
+    "reload": "Reîncarcă"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} cereri limitate în ultimele 5 minute",
     "hourFilter": "Ora: {hour}",
     "serverLog": "Jurnal server"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "Redenumește acest lanț",
+    "renameConfirm": "Redenumiți lanțul \"{oldName}\" în \"{name}\"? Clienții care apelau auto:{oldName} trebuie să treacă la auto:{name}.",
+    "renamePlaceholder": "Numele nou al lanțului",
+    "renameFailed": "Nu s-a putut redenumi lanțul."
+  },
+  "updates": {
+    "versionAvailable": "Versiunea {version} este disponibilă",
+    "versionReady": "Versiunea {version} este gata de instalare",
+    "releaseNotes": "Note de lansare",
+    "tryAgain": "Încearcă din nou",
+    "offline": "Verifică conexiunea la internet și încearcă din nou."
+>>>>>>> upstream/main
   }
 }

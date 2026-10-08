@@ -16,8 +16,12 @@
     "modelsMenu": "မော်ဒယ်အမျိုးအစားများကို ကြည့်ရှုပါ",
     "agents": "အေးဂျင့်များ",
     "logs": "မှတ်တမ်းများ",
+<<<<<<< HEAD
     "analyticsMenu": "သုံးသပ်ချက် စာမျက်နှာများ",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "သုံးသပ်ချက် စာမျက်နှာများ"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "သင့်အကောင့်ကို ဖန်တီးပါ",
@@ -109,6 +113,7 @@
     "sectionCompression": "ချုံ့ခြင်း",
     "sectionAdvanced": "အဆင့်မြင့်",
     "sectionPreview": "အစမ်းကြည့်ရှုမှု",
+<<<<<<< HEAD
     "sectionRateLimit": "အမြန်နှုန်း ကန့်သတ်ချက်များ",
     "rateLimitProxy": "ပရိောက်စီ /v1 ကန့်သတ်ချက် (မိနစ်လျှင် တောင်းဆိုမှုများ)",
     "rateLimitAdmin": "ဒက်ရှ်ဘုတ် /api ကန့်သတ်ချက် (မိနစ်လျှင် တောင်းဆိုမှုများ)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "ပေါင်းစည်းသော့ /v1 ကန့်သတ်ချက် (မိနစ်လျှင် တောင်းဆိုမှုများ)",
     "rateLimitEnvLocked": "{env} ဖြင့် သတ်မှတ်ထားသည် — ပြင်ဆင်ရန် ဖယ်ရှားပါ",
     "rateLimitSaved": "အသုံးပြုပြီး — နောက်တစ်ကြိမ် တောင်းဆိုမှုတွင် အကျုံးဝင်သည်",
+=======
+>>>>>>> upstream/main
     "generalDescription": "ဤဒက်ရှ်ဘုတ်၏ ဘာသာစကားနှင့် အပြင်အဆင်။",
     "advancedDescription": "ချုံ့ခြင်း လုပ်ငန်းစဉ်အတွက် သတ်မှတ်ချက်များနှင့် ဘေးကင်းရေး ခလုတ်များ။",
     "compressionTitle": "Prompt ချုံ့ခြင်း",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "အစမ်းကြည့်ရန်",
     "updatesTitle": "အပ်ဒိတ်များ",
     "checkForUpdates": "အပ်ဒိတ်များကို စစ်ဆေးပါ",
+<<<<<<< HEAD
     "lastChecked": "နောက်ဆုံးစစ်ဆေးသည့်နေ့: {when}",
     "currentVersion": "လက်ရှိ build:",
     "updateAvailable": "အပ်ဒိတ် ရရှိနိုင်သည်",
     "changelog": "ပြောင်းလဲထားသည့်အရာများ",
+=======
+    "updateAvailable": "အပ်ဒိတ် ရရှိနိုင်သည်",
+>>>>>>> upstream/main
     "upToDate": "နောက်ဆုံးပေါ် ဖြစ်သည်",
     "buildAhead": "ဤ build သည် တရားဝင် main ထက် ရှေ့ရောက်နေသည်။",
     "buildDiverged": "ဤ build သည် တရားဝင် main မှ ကွဲထွက်သွားသည်။",
     "buildUnknown": "ဤစိတ်ကြိုက် build ကို တရားဝင် main နှင့် နှိုင်းယှဉ်၍ မရပါ။",
     "notGitInstall": "ဤထည့်သွင်းမှုတွင် commit အချက်အလက် မပါဝင်ပါ။",
     "checkFailed": "အပ်ဒိတ်များကို စစ်ဆေး၍ မရပါ။",
+<<<<<<< HEAD
     "contactsGithub": "စစ်ဆေးမှုများကို ကိုယ်တိုင်လုပ်ဆောင်ရပြီး GitHub သို့ ဆက်သွယ်သည်။",
     "autoUpdateCheck": "အလိုအလျောက် အပ်ဒိတ်စစ်ဆေးမှု",
     "autoUpdateCheckHelp": "တစ်ရက်လျှင် တစ်ကြိမ် ဗားရှင်းအသစ်အတွက် GitHub ကို စစ်ဆေးပြီး သတိပေးချက် ပြသသည်။ မူရင်းအတိုင်း ပိတ်ထားသည်။",
     "openReleases": "GitHub Releases ကို ဖွင့်ရန်",
     "restartAfterUpdate": "build ပြီးဆုံးပြီးနောက် FreeLLMAPI ကို ပြန်လည်စတင်ပါ။"
+=======
+    "autoUpdateCheck": "အလိုအလျောက် အပ်ဒိတ်စစ်ဆေးမှု",
+    "restartAfterUpdate": "build ပြီးဆုံးပြီးနောက် FreeLLMAPI ကို ပြန်လည်စတင်ပါ။",
+    "downloadUpdate": "အပ်ဒိတ်ကို ဒေါင်းလုဒ်လုပ်ရန်",
+    "downloadingUpdate": "ဒေါင်းလုဒ်လုပ်နေသည်… {percent}%",
+    "restartToUpdate": "အပ်ဒိတ်လုပ်ရန် ပြန်စတင်ပါ",
+    "updateReadyHint": "ဒေါင်းလုဒ်ပြီးပါပြီ။ FreeLLMAPI သည် သင့်ဒေတာကို အရန်သိမ်းပြီး ပြန်စတင်ကာ ဗားရှင်းအသစ်ကို ဖွင့်ပါမည်။",
+    "updateInstallFailed": "အပ်ဒိတ်ကို ထည့်သွင်း၍ မရပါ။",
+    "updateNow": "ယခု အပ်ဒိတ်လုပ်ရန်",
+    "updatingContainer": "image အသစ်ကို ဆွဲယူပြီး ပြန်စတင်နေသည်။ FreeLLMAPI ပြန်လာသောအခါ ဤစာမျက်နှာ ပြန်ဖွင့်ပါမည်။",
+    "updateNowFailed": "အပ်ဒိတ်လုပ်သူက တောင်းဆိုမှုကို မလက်ခံပါ။ watchtower container လည်ပတ်နေကြောင်း စစ်ဆေးပါ။",
+    "updateNowTimeout": "၅ မိနစ်ကြာသော်လည်း FreeLLMAPI ပြန်မစတင်သေးပါ။ watchtower container ၏ မှတ်တမ်းများကို စစ်ဆေးပါ။"
+>>>>>>> upstream/main
   },
   "models": {
     "title": "မော်ဒယ်များ",
@@ -217,6 +242,10 @@
     "noKey": "သော့မရှိ",
     "dragToReorder": "ပြန်စီစဉ်ရန် ဆွဲပါ",
     "dragToReorderGroup": "မော်ဒယ်ကို ပြန်စီရန် ဆွဲယူပါ",
+<<<<<<< HEAD
+=======
+    "moveToRank": "အဆင့်သို့ သွားရန်",
+>>>>>>> upstream/main
     "providerCount": "{count} ပံ့ပိုးသူများ",
     "servedBy": "ဝန်ဆောင်မှုပေးသူ {providers}",
     "viewProviders": "ပံ့ပိုးသူများကို ကြည့်ရှုပါ",
@@ -231,6 +260,10 @@
     "settingsHint": "ကတ်တလော့မော်ဒယ်များ၏ ဒေသဆိုင်ရာ တည်းဖြတ်မှုများကို ကတ်တလော့ခ် đồng bộ များအတွင်း သိမ်းဆည်းထားသည်။ ဖျက်သိမ်းထားသော catalog မော်ဒယ်များသည် config မှတဆင့် ထပ်မံထည့်သွင်းသည်အထိ ဖျက်သိမ်းထားမည်ဖြစ်သည်။",
     "catalogModel": "ကတ်တလော့",
     "customModel": "စိတ်ကြိုက်",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "ရှာဖွေတွေ့ရှိ",
+>>>>>>> upstream/main
     "localOverride": "ဒေသဆိုင်ရာကျော်လွန်မှု",
     "displayName": "ပြသအမည်",
     "sizeLabel": "စွမ်းရည်အဆင့်",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "သော့များ",
     "pageDescription": "ပံ့ပိုးသူအတည်ပြုချက်များနှင့် သင့်အက်ပ်များ ချိတ်ဆက်ထားသော API သော့ချက်။",
     "tabProviders": "ပံ့ပိုးသူများ",
     "checklistSummary": "ပံ့ပိုးသူ {total} ဦးအနက် {configured} ဦး သတ်မှတ်ပြီး",
     "checklistKeyless": "ကီး မလိုအပ်ပါ",
     "checklistNoKeyTip": "ကီး မထည့်ရသေးပါ။ ထည့်ရန် နှိပ်ပါ။",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "အကောင့်ဖွင့်၍ သော့့ရရန် {provider} ကိုဖွင့်ပါ",
+>>>>>>> upstream/main
     "checklistKeylessTip": "ကီး မပါဘဲ အလုပ်လုပ်ပါသည်။",
     "tabQuotaSignals": "အရေအတွက် အချက်ပြချက်များ",
     "tabApiKey": "ပေါင်းစည်းထားသော API",
@@ -506,11 +546,19 @@
     "platform": "ပလက်ဖောင်း",
     "hideAdded": "ထည့်ပြီးသော Provider များကို ဖျောက်ရန်",
     "apiToken": "API token",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "API မလိုအပ်ပါ",
     "bearerTokenPlaceholder": "သယ်ဆောင်သူတံဆိပ်",
     "pasteKeyPlaceholder": "ဒီမှာ key ကို paste လုပ်ပါ",
     "pasteSeveral": "အများအပြား ကူးထည့်ရန်",
     "keylessHint": "API key မလိုအပ်ပါ: ဤဝန်ဆောင်မှုပေးသူ၏ အခမဲ့အဆင့်သည် အမည်မဖော်နိုင်ပါ (IP တစ်ခုချင်းစီအတွက် ဈေးနှုန်းကန့်သတ်ထားသည်)။",
+=======
+    "keyOptionalPlaceholder": "ရွေးချယ်နိုင်သည်",
+    "bearerTokenPlaceholder": "သယ်ဆောင်သူတံဆိပ်",
+    "pasteKeyPlaceholder": "ဒီမှာ key ကို paste လုပ်ပါ",
+    "pasteSeveral": "အများအပြား ကူးထည့်ရန်",
+    "keyOptionalHint": "ရွေးချယ်နိုင်သည်: အမည်မသိ အခမဲ့အဆင့် (IP တစ်ခုစီအလိုက် နှုန်းကန့်သတ်) အတွက် ကွက်လပ်ထားပါ၊ သို့မဟုတ် သင့်အကောင့်ကို အသုံးပြုရန် ကိုယ်ပိုင်ကီးကို ကူးထည့်ပါ။",
+>>>>>>> upstream/main
     "enable": "ဖွင့်ပါ",
     "noProviderKeys": "Provider key မရှိသေးပါ။ လမ်းကြောင်းစတင်ရန် အထက်တွင် တစ်ခုထည့်ပါ။",
     "filterPlaceholder": "စစ်ထုတ်ပေးသူများ သို့မဟုတ် သော့များ",
@@ -688,7 +736,18 @@
     "testFailed": "မော်ဒယ်စမ်းသပ်မှု ကျရှုံးခဲ့သည်",
     "testThrottled": "ဤမော်ဒယ်ကို ထပ်မံမစမ်းသပ်မီ {seconds} စက္ကန့် စောင့်ပါ။",
     "noModelsForProvider": "ဤဝန်ဆောင်မှုပေးသူအတွက် မော်ဒယ်များ သတ်မှတ်ထားခြင်း မရှိပါ။",
+<<<<<<< HEAD
     "testModels": "မော်ဒယ်များ စမ်းသပ်ရန်"
+=======
+    "testModels": "မော်ဒယ်များ စမ်းသပ်ရန်",
+    "monthlyRequestCapLabel": "လစဉ်တောင်းဆိုမှုအကန့်အသတ်",
+    "monthlyTokenCapLabel": "လစဉ်တိုကင်အကန့်အသတ်",
+    "capUnlimitedPlaceholder": "အကန့်အသတ်မရှိ",
+    "capEditHint": "အကန့်အသတ်များကို လ၏ ပထမရက် ၀၀:၀၀ UTC တွင် ပြန်ချမှတ်သည်။ မရှိလိုပါက ဗလာထားပါ။",
+    "monthlyUsageLine": "ယခုလ တောင်းဆိုမှု {requests}၊ တိုကင် {tokens}",
+    "quotaBalanceHint": "{limit} {metric} အနက် {remaining} ကျန်သည်",
+    "quotaBalanceLeft": "{remaining} ကျန်သည်"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "အပ်ဒိတ်မတိုင်မီ"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "ကျန်းမာသော",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "သင့်ကိုယ်ပိုင်စက်မှနေ၍ WhatsApp၊ Telegram၊ Discord နှင့် အခြားနေရာများတွင် ဖြေကြားပေးသော အမြဲအသင့်ရှိနေသည့် ကိုယ်ပိုင်လက်ထောက်။",
+<<<<<<< HEAD
       "hermes": "Nous Research ၏ မိမိကိုယ်ကို တိုးတက်အောင်လုပ်နိုင်သော အေးဂျင့်၊ တည်မြဲသည့်မှတ်ဉာဏ်နှင့် ကျွမ်းကျင်မှုများပါဝင်ပြီး terminal တွင်ဖြစ်စေ chat အက်ပ်များတွင်ဖြစ်စေ အသုံးပြုနိုင်သည်။"
+=======
+      "hermes": "Nous Research ၏ မိမိကိုယ်ကို တိုးတက်အောင်လုပ်နိုင်သော အေးဂျင့်၊ တည်မြဲသည့်မှတ်ဉာဏ်နှင့် ကျွမ်းကျင်မှုများပါဝင်ပြီး terminal တွင်ဖြစ်စေ chat အက်ပ်များတွင်ဖြစ်စေ အသုံးပြုနိုင်သည်။",
+      "pi": "သင့်ကိုယ်ပိုင် extension များ၊ ကျွမ်းကျင်မှုများနှင့် prompt template များဖြင့် ပုံဖော်နိုင်သော အနည်းဆုံး terminal အေးဂျင့်။",
+      "reasonix": "DeepSeek အတွက် တည်ဆောက်ထားသော terminal coding agent ဖြစ်ပြီး ရှည်လျားသော session များ စျေးသက်သာစေရန် prefix caching ကို အခြေခံထားသည်။"
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "FreeLLMAPI ဗားရှင်းအသစ် ထည့်သွင်းပြီးပါပြီ။",
+    "reload": "ပြန်ဖွင့်ရန်"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "ပြီးခဲ့သော မိနစ် ၅ အတွင်း တောင်းဆိုမှု {count} ခု ကန့်သတ်ခံရသည်",
     "hourFilter": "နာရီ: {hour}",
     "serverLog": "ဆာဗာ မှတ်တမ်း"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "ဤချိန်း၏ အမည်ကို ပြောင်းရန်",
+    "renameConfirm": "ချိန်း \"{oldName}\" ကို \"{name}\" အမည်ပြောင်းမလား? auto:{oldName} ကိုခေါ်ဆိုသော client များသည် auto:{name} သို့ ပြောင်းရမည်။",
+    "renamePlaceholder": "ချိန်းအမည်အသစ်",
+    "renameFailed": "ချိန်းအမည်ကို မပြောင်းနိုင်ပါ။"
+  },
+  "updates": {
+    "versionAvailable": "ဗားရှင်း {version} ရရှိနိုင်ပါပြီ",
+    "versionReady": "ဗားရှင်း {version} ထည့်သွင်းရန် အသင့်ဖြစ်ပါပြီ",
+    "releaseNotes": "ထုတ်ဝေမှု မှတ်စုများ",
+    "tryAgain": "ထပ်ကြိုးစားပါ",
+    "offline": "အင်တာနက်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်ကြိုးစားပါ။"
+>>>>>>> upstream/main
   }
 }

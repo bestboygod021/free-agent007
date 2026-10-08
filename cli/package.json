@@ -1,6 +1,10 @@
 {
   "name": "freellmapi",
+<<<<<<< HEAD
   "version": "0.6.0",
+=======
+  "version": "0.8.0",
+>>>>>>> upstream/main
   "description": "Set up coding agents to use a FreeLLMAPI gateway",
   "license": "MIT",
   "repository": {
@@ -40,6 +44,11 @@
     "dist/config-files.d.ts",
     "dist/doctor.js",
     "dist/doctor.d.ts",
+<<<<<<< HEAD
+=======
+    "dist/keys.js",
+    "dist/keys.d.ts",
+>>>>>>> upstream/main
     "dist/models.js",
     "dist/models.d.ts",
     "dist/tools.js",

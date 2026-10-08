@@ -16,8 +16,12 @@
     "modelsMenu": "Αναζήτηση τύπων μοντέλων",
     "agents": "Πράκτορες",
     "logs": "Καταγραφές",
+<<<<<<< HEAD
     "analyticsMenu": "Σελίδες ανάλυσης",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Σελίδες ανάλυσης"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Δημιουργήστε τον λογαριασμό σας",
@@ -109,6 +113,7 @@
     "sectionCompression": "Συμπίεση",
     "sectionAdvanced": "Για προχωρημένους",
     "sectionPreview": "Προεπισκόπηση",
+<<<<<<< HEAD
     "sectionRateLimit": "Όρια ρυθμού",
     "rateLimitProxy": "Όριο διακομιστή μεσολάβησης /v1 (αιτήματα/λεπτό)",
     "rateLimitAdmin": "Όριο πίνακα ελέγχου /api (αιτήματα/λεπτό)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Όριο ενοποιημένου κλειδιού /v1 (αιτήματα/λεπτό)",
     "rateLimitEnvLocked": "Ορίστηκε από {env} — αφαιρέστε τη μεταβλητή για επεξεργασία",
     "rateLimitSaved": "Εφαρμόστηκε — ισχύει στο επόμενο αίτημα",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Γλώσσα και εμφάνιση αυτού του πίνακα ελέγχου.",
     "advancedDescription": "Όρια και διακόπτες ασφαλείας για τη ροή συμπίεσης.",
     "compressionTitle": "Συμπίεση prompt",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Εκτέλεση προεπισκόπησης",
     "updatesTitle": "Ενημερώσεις",
     "checkForUpdates": "Έλεγχος για ενημερώσεις",
+<<<<<<< HEAD
     "lastChecked": "Τελευταίος έλεγχος: {when}",
     "currentVersion": "Τρέχον build:",
     "updateAvailable": "Διαθέσιμη ενημέρωση",
     "changelog": "Τι άλλαξε",
+=======
+    "updateAvailable": "Διαθέσιμη ενημέρωση",
+>>>>>>> upstream/main
     "upToDate": "Ενημερωμένο",
     "buildAhead": "Αυτό το build είναι μπροστά από το επίσημο main.",
     "buildDiverged": "Αυτό το build έχει αποκλίνει από το επίσημο main.",
     "buildUnknown": "Αυτό το προσαρμοσμένο build δεν μπορεί να συγκριθεί με το επίσημο main.",
     "notGitInstall": "Αυτή η εγκατάσταση δεν περιλαμβάνει πληροφορίες commit.",
     "checkFailed": "Δεν ήταν δυνατός ο έλεγχος για ενημερώσεις.",
+<<<<<<< HEAD
     "contactsGithub": "Οι έλεγχοι γίνονται χειροκίνητα και επικοινωνούν με το GitHub.",
     "autoUpdateCheck": "Αυτόματος έλεγχος ενημερώσεων",
     "autoUpdateCheckHelp": "Ελέγχει το GitHub μία φορά την ημέρα για νέα έκδοση και εμφανίζει υπενθύμιση. Απενεργοποιημένο από προεπιλογή.",
     "openReleases": "Άνοιγμα εκδόσεων GitHub",
     "restartAfterUpdate": "Επανεκκινήστε το FreeLLMAPI μετά την ολοκλήρωση του build."
+=======
+    "autoUpdateCheck": "Αυτόματος έλεγχος ενημερώσεων",
+    "restartAfterUpdate": "Επανεκκινήστε το FreeLLMAPI μετά την ολοκλήρωση του build.",
+    "downloadUpdate": "Λήψη ενημέρωσης",
+    "downloadingUpdate": "Λήψη… {percent}%",
+    "restartToUpdate": "Επανεκκίνηση για ενημέρωση",
+    "updateReadyHint": "Η λήψη ολοκληρώθηκε. Το FreeLLMAPI δημιουργεί αντίγραφο ασφαλείας των δεδομένων σας, επανεκκινείται και ανοίγει τη νέα έκδοση.",
+    "updateInstallFailed": "Η ενημέρωση δεν ήταν δυνατό να εγκατασταθεί.",
+    "updateNow": "Ενημέρωση τώρα",
+    "updatingContainer": "Λήψη της νέας εικόνας και επανεκκίνηση. Η σελίδα θα φορτωθεί ξανά όταν επιστρέψει το FreeLLMAPI.",
+    "updateNowFailed": "Το πρόγραμμα ενημέρωσης δεν δέχτηκε το αίτημα. Ελέγξτε ότι εκτελείται το κοντέινερ watchtower.",
+    "updateNowTimeout": "Το FreeLLMAPI δεν έχει επανεκκινηθεί μετά από 5 λεπτά. Ελέγξτε τα αρχεία καταγραφής του κοντέινερ watchtower."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Μοντέλα",
@@ -217,6 +242,10 @@
     "noKey": "χωρίς κλειδί",
     "dragToReorder": "Σύρετε για αναδιάταξη",
     "dragToReorderGroup": "Σύρετε για να αλλάξετε τη σειρά του μοντέλου",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Μετάβαση στην κατάταξη",
+>>>>>>> upstream/main
     "providerCount": "{count} παρόχων",
     "servedBy": "Σερβίρεται από {providers}",
     "viewProviders": "Προβολή παρόχων",
@@ -231,6 +260,10 @@
     "settingsHint": "Οι τοπικές αλλαγές σε μοντέλα καταλόγων διατηρούνται σε όλους τους συγχρονισμούς καταλόγων. Τα διαγραμμένα μοντέλα καταλόγου παραμένουν διαγραμμένα μέχρι να τα προσθέσετε ξανά μέσω της διαμόρφωσης.",
     "catalogModel": "Κατάλογος",
     "customModel": "έθιμο",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "εντοπισμένο",
+>>>>>>> upstream/main
     "localOverride": "τοπική παράκαμψη",
     "displayName": "Εμφανιζόμενο όνομα",
     "sizeLabel": "Βαθμίδα ικανοτήτων",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Κλειδιά",
     "pageDescription": "Διαπιστευτήρια παρόχου και το ενοποιημένο κλειδί API με το οποίο συνδέονται οι εφαρμογές σας.",
     "tabProviders": "Πάροχοι",
     "checklistSummary": "{configured} από {total} παρόχους έχουν ρυθμιστεί",
     "checklistKeyless": "δεν απαιτείται κλειδί",
     "checklistNoKeyTip": "Δεν έχει προστεθεί κλειδί ακόμη. Κάντε κλικ για να προσθέσετε ένα.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Ανοίξτε το {provider} για να δημιουργήσετε λογαριασμό και να λάβετε κλειδί",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Λειτουργεί χωρίς κλειδί.",
     "tabQuotaSignals": "Σήματα ποσοστώσεων",
     "tabApiKey": "Ενοποιημένο κλειδί API",
@@ -506,11 +546,19 @@
     "platform": "Πλατφόρμα",
     "hideAdded": "Απόκρυψη προστιθέμενων παρόχων",
     "apiToken": "API διακριτικό",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Δεν χρειάζεται API κλειδί",
     "bearerTokenPlaceholder": "Διακριτικό κομιστή",
     "pasteKeyPlaceholder": "Επικόλληση κλειδιού εδώ",
     "pasteSeveral": "Επικόλληση πολλών",
     "keylessHint": "Δεν απαιτείται API κλειδί: η δωρεάν βαθμίδα αυτού του παρόχου είναι ανώνυμη (περιορισμένη τιμή ανά IP).",
+=======
+    "keyOptionalPlaceholder": "Προαιρετικό",
+    "bearerTokenPlaceholder": "Διακριτικό κομιστή",
+    "pasteKeyPlaceholder": "Επικόλληση κλειδιού εδώ",
+    "pasteSeveral": "Επικόλληση πολλών",
+    "keyOptionalHint": "Προαιρετικό: αφήστε το κενό για το ανώνυμο δωρεάν επίπεδο (όριο ανά IP) ή επικολλήστε το δικό σας κλειδί για να χρησιμοποιήσετε τον λογαριασμό σας.",
+>>>>>>> upstream/main
     "enable": "Ενεργοποίηση",
     "noProviderKeys": "Δεν υπάρχουν ακόμη κλειδιά παρόχου. Προσθέστε ένα παραπάνω για να ξεκινήσετε τη δρομολόγηση.",
     "filterPlaceholder": "Πάροχοι ή κλειδιά φίλτρων",
@@ -688,7 +736,18 @@
     "testFailed": "Η δοκιμή μοντέλου απέτυχε",
     "testThrottled": "Περιμένετε {seconds}δ πριν δοκιμάσετε ξανά αυτό το μοντέλο.",
     "noModelsForProvider": "Δεν έχουν διαμορφωθεί μοντέλα για αυτόν τον πάροχο.",
+<<<<<<< HEAD
     "testModels": "Δοκιμή μοντέλων"
+=======
+    "testModels": "Δοκιμή μοντέλων",
+    "monthlyRequestCapLabel": "Μηνιαίο όριο αιτημάτων",
+    "monthlyTokenCapLabel": "Μηνιαίο όριο tokens",
+    "capUnlimitedPlaceholder": "Απεριόριστο",
+    "capEditHint": "Τα όρια μηδενίζονται την 1η στις 00:00 UTC. Αφήστε κενό για απεριόριστο.",
+    "monthlyUsageLine": "{requests} αιτήματα, {tokens} tokens αυτόν τον μήνα",
+    "quotaBalanceHint": "Απομένουν {remaining} από {limit} {metric}",
+    "quotaBalanceLeft": "Απομένουν {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Πριν την ενημέρωση"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "υγιής",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "Ένας πάντα διαθέσιμος προσωπικός βοηθός που απαντά σε WhatsApp, Telegram, Discord και άλλα από το δικό σας μηχάνημα.",
+<<<<<<< HEAD
       "hermes": "Ο αυτοβελτιούμενος πράκτορας της Nous Research με μόνιμη μνήμη και δεξιότητες, στο τερματικό ή σε εφαρμογές συνομιλίας."
+=======
+      "hermes": "Ο αυτοβελτιούμενος πράκτορας της Nous Research με μόνιμη μνήμη και δεξιότητες, στο τερματικό ή σε εφαρμογές συνομιλίας.",
+      "pi": "Ένας μινιμαλιστικός πράκτορας τερματικού που διαμορφώνετε με δικές σας επεκτάσεις, δεξιότητες και πρότυπα προτροπών.",
+      "reasonix": "Πράκτορας προγραμματισμού για το τερματικό, φτιαγμένος για το DeepSeek γύρω από την προσωρινή αποθήκευση προθεμάτων, ώστε οι μεγάλες συνεδρίες να μένουν φθηνές."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "Έχει εγκατασταθεί νεότερη έκδοση του FreeLLMAPI.",
+    "reload": "Επαναφόρτωση"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} αιτήματα περιορίστηκαν τις τελευταίες 5 λεπτά",
     "hourFilter": "Ώρα: {hour}",
     "serverLog": "Αρχείο διακομιστή"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "Μετονομασία αυτής της αλυσίδας",
+    "renameConfirm": "Μετονομασία της αλυσίδας \"{oldName}\" σε \"{name}\"; Οι πελάτες που καλούν auto:{oldName} πρέπει να μεταβούν σε auto:{name}.",
+    "renamePlaceholder": "Νέο όνομα αλυσίδας",
+    "renameFailed": "Δεν ήταν δυνατή η μετονομασία της αλυσίδας."
+  },
+  "updates": {
+    "versionAvailable": "Η έκδοση {version} είναι διαθέσιμη",
+    "versionReady": "Η έκδοση {version} είναι έτοιμη για εγκατάσταση",
+    "releaseNotes": "Σημειώσεις έκδοσης",
+    "tryAgain": "Δοκιμάστε ξανά",
+    "offline": "Ελέγξτε τη σύνδεσή σας στο διαδίκτυο και δοκιμάστε ξανά."
+>>>>>>> upstream/main
   }
 }

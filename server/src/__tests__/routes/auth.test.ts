@@ -17,7 +17,11 @@ async function call(app: Express, method: string, path: string, body?: any, toke
   });
   const data = await res.json().catch(() => null);
   server.close();
+<<<<<<< HEAD
   return { status: res.status, body: data, retryAfter: res.headers.get('Retry-After') };
+=======
+  return { status: res.status, body: data };
+>>>>>>> upstream/main
 }
 
 // Tests run in definition order against one shared in-memory DB, mirroring the
@@ -97,11 +101,15 @@ describe('Dashboard auth (#35)', () => {
     for (let i = 0; i < 5; i++) {
       expect((await call(app, 'POST', '/api/auth/login', creds)).status).toBe(401);
     }
+<<<<<<< HEAD
     const locked = await call(app, 'POST', '/api/auth/login', creds);
     expect(locked.status).toBe(429);
     // The wait is published so the dashboard can tick it down live.
     const wait = Number(locked.retryAfter);
     expect(wait).toBeGreaterThanOrEqual(1);
     expect(wait).toBeLessThanOrEqual(15 * 60);
+=======
+    expect((await call(app, 'POST', '/api/auth/login', creds)).status).toBe(429);
+>>>>>>> upstream/main
   });
 });

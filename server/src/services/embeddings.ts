@@ -8,11 +8,24 @@
 // always works: with one provider it just uses that one, with several it gets
 // cross-provider redundancy for free.
 import { getDb, getSetting } from '../db/index.js';
+<<<<<<< HEAD
 import { getClientContext } from '../lib/client-context.js';
 import { reserveProviderCredential } from './provider-credential.js';
 import { proxyFetch } from '../lib/proxy.js';
 import { customEndpointKeyIds } from './custom-endpoint.js';
 import type { Db } from '../db/types.js';
+=======
+import { secondsUntilNextMonth } from './key-budget.js';
+import { parseRetryAfterMs } from '../providers/base.js';
+import { RetryHintTracker, retryAfterSeconds } from '../lib/retry-hint.js';
+import { getClientContext } from '../lib/client-context.js';
+import { reserveProviderCredential } from './provider-credential.js';
+import { proxyFetch } from '../lib/proxy.js';
+import { bearerAuthHeader } from '../lib/credential.js';
+import { customEndpointKeyIds } from './custom-endpoint.js';
+import type { Db } from '../db/types.js';
+import { SPEKA_BASE_URL } from '../providers/speka.js';
+>>>>>>> upstream/main
 
 export interface EmbeddingModelRow {
   id: number;
@@ -40,6 +53,7 @@ export interface EmbeddingsResult {
 export class EmbeddingsError extends Error {
   status: number;
   code?: string;
+<<<<<<< HEAD
   constructor(message: string, status: number, code?: string) {
     super(message);
     this.status = status;
@@ -47,6 +61,34 @@ export class EmbeddingsError extends Error {
   }
 }
 
+=======
+  /** Back-off the upstream provider stated (`Retry-After` header or a
+   *  retry-delay field in the error body), in milliseconds. Kept separate from
+   *  the message so the route can answer the client with a real Retry-After
+   *  instead of a bare 429, the same way the chat router benches keys. */
+  retryAfterMs?: number;
+  constructor(message: string, status: number, code?: string, retryAfterMs?: number) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+/** EmbeddingsError for a non-OK upstream response: status, truncated body and
+ *  any stated back-off read off the `Retry-After` header before the body is
+ *  consumed. */
+async function upstreamEmbeddingsError(r: Response): Promise<EmbeddingsError> {
+  const retryAfterMs = parseRetryAfterMs(r.headers?.get('retry-after') ?? null);
+  return new EmbeddingsError(
+    `upstream ${r.status}: ${(await r.text()).slice(0, 200)}`,
+    r.status,
+    undefined,
+    retryAfterMs,
+  );
+}
+
+>>>>>>> upstream/main
 export function listEmbeddingModels(): EmbeddingModelRow[] {
   return getDb().prepare(
     'SELECT * FROM embedding_models ORDER BY family, priority',
@@ -90,6 +132,10 @@ export const EMBEDDING_PLATFORMS = new Set([
   'huggingface',
   'cohere',
   'sealion',
+<<<<<<< HEAD
+=======
+  'speka',
+>>>>>>> upstream/main
 ]);
 
 interface ProviderCallResult {
@@ -116,12 +162,22 @@ async function openAiStyleEmbed(
   if (dimensions !== undefined) body.dimensions = dimensions;
   const r = await proxyFetch(url, {
     method: 'POST',
+<<<<<<< HEAD
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+=======
+    // A custom endpoint with auth off holds the `no-key` sentinel: omit the
+    // header instead of sending `Bearer no-key` (#1331).
+    headers: { 'Content-Type': 'application/json', ...bearerAuthHeader(key) },
+>>>>>>> upstream/main
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   }, platform, 'embedding', FETCH_TIMEOUT_MS);
   if (!r.ok) {
+<<<<<<< HEAD
     throw new EmbeddingsError(`upstream ${r.status}: ${(await r.text()).slice(0, 200)}`, r.status);
+=======
+    throw await upstreamEmbeddingsError(r);
+>>>>>>> upstream/main
   }
   const j = (await r.json()) as {
     data?: { index?: number; embedding: number[] }[];
@@ -238,6 +294,11 @@ async function callProvider(row: EmbeddingModelRow, credential: ProviderCredenti
       return openAiStyleEmbed('https://models.github.ai/inference/embeddings', row.platform, key, row.model_id, inputs, {}, dimensions);
     case 'sealion':
       return openAiStyleEmbed('https://api.sea-lion.ai/v1/embeddings', row.platform, key, row.model_id, inputs, {}, dimensions);
+<<<<<<< HEAD
+=======
+    case 'speka':
+      return openAiStyleEmbed(`${SPEKA_BASE_URL}/embeddings`, row.platform, key, row.model_id, inputs, { encoding_format: 'float' }, dimensions);
+>>>>>>> upstream/main
     case 'cloudflare': {
       // Key is stored as "account_id:token".
       const sep = key.indexOf(':');
@@ -261,7 +322,11 @@ async function callProvider(row: EmbeddingModelRow, credential: ProviderCredenti
         },
         row.platform, 'embedding', FETCH_TIMEOUT_MS,
       );
+<<<<<<< HEAD
       if (!r.ok) throw new EmbeddingsError(`upstream ${r.status}: ${(await r.text()).slice(0, 200)}`, r.status);
+=======
+      if (!r.ok) throw await upstreamEmbeddingsError(r);
+>>>>>>> upstream/main
       const j = await r.json() as number[][] | number[];
       const vectors = Array.isArray(j[0]) ? (j as number[][]) : [j as number[]];
       return { vectors, inputTokens: null };
@@ -278,7 +343,11 @@ async function callProvider(row: EmbeddingModelRow, credential: ProviderCredenti
         }),
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       }, row.platform, 'embedding', FETCH_TIMEOUT_MS);
+<<<<<<< HEAD
       if (!r.ok) throw new EmbeddingsError(`upstream ${r.status}: ${(await r.text()).slice(0, 200)}`, r.status);
+=======
+      if (!r.ok) throw await upstreamEmbeddingsError(r);
+>>>>>>> upstream/main
       const j = (await r.json()) as { embeddings?: { float?: number[][] }; meta?: { billed_units?: { input_tokens?: number } } };
       return { vectors: j.embeddings?.float ?? [], inputTokens: j.meta?.billed_units?.input_tokens ?? null };
     }
@@ -331,10 +400,23 @@ export async function runEmbeddings(model: string | undefined, inputs: string[],
   }
 
   let lastError: EmbeddingsError | null = null;
+<<<<<<< HEAD
   for (const row of chain) {
     const { credential, budgetBlocked } = reserveProviderCredential(row, estimateTokens(inputs));
     if (!credential) {
       if (budgetBlocked) lastError = new EmbeddingsError('Monthly key budget exhausted', 429, 'quota_exceeded');
+=======
+  // Upstream back-offs across the whole chain: only a chain that was rate
+  // limited end to end earns a Retry-After, and then the soonest one.
+  const hints = new RetryHintTracker();
+  for (const row of chain) {
+    const { credential, budgetBlocked } = reserveProviderCredential(row, estimateTokens(inputs));
+    if (!credential) {
+      if (budgetBlocked) {
+        lastError = new EmbeddingsError('Monthly key budget exhausted', 429, 'quota_exceeded');
+        hints.record(429, secondsUntilNextMonth() * 1000);
+      }
+>>>>>>> upstream/main
       continue;
     }
     const started = Date.now();
@@ -357,6 +439,10 @@ export async function runEmbeddings(model: string | undefined, inputs: string[],
       const e = err instanceof EmbeddingsError ? err : new EmbeddingsError(String(err?.message ?? err), 502);
       logEmbeddingRequest(row, credential.id, 'error', 0, Date.now() - started, e.message.slice(0, 300));
       lastError = e;
+<<<<<<< HEAD
+=======
+      hints.record(e.status, e.retryAfterMs);
+>>>>>>> upstream/main
       // fall through to the next provider in the family
     } finally {
       credential.release();
@@ -367,5 +453,21 @@ export async function runEmbeddings(model: string | undefined, inputs: string[],
     `All providers for embedding family '${family}' failed${lastError ? ` (last: ${lastError.message.slice(0, 160)})` : ' (no usable keys)'}.`,
     lastError && lastError.status === 429 ? 429 : 502,
     lastError?.code,
+<<<<<<< HEAD
   );
 }
+=======
+    lastError && lastError.status === 429 ? hints.retryAfterMs() : undefined,
+  );
+}
+
+/** Whole seconds the client should wait before retrying an embeddings request:
+ *  the soonest upstream back-off when the whole chain was rate limited, else the
+ *  monthly-budget reset for a local quota block. Undefined means the caller
+ *  shouldn't set the header. */
+export function embeddingsRetryAfterSec(err: EmbeddingsError): number | undefined {
+  if (err.retryAfterMs !== undefined) return retryAfterSeconds(err.retryAfterMs);
+  if (err.code === 'quota_exceeded') return secondsUntilNextMonth();
+  return undefined;
+}
+>>>>>>> upstream/main

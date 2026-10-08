@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+<<<<<<< HEAD
     "predev": "tsc -p ../shared/tsconfig.json",
     "dev": "tsx watch src/index.ts",
     "prebuild": "tsc -p ../shared/tsconfig.json",
+=======
+    "dev": "tsx watch src/index.ts",
+>>>>>>> upstream/main
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run --pool=forks --fileParallelism=false",
@@ -23,10 +27,15 @@
     "db:migration:create": "tsx src/db/migrate/cli.ts create"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@freellmapi/agent": "*",
     "@freellmapi/shared": "*",
     "ajv": "^8.20.0",
     "better-sqlite3": "^12.10.0",
+=======
+    "@freellmapi/shared": "*",
+    "ajv": "^8.20.0",
+>>>>>>> upstream/main
     "compression": "^1.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
@@ -57,5 +66,11 @@
   "engines": {
     "node": ">=20.18.0 <25.0.0",
     "npm": ">=10.0.0"
+<<<<<<< HEAD
+=======
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^12.10.0"
+>>>>>>> upstream/main
   }
 }

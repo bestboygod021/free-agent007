@@ -16,8 +16,12 @@
     "modelsMenu": "მოდელის ტიპების დათვალიერება",
     "agents": "აგენტები",
     "logs": "ჟურნალი",
+<<<<<<< HEAD
     "analyticsMenu": "ანალიტიკის გვერდები",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "ანალიტიკის გვერდები"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "შექმენით თქვენი ანგარიში",
@@ -109,6 +113,7 @@
     "sectionCompression": "შეკუმშვა",
     "sectionAdvanced": "დამატებითი",
     "sectionPreview": "გადახედვა",
+<<<<<<< HEAD
     "sectionRateLimit": "სიჩქარის ლიმიტები",
     "rateLimitProxy": "პროქსი /v1 ლიმიტი (მოთხოვნა/წუთში)",
     "rateLimitAdmin": "დაშბორდი /api ლიმიტი (მოთხოვნა/წუთში)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "გაერთიანებული გასაღების /v1 ლიმიტი (მოთხოვნა/წუთში)",
     "rateLimitEnvLocked": "{env}-ით მყარდება — რედაქტირებისთვის მოხსენით",
     "rateLimitSaved": "გამოყენებულია — მომდევნო მოთხოვნაზე იმოქმედებს",
+=======
+>>>>>>> upstream/main
     "generalDescription": "ამ დაფის ენა და გარეგნობა.",
     "advancedDescription": "შეკუმშვის კონვეიერის ზღვრები და უსაფრთხოების გადამრთველები.",
     "compressionTitle": "პრომპტის შეკუმშვა",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "გადახედვის გაშვება",
     "updatesTitle": "განახლებები",
     "checkForUpdates": "შეამოწმეთ განახლებები",
+<<<<<<< HEAD
     "lastChecked": "ბოლო შემოწმება: {when}",
     "currentVersion": "მიმდინარე ბილდი:",
     "updateAvailable": "განახლება ხელმისაწვდომია",
     "changelog": "რა შეიცვალა",
+=======
+    "updateAvailable": "განახლება ხელმისაწვდომია",
+>>>>>>> upstream/main
     "upToDate": "განახლებულია",
     "buildAhead": "ეს ბილდი ოფიციალურ main შტოს უსწრებს.",
     "buildDiverged": "ეს ბილდი ოფიციალურ main შტოს ასცდა.",
     "buildUnknown": "ამ მორგებული ბილდის შედარება ოფიციალურ main შტოსთან შეუძლებელია.",
     "notGitInstall": "ეს ინსტალაცია კომიტების შესახებ ინფორმაციას არ შეიცავს.",
     "checkFailed": "განახლებების შემოწმება ვერ მოხერხდა.",
+<<<<<<< HEAD
     "contactsGithub": "შემოწმება ხელით სრულდება და GitHub-ს უკავშირდება.",
     "autoUpdateCheck": "განახლებების ავტომატური შემოწმება",
     "autoUpdateCheckHelp": "დღეში ერთხელ ამოწმებს GitHub-ს ახალი გამოშვებისთვის და აჩვენებს შეხსენებას. ნაგულისხმევად გამორთულია.",
     "openReleases": "GitHub-ის რელიზების გახსნა",
     "restartAfterUpdate": "ბილდის დასრულების შემდეგ გადატვირთეთ FreeLLMAPI."
+=======
+    "autoUpdateCheck": "განახლებების ავტომატური შემოწმება",
+    "restartAfterUpdate": "ბილდის დასრულების შემდეგ გადატვირთეთ FreeLLMAPI.",
+    "downloadUpdate": "განახლების ჩამოტვირთვა",
+    "downloadingUpdate": "იტვირთება… {percent}%",
+    "restartToUpdate": "გადატვირთვა განახლებისთვის",
+    "updateReadyHint": "ჩამოიტვირთა. FreeLLMAPI ქმნის თქვენი მონაცემების სარეზერვო ასლს, გადაიტვირთება და გახსნის ახალ ვერსიას.",
+    "updateInstallFailed": "განახლების დაყენება ვერ მოხერხდა.",
+    "updateNow": "ახლავე განახლება",
+    "updatingContainer": "ახალი იმიჯის ჩამოტვირთვა და გადატვირთვა. გვერდი გადაიტვირთება, როცა FreeLLMAPI დაბრუნდება.",
+    "updateNowFailed": "განახლების სერვისმა მოთხოვნა არ მიიღო. შეამოწმეთ, მუშაობს თუ არა watchtower კონტეინერი.",
+    "updateNowTimeout": "FreeLLMAPI 5 წუთის შემდეგაც არ გადაიტვირთა. შეამოწმეთ watchtower კონტეინერის ჟურნალები."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "მოდელები",
@@ -217,6 +242,10 @@
     "noKey": "გასაღების გარეშე",
     "dragToReorder": "გადაიტანეთ ხელახლა შეკვეთისთვის",
     "dragToReorderGroup": "გადაიტანეთ მოდელის ხელახლა შეკვეთისთვის",
+<<<<<<< HEAD
+=======
+    "moveToRank": "გადასვლა რანგზე",
+>>>>>>> upstream/main
     "providerCount": "{count} პროვაიდერები",
     "servedBy": "ემსახურება {providers}",
     "viewProviders": "პროვაიდერების ნახვა",
@@ -231,6 +260,10 @@
     "settingsHint": "კატალოგის მოდელების ადგილობრივი რედაქტირება ინახება კატალოგის სინქრონიზაციაში. კატალოგის წაშლილი მოდელები წაშლილია მანამ, სანამ არ დაამატებთ მათ ხელახლა კონფიგურაციის საშუალებით.",
     "catalogModel": "კატალოგი",
     "customModel": "საბაჟო",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "აღმოჩენილი",
+>>>>>>> upstream/main
     "localOverride": "ადგილობრივი გადაფარვა",
     "displayName": "საჩვენებელი სახელი",
     "sizeLabel": "შესაძლებლობების დონე",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "გასაღებები",
     "pageDescription": "პროვაიდერის სერთიფიკატები და ერთიანი API გასაღები, რომელთანაც დაკავშირებულია თქვენი აპები.",
     "tabProviders": "პროვაიდერები",
     "checklistSummary": "{total}-დან {configured} პროვაიდერი კონფიგურირებულია",
     "checklistKeyless": "გასაღები არ არის საჭირო",
     "checklistNoKeyTip": "გასაღები ჯერ არ დამატებულა. დააწკაპუნეთ დასამატებლად.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "გახსენით {provider} ანგარიშის შესაქმნელად და გასაღების მისაღებად",
+>>>>>>> upstream/main
     "checklistKeylessTip": "მუშაობს გასაღების გარეშე.",
     "tabQuotaSignals": "კვოტის სიგნალები",
     "tabApiKey": "ერთიანი API გასაღები",
@@ -506,11 +546,19 @@
     "platform": "პლატფორმა",
     "hideAdded": "დამატებული პროვაიდერების დამალვა",
     "apiToken": "API ჟეტონი",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "API გასაღები არ არის საჭირო",
     "bearerTokenPlaceholder": "მატარებლის ნიშანი",
     "pasteKeyPlaceholder": "ჩასვით გასაღები აქ",
     "pasteSeveral": "რამდენიმეს ჩასმა",
     "keylessHint": "API გასაღები არ არის საჭირო: ამ პროვაიდერის უფასო დონე ანონიმურია (ფასი შეზღუდულია IP-ზე).",
+=======
+    "keyOptionalPlaceholder": "არასავალდებულო",
+    "bearerTokenPlaceholder": "მატარებლის ნიშანი",
+    "pasteKeyPlaceholder": "ჩასვით გასაღები აქ",
+    "pasteSeveral": "რამდენიმეს ჩასმა",
+    "keyOptionalHint": "არასავალდებულო: დატოვეთ ცარიელი ანონიმური უფასო დონისთვის (IP-ზე შეზღუდული), ან ჩასვით საკუთარი გასაღები თქვენი ანგარიშის გამოსაყენებლად.",
+>>>>>>> upstream/main
     "enable": "ჩართვა",
     "noProviderKeys": "პროვაიდერის გასაღებები ჯერ არ არის. დაამატეთ ერთი ზემოთ მარშრუტის დასაწყებად.",
     "filterPlaceholder": "გაფილტრეთ პროვაიდერები ან გასაღებები",
@@ -688,7 +736,18 @@
     "testFailed": "მოდელის ტესტირება ჩაიშალა",
     "testThrottled": "გთხოვთ მოიცადოთ {seconds}წმ ამ მოდელის ხელახლა შემოწმებამდე.",
     "noModelsForProvider": "ამ პროვაიდერისთვის მოდელები არ არის კონფიგურირებული.",
+<<<<<<< HEAD
     "testModels": "მოდელების ტესტირება"
+=======
+    "testModels": "მოდელების ტესტირება",
+    "monthlyRequestCapLabel": "თვიური მოთხოვნების ლიმიტი",
+    "monthlyTokenCapLabel": "თვიური ტოკენების ლიმიტი",
+    "capUnlimitedPlaceholder": "შეუზღუდავი",
+    "capEditHint": "ლიმიტები სათითაო თვის 1-ს 00:00 UTC აღდგება. დატოვეთ ცარიელი შეუზღუდავისთვის.",
+    "monthlyUsageLine": "ამ თვეში {requests} მოთხოვნა, {tokens} ტოკენი",
+    "quotaBalanceHint": "დარჩა {remaining} / {limit} {metric}",
+    "quotaBalanceLeft": "დარჩა {remaining}"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "განახლებამდე"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "ჯანსაღი",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "მუდამ ჩართული პირადი ასისტენტი, რომელიც თქვენივე მანქანიდან პასუხობს WhatsApp-ში, Telegram-ში, Discord-სა და სხვაგან.",
+<<<<<<< HEAD
       "hermes": "Nous Research-ის თვითგანვითარებადი აგენტი მუდმივი მეხსიერებითა და უნარებით, ტერმინალში ან ჩატის აპებში."
+=======
+      "hermes": "Nous Research-ის თვითგანვითარებადი აგენტი მუდმივი მეხსიერებითა და უნარებით, ტერმინალში ან ჩატის აპებში.",
+      "pi": "მინიმალისტური ტერმინალის აგენტი, რომელსაც საკუთარი გაფართოებებით, უნარებითა და მოთხოვნის შაბლონებით აწყობთ.",
+      "reasonix": "DeepSeek-ისთვის შექმნილი ტერმინალის კოდირების აგენტი, აგებული პრეფიქსის ქეშირებაზე, რომ ხანგრძლივი სესიები იაფი დარჩეს."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "დაყენებულია FreeLLMAPI-ის უფრო ახალი ვერსია.",
+    "reload": "გადატვირთვა"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "ბოლო 5 წუთში {count} მოთხოვნა შეიზღუდა",
     "hourFilter": "საათი: {hour}",
     "serverLog": "სერვერის ჟურნალი"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "ამ ჯაჭვის გადარქმევა",
+    "renameConfirm": "გადარქვათ ჯაჭვს \"{oldName}\" სახელი \"{name}\"? კლიენტებმა, რომლებიც იძახიან auto:{oldName}, უნდა გადავიდნენ auto:{name}-ზე.",
+    "renamePlaceholder": "ახალი ჯაჭვის სახელი",
+    "renameFailed": "ამ ჯაჭვის გადარქმევა ვერ მოხერხდა."
+  },
+  "updates": {
+    "versionAvailable": "ხელმისაწვდომია ვერსია {version}",
+    "versionReady": "ვერსია {version} მზადაა დასაყენებლად",
+    "releaseNotes": "გამოშვების შენიშვნები",
+    "tryAgain": "ხელახლა ცდა",
+    "offline": "შეამოწმეთ ინტერნეტკავშირი და სცადეთ ხელახლა."
+>>>>>>> upstream/main
   }
 }

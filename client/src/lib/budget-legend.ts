@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+import type { TokenUsageData } from './routing'
+
+>>>>>>> upstream/main
 // The monthly-budget legend: one flat list of models, smartest first.
 //
 // It used to nest model rows under provider pool headers (#1010), which read
@@ -7,6 +12,7 @@
 // under the smartest strategy. Pool-level quota readings live on each model's
 // own page.
 
+<<<<<<< HEAD
 /** The subset of a wire model row the legend renders. Kept explicit (rather
  *  than derived from the full server row) because unranked models are legal
  *  here — they sort last — and the legend never shows the rate-limit lanes. */
@@ -20,13 +26,22 @@ export type LegendModel = {
 }
 
 export type LegendRow = LegendModel & {
+=======
+export type LegendModel = TokenUsageData['models'][number]
+
+export interface LegendRow extends LegendModel {
+>>>>>>> upstream/main
   usedTokens: number
   remainingTokens: number
   /** Share of the whole budget this model's remaining allowance is. */
   widthPct: number
 }
 
+<<<<<<< HEAD
 export type BudgetLegend = {
+=======
+export interface BudgetLegend {
+>>>>>>> upstream/main
   /** Rows with a budget to show, smartest first. */
   rows: LegendRow[]
   /** Rows with no published quota, folded into the "+N" summary line. */

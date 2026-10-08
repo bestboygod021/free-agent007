@@ -36,6 +36,7 @@ import * as responseCache from '../migrations/20260903_000002_response_cache.js'
 import * as keyMonthlyBudget from '../migrations/20260904_000001_key_monthly_budget.js';
 import * as keyMonthlyUsage from '../migrations/20260914_000001_key_monthly_usage.js';
 import * as quotaSnapshotFreshness from '../migrations/20260915_000001_quota_snapshot_freshness.js';
+<<<<<<< HEAD
 import * as agentMemoryAndJobs from '../migrations/20260921_000001_agent_memory_and_jobs.js';
 import * as agentRuns from '../migrations/20260921_000002_agent_runs.js';
 import * as agentToolCalls from '../migrations/20260921_000003_agent_tool_calls.js';
@@ -45,6 +46,9 @@ import * as ragDocuments from '../migrations/20260921_000006_rag_documents.js';
 import * as semanticCache from '../migrations/20260921_000007_semantic_cache.js';
 import * as ragKeywordIndex from '../migrations/20260924_000001_rag_keyword_index.js';
 import * as rateLimitEvents from '../migrations/20261008_000001_rate_limit_events.js';
+=======
+import * as requestModelAttribution from '../migrations/20260913_000001_request_model_attribution.js';
+>>>>>>> upstream/main
 
 export interface MigrationModule {
   up(db: Db): void;
@@ -91,6 +95,7 @@ export const ANALYTICS_LATENCY_PERCENTILE_INDEX_FILENAME = '20260902_000001_anal
 export const MCP_ENABLED_DEFAULT_FILENAME = '20260903_000001_mcp_enabled_default.ts';
 export const RESPONSE_CACHE_FILENAME = '20260903_000002_response_cache.ts';
 export const KEY_MONTHLY_BUDGET_FILENAME = '20260904_000001_key_monthly_budget.ts';
+<<<<<<< HEAD
 export const KEY_MONTHLY_USAGE_FILENAME = '20260914_000001_key_monthly_usage.ts';
 export const QUOTA_SNAPSHOT_FRESHNESS_FILENAME = '20260915_000001_quota_snapshot_freshness.ts';
 export const AGENT_MEMORY_AND_JOBS_FILENAME = '20260921_000001_agent_memory_and_jobs.ts';
@@ -102,6 +107,11 @@ export const RAG_DOCUMENTS_FILENAME = '20260921_000006_rag_documents.ts';
 export const SEMANTIC_CACHE_FILENAME = '20260921_000007_semantic_cache.ts';
 const RAG_KEYWORD_INDEX_FILENAME = '20260924_000001_rag_keyword_index.ts';
 const RATE_LIMIT_EVENTS_FILENAME = '20261008_000001_rate_limit_events.ts';
+=======
+export const REQUEST_MODEL_ATTRIBUTION_FILENAME = '20260913_000001_request_model_attribution.ts';
+export const KEY_MONTHLY_USAGE_FILENAME = '20260914_000001_key_monthly_usage.ts';
+export const QUOTA_SNAPSHOT_FRESHNESS_FILENAME = '20260915_000001_quota_snapshot_freshness.ts';
+>>>>>>> upstream/main
 
 export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: LEGACY_BASELINE_FILENAME, module: legacyBaseline },
@@ -139,6 +149,7 @@ export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: MCP_ENABLED_DEFAULT_FILENAME, module: mcpEnabledDefault },
   { filename: RESPONSE_CACHE_FILENAME, module: responseCache },
   { filename: KEY_MONTHLY_BUDGET_FILENAME, module: keyMonthlyBudget },
+<<<<<<< HEAD
   { filename: KEY_MONTHLY_USAGE_FILENAME, module: keyMonthlyUsage },
   { filename: QUOTA_SNAPSHOT_FRESHNESS_FILENAME, module: quotaSnapshotFreshness },
   { filename: AGENT_MEMORY_AND_JOBS_FILENAME, module: agentMemoryAndJobs },
@@ -150,4 +161,9 @@ export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: SEMANTIC_CACHE_FILENAME, module: semanticCache },
   { filename: RAG_KEYWORD_INDEX_FILENAME, module: ragKeywordIndex },
   { filename: RATE_LIMIT_EVENTS_FILENAME, module: rateLimitEvents },
+=======
+  { filename: REQUEST_MODEL_ATTRIBUTION_FILENAME, module: requestModelAttribution },
+  { filename: KEY_MONTHLY_USAGE_FILENAME, module: keyMonthlyUsage },
+  { filename: QUOTA_SNAPSHOT_FRESHNESS_FILENAME, module: quotaSnapshotFreshness },
+>>>>>>> upstream/main
 ];

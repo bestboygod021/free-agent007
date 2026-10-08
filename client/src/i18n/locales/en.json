@@ -16,8 +16,12 @@
     "switchToEnglish": "Switch to English",
     "modelsMenu": "Browse model types",
     "logs": "Logs",
+<<<<<<< HEAD
     "analyticsMenu": "Analytics pages",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Analytics pages"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Create your account",
@@ -109,6 +113,7 @@
     "sectionCompression": "Compression",
     "sectionAdvanced": "Advanced",
     "sectionPreview": "Preview",
+<<<<<<< HEAD
     "sectionRateLimit": "Rate limits",
     "rateLimitProxy": "Proxy /v1 cap (requests/min)",
     "rateLimitAdmin": "Dashboard /api cap (requests/min)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Unified-key /v1 cap (requests/min)",
     "rateLimitEnvLocked": "Pinned by {env} — unset it to edit",
     "rateLimitSaved": "Applied — effective on the next request",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Language and appearance of this dashboard.",
     "advancedDescription": "Thresholds and safety switches for the compression pipeline.",
     "compressionTitle": "Prompt compression",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Run preview",
     "updatesTitle": "Updates",
     "checkForUpdates": "Check for updates",
+<<<<<<< HEAD
     "lastChecked": "Last checked: {when}",
     "currentVersion": "Current build:",
     "updateAvailable": "Update available",
     "changelog": "What's changed",
+=======
+    "updateAvailable": "Update available",
+>>>>>>> upstream/main
     "upToDate": "Up to date",
     "buildAhead": "This build is ahead of official main.",
     "buildDiverged": "This build has diverged from official main.",
     "buildUnknown": "This custom build cannot be compared with official main.",
     "notGitInstall": "This installation does not include commit information.",
     "checkFailed": "Could not check for updates.",
+<<<<<<< HEAD
     "contactsGithub": "Checks are manual and contact GitHub.",
     "autoUpdateCheck": "Automatic update check",
     "autoUpdateCheckHelp": "Checks GitHub once a day for a new release and shows a reminder. Off by default.",
     "openReleases": "Open GitHub Releases",
     "restartAfterUpdate": "Restart FreeLLMAPI after the build completes."
+=======
+    "autoUpdateCheck": "Automatic update check",
+    "restartAfterUpdate": "Restart FreeLLMAPI after the build completes.",
+    "downloadUpdate": "Download update",
+    "downloadingUpdate": "Downloading… {percent}%",
+    "restartToUpdate": "Restart to update",
+    "updateReadyHint": "Downloaded. FreeLLMAPI backs up your data, restarts and opens the new version.",
+    "updateInstallFailed": "The update could not be installed.",
+    "updateNow": "Update now",
+    "updatingContainer": "Pulling the new image and restarting. This page reloads when FreeLLMAPI is back.",
+    "updateNowFailed": "The updater did not accept the request. Check that the watchtower container is running.",
+    "updateNowTimeout": "FreeLLMAPI has not restarted after 5 minutes. Check the watchtower container's logs."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Models",
@@ -217,6 +242,10 @@
     "noKey": "no key",
     "dragToReorder": "Drag to reorder",
     "dragToReorderGroup": "Drag to reorder model",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Jump to rank",
+>>>>>>> upstream/main
     "providerCount": "{count} providers",
     "servedBy": "Served by {providers}",
     "viewProviders": "View providers",
@@ -231,6 +260,10 @@
     "settingsHint": "Local edits to catalog models are kept across catalog syncs. Deleted catalog models stay deleted until you add them again through config.",
     "catalogModel": "catalog",
     "customModel": "custom",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "discovered",
+>>>>>>> upstream/main
     "localOverride": "local override",
     "displayName": "Display name",
     "sizeLabel": "Capability tier",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Keys",
     "pageDescription": "Provider credentials and the unified API key your apps connect with.",
     "tabProviders": "Providers",
     "checklistSummary": "{configured} of {total} providers configured",
     "checklistKeyless": "no key needed",
     "checklistNoKeyTip": "No key added yet. Click to add one.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Open {provider} to create an account and get a key",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Works without a key.",
     "tabQuotaSignals": "Quota signals",
     "tabApiKey": "Unified API key",
@@ -544,11 +584,19 @@
     "platform": "Platform",
     "hideAdded": "Hide added providers",
     "apiToken": "API token",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "No API key needed",
     "bearerTokenPlaceholder": "Bearer token",
     "pasteKeyPlaceholder": "paste key here",
     "pasteSeveral": "Paste several",
     "keylessHint": "No API key needed: this provider's free tier is anonymous (rate-limited per IP).",
+=======
+    "keyOptionalPlaceholder": "Optional",
+    "bearerTokenPlaceholder": "Bearer token",
+    "pasteKeyPlaceholder": "paste key here",
+    "pasteSeveral": "Paste several",
+    "keyOptionalHint": "Optional: leave blank for the anonymous free tier (rate-limited per IP), or paste your own key to use your account.",
+>>>>>>> upstream/main
     "enable": "Enable",
     "noProviderKeys": "No provider keys yet. Add one above to start routing.",
     "filterPlaceholder": "Filter providers or keys",
@@ -688,7 +736,18 @@
     "testFailed": "Model test failed",
     "testThrottled": "Please wait {seconds}s before testing this model again.",
     "noModelsForProvider": "No models configured for this provider.",
+<<<<<<< HEAD
     "testModels": "Test models"
+=======
+    "testModels": "Test models",
+    "monthlyRequestCapLabel": "Monthly request cap",
+    "monthlyTokenCapLabel": "Monthly token cap",
+    "capUnlimitedPlaceholder": "Unlimited",
+    "capEditHint": "Caps reset on the 1st, 00:00 UTC. Leave blank for unlimited.",
+    "monthlyUsageLine": "{requests} requests, {tokens} tokens this month",
+    "quotaBalanceHint": "{remaining} of {limit} {metric} left",
+    "quotaBalanceLeft": "{remaining} left"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Pre-update"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "healthy",
@@ -764,7 +828,13 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "An always-on personal assistant that answers on WhatsApp, Telegram, Discord and more from your own machine.",
+<<<<<<< HEAD
       "hermes": "Nous Research's self-improving agent with persistent memory and skills, in the terminal or on chat apps."
+=======
+      "hermes": "Nous Research's self-improving agent with persistent memory and skills, in the terminal or on chat apps.",
+      "pi": "A minimal terminal harness you shape with your own extensions, skills and prompt templates.",
+      "reasonix": "A DeepSeek-native terminal coding agent, built around prefix caching so long sessions stay cheap."
+>>>>>>> upstream/main
     }
   },
   "analytics": {
@@ -1149,12 +1219,18 @@
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "A newer version of FreeLLMAPI is installed.",
+    "reload": "Reload"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} requests rate-limited in the last 5 minutes",
     "hourFilter": "Hour: {hour}",
     "serverLog": "Server log"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "Rename this chain",
+    "renameConfirm": "Rename chain \"{oldName}\" to \"{name}\"? Clients calling auto:{oldName} must switch to auto:{name}.",
+    "renamePlaceholder": "New chain name",
+    "renameFailed": "Couldn't rename the chain."
+  },
+  "updates": {
+    "versionAvailable": "Version {version} is available",
+    "versionReady": "Version {version} is ready to install",
+    "releaseNotes": "Release notes",
+    "tryAgain": "Try again",
+    "offline": "Check your internet connection and try again."
+>>>>>>> upstream/main
   }
 }

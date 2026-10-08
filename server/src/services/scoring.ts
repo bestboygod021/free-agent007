@@ -126,8 +126,20 @@ export function isValidPeakHour(hour: unknown): hour is number {
 }
 
 /** True when `timezone` is an IANA name this runtime's ICU data knows. */
+<<<<<<< HEAD
 import { isValidTimezone } from '@freellmapi/shared/schemas.js';
 export { isValidTimezone };
+=======
+export function isValidTimezone(timezone: unknown): timezone is string {
+  if (typeof timezone !== 'string' || !timezone.trim()) return false;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+>>>>>>> upstream/main
 
 /**
  * The hour (0–23) at `now` in `timezone`. Uses Intl rather than Date#getHours

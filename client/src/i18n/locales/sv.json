@@ -16,8 +16,12 @@
     "modelsMenu": "Bläddra bland modelltyper",
     "agents": "Agenter",
     "logs": "Loggar",
+<<<<<<< HEAD
     "analyticsMenu": "Analyssidor",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Analyssidor"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Skapa ditt konto",
@@ -109,6 +113,7 @@
     "sectionCompression": "Komprimering",
     "sectionAdvanced": "Avancerat",
     "sectionPreview": "Förhandsvisning",
+<<<<<<< HEAD
     "sectionRateLimit": "Hastighetsgränser",
     "rateLimitProxy": "Proxy-/v1-gräns (förfrågningar/min)",
     "rateLimitAdmin": "Dashboard-/api-gräns (förfrågningar/min)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Enhetlig nyckel-/v1-gräns (förfrågningar/min)",
     "rateLimitEnvLocked": "Låst av {env} — ta bort den för att redigera",
     "rateLimitSaved": "Tillämpat — gäller nästa förfrågan",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Språk och utseende för den här instrumentpanelen.",
     "advancedDescription": "Tröskelvärden och säkerhetsreglage för komprimeringspipelinen.",
     "compressionTitle": "Promptkomprimering",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Kör förhandsvisning",
     "updatesTitle": "Uppdateringar",
     "checkForUpdates": "Kolla efter uppdateringar",
+<<<<<<< HEAD
     "lastChecked": "Senast kontrollerat: {when}",
     "currentVersion": "Aktuell version:",
     "updateAvailable": "Uppdatering tillgänglig",
     "changelog": "Vad har ändrats",
+=======
+    "updateAvailable": "Uppdatering tillgänglig",
+>>>>>>> upstream/main
     "upToDate": "Uppdaterad",
     "buildAhead": "Den här versionen ligger före officiella main.",
     "buildDiverged": "Den här versionen har avvikit från officiella main.",
     "buildUnknown": "Den här anpassade versionen kan inte jämföras med officiella main.",
     "notGitInstall": "Den här installationen innehåller ingen commit-information.",
     "checkFailed": "Det gick inte att söka efter uppdateringar.",
+<<<<<<< HEAD
     "contactsGithub": "Kontroller görs manuellt och kontaktar GitHub.",
     "autoUpdateCheck": "Automatisk uppdateringskontroll",
     "autoUpdateCheckHelp": "Kontrollerar GitHub en gång om dagen efter en ny version och visar en påminnelse. Av som standard.",
     "openReleases": "Öppna GitHub Releases",
     "restartAfterUpdate": "Starta om FreeLLMAPI när bygget är klart."
+=======
+    "autoUpdateCheck": "Automatisk uppdateringskontroll",
+    "restartAfterUpdate": "Starta om FreeLLMAPI när bygget är klart.",
+    "downloadUpdate": "Hämta uppdatering",
+    "downloadingUpdate": "Hämtar… {percent} %",
+    "restartToUpdate": "Starta om för att uppdatera",
+    "updateReadyHint": "Hämtad. FreeLLMAPI säkerhetskopierar dina data, startar om och öppnar den nya versionen.",
+    "updateInstallFailed": "Uppdateringen kunde inte installeras.",
+    "updateNow": "Uppdatera nu",
+    "updatingContainer": "Hämtar den nya avbildningen och startar om. Sidan laddas om när FreeLLMAPI är tillbaka.",
+    "updateNowFailed": "Uppdateraren tog inte emot begäran. Kontrollera att watchtower-containern körs.",
+    "updateNowTimeout": "FreeLLMAPI har inte startat om efter 5 minuter. Kontrollera loggarna för watchtower-containern."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Modeller",
@@ -217,6 +242,10 @@
     "noKey": "Ingen nyckel",
     "dragToReorder": "Dra för att omordna",
     "dragToReorderGroup": "Dra för att omordna modellen",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Hoppa till rang",
+>>>>>>> upstream/main
     "providerCount": "{count} leverantörer",
     "servedBy": "Trafikerad av {providers}",
     "viewProviders": "Visa leverantörer",
@@ -231,6 +260,10 @@
     "settingsHint": "Lokala redigeringar av katalogmodeller sparas över katalogsynkningar. Raderade katalogmodeller förblir raderade tills du lägger till dem igen via konfigurationen.",
     "catalogModel": "Katalog",
     "customModel": "Sedvänja",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "upptäckt",
+>>>>>>> upstream/main
     "localOverride": "Lokal överstyrning",
     "displayName": "Visningsnamn",
     "sizeLabel": "Kapacitetsnivå",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Nycklar",
     "pageDescription": "Leverantörsuppgifter och den enhetliga API-nyckeln som dina appar ansluter till.",
     "tabProviders": "Leverantörer",
     "checklistSummary": "{configured} av {total} leverantörer konfigurerade",
     "checklistKeyless": "ingen nyckel krävs",
     "checklistNoKeyTip": "Ingen nyckel har lagts till än. Klicka för att lägga till en.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Öppna {provider} för att skapa ett konto och få en nyckel",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Fungerar utan nyckel.",
     "tabQuotaSignals": "Kvotsignaler",
     "tabApiKey": "Enhetlig API nyckel",
@@ -506,11 +546,19 @@
     "platform": "Plattform",
     "hideAdded": "Dölj tillagda leverantörer",
     "apiToken": "API token",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Ingen API nyckel behövs",
     "bearerTokenPlaceholder": "Bärartoken",
     "pasteKeyPlaceholder": "klistra in knappen här",
     "pasteSeveral": "Klistra in flera",
     "keylessHint": "Ingen API nyckel behövs: denna leverantörs gratisnivå är anonym (prisbegränsad per IP).",
+=======
+    "keyOptionalPlaceholder": "Valfritt",
+    "bearerTokenPlaceholder": "Bärartoken",
+    "pasteKeyPlaceholder": "klistra in knappen här",
+    "pasteSeveral": "Klistra in flera",
+    "keyOptionalHint": "Valfritt: lämna tomt för den anonyma gratisnivån (hastighetsbegränsad per IP) eller klistra in din egen nyckel för att använda ditt konto.",
+>>>>>>> upstream/main
     "enable": "Aktivera",
     "noProviderKeys": "Inga leverantörsnycklar än. Lägg till en ovan för att börja rutta.",
     "filterPlaceholder": "Filterleverantörer eller nycklar",
@@ -688,7 +736,18 @@
     "testFailed": "Modelltestet misslyckades",
     "testThrottled": "Vänta {seconds}s innan du testar denna modell igen.",
     "noModelsForProvider": "Inga modeller konfigurerade för denna leverantör.",
+<<<<<<< HEAD
     "testModels": "Testa modeller"
+=======
+    "testModels": "Testa modeller",
+    "monthlyRequestCapLabel": "Månadslimit för förfrågningar",
+    "monthlyTokenCapLabel": "Månadslimit för tokens",
+    "capUnlimitedPlaceholder": "Obegränsat",
+    "capEditHint": "Gränserna nollställs den 1:a kl 00:00 UTC. Lämna tomt för obegränsat.",
+    "monthlyUsageLine": "{requests} förfrågningar, {tokens} tokens denna månad",
+    "quotaBalanceHint": "{remaining} av {limit} {metric} kvar",
+    "quotaBalanceLeft": "{remaining} kvar"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Före uppdatering"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "Hälsosamt",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "En ständigt tillgänglig personlig assistent som svarar på WhatsApp, Telegram, Discord med mera från din egen dator.",
+<<<<<<< HEAD
       "hermes": "Nous Researchs självförbättrande agent med beständigt minne och färdigheter, i terminalen eller i chattappar."
+=======
+      "hermes": "Nous Researchs självförbättrande agent med beständigt minne och färdigheter, i terminalen eller i chattappar.",
+      "pi": "En minimal terminalagent som du formar med egna tillägg, färdigheter och promptmallar.",
+      "reasonix": "En terminalbaserad kodagent byggd för DeepSeek kring prefix-cachning, så att långa sessioner förblir billiga."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "En nyare version av FreeLLMAPI är installerad.",
+    "reload": "Läs in igen"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} förfrågningar begränsades de senaste 5 minuterna",
     "hourFilter": "Timme: {hour}",
     "serverLog": "Serverlogg"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "Byt namn på denna kedja",
+    "renameConfirm": "Byt namn på kedjan \"{oldName}\" till \"{name}\"? Klients som anropar auto:{oldName} måste byta till auto:{name}.",
+    "renamePlaceholder": "Nytt kedjenamn",
+    "renameFailed": "Det gick inte att byta namn på kedjan."
+  },
+  "updates": {
+    "versionAvailable": "Version {version} är tillgänglig",
+    "versionReady": "Version {version} är redo att installeras",
+    "releaseNotes": "Versionsinformation",
+    "tryAgain": "Försök igen",
+    "offline": "Kontrollera internetanslutningen och försök igen."
+>>>>>>> upstream/main
   }
 }

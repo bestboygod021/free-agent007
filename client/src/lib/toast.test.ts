@@ -24,6 +24,7 @@ describe('toast store (#586)', () => {
 
     it('lets an explicit per-call duration win, including for errors', async () => {
       const { toast, getToasts } = await loadStore()
+<<<<<<< HEAD
       toast.error('transient', { duration: 2000 })
       toast.success('slow read', { duration: 10000 })
       expect(getToasts().map(t => t.duration)).toEqual([2000, 10000])
@@ -34,6 +35,12 @@ describe('toast store (#586)', () => {
       toast.info('pinned', { duration: null })
       expect(getToasts()[0].duration).toBeNull()
     })
+=======
+      toast.error('transient', 2000)
+      toast.success('slow read', 10000)
+      expect(getToasts().map(t => t.duration)).toEqual([2000, 10000])
+    })
+>>>>>>> upstream/main
   })
 
   it('replaces an identical pending toast instead of stacking duplicates', async () => {
@@ -48,6 +55,7 @@ describe('toast store (#586)', () => {
     expect(getToasts()).toHaveLength(3)
   })
 
+<<<<<<< HEAD
   it('carries an action button through push and updateToast', async () => {
     const { toast, getToasts, updateToast } = await loadStore()
     const onClick = vi.fn()
@@ -62,6 +70,8 @@ describe('toast store (#586)', () => {
     expect(getToasts()[0].action?.label).toBe('Retry now')
   })
 
+=======
+>>>>>>> upstream/main
   it('dismissToast removes a toast and ignores unknown ids', async () => {
     const { toast, dismissToast, getToasts } = await loadStore()
     const id = toast.error('boom')

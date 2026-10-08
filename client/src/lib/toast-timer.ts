@@ -4,7 +4,11 @@
 // hover and blur can overlap, and the timer only runs when every hold has
 // been released. Kept free of React/DOM so it can be unit-tested directly.
 
+<<<<<<< HEAD
 export type ToastTimer = {
+=======
+export interface ToastTimer {
+>>>>>>> upstream/main
   /** Suspend the countdown; keeps the remaining time. */
   pause(): void
   /** Release one pause hold; the countdown resumes once none remain. */

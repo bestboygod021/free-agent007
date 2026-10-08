@@ -18,7 +18,11 @@ import { contentToString, stripImagesFromMessages } from '../lib/content.js';
 import { sanitizeProviderErrorMessage } from '../lib/error-redaction.js';
 import { getSetting, setSetting } from '../db/index.js';
 import type { CompletionOptions } from '../providers/base.js';
+<<<<<<< HEAD
 import { fusionConfigSchema } from '@freellmapi/shared/schemas.js';
+=======
+import { routeOutputBudget } from '../lib/output-cap.js';
+>>>>>>> upstream/main
 
 // The virtual model id that triggers multi-model synthesis. Mirrors how
 // `auto` is a virtual id the router intercepts (see routes/proxy.ts).
@@ -102,9 +106,28 @@ function panelMaxK(): number {
   return Math.min(intSetting('fusion_max_k', HARD_MAX_PANEL_K), HARD_MAX_PANEL_K);
 }
 
+<<<<<<< HEAD
 
 
 export { fusionConfigSchema };
+=======
+export const fusionConfigSchema = z.object({
+  // Explicit panel: the exact model ids the client wants to fuse. Any unknown
+  // / disabled ids are dropped (and reported in x_fusion) rather than failing
+  // the whole request — a panel is robust to missing members by design.
+  models: z.array(z.string().min(1)).optional(),
+  // Auto-panel size when `models` is omitted. Clamped to [1, fusion_max_k].
+  k: z.number().int().positive().optional(),
+  // Judge/synthesizer model id. Omit → the top-ranked available model.
+  judge: z.string().min(1).optional(),
+  // 'synthesize' (default): one blended answer. 'best_of': skip the judge,
+  // return the longest single panel answer (cheaper; no +1 judge call).
+  strategy: z.enum(['synthesize', 'best_of']).optional(),
+  // Attach the per-model panel answers + judge metadata under `x_fusion`.
+  expose_panel: z.boolean().optional(),
+});
+
+>>>>>>> upstream/main
 export type FusionConfig = z.infer<typeof fusionConfigSchema>;
 
 export function getFusionMaxK(): number {
@@ -263,8 +286,14 @@ async function runModelCall(
     if (!route) break;
 
     const startedAt = Date.now();
+<<<<<<< HEAD
     try {
       const result = await route.provider.chatCompletion(route.apiKey, messages, route.modelId, options);
+=======
+    const routeOpts = { ...options, contextBudget: routeOutputBudget(route, estimatedTokens) };
+    try {
+      const result = await route.provider.chatCompletion(route.apiKey, messages, route.modelId, routeOpts);
+>>>>>>> upstream/main
       const choice = result.choices?.[0];
       const text = contentToString(choice?.message?.content ?? '');
       const toolCalls = choice?.message?.tool_calls;
@@ -351,10 +380,18 @@ async function runJudgeStreaming(
     if (!route) break;
 
     const startedAt = Date.now();
+<<<<<<< HEAD
     let text = '';
     let started = false;
     try {
       for await (const chunk of route.provider.streamChatCompletion(route.apiKey, messages, route.modelId, options)) {
+=======
+    const routeOpts = { ...options, contextBudget: routeOutputBudget(route, estimatedTokens) };
+    let text = '';
+    let started = false;
+    try {
+      for await (const chunk of route.provider.streamChatCompletion(route.apiKey, messages, route.modelId, routeOpts)) {
+>>>>>>> upstream/main
         const delta = (chunk as any)?.choices?.[0]?.delta?.content;
         if (typeof delta === 'string' && delta.length > 0) {
           if (!started) { started = true; cb.onStart?.({ platform: route.platform, model: route.modelId }); }

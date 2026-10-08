@@ -1,5 +1,6 @@
 // ---- Platform & Model Types ----
 
+<<<<<<< HEAD
 // ---- Shared API Contracts (from ./schemas.ts) ----
 // Type-only re-exports of the Zod-inferred types. They are erased at compile
 // time, so importing types.ts pulls no zod code into a runtime bundle; the
@@ -115,6 +116,11 @@ export type { ErrorResponse, OllamaNativeError } from './schemas';
 export type { ProfileUpdate, ConversationPatch, LogQueryParams } from './schemas';
 export type { SignupInput, LoginInput, AddApiKeyInput, UpdateApiKeyInput } from './schemas';
 export type { ImportApiKeyInput, ImportKeysRequest, ChangePasswordInput, ChangeEmailInput, ResetPasswordInput } from './schemas';
+=======
+/** How the global outbound proxy URL is interpreted. Per-key proxies always
+ * use the traditional forward-proxy transport. */
+export type ProxyMode = 'forward' | 'fetch-relay';
+>>>>>>> upstream/main
 
 /** A model declared beside a custom endpoint in an import file (#382). A
  *  capability flag is present only when the paste declared it via a trailing
@@ -180,6 +186,26 @@ export type Platform =
   // monthly when a payment method is attached; usage beyond the grant is
   // pay-as-you-go. Background polling is required for its flex-only models.
   | 'sail'
+<<<<<<< HEAD
+=======
+  // Responses-only gateway; a shared monthly free allowance, not per model.
+  | 'aclide'
+  // OpenAI-compatible chat and embeddings; one shared $1 monthly allowance.
+  | 'speka'
+  // Ongoing free research API for chat and speech recognition; catalog only.
+  | 'typhoon'
+  // Permanent free chat aliases, shared fair-use quota; signed catalog only.
+  | 'plugsky'
+  // Selected zero-priced routes have daily/rolling quotas without a top-up;
+  // signed catalog only. The public roster also includes paid/promotional IDs.
+  | 'llmtr'
+  // Catalog-managed free routes: monthly request quota / ongoing $0 models.
+  | 'gizmo'
+  | 'blockrun'
+  // Hosted vision API: $5/workspace in recurring monthly credits, shared
+  // across models. Signed catalog only; no bundled model seeds.
+  | 'moondream'
+>>>>>>> upstream/main
   // Hosted gateways; model rows are delivered by the signed catalog only.
   // ElectronHub renews weekly credits; Experiential renews monthly credits.
   | 'electronhub'
@@ -356,7 +382,13 @@ export interface Model {
   enabled: boolean;
   supportsVision: boolean;
   supportsTools: boolean;
+<<<<<<< HEAD
   source?: 'catalog' | 'custom';
+=======
+  /** 'discovered': fetched from a built-in provider's own /models because the
+   *  catalog carries no models for it (#1348). */
+  source?: 'catalog' | 'custom' | 'discovered';
+>>>>>>> upstream/main
   keyId?: number | null;
   endpointScope?: string | null;
 }
@@ -415,7 +447,16 @@ export interface ApiKey {
   baseUrl: string | null;
   status: KeyStatus;
   enabled: boolean;
+<<<<<<< HEAD
   keyless: boolean;
+=======
+  /** This row is the anonymous sentinel of a key-optional platform: there is
+   *  no credential to copy, scope or reveal. */
+  keyless: boolean;
+  /** The platform works with or without a key (Kilo, OVH, AI Horde), so a key
+   *  can be added to or left off this row (#1331). */
+  keyOptional?: boolean;
+>>>>>>> upstream/main
   /** Whether an export file would actually contain this row. The server decides
    *  it so the dialog's "will export N keys" cannot drift from the export. */
   exportable: boolean;
@@ -425,10 +466,26 @@ export interface ApiKey {
   /** Model ids this key is limited to; null = serves every model of its
    *  platform (#657). */
   modelScope?: string[] | null;
+<<<<<<< HEAD
+=======
+  /** Per-key monthly request cap (0 = unlimited, #1158). */
+  monthlyRequestCap?: number;
+  /** Per-key monthly token cap (0 = unlimited, #1158). */
+  monthlyTokenCap?: number;
+  /** Current UTC month's successful usage against the caps above, with the
+   *  ISO time of the next monthly reset. */
+  monthlyUsage?: { requests: number; tokens: number; resetsAt: string };
+>>>>>>> upstream/main
   /** The per-key proxy override with its password masked (#590); '' = none. */
   maskedProxyUrl?: string;
   models?: ApiKeyModel[];
   cooldowns?: ApiKeyCooldown[];
+<<<<<<< HEAD
+=======
+  /** True for a built-in provider key whose platform the catalog carries no
+   *  models for, so the dashboard offers Fetch models on it (#1348). */
+  modelDiscovery?: boolean;
+>>>>>>> upstream/main
 }
 
 export interface ApiKeyCreate {
@@ -439,9 +496,26 @@ export interface ApiKeyCreate {
 
 // ---- Fallback Config ----
 
+<<<<<<< HEAD
 // FallbackEntry now lives in ./schemas.ts as the full GET /api/fallback row
 // (the old sketch here typed modelId as the DB id and missed two thirds of
 // the fields the endpoint actually sends). Zero importers when replaced.
+=======
+export interface FallbackEntry {
+  modelId: number;
+  platform: Platform;
+  displayName: string;
+  intelligenceRank: number;
+  speedRank: number;
+  priority: number;
+  enabled: boolean;
+  // Present when model unification is enabled — identifies the logical model
+  // this provider row belongs to so the dashboard can render grouped rows.
+  groupKey?: string;
+  canonicalId?: string;
+  groupLabel?: string;
+}
+>>>>>>> upstream/main
 
 // ---- Model Grouping (unify the same model across providers) ----
 // One logical model can be served by several providers (rows in the `models`
@@ -602,10 +676,21 @@ export interface ChatCompletionChunk {
 
 // ---- Analytics Types ----
 
+<<<<<<< HEAD
 /** GET /api/analytics/summary payload — the full 14-field shape emitted by
  *  server/src/routes/analytics.ts (was a stale 6-field sketch before it moved
  *  to the Zod contract in ./schemas.ts). */
 export type { AnalyticsSummary } from './schemas';
+=======
+export interface AnalyticsSummary {
+  totalRequests: number;
+  successRate: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  avgLatencyMs: number;
+  estimatedCostSavings: number;
+}
+>>>>>>> upstream/main
 
 export interface PlatformStats {
   platform: Platform;
@@ -653,6 +738,27 @@ export type QuotaMetric = 'requests' | 'tokens' | 'credits' | 'neurons';
 export type QuotaResetStrategy = 'fixed_calendar' | 'rolling_window' | 'token_bucket' | 'provider_reported' | 'unknown';
 export type QuotaObservationSource = 'header' | 'quota_api' | 'error_body' | 'local_usage' | 'documentation' | 'probe';
 
+<<<<<<< HEAD
+=======
+export interface ProviderQuotaState {
+  platform: Platform;
+  keyId: number;
+  /** The key's operator-facing label, when the row still names a live key. */
+  keyLabel?: string | null;
+  quotaPoolKey: string;
+  metric: QuotaMetric;
+  limit: number | null;
+  remaining: number | null;
+  resetAt: string | null;
+  resetStrategy: QuotaResetStrategy;
+  source: QuotaObservationSource;
+  confidence: number;
+  notes: string | null;
+  observedAt: string;
+  updatedAt: string;
+}
+
+>>>>>>> upstream/main
 export interface ProviderQuotaObservation extends ProviderQuotaState {
   id: string;
   statusCode: number | null;

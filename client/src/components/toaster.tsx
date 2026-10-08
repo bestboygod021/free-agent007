@@ -70,6 +70,7 @@ function Toast({ toast }: { toast: ToastItem }) {
     >
       <Icon className={`mt-0.5 size-4 shrink-0 ${ICON_CLASS[toast.kind]}`} />
       <p className="min-w-0 flex-1 break-words text-sm leading-snug">{toast.message}</p>
+<<<<<<< HEAD
       {toast.action && (
         <button
           type="button"
@@ -85,6 +86,8 @@ function Toast({ toast }: { toast: ToastItem }) {
           {toast.action.label}
         </button>
       )}
+=======
+>>>>>>> upstream/main
       <button
         type="button"
         aria-label={t('common.dismiss')}

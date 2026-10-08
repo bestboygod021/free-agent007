@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 // duration of the exit animation).
 export function FloatingBar({ show, children }: { show: boolean; children: ReactNode }) {
   const [render, setRender] = useState(show)
+<<<<<<< HEAD
   // Reveal is a render-phase adjustment (the bar must exist before the
   // slide-in animation can run); the hide is the only deferred part — it waits
   // out the exit animation in a timeout, which is what the effect is for.
@@ -15,6 +16,13 @@ export function FloatingBar({ show, children }: { show: boolean; children: React
   }
   useEffect(() => {
     if (show) return
+=======
+  useEffect(() => {
+    if (show) {
+      setRender(true)
+      return
+    }
+>>>>>>> upstream/main
     const t = setTimeout(() => setRender(false), 300) // match animation duration
     return () => clearTimeout(t)
   }, [show])

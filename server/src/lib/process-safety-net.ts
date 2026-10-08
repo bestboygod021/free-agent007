@@ -87,6 +87,14 @@ export function handleProcessError(
 ): ProcessErrorDecision {
   const log = hooks.log ?? console.error;
   const decision = classifyProcessError(err);
+<<<<<<< HEAD
+=======
+  // A write that hit a closed pipe is swallowed WITHOUT logging: when the pipe
+  // is our own stdout/stderr, logging it writes to that same dead pipe, which
+  // raises the next EPIPE — and every one of those lines is also persisted to
+  // server_logs. That loop ran at thousands of rows a second.
+  if (decision === 'swallow' && isBrokenPipeWrite(err)) return 'swallow';
+>>>>>>> upstream/main
   if (decision === 'swallow') {
     log(`[safety-net] swallowed transient ${kind}: ${describeError(err)}`);
     return 'swallow';
@@ -96,6 +104,34 @@ export function handleProcessError(
   return 'fatal';
 }
 
+<<<<<<< HEAD
+=======
+/** Pure: true for a write that failed because the reading end of the pipe is gone. */
+export function isBrokenPipeWrite(err: unknown): boolean {
+  const e = err as { code?: unknown; syscall?: unknown } | null;
+  return !!e && typeof e === 'object' && e.code === 'EPIPE' && e.syscall === 'write';
+}
+
+// Codes a stdio stream emits once whatever was reading it has gone away.
+const DEAD_STDIO_CODES = new Set(['EPIPE', 'EOF', 'ERR_STREAM_DESTROYED']);
+
+/**
+ * Give stdout/stderr an 'error' listener. Without one, a stream error — the
+ * terminal closed, or the process that started us with piped output exited —
+ * is escalated to an uncaughtException on every later console write. A dead
+ * console is not a reason to crash or to log, so those codes are dropped and
+ * anything else is rethrown to keep the fail-fast contract.
+ */
+export function guardStdio(streams: NodeJS.EventEmitter[] = [process.stdout, process.stderr]): void {
+  for (const stream of streams) {
+    stream.on('error', (err: { code?: string }) => {
+      if (err && typeof err.code === 'string' && DEAD_STDIO_CODES.has(err.code)) return;
+      throw err;
+    });
+  }
+}
+
+>>>>>>> upstream/main
 let installed = false;
 
 /** Install the global handlers once. Idempotent. Call as early as possible at
@@ -105,6 +141,10 @@ export function installProcessSafetyNet(hooks: SafetyNetHooks = {}): void {
   if (installed) return;
   installed = true;
   if (hooks.hasProcessHooks === false) return;
+<<<<<<< HEAD
+=======
+  guardStdio();
+>>>>>>> upstream/main
   process.on('uncaughtException', (err) => handleProcessError('uncaughtException', err, hooks));
   process.on('unhandledRejection', (reason) => handleProcessError('unhandledRejection', reason, hooks));
 }

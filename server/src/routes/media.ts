@@ -7,7 +7,10 @@ import { deleteUnusedCustomEndpointKey } from '../lib/custom-provider-cleanup.js
 import { resolveCustomEndpointKey } from '../services/custom-endpoint.js';
 import { registerCustomMediaModel } from '../services/custom-media-register.js';
 import { listAllMediaModels } from '../services/media.js';
+<<<<<<< HEAD
 import { customMediaSchema, mediaUpdateSchema } from '@freellmapi/shared/schemas.js';
+=======
+>>>>>>> upstream/main
 
 export const mediaRouter = Router();
 
@@ -100,7 +103,22 @@ mediaRouter.get('/usage', (req: Request, res: Response) => {
   });
 });
 
+<<<<<<< HEAD
 
+=======
+const customMediaSchema = z.object({
+  baseUrl: z.string().url('baseUrl must be a valid URL'),
+  model: z.string().min(1),
+  displayName: z.string().optional(),
+  // 'transcription' registers a custom OpenAI-compatible STT endpoint. The
+  // media_models table, GET /api/media/usage, the /v1/audio/transcriptions
+  // handler and the media service's 'custom' adapter all accept it.
+  modality: z.enum(['image', 'audio', 'transcription']),
+  apiKey: z.string().optional(),
+  label: z.string().optional(),
+  quotaLabel: z.string().optional(),
+});
+>>>>>>> upstream/main
 
 mediaRouter.post('/custom', (req: Request, res: Response) => {
   const parsed = customMediaSchema.safeParse(req.body);
@@ -154,7 +172,11 @@ mediaRouter.post('/custom', (req: Request, res: Response) => {
   });
 });
 
+<<<<<<< HEAD
 
+=======
+const updateSchema = z.object({ enabled: z.boolean() });
+>>>>>>> upstream/main
 
 mediaRouter.put('/:id', (req: Request, res: Response) => {
   const id = Number(req.params.id);
@@ -162,7 +184,11 @@ mediaRouter.put('/:id', (req: Request, res: Response) => {
     res.status(400).json({ error: { message: 'Invalid id' } });
     return;
   }
+<<<<<<< HEAD
   const parsed = mediaUpdateSchema.safeParse(req.body);
+=======
+  const parsed = updateSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: 'Invalid request body' } });
     return;

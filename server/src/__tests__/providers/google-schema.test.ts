@@ -198,11 +198,21 @@ describe('sanitizeForGemini', () => {
         count: { type: 'number', multipleOf: 0.5 },
       },
     };
+<<<<<<< HEAD
     expect(sanitizeForGemini(input)).toEqual({
       type: 'object',
       properties: {
         tuple: { type: 'array' },
         bag: { type: 'array' },
+=======
+    // prefixItems/contains are stripped, but Gemini requires `items` on every
+    // array (#1334), so the tuple's member becomes `items` and `bag` gets `{}`.
+    expect(sanitizeForGemini(input)).toEqual({
+      type: 'object',
+      properties: {
+        tuple: { type: 'array', items: { type: 'string' } },
+        bag: { type: 'array', items: {} },
+>>>>>>> upstream/main
         names: { type: 'object' },
         count: { type: 'number' },
       },

@@ -9,7 +9,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+<<<<<<< HEAD
 import { useSearchParams } from 'react-router-dom'
+=======
+>>>>>>> upstream/main
 import { apiFetch } from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -50,7 +53,10 @@ const SCROLL_FOLLOW_SLACK = 40
 // inspector): red for error, amber for warn, a calm blue for info, and plain
 // muted for debug — which is noise you opted into.
 const LEVEL_CLASS: Record<LogLevel, string> = {
+<<<<<<< HEAD
   trace: 'bg-muted/40 text-muted-foreground/60',
+=======
+>>>>>>> upstream/main
   debug: 'bg-muted text-muted-foreground',
   info: 'bg-sky-600/15 text-sky-700 dark:text-sky-400',
   warn: 'bg-amber-600/15 text-amber-700 dark:text-amber-400',
@@ -122,6 +128,7 @@ export default function LogsPage() {
   const { t } = useI18n()
   const queryClient = useQueryClient()
 
+<<<<<<< HEAD
   // A deep link (the rate-limit panel's "server log" entry, /logs?q=rate-limit)
   // must prefill the filter — the haystack search covers message AND source.
   const [searchParams] = useSearchParams()
@@ -130,6 +137,12 @@ export default function LogsPage() {
   const [provider, setProvider] = useState('all')
   const [searchInput, setSearchInput] = useState(initialQuery)
   const [search, setSearch] = useState(initialQuery)
+=======
+  const [levels, setLevels] = useState<LogLevel[]>(() => [...DEFAULT_LOG_LEVELS])
+  const [provider, setProvider] = useState('all')
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+>>>>>>> upstream/main
   const [paused, setPaused] = useState(false)
 
   // The tail itself lives in component state, not in the query cache: each poll
@@ -325,9 +338,13 @@ export default function LogsPage() {
                 )}
               >
                 {t(`logs.levels.${level}`)}
+<<<<<<< HEAD
                 {/* counts fold trace into debug server-side (logCounts is
                     4-wide by contract); mirror that when indexing. */}
                 <span className="tabular-nums opacity-70">{counts[level === 'trace' ? 'debug' : level]}</span>
+=======
+                <span className="tabular-nums opacity-70">{counts[level]}</span>
+>>>>>>> upstream/main
               </button>
             )
           })}

@@ -2,6 +2,7 @@
 // FallbackPage so the Models page, the per-model detail page, and the command
 // palette share one module instead of importing from a page component.
 
+<<<<<<< HEAD
 // The full GET /api/fallback row now lives in shared/schemas.ts; imported
 // for local use (Row below) and re-exported so importers keep one import site.
 import type {
@@ -31,11 +32,74 @@ export type {
   RateLimitUsageData,
 }
 
+=======
+export interface FallbackEntry {
+  modelDbId: number
+  priority: number
+  effectivePriority: number
+  penalty: number
+  rateLimitHits: number
+  enabled: boolean
+  platform: string
+  modelId: string
+  displayName: string
+  intelligenceRank: number
+  speedRank: number
+  sizeLabel: string
+  rpmLimit: number | null
+  rpdLimit: number | null
+  tpmLimit?: number | null
+  tpdLimit?: number | null
+  monthlyTokenBudget: string
+  // Parsed token count from the server (single source of truth — see
+  // server/src/lib/budget.ts). Optional only because the dev mock omits it.
+  monthlyTokenBudgetTokens?: number
+  // Max context length in tokens (catalog value), or null when unrecorded.
+  // Drives the catalog context-window filter on the Models page.
+  contextWindow?: number | null
+  supportsVision: boolean
+  supportsTools: boolean
+  source?: 'catalog' | 'custom' | 'discovered'
+  keyId?: number | null
+  keyLabel?: string | null
+  // Which custom endpoint this row belongs to (its base URL), and the model id
+  // that names this endpoint's copy on its own. Null for catalog models only:
+  // EVERY custom row bound to an endpoint carries both, including the single
+  // relay of a one-endpoint install. Neither may be rendered directly —
+  // go through memberProviderLabel / providerPinId / memberEndpointTitle, which
+  // reveal them only once two endpoints actually collide (#651).
+  endpointScope?: string | null
+  qualifiedModelId?: string | null
+  hasOverrides?: boolean
+  // Which fields a local override replaces, so the model page can mark the
+  // individual inputs that no longer show the catalog default (#551).
+  overrideFields?: string[]
+  // The provider reported this model as permanently gone (410 / end of life),
+  // so the gateway disabled it by itself — distinct from a switch the user
+  // flipped off. `retiredReason` is the upstream wording. See #634.
+  retiredUpstream?: boolean
+  retiredReason?: string | null
+  keyCount: number
+  // Logical-model grouping (sent by the server when unify is relevant). Absent
+  // for ungrouped rows; the UI falls back to a per-row "solo" group then.
+  groupKey?: string
+  canonicalId?: string
+  groupLabel?: string
+}
+
+export type RoutingStrategy = 'priority' | 'balanced' | 'smartest' | 'fastest' | 'reliable' | 'custom'
+>>>>>>> upstream/main
 
 // How the gateway picks between several keys of ONE platform, once a model has
 // been chosen (#919). Separate from RoutingStrategy, which ranks models: the
 // two are independent knobs and the Fallback page sets them side by side.
+<<<<<<< HEAD
 
+=======
+export type KeySelectionStrategy = 'auto' | 'least-remaining'
+
+export type RoutingWeights = { reliability: number; speed: number; intelligence: number }
+>>>>>>> upstream/main
 
 /** Presets the peak-hours adjustment (#760) leaves alone: they already sit at
  *  the two ends of the speed↔reliability axis, so reweighting them would make
@@ -43,17 +107,71 @@ export type {
  *  PEAK_EXEMPT_STRATEGIES in server/src/services/scoring.ts. */
 export const PEAK_EXEMPT_STRATEGIES: RoutingStrategy[] = ['fastest', 'reliable']
 
+<<<<<<< HEAD
 
+=======
+export interface RoutingScore {
+  modelDbId: number
+  reliability: number
+  speed: number
+  intelligence: number
+  headroom: number
+  rateLimit: number
+  score: number
+  totalRequests: number
+}
+
+export interface RoutingData {
+  strategy: RoutingStrategy
+  weights: RoutingWeights | null
+  customWeights: RoutingWeights
+  /** Exploration toggle: when on, unmeasured models get a guaranteed chance to
+   *  be tried so they build reliability/speed data (#685 follow-up). Required:
+   *  the server always sends it, and the checkbox renders straight from it. */
+  exploreEnabled: boolean
+  /** Peak-hours adjustment (#760): opt-in, off by default. `peakAdjusted` says
+   *  whether `weights` above is the raw preset or a peak-hours variant of it —
+   *  the weight summary is labelled from that flag so the numbers never change
+   *  under the operator without an explanation. */
+  peakHoursAdjust: boolean
+  peakStartHour: number
+  peakEndHour: number
+  /** IANA timezone the peak window is read in (default 'UTC'). */
+  peakTimezone: string
+  peakAdjusted: boolean
+  /** Key-selection policy (#919). Required for the same reason as
+   *  exploreEnabled: the picker renders straight from GET /routing. */
+  keySelectionStrategy: KeySelectionStrategy
+  /** Ceiling on the router's own cooldown guesses in ms (#952); null = no cap
+   *  (ladder tops out at 24h, 402/403 bench a day). */
+  cooldownCeilingMs: number | null
+  scores: (RoutingScore & { platform: string; modelId: string; displayName: string; enabled: boolean })[]
+}
+>>>>>>> upstream/main
 
 // A merged row: fallback-chain metadata + live bandit scores.
 export type Row = FallbackEntry & Partial<RoutingScore>
 
+<<<<<<< HEAD
+=======
+export interface TokenUsageData {
+  totalBudget: number
+  totalUsed: number
+  /** Served smartest-first (intelligenceRank 1 = smartest); the bar and its
+   *  legend keep that order. */
+  models: { displayName: string; platform: string; modelId?: string; intelligenceRank?: number; budget: number; used?: number }[]
+}
+>>>>>>> upstream/main
 
 // Custom endpoints all share the generic 'custom' platform id, so show the
 // user's key label ("Ollama box") instead so the models list names the actual
 // provider. Falls back to the platform for catalog models (and unlabeled custom
 // keys, whose label defaults to "Custom"). (#469)
+<<<<<<< HEAD
 export function providerLabel(row: { platform: string; source?: 'catalog' | 'custom'; keyLabel?: string | null }): string {
+=======
+export function providerLabel(row: { platform: string; source?: 'catalog' | 'custom' | 'discovered'; keyLabel?: string | null }): string {
+>>>>>>> upstream/main
   if (row.source === 'custom' && row.keyLabel && row.keyLabel.trim()) return row.keyLabel
   return row.platform
 }
@@ -74,7 +192,11 @@ export function endpointShortLabel(scope: string): string {
  * so there is nothing new to notice until a real collision exists.
  */
 export function memberProviderLabel<T extends {
+<<<<<<< HEAD
   platform: string; modelId: string; source?: 'catalog' | 'custom'
+=======
+  platform: string; modelId: string; source?: 'catalog' | 'custom' | 'discovered'
+>>>>>>> upstream/main
   keyLabel?: string | null; endpointScope?: string | null
 }>(row: T, siblings: readonly T[]): string {
   const base = providerLabel(row)
@@ -93,7 +215,11 @@ export function memberProviderLabel<T extends {
  * when it is needed (#651).
  */
 function hasEndpointCollision<T extends {
+<<<<<<< HEAD
   platform: string; modelId: string; source?: 'catalog' | 'custom'; endpointScope?: string | null
+=======
+  platform: string; modelId: string; source?: 'catalog' | 'custom' | 'discovered'; endpointScope?: string | null
+>>>>>>> upstream/main
 }>(row: T, siblings: readonly T[]): boolean {
   if (row.source !== 'custom' || !row.endpointScope) return false
   const endpoints = new Set(siblings
@@ -111,7 +237,11 @@ function hasEndpointCollision<T extends {
  * single-endpoint install, which is exactly what #651 must not do.
  */
 export function memberEndpointTitle<T extends {
+<<<<<<< HEAD
   platform: string; modelId: string; source?: 'catalog' | 'custom'
+=======
+  platform: string; modelId: string; source?: 'catalog' | 'custom' | 'discovered'
+>>>>>>> upstream/main
   keyLabel?: string | null; endpointScope?: string | null
 }>(row: T, siblings: readonly T[]): string | undefined {
   if (memberProviderLabel(row, siblings) === providerLabel(row)) return undefined
@@ -124,7 +254,11 @@ export function memberEndpointTitle<T extends {
  * the endpoint-qualified id the server computed names one of them.
  */
 export function providerPinId<T extends {
+<<<<<<< HEAD
   platform: string; modelId: string; source?: 'catalog' | 'custom'
+=======
+  platform: string; modelId: string; source?: 'catalog' | 'custom' | 'discovered'
+>>>>>>> upstream/main
   endpointScope?: string | null; qualifiedModelId?: string | null
 }>(row: T, siblings: readonly T[]): string {
   if (!row.qualifiedModelId) return row.modelId
@@ -244,8 +378,29 @@ export function groupQuotaBadge(
 // router would pick next for that model (the routable key with the most
 // headroom), so the client only has to aggregate across a group's members.
 
+<<<<<<< HEAD
 
 
+=======
+export interface RateLimitWindow {
+  used: number
+  limit: number
+}
+
+export interface RateLimitUsageRow {
+  modelDbId: number
+  platform: string
+  modelId: string
+  rpm: RateLimitWindow | null
+  rpd: RateLimitWindow | null
+  tpm: RateLimitWindow | null
+}
+
+export interface RateLimitUsageData {
+  generatedAtMs: number
+  rows: RateLimitUsageRow[]
+}
+>>>>>>> upstream/main
 
 export type RateLimitKind = 'RPM' | 'RPD' | 'TPM'
 
@@ -316,6 +471,17 @@ export const platformColors: Record<string, string> = {
   groq:        '#f55036',
   cerebras:    '#8b5cf6',
   sail:        '#0ea5e9',
+<<<<<<< HEAD
+=======
+  aclide:      '#6366f1',
+  speka:       '#0d9488',
+  typhoon:     '#e11d48',
+  plugsky:     '#0284c7',
+  llmtr:       '#0f766e',
+  gizmo:       '#7c3aed',
+  blockrun:    '#2563eb',
+  moondream:   '#6d5dfc',
+>>>>>>> upstream/main
   electronhub: '#6366f1',
   experiential: '#14b8a6',
   router9:      '#8b5cf6',
@@ -364,7 +530,11 @@ export const platformColors: Record<string, string> = {
 
 // ── Grouped (unified) rendering ──────────────────────────────────────────────
 // One logical model and the provider rows that serve it.
+<<<<<<< HEAD
 export type ModelGroupRow = {
+=======
+export interface ModelGroupRow {
+>>>>>>> upstream/main
   key: string
   label: string
   members: Row[]
@@ -411,6 +581,19 @@ export function buildGroups(
   return groups
 }
 
+<<<<<<< HEAD
+=======
+// Clamp a typed 1-based rank (#1317) to a valid 0-based index into the visible
+// chain. Jump-to-rank edits clamp instead of erroring: 1 means "front", a
+// number past the end means "last", and garbage falls back to staying put.
+export function clampRankToIndex(toRank: number, length: number): number {
+  if (!Number.isFinite(toRank)) return -1
+  const i = Math.trunc(toRank) - 1
+  if (i < 0) return 0
+  return i > length - 1 ? length - 1 : i
+}
+
+>>>>>>> upstream/main
 /**
  * Whether a search query matches a logical-model group (#1056). The hay covers
  * everything the table can DISPLAY for the group: its label, canonical id, and
@@ -425,7 +608,11 @@ export function groupMatchesQuery(
     label: string
     members: Array<{
       platform: string; modelId: string; displayName: string
+<<<<<<< HEAD
       canonicalId?: string; source?: 'catalog' | 'custom'
+=======
+      canonicalId?: string; source?: 'catalog' | 'custom' | 'discovered'
+>>>>>>> upstream/main
       keyLabel?: string | null; endpointScope?: string | null
     }>
   },

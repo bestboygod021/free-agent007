@@ -1,6 +1,9 @@
 import { NavLink } from 'react-router-dom'
 import { useI18n } from '@/i18n'
+<<<<<<< HEAD
 import { prefetchHandlers } from '@/lib/route-prefetch'
+=======
+>>>>>>> upstream/main
 
 // Segmented Chat | Embeddings | Fusion switcher shared by the Models pages.
 // Industry-standard layout: one "Models" section, modality as a tab — chat
@@ -15,12 +18,21 @@ export function ModelsTabs() {
     }`
   return (
     <div className="inline-flex gap-1 rounded-xl border p-1">
+<<<<<<< HEAD
       <NavLink to="/models/chat" {...prefetchHandlers('/models/chat')} className={({ isActive }) => tab(isActive)}>{t('models.chatModelsTab')}</NavLink>
       <NavLink to="/models/embeddings" {...prefetchHandlers('/models/embeddings')} className={({ isActive }) => tab(isActive)}>{t('models.embeddingsTab')}</NavLink>
       <NavLink to="/models/image" {...prefetchHandlers('/models/image')} className={({ isActive }) => tab(isActive)}>{t('models.imageTab')}</NavLink>
       <NavLink to="/models/video" {...prefetchHandlers('/models/video')} className={({ isActive }) => tab(isActive)}>{t('models.videoTab')}</NavLink>
       <NavLink to="/models/audio" {...prefetchHandlers('/models/audio')} className={({ isActive }) => tab(isActive)}>{t('models.audioTab')}</NavLink>
       <NavLink to="/models/fusion" {...prefetchHandlers('/models/fusion')} className={({ isActive }) => tab(isActive)}>{t('models.fusionTab')}</NavLink>
+=======
+      <NavLink to="/models/chat" className={({ isActive }) => tab(isActive)}>{t('models.chatModelsTab')}</NavLink>
+      <NavLink to="/models/embeddings" className={({ isActive }) => tab(isActive)}>{t('models.embeddingsTab')}</NavLink>
+      <NavLink to="/models/image" className={({ isActive }) => tab(isActive)}>{t('models.imageTab')}</NavLink>
+      <NavLink to="/models/video" className={({ isActive }) => tab(isActive)}>{t('models.videoTab')}</NavLink>
+      <NavLink to="/models/audio" className={({ isActive }) => tab(isActive)}>{t('models.audioTab')}</NavLink>
+      <NavLink to="/models/fusion" className={({ isActive }) => tab(isActive)}>{t('models.fusionTab')}</NavLink>
+>>>>>>> upstream/main
     </div>
   )
 }

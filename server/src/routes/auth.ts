@@ -1,19 +1,26 @@
 import { Router } from 'express';
+<<<<<<< HEAD
 import { ensureDefaultOrganization } from '../services/agent-tenancy.js';
 import { acceptInvite, previewInvite, isInviteFailure } from '../services/agent-invites.js';
+=======
+>>>>>>> upstream/main
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import {
   userCount,
   createUser,
   verifyCredentials,
+<<<<<<< HEAD
   findUserByEmail,
+=======
+>>>>>>> upstream/main
   createSession,
   validateSession,
   deleteSession,
   updateEmail,
   updatePassword,
   resetUserPassword,
+<<<<<<< HEAD
 } from '../services/auth.js';
 import {
   signupInputSchema,
@@ -22,6 +29,10 @@ import {
   changePasswordInputSchema,
   resetPasswordInputSchema,
 } from '@freellmapi/shared/schemas.js';
+=======
+  normalizeEmail,
+} from '../services/auth.js';
+>>>>>>> upstream/main
 import { setupCodeMatches, clearSetupCode } from '../lib/setup-code.js';
 import { generateResetCode, resetCodeMatches, clearResetCode } from '../lib/reset-code.js';
 
@@ -33,11 +44,34 @@ const failedPasswordAttempts = new Map<number, number>();
 // /status, /setup and /login are reachable without a session (bootstrap);
 // /logout and /me validate the token themselves.
 
+<<<<<<< HEAD
+=======
+// Signing up is the one place the address has to look like an address.
+const signupSchema = z.object({
+  email: z.string().email('A valid email is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+// Logging in is a lookup, not a registration, so the address is matched rather
+// than validated. The desktop app seeds its hidden account as
+// `desktop@localhost` (server-host.ts), which has no TLD and so could never
+// satisfy z.email() — every login attempt on a desktop install failed with
+// "A valid email is required" before the password was even checked, including
+// the reset-then-sign-in-from-a-browser route suggested in #807. Length rules
+// belong to signup too: an account created under an older policy must still be
+// able to get in.
+const loginSchema = z.object({
+  email: z.string().min(1, 'Email is required'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+>>>>>>> upstream/main
 // ── Brute-force throttle ──────────────────────────────────────────────────
 // Simple in-memory per-email limiter. A local single-user tool doesn't need a
 // distributed store; this just blunts online password guessing.
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000;
+<<<<<<< HEAD
 const attempts = new Map<string, { count: number; lockedUntil: number }>();
 
 function isLockedOut(email: string): boolean {
@@ -53,6 +87,36 @@ function lockoutRemainingSec(email: string): number {
 }
 function recordFailure(email: string): void {
   const key = email.toLowerCase();
+=======
+// Bound the map so a flood of distinct addresses cannot grow it without limit;
+// expired buckets are pruned opportunistically, mirroring the per-IP limiter in
+// middleware/rateLimit.ts.
+const MAX_TRACKED_EMAILS = 10_000;
+const attempts = new Map<string, { count: number; lockedUntil: number }>();
+
+// The bucket key MUST be the same spelling verifyCredentials looks the user up
+// by. Keying on `.toLowerCase()` alone while the lookup also trimmed meant
+// " admin@example.com" authenticated against the admin row but landed in its
+// own bucket, so every whitespace variant handed the guesser another five
+// tries and the lockout never engaged.
+function throttleKey(email: string): string {
+  return normalizeEmail(email);
+}
+function isLockedOut(email: string): boolean {
+  const a = attempts.get(throttleKey(email));
+  return !!a && a.lockedUntil > Date.now();
+}
+// Seconds until the per-email lockout lifts (0 when not locked). The 429
+// carries this as Retry-After so a client (or a scripted login retry loop)
+// backs off for the ACTUAL remaining time instead of the worst-case 15 min.
+function lockoutRetryAfterSec(email: string, now = Date.now()): number {
+  const a = attempts.get(throttleKey(email));
+  if (!a || a.lockedUntil <= now) return 0;
+  return Math.max(1, Math.ceil((a.lockedUntil - now) / 1000));
+}
+function recordFailure(email: string): void {
+  const key = throttleKey(email);
+>>>>>>> upstream/main
   const a = attempts.get(key) ?? { count: 0, lockedUntil: 0 };
   a.count++;
   if (a.count >= MAX_ATTEMPTS) {
@@ -60,9 +124,21 @@ function recordFailure(email: string): void {
     a.count = 0;
   }
   attempts.set(key, a);
+<<<<<<< HEAD
 }
 function clearFailures(email: string): void {
   attempts.delete(email.toLowerCase());
+=======
+  if (attempts.size > MAX_TRACKED_EMAILS) {
+    const now = Date.now();
+    for (const [tracked, state] of attempts) {
+      if (tracked !== key && state.lockedUntil <= now) attempts.delete(tracked);
+    }
+  }
+}
+function clearFailures(email: string): void {
+  attempts.delete(throttleKey(email));
+>>>>>>> upstream/main
 }
 
 function bearer(req: Request): string | undefined {
@@ -70,18 +146,49 @@ function bearer(req: Request): string | undefined {
     ?? (req.headers['x-dashboard-token'] as string | undefined);
 }
 
+<<<<<<< HEAD
 // Is the caller connecting from the local machine? We check the actual socket
 // peer address, NOT req.ip or X-Forwarded-For: those are attacker-controlled
 // behind a proxy (and trust proxy is off by default anyway), so trusting them
 // here would let a remote caller pretend to be local and skip the setup code.
 function isLoopbackRemote(req: Request): boolean {
   let addr = req.socket.remoteAddress ?? '';
+=======
+function isLoopbackAddress(value: string | undefined): boolean {
+  let addr = (value ?? '').trim();
+>>>>>>> upstream/main
   // Node reports IPv4 loopback over a dual-stack socket as "::ffff:127.0.0.1".
   if (addr.startsWith('::ffff:')) addr = addr.slice(7);
   if (addr === '::1') return true;
   return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(addr);
 }
 
+<<<<<<< HEAD
+=======
+// Is the caller connecting from the local machine? The socket peer address is
+// the authority, NOT req.ip: forwarded headers are attacker-controlled, so
+// letting one of them ASSERT locality would hand a remote caller the setup
+// code exemption outright.
+//
+// But the socket peer alone is not sufficient either, because the reverse-proxy
+// deployment this project documents (docs/en/proxy/OVERVIEW.md, and
+// docs/en/troubleshooting/01-common-issues.md on TRUST_PROXY) puts Caddy/nginx/
+// Traefik on the SAME host: every request then arrives from 127.0.0.1 and the
+// socket test is true for the entire internet. So a forwarded hop can never
+// grant locality, but it can withdraw it — exactly the treatment the Ollama
+// open-loopback mode already applies in routes/ollama.ts:25-38.
+function isLoopbackRemote(req: Request): boolean {
+  if (!isLoopbackAddress(req.socket.remoteAddress)) return false;
+  const forwarded = req.headers['x-forwarded-for'];
+  const firstForwarded = (Array.isArray(forwarded) ? forwarded[0] : forwarded)
+    ?.split(',')[0];
+  // A local reverse proxy is itself a loopback socket, but its first forwarded
+  // hop may be remote. Refuse that request rather than silently widening the
+  // no-code first-run path through the proxy.
+  return !firstForwarded || isLoopbackAddress(firstForwarded);
+}
+
+>>>>>>> upstream/main
 // Has the dashboard been set up yet, and is this caller authenticated?
 authRouter.get('/status', (req: Request, res: Response) => {
   const session = validateSession(bearer(req));
@@ -116,22 +223,33 @@ authRouter.post('/setup', (req: Request, res: Response) => {
     return;
   }
 
+<<<<<<< HEAD
   const parsed = signupInputSchema.safeParse(req.body);
+=======
+  const parsed = signupSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
   }
   const user = createUser(parsed.data.email, parsed.data.password);
+<<<<<<< HEAD
   // Agent data is scoped to an organisation and project, so the first account
   // needs one or every agent call fails on a scope it has no way to create.
   ensureDefaultOrganization(user.userId);
+=======
+>>>>>>> upstream/main
   clearSetupCode(); // one-time: the dashboard is now claimed
   const token = createSession(user.userId);
   res.status(201).json({ token, email: user.email });
 });
 
 authRouter.post('/login', (req: Request, res: Response) => {
+<<<<<<< HEAD
   const parsed = loginInputSchema.safeParse(req.body);
+=======
+  const parsed = loginSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -139,7 +257,14 @@ authRouter.post('/login', (req: Request, res: Response) => {
   const { email, password } = parsed.data;
 
   if (isLockedOut(email)) {
+<<<<<<< HEAD
     res.setHeader('Retry-After', String(lockoutRemainingSec(email)));
+=======
+    // RFC 6585: a 429 must say when the client may return. The whole gateway
+    // already does this (proxy limiter, exhaustion Retry-After, monthly budget
+    // cap); the dashboard's own lockout was the one 429 that didn't.
+    res.setHeader('Retry-After', String(lockoutRetryAfterSec(email)));
+>>>>>>> upstream/main
     res.status(429).json({ error: { message: 'Too many attempts. Wait 15 minutes or restart the app.', type: 'rate_limit_error' } });
     return;
   }
@@ -171,13 +296,26 @@ authRouter.get('/me', (req: Request, res: Response) => {
   res.json({ email: session.email });
 });
 
+<<<<<<< HEAD
+=======
+// Change email (requires active session + current password)
+const changeEmailSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newEmail: z.string().email('A valid email is required'),
+});
+
+>>>>>>> upstream/main
 authRouter.post('/change-email', (req: Request, res: Response) => {
   const session = validateSession(bearer(req));
   if (!session) {
     res.status(401).json({ error: { message: 'Authentication required', type: 'authentication_error' } });
     return;
   }
+<<<<<<< HEAD
   const parsed = changeEmailInputSchema.safeParse(req.body);
+=======
+  const parsed = changeEmailSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -207,13 +345,26 @@ authRouter.post('/change-email', (req: Request, res: Response) => {
   }
 });
 
+<<<<<<< HEAD
+=======
+// Change password (requires active session + current password)
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+>>>>>>> upstream/main
 authRouter.post('/change-password', (req: Request, res: Response) => {
   const session = validateSession(bearer(req));
   if (!session) {
     res.status(401).json({ error: { message: 'Authentication required', type: 'authentication_error' } });
     return;
   }
+<<<<<<< HEAD
   const parsed = changePasswordInputSchema.safeParse(req.body);
+=======
+  const parsed = changePasswordSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -246,8 +397,12 @@ authRouter.post('/forgot-password', (_req: Request, res: Response) => {
   }
   const now = Date.now();
   if (now - lastResetCodeAt < RESET_CODE_MIN_INTERVAL_MS) {
+<<<<<<< HEAD
     const waitSec = Math.max(1, Math.ceil((lastResetCodeAt + RESET_CODE_MIN_INTERVAL_MS - now) / 1000));
     res.setHeader('Retry-After', String(waitSec));
+=======
+    res.setHeader('Retry-After', String(Math.max(1, Math.ceil((RESET_CODE_MIN_INTERVAL_MS - (now - lastResetCodeAt)) / 1000))));
+>>>>>>> upstream/main
     res.status(429).json({ error: { message: 'Too many reset-code requests. Try again later.', type: 'rate_limit_error' } });
     return;
   }
@@ -256,8 +411,19 @@ authRouter.post('/forgot-password', (_req: Request, res: Response) => {
   res.json({ success: true });
 });
 
+<<<<<<< HEAD
 authRouter.post('/reset-password', (req: Request, res: Response) => {
   const parsed = resetPasswordInputSchema.safeParse(req.body);
+=======
+// Reset password: accept the logged code + new password
+const resetPasswordSchema = z.object({
+  resetCode: z.string().min(1, 'Reset code is required'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+authRouter.post('/reset-password', (req: Request, res: Response) => {
+  const parsed = resetPasswordSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     res.status(400).json({ error: { message: parsed.error.errors.map(e => e.message).join(', ') } });
     return;
@@ -274,6 +440,7 @@ authRouter.post('/reset-password', (req: Request, res: Response) => {
   clearResetCode();
   res.json({ success: true });
 });
+<<<<<<< HEAD
 
 /**
  * POST /api/auth/accept-invite — redeem an invite and get an account.
@@ -341,3 +508,5 @@ authRouter.post('/accept-invite', (req: Request, res: Response) => {
     role: result.role,
   });
 });
+=======
+>>>>>>> upstream/main

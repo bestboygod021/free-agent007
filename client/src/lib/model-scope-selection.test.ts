@@ -28,9 +28,14 @@ function entry(platform: string, modelId: string, extra: Partial<FallbackEntry> 
     supportsVision: false,
     supportsTools: true,
     keyCount: 1,
+<<<<<<< HEAD
     source: 'catalog',
     ...extra,
   } as FallbackEntry
+=======
+    ...extra,
+  }
+>>>>>>> upstream/main
 }
 
 function candidates(...ids: string[]): ScopeCandidate[] {

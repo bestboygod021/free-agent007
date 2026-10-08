@@ -16,8 +16,12 @@
     "modelsMenu": "Model tiplərinə baxın",
     "agents": "Agentlər",
     "logs": "Loglar",
+<<<<<<< HEAD
     "analyticsMenu": "Analitika səhifələri",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Analitika səhifələri"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Hesabınızı yaradın",
@@ -109,6 +113,7 @@
     "sectionCompression": "Sıxılma",
     "sectionAdvanced": "Ətraflı",
     "sectionPreview": "Ön baxış",
+<<<<<<< HEAD
     "sectionRateLimit": "Sürət limitləri",
     "rateLimitProxy": "Proxy /v1 limiti (dəqiqəyə sorğu)",
     "rateLimitAdmin": "Panel /api limiti (dəqiqəyə sorğu)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Birləşdirilmiş açar /v1 limiti (dəqiqəyə sorğu)",
     "rateLimitEnvLocked": "{env} tərəfindən sabitlənib — redaktə üçün silin",
     "rateLimitSaved": "Tətbiq edildi — növbəti sorğuda qüvvəyə minəcək",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Bu panelin dili və görünüşü.",
     "advancedDescription": "Sıxılma prosesi üçün hədlər və təhlükəsizlik açarları.",
     "compressionTitle": "Prompt sıxılması",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Önbaxışı işə sal",
     "updatesTitle": "Yeniləmələr",
     "checkForUpdates": "Yeniləmələri yoxlayın",
+<<<<<<< HEAD
     "lastChecked": "Son yoxlama: {when}",
     "currentVersion": "Cari quruluş:",
     "updateAvailable": "Yeniləmə mövcuddur",
     "changelog": "Nələr dəyişib",
+=======
+    "updateAvailable": "Yeniləmə mövcuddur",
+>>>>>>> upstream/main
     "upToDate": "Ən son versiyadır",
     "buildAhead": "Bu quruluş rəsmi main budağından irəlidədir.",
     "buildDiverged": "Bu quruluş rəsmi main budağından ayrılıb.",
     "buildUnknown": "Bu xüsusi quruluşu rəsmi main budağı ilə müqayisə etmək mümkün deyil.",
     "notGitInstall": "Bu quraşdırmada commit məlumatı yoxdur.",
     "checkFailed": "Yeniləmələri yoxlamaq mümkün olmadı.",
+<<<<<<< HEAD
     "contactsGithub": "Yoxlamalar əl ilə başladılır və GitHub-a qoşulur.",
     "autoUpdateCheck": "Avtomatik yeniləmə yoxlaması",
     "autoUpdateCheckHelp": "Gündə bir dəfə yeni buraxılış üçün GitHub-u yoxlayır və xatırlatma göstərir. Standart olaraq sönülüdür.",
     "openReleases": "GitHub buraxılışlarını aç",
     "restartAfterUpdate": "Quruluş tamamlandıqdan sonra FreeLLMAPI-ni yenidən başladın."
+=======
+    "autoUpdateCheck": "Avtomatik yeniləmə yoxlaması",
+    "restartAfterUpdate": "Quruluş tamamlandıqdan sonra FreeLLMAPI-ni yenidən başladın.",
+    "downloadUpdate": "Yeniləməni endir",
+    "downloadingUpdate": "Endirilir… {percent}%",
+    "restartToUpdate": "Yeniləmək üçün yenidən başlat",
+    "updateReadyHint": "Endirildi. FreeLLMAPI məlumatlarınızın ehtiyat nüsxəsini çıxarır, yenidən başlayır və yeni versiyanı açır.",
+    "updateInstallFailed": "Yeniləmə quraşdırıla bilmədi.",
+    "updateNow": "İndi yenilə",
+    "updatingContainer": "Yeni şəkil endirilir və yenidən başladılır. FreeLLMAPI qayıdanda bu səhifə yenilənəcək.",
+    "updateNowFailed": "Yeniləyici sorğunu qəbul etmədi. watchtower konteynerinin işlədiyini yoxlayın.",
+    "updateNowTimeout": "FreeLLMAPI 5 dəqiqədən sonra da yenidən başlamayıb. watchtower konteynerinin jurnallarına baxın."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Modellər",
@@ -217,6 +242,10 @@
     "noKey": "Açar yoxdur",
     "dragToReorder": "Yenidən sıralamaq üçün sürükləmə",
     "dragToReorderGroup": "Modeli yenidən sıralamaq üçün sürükləmə",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Reytinqə keçid",
+>>>>>>> upstream/main
     "providerCount": "{count} təminatçıları",
     "servedBy": "Xidmət {providers}",
     "viewProviders": "Bax təminatçıları",
@@ -231,6 +260,10 @@
     "settingsHint": "Kataloq modellərinə lokal redaktələr kataloq sinxronizasiyaları arasında saxlanılır. Silinmiş kataloq modelləri yenidən konfiqurasiya vasitəsilə əlavə edənə qədər silinmiş qalır.",
     "catalogModel": "Kataloq",
     "customModel": "Adət",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "aşkarlanmış",
+>>>>>>> upstream/main
     "localOverride": "Lokal Üstünlüklər",
     "displayName": "Göstərilmə adı",
     "sizeLabel": "Qabiliyyət səviyyəsi",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing degraded: {healthy} of {total} providers healthy (since {since})",
     "noProvider": "No provider",
     "enabledCount": "{count} enabled",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Açarlar",
     "pageDescription": "Təminatçı etimadnamələri və tətbiqlərinizin birləşdiyi API açarı ilə əlaqə qurun.",
     "tabProviders": "Təchizatçılar",
     "checklistSummary": "{total} təchizatçıdan {configured} qurulub",
     "checklistKeyless": "açar tələb olunmur",
     "checklistNoKeyTip": "Hələ açar əlavə edilməyib. Əlavə etmək üçün klikləyin.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "Hesab yaratmaq və açar almaq üçün {provider} səhifəsini açın",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Açarsız işləyir.",
     "tabQuotaSignals": "Kvota siqnalları",
     "tabApiKey": "Birləşmiş API açarı",
@@ -506,11 +546,19 @@
     "platform": "Platforma",
     "hideAdded": "Əlavə edilmiş provayderləri gizlət",
     "apiToken": "API tokeni",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Heç API açar lazım deyil",
     "bearerTokenPlaceholder": "Daşıyıcı token",
     "pasteKeyPlaceholder": "Burada açarı yapışdır",
     "pasteSeveral": "Bir neçəsini yapışdır",
     "keylessHint": "API açar tələb olunmur: bu provayderin pulsuz səviyyəsi anonimdir (IP üçün tarif məhdudiyyəti ilə).",
+=======
+    "keyOptionalPlaceholder": "İstəyə bağlı",
+    "bearerTokenPlaceholder": "Daşıyıcı token",
+    "pasteKeyPlaceholder": "Burada açarı yapışdır",
+    "pasteSeveral": "Bir neçəsini yapışdır",
+    "keyOptionalHint": "İstəyə bağlı: anonim pulsuz səviyyə üçün boş buraxın (hər IP üzrə məhdud) və ya hesabınızdan istifadə etmək üçün öz açarınızı yapışdırın.",
+>>>>>>> upstream/main
     "enable": "Aktiv et",
     "noProviderKeys": "Hələ provayder açarları yoxdur. Marşrutlaşdırmaya başlamaq üçün yuxarıda birini əlavə edin.",
     "filterPlaceholder": "Filtr təminatçıları və ya açarlar",
@@ -688,7 +736,18 @@
     "testFailed": "Model sınağı uğursuz oldu",
     "testThrottled": "Bu modeli yenidən sınaqdan keçirməzdən əvvəl {seconds} san gözləyin.",
     "noModelsForProvider": "Bu təminatçı üçün heç bir model tənzimlənməyib.",
+<<<<<<< HEAD
     "testModels": "Modelləri test et"
+=======
+    "testModels": "Modelləri test et",
+    "monthlyRequestCapLabel": "Aylıq sorğu limiti",
+    "monthlyTokenCapLabel": "Aylıq token limiti",
+    "capUnlimitedPlaceholder": "Limitsiz",
+    "capEditHint": "Limitlər hər ayın 1-i 00:00 UTC-də sıfırlanır. Limitsiz üçün boş buraxın.",
+    "monthlyUsageLine": "Bu ay {requests} sorğu, {tokens} token",
+    "quotaBalanceHint": "{limit} {metric} içindən {remaining} qalıb",
+    "quotaBalanceLeft": "{remaining} qalıb"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Yeniləmədən əvvəl"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "sağlam",
@@ -1144,17 +1208,29 @@
       "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
       "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint.",
       "openclaw": "Öz maşınınızdan WhatsApp, Telegram, Discord və digərlərində cavab verən, həmişə aktiv şəxsi köməkçi.",
+<<<<<<< HEAD
       "hermes": "Nous Research-in özünü təkmilləşdirən agenti; daimi yaddaş və bacarıqlarla, terminalda və ya söhbət tətbiqlərində."
+=======
+      "hermes": "Nous Research-in özünü təkmilləşdirən agenti; daimi yaddaş və bacarıqlarla, terminalda və ya söhbət tətbiqlərində.",
+      "pi": "Öz genişləndirmələriniz, bacarıqlarınız və sorğu şablonlarınızla formalaşdırdığınız minimal terminal agenti.",
+      "reasonix": "DeepSeek üçün yaradılmış terminal kodlaşdırma agenti; uzun sessiyalar ucuz qalsın deyə prefiks keşi üzərində qurulub."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "FreeLLMAPI-nin daha yeni versiyası quraşdırılıb.",
+    "reload": "Yenidən yüklə"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-tier pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Start empty",
     "startEmptyHint": "Create the chain with no models in it, and keep new catalog models out of it. Unchecked, it starts as a copy of the default chain.",
     "curated": "Curated",
+<<<<<<< HEAD
     "curatedHint": "New catalog models are not added to this chain automatically."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "Son 5 dəqiqədə {count} sorğu məhdudlaşdırıldı",
     "hourFilter": "Saat: {hour}",
     "serverLog": "Server jurnalı"
+=======
+    "curatedHint": "New catalog models are not added to this chain automatically.",
+    "renameHint": "Bu zəncirin adını dəyiş",
+    "renameConfirm": "\"{oldName}\" zəncirinin adı \"{name}\" ilə dəyişilsin? auto:{oldName} səsləyən müştərilər auto:{name} keçməlidir.",
+    "renamePlaceholder": "Yeni zəncir adı",
+    "renameFailed": "Zəncirin adını dəyişmək alınmadı."
+  },
+  "updates": {
+    "versionAvailable": "{version} versiyası mövcuddur",
+    "versionReady": "{version} versiyası quraşdırmağa hazırdır",
+    "releaseNotes": "Buraxılış qeydləri",
+    "tryAgain": "Yenidən cəhd et",
+    "offline": "İnternet bağlantınızı yoxlayın və yenidən cəhd edin."
+>>>>>>> upstream/main
   }
 }

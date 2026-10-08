@@ -14,7 +14,12 @@ const LAST_RUN_SETTING = 'backup_last_run_day';
  *  path would misread. Restore refuses anything it does not know. */
 const DUMP_FORMAT = 1;
 
+<<<<<<< HEAD
 export type BackupSource = 'manual' | 'scheduled' | 'pre-restore';
+=======
+export const BACKUP_SOURCES = ['manual', 'scheduled', 'pre-restore', 'pre-update'] as const;
+export type BackupSource = (typeof BACKUP_SOURCES)[number];
+>>>>>>> upstream/main
 
 export interface BackupSchedule {
   enabled: boolean;
@@ -75,6 +80,7 @@ function isBackupableTable(name: string): boolean {
   return !isInternalTable(name) && !isExcludedTable(name);
 }
 
+<<<<<<< HEAD
 /**
  * Shadow tables belonging to a virtual table.
  *
@@ -118,6 +124,12 @@ export function listTables(db: Db = getDb()): string[] {
   const rows = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as { name: string }[];
   const shadows = shadowTables(db);
   return rows.map((row) => row.name).filter((name) => isBackupableTable(name) && !shadows.has(name));
+=======
+/** Every table a dump may contain, in a stable order. */
+export function listTables(db: Db = getDb()): string[] {
+  const rows = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as { name: string }[];
+  return rows.map((row) => row.name).filter(isBackupableTable);
+>>>>>>> upstream/main
 }
 
 /* ------------------------------------------------------------------ */
@@ -279,11 +291,15 @@ function sqliteEscape(value: unknown): string {
 function sqliteCreateTable(db: Db, table: string): string | null {
   const row = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?").get(table) as { sql: string } | undefined;
   if (!row?.sql) return null;
+<<<<<<< HEAD
   // `CREATE VIRTUAL TABLE` as well as `CREATE TABLE`. Anchoring on the latter
   // alone left a virtual table without IF NOT EXISTS, so restoring into a
   // migrated database failed with "table already exists" and rolled the whole
   // restore back -- found by the full suite, not by the retrieval tests.
   return `${row.sql.replace(/^CREATE\s+(VIRTUAL\s+)?TABLE/i, (m) => `${m} IF NOT EXISTS`)};`;
+=======
+  return `${row.sql.replace(/^CREATE TABLE/i, 'CREATE TABLE IF NOT EXISTS')};`;
+>>>>>>> upstream/main
 }
 
 function sqliteDumpTable(db: Db, table: string): string {
@@ -332,7 +348,11 @@ export function createBackup(
   const now = new Date();
   const createdAt = now.toISOString();
   const stamp = now.toISOString().replace(/[-:]/g, '').replace(/\..+/, '').replace('T', '-');
+<<<<<<< HEAD
   const prefix = source === 'scheduled' ? 'auto-backup' : source === 'pre-restore' ? 'pre-restore' : 'backup';
+=======
+  const prefix = source === 'scheduled' ? 'auto-backup' : source === 'manual' ? 'backup' : source;
+>>>>>>> upstream/main
   const filename = `${prefix}-${stamp}-${crypto.randomBytes(3).toString('hex')}.sql`;
 
   const dir = resolveBackupDir(db, opts.backupPath ?? readBackupSchedule().backupPath);
@@ -374,8 +394,14 @@ function toMeta(row: BackupRow): BackupMeta {
   } catch {
     tables = [];
   }
+<<<<<<< HEAD
   const source: BackupSource =
     row.source === 'scheduled' ? 'scheduled' : row.source === 'pre-restore' ? 'pre-restore' : 'manual';
+=======
+  const source: BackupSource = (BACKUP_SOURCES as readonly string[]).includes(row.source)
+    ? row.source as BackupSource
+    : 'manual';
+>>>>>>> upstream/main
   return {
     id: row.id,
     filename: row.filename,

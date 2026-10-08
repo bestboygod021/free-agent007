@@ -2,12 +2,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { useI18n } from '@/i18n'
+<<<<<<< HEAD
 import { apiFetch, apiBaseUrl } from '@/lib/api'
+=======
+import { apiFetch } from '@/lib/api'
+>>>>>>> upstream/main
 import { CopyButton } from '@/components/copy-button'
 import { PageHeader } from '@/components/page-header'
 import { ModelsTabs } from '@/components/models-tabs'
 import { Switch } from '@/components/ui/switch'
+<<<<<<< HEAD
 import { ApiUsageBlock } from '@/components/api-usage'
+=======
+import { apiBaseUrl, ApiUsageBlock } from '@/components/api-usage'
+>>>>>>> upstream/main
 import type { MediaModel } from '@/components/media-models'
 
 // One generative-media model's page: every provider that serves this logical

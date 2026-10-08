@@ -11,7 +11,12 @@ import type {
 } from '@freellmapi/shared/types.js';
 import { routeRequest, resolveModelGroupCandidates, resolveRoutingChain, resolveStickyPreference, routingReserveTokens, type RouteResult, type ResolvedChain, type ChainRow } from '../services/router.js';
 import { getSetting, getUnifiedApiKey } from '../db/index.js';
+<<<<<<< HEAD
 import { contentToString } from '../lib/content.js';
+=======
+import { contentToString, estimateInputTokens } from '../lib/content.js';
+import { routeOutputBudget } from '../lib/output-cap.js';
+>>>>>>> upstream/main
 import { resolveTaskType } from '../lib/task-type.js';
 import { repairToolArguments, toolSchemaMap } from '../lib/tool-args.js';
 import { invalidToolArgumentsError, invalidToolCallReasons, isToolArgumentValidationEnabled } from '../lib/tool-validate.js';
@@ -30,7 +35,10 @@ import type { ReasoningEffort } from '../lib/sampling-params.js';
 import { buildModelListing } from '../services/model-listing.js';
 import { compressRequest, formatCompressionHeader } from '../services/compression/pipeline.js';
 import { normalizeMessageImages } from '../lib/image-normalize.js';
+<<<<<<< HEAD
 import { anthropicMessagesSchema } from '@freellmapi/shared/schemas.js';
+=======
+>>>>>>> upstream/main
 
 // Anthropic-compatible Messages API (`POST /v1/messages`). This is a thin
 // translation layer over the SAME router/fallback/analytics machinery the
@@ -66,6 +74,7 @@ const IMAGE_TOKEN_ESTIMATE = 1000;
 // with extra fields like `cache_control`. We validate the envelope and handle
 // the block types we understand by `type`, ignoring the rest — same tolerance
 // philosophy as the OpenAI route (#200).
+<<<<<<< HEAD
 
 
 
@@ -77,6 +86,60 @@ const IMAGE_TOKEN_ESTIMATE = 1000;
 
 
 type AnthropicRequest = z.infer<typeof anthropicMessagesSchema>;
+=======
+const contentBlockSchema = z.object({ type: z.string() }).passthrough();
+
+const anthropicMessageSchema = z.object({
+  // Anthropic's own API only allows user/assistant here, but real clients
+  // (Claude Code, routers) sometimes inline a `system` turn in the messages
+  // array. Accept it and fold it into the system context rather than 400-ing —
+  // same tolerance philosophy as the OpenAI route's developer/function roles.
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.union([z.string(), z.array(contentBlockSchema)]),
+}).passthrough();
+
+const anthropicToolSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  input_schema: z.record(z.string(), z.unknown()).optional(),
+}).passthrough();
+
+const anthropicToolChoiceSchema = z.object({
+  type: z.enum(['auto', 'any', 'tool', 'none']),
+  name: z.string().optional(),
+}).passthrough();
+
+const messagesSchema = z.object({
+  model: z.string().optional(),
+  // Anthropic mandates max_tokens; accept omission and clamp non-positive
+  // values to the default rather than 400-ing (some clients send 0).
+  max_tokens: z.number().int().optional(),
+  messages: z.array(anthropicMessageSchema).min(1),
+  system: z.union([z.string(), z.array(contentBlockSchema)]).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  // Anthropic's native top_k — forwarded to providers that support it via the
+  // platform policy in lib/sampling-params.ts.
+  top_k: z.number().int().min(1).nullable().optional(),
+  stream: z.boolean().optional(),
+  stop_sequences: z.array(z.string()).optional(),
+  tools: z.array(anthropicToolSchema).optional(),
+  tool_choice: anthropicToolChoiceSchema.optional(),
+  // Anthropic's native extended-thinking knob. Mapped onto the internal
+  // reasoning_effort (see effortFromAnthropicThinking) so providers with
+  // request-side reasoning control receive it; platforms without support have
+  // it stripped by the policy in lib/sampling-params.ts.
+  // `type` is a free string, not the enabled/disabled enum: Anthropic keeps
+  // adding modes (Claude Code sends 'adaptive') and validating the enum here
+  // turned a knob we only use as a hint into a hard 400 (#632).
+  thinking: z.object({
+    type: z.string().optional(),
+    budget_tokens: z.number().int().optional(),
+  }).passthrough().nullable().optional(),
+}).passthrough();
+
+type AnthropicRequest = z.infer<typeof messagesSchema>;
+>>>>>>> upstream/main
 
 // Anthropic expresses reasoning control as a token budget; our internal knob
 // is OpenAI's coarse effort scale. Thresholds follow Anthropic's own guidance
@@ -334,10 +397,13 @@ function convertRequest(input: AnthropicRequest): ConvertedRequest {
   };
 }
 
+<<<<<<< HEAD
 function estimateTokens(messages: ChatMessage[]): number {
   return messages.reduce((sum, m) => sum + Math.ceil(contentToString(m.content).length / 4), 0);
 }
 
+=======
+>>>>>>> upstream/main
 // Model resolution (Claude family → auto | pinned catalog model) lives in
 // services/anthropic-map.ts so the dashboard mapping editor and this route
 // share one source of truth. Claude Code keeps its built-in `claude-*` names;
@@ -408,7 +474,11 @@ anthropicRouter.post('/messages', async (req: Request, res: Response) => {
   const start = Date.now();
   if (!authenticate(req, res)) return;
 
+<<<<<<< HEAD
   const parsed = anthropicMessagesSchema.safeParse(req.body);
+=======
+  const parsed = messagesSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     const detail = parsed.error.errors
       .map(e => (e.path.length ? `${e.path.join('.')}: ${e.message}` : e.message))
@@ -465,7 +535,11 @@ anthropicRouter.post('/messages', async (req: Request, res: Response) => {
   messages = compressionResult.messages;
   res.setHeader('X-FreeLLM-Compress', formatCompressionHeader(compressionResult));
 
+<<<<<<< HEAD
   const estimatedInputTokens = estimateTokens(messages);
+=======
+  const estimatedInputTokens = estimateInputTokens(messages, tools);
+>>>>>>> upstream/main
   const imageCount = messages.reduce((n, m) =>
     n + (Array.isArray(m.content) ? m.content.filter(b => (b as any)?.type === 'image_url').length : 0), 0);
 
@@ -620,9 +694,17 @@ anthropicRouter.post('/messages', async (req: Request, res: Response) => {
       return routeRequest(routingTotal, state.skipKeys.size > 0 ? state.skipKeys : undefined, preferredModel, hasImage, wantsTools, state.skipModels.size > 0 ? state.skipModels : undefined, groupChain ?? resolvedChain?.chain, false, state.skipPlatforms.size > 0 ? state.skipPlatforms : undefined, outputReserve, taskType);
     },
     dispatch: async (route, attempt, dispatchCtx) => {
+<<<<<<< HEAD
       if (stream) {
         try {
           await streamCompletion(res, route, messages, dispatchOptions, {
+=======
+      const contextBudget = routeOutputBudget(route, estimatedInputTokens);
+      const routeOptions = { ...dispatchOptions, contextBudget };
+      if (stream) {
+        try {
+          await streamCompletion(res, route, messages, routeOptions, {
+>>>>>>> upstream/main
             start, attempt, attemptLog, clientGone: () => clientGone, requestedModel, estimatedInputTokens, tools, pinnedModelId,
             sessionId, pinned: resolved.pinned, stickyScope, strategyKey, disarmHedge: dispatchCtx.disarmHedge, state,
           });
@@ -635,7 +717,11 @@ anthropicRouter.post('/messages', async (req: Request, res: Response) => {
         }
       }
 
+<<<<<<< HEAD
       const result = await route.provider.chatCompletion(route.apiKey, messages, route.modelId, dispatchOptions);
+=======
+      const result = await route.provider.chatCompletion(route.apiKey, messages, route.modelId, routeOptions);
+>>>>>>> upstream/main
       const respMsg = result.choices?.[0]?.message;
       const respText = contentToString(respMsg?.content ?? '');
       let respToolCalls = respMsg?.tool_calls ?? [];
@@ -1047,7 +1133,11 @@ async function streamCompletion(
 // windows; we return a heuristic estimate (the proxy doesn't run a tokenizer).
 anthropicRouter.post('/messages/count_tokens', (req: Request, res: Response) => {
   if (!authenticate(req, res)) return;
+<<<<<<< HEAD
   const parsed = anthropicMessagesSchema.safeParse(req.body);
+=======
+  const parsed = messagesSchema.safeParse(req.body);
+>>>>>>> upstream/main
   if (!parsed.success) {
     sendError(res, 400, 'invalid_request_error', 'Invalid request');
     return;
@@ -1067,7 +1157,11 @@ anthropicRouter.post('/messages/count_tokens', (req: Request, res: Response) => 
     recordStats: false,
   });
   res.setHeader('X-FreeLLM-Compress', formatCompressionHeader(compressionResult));
+<<<<<<< HEAD
   res.json({ input_tokens: estimateTokens(compressionResult.messages) });
+=======
+  res.json({ input_tokens: estimateInputTokens(compressionResult.messages, tools) });
+>>>>>>> upstream/main
 });
 
 // Anthropic-compatible GET /v1/models. Content-negotiated: only answers when

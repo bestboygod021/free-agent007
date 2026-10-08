@@ -13,7 +13,12 @@ import { routeRequest, hasEnabledVisionModel, hasEnabledToolsModel, resolveStick
 import { getDb } from '../db/index.js';
 import { resolveAuth, prependSystemPrompt } from '../lib/system-prompt.js';
 import { isUnifyEnabled, getModelGroups, resolveRequestedIdForDispatch } from '../services/model-groups.js';
+<<<<<<< HEAD
 import { contentToString, messageHasImage } from '../lib/content.js';
+=======
+import { contentToString, estimateInputTokens, messageHasImage } from '../lib/content.js';
+import { routeOutputBudget } from '../lib/output-cap.js';
+>>>>>>> upstream/main
 import { resolveTaskType } from '../lib/task-type.js';
 import { normalizeMessageImages } from '../lib/image-normalize.js';
 import { repairToolArguments, toolSchemaMap } from '../lib/tool-args.js';
@@ -32,7 +37,11 @@ import {
 import { runFallbackLoop, newFallbackState, fallbackRoutingTokens, recordUpstreamSuccess, setFallbackHeaders, exhaustionErrorPayload, setExhaustionHeaders, type AttemptRecord } from '../lib/fallback-loop.js';
 import { routedViaValue, safeHeaderValue } from '../lib/header-value.js';
 import { applyTokenBudget, tokenBudgetMessage } from '../lib/guardrails.js';
+<<<<<<< HEAD
 import { pickSamplingParams, type ResponseFormat } from '../lib/sampling-params.js';
+=======
+import { samplingParamSchemaFields, pickSamplingParams, type ResponseFormat } from '../lib/sampling-params.js';
+>>>>>>> upstream/main
 import { enforceJsonContent } from '../lib/structured-output.js';
 import { sanitizeProviderErrorMessage } from '../lib/error-redaction.js';
 import { isClientAbortError, newClientAbortError, newHedgeAbortError } from '../lib/error-classify.js';
@@ -41,11 +50,18 @@ import { compressRequest, formatCompressionHeader } from '../services/compressio
 import {
   FUSION_MODEL_ID,
   FusionError,
+<<<<<<< HEAD
+=======
+  fusionConfigSchema,
+>>>>>>> upstream/main
   isFusionModel,
   runFusion,
   type FusionResult,
 } from '../services/fusion.js';
+<<<<<<< HEAD
 import { responsesMessageItemSchema, responsesFunctionCallItemSchema, responsesRequestSchema } from '@freellmapi/shared/schemas.js';
+=======
+>>>>>>> upstream/main
 
 export const responsesRouter = Router();
 
@@ -91,6 +107,7 @@ function nowUnix(): number {
 // only consume the fields we can map. Unknown fields (store, reasoning,
 // metadata, previous_response_id, …) are accepted and ignored.
 
+<<<<<<< HEAD
 
 
 
@@ -98,6 +115,29 @@ function nowUnix(): number {
 
 
 
+=======
+const contentPartSchema = z.object({ type: z.string() }).passthrough();
+
+const messageItemSchema = z.object({
+  type: z.literal('message').optional(),
+  role: z.enum(['system', 'developer', 'user', 'assistant']),
+  content: z.union([z.string(), z.array(contentPartSchema)]),
+});
+
+const functionCallItemSchema = z.object({
+  type: z.literal('function_call'),
+  call_id: z.string(),
+  name: z.string(),
+  arguments: z.string(),
+  id: z.string().optional(),
+});
+
+const functionCallOutputItemSchema = z.object({
+  type: z.literal('function_call_output'),
+  call_id: z.string(),
+  output: z.union([z.string(), z.array(contentPartSchema), z.record(z.string(), z.unknown())]),
+});
+>>>>>>> upstream/main
 
 // Remaining official ResponseInputItemParam kinds. Codex computer-use round-trips
 // `computer_call` (the model's action request) and `computer_call_output` (the
@@ -106,6 +146,7 @@ function nowUnix(): number {
 // 400s on a standard payload; each is then either mapped (below) or dropped
 // because chat-completions upstreams have no equivalent (computer/local_shell).
 // Each schema is permissive — we only consume the fields that matter.
+<<<<<<< HEAD
 
 
 
@@ -113,6 +154,39 @@ function nowUnix(): number {
 
 
 
+=======
+const computerCallItemSchema = z.object({
+  type: z.literal('computer_call'),
+  call_id: z.string(),
+  action: z.record(z.string(), z.unknown()).optional(),
+  id: z.string().optional(),
+}).passthrough();
+
+const computerCallOutputItemSchema = z.object({
+  type: z.literal('computer_call_output'),
+  call_id: z.string(),
+  output: z.union([
+    z.string(),
+    z.array(contentPartSchema),
+    z.record(z.string(), z.unknown()),
+  ]).optional(),
+  id: z.string().optional(),
+}).passthrough();
+
+const reasoningItemSchema = z.object({
+  type: z.literal('reasoning'),
+  summary: z.union([z.string(), z.array(contentPartSchema)]).optional(),
+  content: z.union([z.string(), z.array(contentPartSchema)]).optional(),
+  id: z.string().optional(),
+}).passthrough();
+
+const localShellCallItemSchema = z.object({
+  type: z.literal('local_shell_call'),
+  call_id: z.string().optional(),
+  action: z.record(z.string(), z.unknown()).optional(),
+  id: z.string().optional(),
+}).passthrough();
+>>>>>>> upstream/main
 
 // Codex sends its client-side tool inventory as an `additional_tools` input
 // item on every Responses turn.  It is metadata for the harness, not a chat
@@ -120,25 +194,99 @@ function nowUnix(): number {
 // permissive because Codex may add fields (or tool shapes) as the inventory
 // evolves; rejecting the whole request here turns an otherwise valid launch
 // into a misleading `input: Invalid input` 400.
+<<<<<<< HEAD
 
+=======
+const additionalToolsItemSchema = z.object({
+  type: z.literal('additional_tools'),
+  id: z.string().optional(),
+  role: z.string().optional(),
+  tools: z.array(z.record(z.string(), z.unknown())).optional(),
+}).passthrough();
+>>>>>>> upstream/main
 
 // The rest of the official ResponseInputItemParam union: built-in tool calls
 // (web_search, file_search, code interpreter, image generation), MCP items,
 // and item references. None has a chat-completions equivalent — validated
 // loosely so a standard replay never 400s, then skipped at conversion like
 // the kinds above.
+<<<<<<< HEAD
 
 
 
+=======
+const otherKnownItemSchema = z.object({
+  type: z.enum([
+    'web_search_call', 'file_search_call', 'code_interpreter_call',
+    'image_generation_call', 'mcp_call', 'mcp_list_tools',
+    'mcp_approval_request', 'mcp_approval_response', 'item_reference',
+  ]),
+  id: z.string().optional(),
+}).passthrough();
+
+const inputItemSchema = z.union([
+  functionCallItemSchema,
+  functionCallOutputItemSchema,
+  computerCallItemSchema,
+  computerCallOutputItemSchema,
+  reasoningItemSchema,
+  localShellCallItemSchema,
+  additionalToolsItemSchema,
+  otherKnownItemSchema,
+  messageItemSchema,
+]);
+>>>>>>> upstream/main
 
 // Accept ANY tool type, not just 'function'. Codex (Responses API) sends
 // built-in tools like `web_search` / `local_shell` alongside function tools;
 // a strict z.literal('function') rejected the whole request. We validate
 // loosely here and drop non-function tools at conversion (toChatTools), since
 // chat-completions providers only accept type:'function'.
+<<<<<<< HEAD
 
 
 
+=======
+const responsesToolSchema = z.object({
+  type: z.string(),
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
+  parameters: z.record(z.string(), z.unknown()).nullable().optional(),
+  strict: z.boolean().nullable().optional(),
+}).passthrough();
+
+const responsesRequestSchema = z.object({
+  model: z.string().optional(),
+  instructions: z.string().nullable().optional(),
+  input: z.union([z.string(), z.array(inputItemSchema)]),
+  stream: z.boolean().optional(),
+  temperature: z.number().min(0).max(2).nullable().optional(),
+  top_p: z.number().min(0).max(1).nullable().optional(),
+  max_output_tokens: z.number().int().positive().nullable().optional(),
+  tools: z.array(responsesToolSchema).optional(),
+  // The virtual Fusion model fans the translated conversation out to a
+  // diverse panel, then optionally synthesizes the survivors. Keep the
+  // Responses surface in parity with /v1/chat/completions.
+  fusion: fusionConfigSchema.optional(),
+  tool_choice: z.union([
+    z.enum(['none', 'auto', 'required']),
+    z.object({ type: z.literal('function'), name: z.string() }).passthrough(),
+  ]).optional(),
+  parallel_tool_calls: z.boolean().nullable().optional(),
+  // Extended sampling params, validated the same way as /chat/completions.
+  // Responses clients express structured output as `text.format` rather than
+  // `response_format` — mapped where completionOpts is built.
+  ...samplingParamSchemaFields,
+  text: z.object({
+    format: z.object({
+      type: z.enum(['text', 'json_object', 'json_schema']),
+      name: z.string().optional(),
+      strict: z.boolean().nullable().optional(),
+      schema: z.record(z.string(), z.unknown()).optional(),
+    }).passthrough().optional(),
+  }).passthrough().nullable().optional(),
+}).passthrough();
+>>>>>>> upstream/main
 
 type ResponsesRequest = z.infer<typeof responsesRequestSchema>;
 
@@ -268,7 +416,11 @@ export function toChatMessages(req: ResponsesRequest): ChatMessage[] {
       const toolCalls: ChatToolCall[] = [];
       let j = i;
       while (j < items.length && (items[j] as { type?: string }).type === 'function_call') {
+<<<<<<< HEAD
         const fc = items[j] as z.infer<typeof responsesFunctionCallItemSchema>;
+=======
+        const fc = items[j] as z.infer<typeof functionCallItemSchema>;
+>>>>>>> upstream/main
         toolCalls.push({
           id: fc.call_id,
           type: 'function',
@@ -299,7 +451,11 @@ export function toChatMessages(req: ResponsesRequest): ChatMessage[] {
     }
 
     // message item
+<<<<<<< HEAD
     const m = item as z.infer<typeof responsesMessageItemSchema>;
+=======
+    const m = item as z.infer<typeof messageItemSchema>;
+>>>>>>> upstream/main
     // 'developer' is the Responses-era system role.
     const role = m.role === 'developer' ? 'system' : m.role;
     const content = partsToChatContent(m.content);
@@ -323,7 +479,11 @@ export function toChatMessages(req: ResponsesRequest): ChatMessage[] {
       const toolCalls: ChatToolCall[] = [];
       let j = i + 1;
       while (j < items.length && (items[j] as { type?: string }).type === 'function_call') {
+<<<<<<< HEAD
         const fc = items[j] as z.infer<typeof responsesFunctionCallItemSchema>;
+=======
+        const fc = items[j] as z.infer<typeof functionCallItemSchema>;
+>>>>>>> upstream/main
         toolCalls.push({
           id: fc.call_id,
           type: 'function',
@@ -629,10 +789,14 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   // bytes (see lib/image-normalize.ts). Mutates the image blocks in place.
   await normalizeMessageImages(messages);
 
+<<<<<<< HEAD
   const estimatedInputTokens = messages.reduce(
     (sum, m) => sum + Math.ceil(contentToString(m.content).length / 4),
     0,
   );
+=======
+  const estimatedInputTokens = estimateInputTokens(messages, tools);
+>>>>>>> upstream/main
 
   // Image requests must route to a vision-capable model (mirrors
   // /chat/completions, proxy.ts). Reject up front with a clear message when
@@ -1045,6 +1209,11 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
       return routeRequest(routingTotal, state.skipKeys.size > 0 ? state.skipKeys : undefined, preferredModel, hasImage, wantsTools, state.skipModels.size > 0 ? state.skipModels : undefined, groupChain ?? resolvedChain?.chain, completionOpts.response_format !== undefined, state.skipPlatforms.size > 0 ? state.skipPlatforms : undefined, outputReserve, taskType);
     },
     dispatch: async (route, attempt, ctx) => {
+<<<<<<< HEAD
+=======
+      const contextBudget = routeOutputBudget(route, estimatedInputTokens);
+      const routeOpts = contextBudget != null ? { ...dispatchOpts, contextBudget } : dispatchOpts;
+>>>>>>> upstream/main
       traceRouteEvent('Responses', {
         event: attempt === 0 ? 'start' : 'next',
         requestId: requestGroupId,
@@ -1139,7 +1308,11 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
             route.apiKey,
             messages,
             route.modelId,
+<<<<<<< HEAD
             dispatchOpts,
+=======
+            routeOpts,
+>>>>>>> upstream/main
             quotaContextForRoute(route, 'responses'),
           );
 
@@ -1377,7 +1550,11 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
         route.apiKey,
         messages,
         route.modelId,
+<<<<<<< HEAD
         dispatchOpts,
+=======
+        routeOpts,
+>>>>>>> upstream/main
         quotaContextForRoute(route, 'responses'),
       );
 

@@ -8,6 +8,7 @@
 // published catalog and arrive via catalog-sync (premium on the live tier within
 // ~12h, free once each model is 30 days old) — never seeded by migrations.
 import { getDb } from '../db/index.js';
+<<<<<<< HEAD
 import { getClientContext } from '../lib/client-context.js';
 import { reserveProviderCredential } from './provider-credential.js';
 import { proxyFetch } from '../lib/proxy.js';
@@ -18,6 +19,24 @@ import { SPEECHIFY_BASE_URL, SPEECHIFY_VERSION } from '../providers/speechify.js
 /** Platforms with a media adapter below. catalog-sync gates media rows on this
  *  (decoupled from the chat provider registry — e.g. SiliconFlow is media-only). */
 export const MEDIA_PLATFORMS = new Set(['nvidia', 'pollinations', 'cloudflare', 'siliconflow', 'google', 'speechify']);
+=======
+import { parseRetryAfterMs } from '../providers/base.js';
+import { RetryHintTracker } from '../lib/retry-hint.js';
+import { secondsUntilNextMonth } from './key-budget.js';
+import { getClientContext } from '../lib/client-context.js';
+import { reserveProviderCredential } from './provider-credential.js';
+import { proxyFetch } from '../lib/proxy.js';
+import { bearerAuthHeader } from '../lib/credential.js';
+import { assessProviderUrl } from '../lib/url-guard.js';
+import { isOnCooldown, setCooldown } from './ratelimit.js';
+import { SPEECHIFY_BASE_URL, SPEECHIFY_VERSION } from '../providers/speechify.js';
+import { TYPHOON_BASE_URL } from '../providers/typhoon.js';
+import { ELECTRONHUB_BASE_URL } from '../providers/electronhub.js';
+
+/** Platforms with a media adapter below. catalog-sync gates media rows on this
+ *  (decoupled from the chat provider registry — e.g. SiliconFlow is media-only). */
+export const MEDIA_PLATFORMS = new Set(['nvidia', 'pollinations', 'cloudflare', 'siliconflow', 'google', 'speechify', 'electronhub']);
+>>>>>>> upstream/main
 
 /** Video uses a dedicated optional catalog registry so binaries that predate
  *  this modality ignore the rows instead of accidentally ingesting them as
@@ -30,7 +49,11 @@ const KEYLESS_CAPABLE = new Set(['pollinations']);
 /** Platforms with a speech-to-text adapter below. catalog-sync gates the
  *  catalog's `transcriptionModels` entries on this, the way MEDIA_PLATFORMS
  *  gates the generative-media rows. */
+<<<<<<< HEAD
 export const TRANSCRIPTION_PLATFORMS = new Set(['groq', 'cloudflare']);
+=======
+export const TRANSCRIPTION_PLATFORMS = new Set(['groq', 'cloudflare', 'typhoon']);
+>>>>>>> upstream/main
 
 // 'transcription' rows live in media_models like the other modalities; they
 // arrive via the catalog's dedicated `transcriptionModels` array (see
@@ -56,10 +79,22 @@ export class MediaError extends Error {
   status: number;
   /** Optional machine-readable error code surfaced in the OpenAI-shaped body. */
   code?: string;
+<<<<<<< HEAD
   constructor(message: string, status: number, code?: string) {
     super(message);
     this.status = status;
     this.code = code;
+=======
+  /** Back-off the upstream provider stated (`Retry-After` header), in
+   *  milliseconds — relayed to the client so an SDK sleeps the stated amount
+   *  instead of hammering the chain, mirroring the embeddings path. */
+  retryAfterMs?: number;
+  constructor(message: string, status: number, code?: string, retryAfterMs?: number) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.retryAfterMs = retryAfterMs;
+>>>>>>> upstream/main
   }
 }
 
@@ -237,7 +272,16 @@ async function mediaFetch(
   );
   if (!r.ok) {
     const body = await r.text().catch(() => '');
+<<<<<<< HEAD
     throw new MediaError(`${platform} ${r.status}: ${body.slice(0, 200)}`, r.status);
+=======
+    throw new MediaError(
+      `${platform} ${r.status}: ${body.slice(0, 200)}`,
+      r.status,
+      undefined,
+      parseRetryAfterMs(r.headers?.get('retry-after') ?? null),
+    );
+>>>>>>> upstream/main
   }
   return r;
 }
@@ -343,7 +387,11 @@ async function callImageProvider(
       if (p.size) body.size = p.size;
       const r = await mediaFetch(`${credential.baseUrl}/images/generations`, 'custom', 'image', {
         method: 'POST',
+<<<<<<< HEAD
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key ?? 'no-key'}` },
+=======
+        headers: { 'Content-Type': 'application/json', ...bearerAuthHeader(key) },
+>>>>>>> upstream/main
         body: JSON.stringify(body),
       });
       const j = (await r.json()) as { data?: { b64_json?: string; url?: string }[] };
@@ -601,6 +649,33 @@ async function callSpeechProvider(
       if (j.audio_format !== fmt) throw new MediaError('Speechify returned a different audio format', 502);
       return { audio: Buffer.from(b64, 'base64'), contentType: fmt === 'ogg' ? 'audio/ogg' : contentTypeFor(fmt) };
     }
+<<<<<<< HEAD
+=======
+    case 'electronhub': {
+      // Only the container formats exercised by this adapter are supported.
+      // Gemini TTS may return WAV even for response_format=mp3. Detect the
+      // actual bytes instead of labelling WAV as MP3 or accepting a JSON error.
+      const format = p.format ?? 'mp3';
+      if (!['mp3', 'wav'].includes(format)) {
+        throw new MediaError('ElectronHub speech supports mp3 and wav output through this adapter', 400);
+      }
+      const defaultVoice = row.model_id === 'humain-tts' ? 'sara'
+        : row.model_id.startsWith('gemini-') ? 'Kore' : 'alloy';
+      const voice = !p.voice || p.voice === 'alloy' ? defaultVoice : p.voice;
+      const r = await mediaFetch(`${ELECTRONHUB_BASE_URL}/audio/speech`, 'electronhub', 'audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...bearerAuthHeader(key) },
+        body: JSON.stringify({ model: row.model_id, input: p.input, voice, response_format: format }),
+      });
+      const audio = Buffer.from(await r.arrayBuffer());
+      const wav = audio.length > 44 && audio.toString('ascii', 0, 4) === 'RIFF'
+        && audio.toString('ascii', 8, 12) === 'WAVE';
+      const mp3 = audio.length > 10 && (audio.toString('ascii', 0, 3) === 'ID3'
+        || (audio[0] === 0xff && (audio[1] & 0xe0) === 0xe0 && (audio[1] & 0x06) !== 0));
+      if (!wav && !mp3) throw new MediaError('ElectronHub returned no recognized speech audio', 502);
+      return { audio, contentType: wav ? 'audio/wav' : 'audio/mpeg' };
+    }
+>>>>>>> upstream/main
     case 'custom': {
       if (!credential.baseUrl) throw new MediaError('custom audio provider is missing base_url', 500);
       const fmt = p.format ?? 'mp3';
@@ -609,7 +684,11 @@ async function callSpeechProvider(
       if (p.format) body.response_format = p.format;
       const r = await mediaFetch(`${credential.baseUrl}/audio/speech`, 'custom', 'audio', {
         method: 'POST',
+<<<<<<< HEAD
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key ?? 'no-key'}` },
+=======
+        headers: { 'Content-Type': 'application/json', ...bearerAuthHeader(key) },
+>>>>>>> upstream/main
         body: JSON.stringify(body),
       });
       return {
@@ -725,7 +804,11 @@ function logMedia(row: Pick<MediaModelRow, 'platform' | 'model_id' | 'modality'>
   }
 }
 
+<<<<<<< HEAD
 function chainError(modality: MediaModality, lastError: MediaError | null): MediaError {
+=======
+function chainError(modality: MediaModality, lastError: MediaError | null, hints: RetryHintTracker): MediaError {
+>>>>>>> upstream/main
   // Only statuses the CALLER can act on are passed through. 400 (bad prompt,
   // duration the model does not accept) and 413 (upload too large) describe
   // the caller's own request, and 429 is the long-standing rate-limit signal.
@@ -740,6 +823,13 @@ function chainError(modality: MediaModality, lastError: MediaError | null): Medi
     `All ${modality} providers failed${lastError ? ` (last: ${lastError.message.slice(0, 160)})` : ' (no usable keys)'}.`,
     status,
     lastError?.code,
+<<<<<<< HEAD
+=======
+    // A 429 from one provider is failed over, so its Retry-After is only the
+    // client's business when EVERY provider was rate limited with a stated
+    // delay — then the soonest one (same rule as the chat exhaustion path).
+    status === 429 ? hints.retryAfterMs() : undefined,
+>>>>>>> upstream/main
   );
 }
 
@@ -747,12 +837,24 @@ function chainError(modality: MediaModality, lastError: MediaError | null): Medi
 export async function runImageGeneration(model: string | undefined, params: ImageParams): Promise<ImageResult> {
   const chain = resolveMediaChain(model, 'image');
   let lastError: MediaError | null = null;
+<<<<<<< HEAD
+=======
+  // Only a chain rate limited end to end earns a Retry-After (the soonest).
+  const hints = new RetryHintTracker();
+>>>>>>> upstream/main
   for (const row of chain) {
     const { credential, budgetBlocked } = KEYLESS_CAPABLE.has(row.platform)
       ? { credential: { id: null, key: null, baseUrl: null, release: () => {} }, budgetBlocked: false }
       : reserveProviderCredential(row, 0);
     if (!credential) {
+<<<<<<< HEAD
       if (budgetBlocked) lastError = new MediaError('Monthly key budget exhausted', 429, 'quota_exceeded');
+=======
+      if (budgetBlocked) {
+        lastError = new MediaError('Monthly key budget exhausted', 429, 'quota_exceeded');
+        hints.record(429, secondsUntilNextMonth() * 1000);
+      }
+>>>>>>> upstream/main
       continue;
     }
     const started = Date.now();
@@ -767,11 +869,19 @@ export async function runImageGeneration(model: string | undefined, params: Imag
       const e = err instanceof MediaError ? err : new MediaError(String(err?.message ?? err), 502);
       logMedia(row, credential.id, 'error', Date.now() - started, e.message.slice(0, 300));
       lastError = e;
+<<<<<<< HEAD
+=======
+      hints.record(e.status, e.retryAfterMs);
+>>>>>>> upstream/main
     } finally {
       credential.release();
     }
   }
+<<<<<<< HEAD
   throw chainError('image', lastError);
+=======
+  throw chainError('image', lastError, hints);
+>>>>>>> upstream/main
 }
 
 /** Generate a video, failing over across catalogued text-to-video providers.
@@ -784,12 +894,24 @@ export async function runVideoGeneration(
 ): Promise<VideoResult> {
   const chain = resolveMediaChain(model, 'video');
   let lastError: MediaError | null = null;
+<<<<<<< HEAD
+=======
+  // Only a chain rate limited end to end earns a Retry-After (the soonest).
+  const hints = new RetryHintTracker();
+>>>>>>> upstream/main
   for (const row of chain) {
     throwIfClientGone(clientSignal);
     const { credential, budgetBlocked } = reserveProviderCredential(row, 0,
       keyId => isOnCooldown(row.platform, row.model_id, keyId));
     if (!credential) {
+<<<<<<< HEAD
       if (budgetBlocked) lastError = new MediaError('Monthly key budget exhausted', 429, 'quota_exceeded');
+=======
+      if (budgetBlocked) {
+        lastError = new MediaError('Monthly key budget exhausted', 429, 'quota_exceeded');
+        hints.record(429, secondsUntilNextMonth() * 1000);
+      }
+>>>>>>> upstream/main
       continue;
     }
     const started = Date.now();
@@ -803,13 +925,21 @@ export async function runVideoGeneration(
       logMedia(row, credential.id, 'error', Date.now() - started, e.message.slice(0, 300));
       if (e.status === 429 && credential.id != null) setCooldown(row.platform, row.model_id, credential.id);
       lastError = e;
+<<<<<<< HEAD
+=======
+      hints.record(e.status, e.retryAfterMs);
+>>>>>>> upstream/main
       // A caller that hung up gets no second generation charged to its account.
       throwIfClientGone(clientSignal);
     } finally {
       credential.release();
     }
   }
+<<<<<<< HEAD
   throw chainError('video', lastError);
+=======
+  throw chainError('video', lastError, hints);
+>>>>>>> upstream/main
 }
 
 // ---------------------------------------------------------------------------
@@ -955,6 +1085,25 @@ async function callTranscriptionProvider(
 ): Promise<Omit<TranscriptionResult, 'platform' | 'modelId'>> {
   const key = credential.key;
   switch (m.platform) {
+<<<<<<< HEAD
+=======
+    case 'typhoon': {
+      // The tested API accepts file + model and returns {text, usage}.
+      // Do not forward Whisper-only options or claim native subtitle support.
+      // The route derives text/JSON response formats from this normalized result.
+      const form = new FormData();
+      form.append('file', new Blob([p.file], { type: p.mimeType || 'application/octet-stream' }), p.filename);
+      form.append('model', m.modelId);
+      const r = await mediaFetch(`${TYPHOON_BASE_URL}/audio/transcriptions`, 'typhoon', 'transcription', {
+        method: 'POST',
+        headers: { ...bearerAuthHeader(key) },
+        body: form,
+      });
+      const j = (await r.json()) as { text?: unknown } | null;
+      if (!j || typeof j.text !== 'string') throw new MediaError('typhoon returned no transcription text', 502);
+      return { text: j.text };
+    }
+>>>>>>> upstream/main
     case 'custom': {
       // Any OpenAI-compatible STT server (faster-whisper-server, LocalAI,
       // whisper.cpp's server, vLLM…). Same multipart shape as groq below;
@@ -973,7 +1122,11 @@ async function callTranscriptionProvider(
       // Never set Content-Type by hand — FormData supplies the boundary.
       const r = await mediaFetch(`${credential.baseUrl}/audio/transcriptions`, 'custom', 'transcription', {
         method: 'POST',
+<<<<<<< HEAD
         headers: { Authorization: `Bearer ${key ?? 'no-key'}` },
+=======
+        headers: { ...bearerAuthHeader(key) },
+>>>>>>> upstream/main
         body: form,
       });
       const j = (await r.json()) as { text?: string; language?: string; duration?: number; segments?: unknown[] };
@@ -1056,11 +1209,23 @@ export async function runTranscription(model: string | undefined, p: Transcripti
     throw new MediaError(`Audio file exceeds the ${maxMb} MB provider upload limit.`, 413);
   }
   let lastError: MediaError | null = null;
+<<<<<<< HEAD
+=======
+  // Only a chain rate limited end to end earns a Retry-After (the soonest).
+  const hints = new RetryHintTracker();
+>>>>>>> upstream/main
   for (const m of usable) {
     const { credential, budgetBlocked } = reserveProviderCredential({ platform: m.platform, key_id: m.keyId }, 0,
       keyId => isOnCooldown(m.platform, m.modelId, keyId));
     if (!credential) {
+<<<<<<< HEAD
       if (budgetBlocked) lastError = new MediaError('Monthly key budget exhausted', 429, 'quota_exceeded');
+=======
+      if (budgetBlocked) {
+        lastError = new MediaError('Monthly key budget exhausted', 429, 'quota_exceeded');
+        hints.record(429, secondsUntilNextMonth() * 1000);
+      }
+>>>>>>> upstream/main
       continue;
     }
     const logRow = { platform: m.platform, model_id: m.modelId, modality: 'transcription' as const };
@@ -1079,23 +1244,43 @@ export async function runTranscription(model: string | undefined, p: Transcripti
         setCooldown(m.platform, m.modelId, credential.id);
       }
       lastError = e;
+<<<<<<< HEAD
+=======
+      hints.record(e.status, e.retryAfterMs);
+>>>>>>> upstream/main
     } finally {
       credential.release();
     }
   }
+<<<<<<< HEAD
   throw chainError('transcription', lastError);
+=======
+  throw chainError('transcription', lastError, hints);
+>>>>>>> upstream/main
 }
 
 /** Synthesize speech, failing over across providers serving the modality. */
 export async function runSpeech(model: string | undefined, params: SpeechParams): Promise<SpeechResult> {
   const chain = resolveMediaChain(model, 'audio');
   let lastError: MediaError | null = null;
+<<<<<<< HEAD
+=======
+  // Only a chain rate limited end to end earns a Retry-After (the soonest).
+  const hints = new RetryHintTracker();
+>>>>>>> upstream/main
   for (const row of chain) {
     const { credential, budgetBlocked } = KEYLESS_CAPABLE.has(row.platform)
       ? { credential: { id: null, key: null, baseUrl: null, release: () => {} }, budgetBlocked: false }
       : reserveProviderCredential(row, 0);
     if (!credential) {
+<<<<<<< HEAD
       if (budgetBlocked) lastError = new MediaError('Monthly key budget exhausted', 429, 'quota_exceeded');
+=======
+      if (budgetBlocked) {
+        lastError = new MediaError('Monthly key budget exhausted', 429, 'quota_exceeded');
+        hints.record(429, secondsUntilNextMonth() * 1000);
+      }
+>>>>>>> upstream/main
       continue;
     }
     const started = Date.now();
@@ -1108,9 +1293,17 @@ export async function runSpeech(model: string | undefined, params: SpeechParams)
       const e = err instanceof MediaError ? err : new MediaError(String(err?.message ?? err), 502);
       logMedia(row, credential.id, 'error', Date.now() - started, e.message.slice(0, 300));
       lastError = e;
+<<<<<<< HEAD
+=======
+      hints.record(e.status, e.retryAfterMs);
+>>>>>>> upstream/main
     } finally {
       credential.release();
     }
   }
+<<<<<<< HEAD
   throw chainError('audio', lastError);
+=======
+  throw chainError('audio', lastError, hints);
+>>>>>>> upstream/main
 }

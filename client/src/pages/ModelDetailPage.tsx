@@ -1,10 +1,17 @@
+<<<<<<< HEAD
 import { useMemo, useState } from 'react'
+=======
+import { useEffect, useMemo, useState } from 'react'
+>>>>>>> upstream/main
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft, Merge, Save, Split, Trash2 } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { apiFetch } from '@/lib/api'
+<<<<<<< HEAD
 import type { UnifyOverrides } from '../../../shared/types'
+=======
+>>>>>>> upstream/main
 import { addAlias, aliasesFor, removeAlias } from '@/lib/alias-merge'
 import { Button } from '@/components/ui/button'
 import { ConfirmButton } from '@/components/confirm-button'
@@ -43,6 +50,14 @@ import {
 
 // The persisted unify overrides (see server model-groups.ts). `splits` forces a
 // "platform:model_id" member out of its computed group into its own entry.
+<<<<<<< HEAD
+=======
+type UnifyOverrides = {
+  merges: { into: string; keys: string[] }[]
+  splits: { member: string; groupKey?: string }[]
+}
+
+>>>>>>> upstream/main
 // What the per-provider split control should do for one member row.
 export type SplitAction = {
   kind: 'split' | 'undo'
@@ -207,7 +222,11 @@ export default function ModelDetailPage() {
   // the full overrides list (see lib/alias-merge) — the visible rows are only
   // this group's slice, so editing by row position would hit other groups.
   const merges = useMemo(() => unify?.overrides.merges ?? [], [unify])
+<<<<<<< HEAD
   const groupAliases = aliasesFor(merges, label)
+=======
+  const groupAliases = useMemo(() => aliasesFor(merges, label), [merges, label])
+>>>>>>> upstream/main
   const submitAlias = () => {
     if (!aliasInput.trim()) return
     mergeMutation.mutate(addAlias(merges, label, aliasInput))
@@ -407,6 +426,7 @@ function ProviderSettingsRow({
     tpmLimit, tpdLimit, supportsVision, supportsTools, enabled])
 
   const [form, setForm] = useState(() => modelSettingsForm(source))
+<<<<<<< HEAD
   // Re-hydrate the form when the server's model (or its effective settings)
   // changes — a render-phase adjustment instead of an effect, so a model
   // switch or a refetched catalog value lands before paint instead of one
@@ -418,12 +438,22 @@ function ProviderSettingsRow({
     setSyncedModelDbId(modelDbId)
     setForm(modelSettingsForm(source))
   }
+=======
+  useEffect(() => setForm(modelSettingsForm(source)), [modelDbId, source])
+>>>>>>> upstream/main
   const setField = <K extends keyof typeof form>(key: K, value: typeof form[K]) =>
     setForm(current => ({ ...current, [key]: value }))
 
   const { patch, invalid, dirty } = reviewModelSettings(source, form)
   const canSave = dirty && patch !== null && !saving && !deleting
+<<<<<<< HEAD
   const sourceLabel = model.source === 'custom' ? t('models.customModel') : t('models.catalogModel')
+=======
+  const sourceLabel = model.source === 'custom'
+    ? t('models.customModel')
+    // #1348: fetched from the provider's own model list, not the catalog.
+    : model.source === 'discovered' ? t('models.discoveredModel') : t('models.catalogModel')
+>>>>>>> upstream/main
   // Fields whose effective value comes from a local override instead of the
   // catalog. Custom models are never catalog-managed, so this stays empty.
   const overridden = new Set(model.overrideFields ?? [])

@@ -69,7 +69,11 @@ export class CloudflareProvider extends BaseProvider {
         model: modelId,
         messages: this.normalizeMessages(messages),
         temperature: options?.temperature,
+<<<<<<< HEAD
         max_tokens: resolveMaxTokens(this.platform, options?.max_tokens),
+=======
+        max_tokens: resolveMaxTokens(this.platform, options?.max_tokens, options?.contextBudget),
+>>>>>>> upstream/main
         top_p: options?.top_p,
         stop: options?.stop,
         tools: options?.tools,
@@ -125,7 +129,11 @@ export class CloudflareProvider extends BaseProvider {
         model: modelId,
         messages: this.normalizeMessages(messages),
         temperature: options?.temperature,
+<<<<<<< HEAD
         max_tokens: resolveMaxTokens(this.platform, options?.max_tokens),
+=======
+        max_tokens: resolveMaxTokens(this.platform, options?.max_tokens, options?.contextBudget),
+>>>>>>> upstream/main
         top_p: options?.top_p,
         stop: options?.stop,
         tools: options?.tools,

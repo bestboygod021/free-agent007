@@ -11,11 +11,43 @@ import { ModelsTabs } from '@/components/models-tabs'
 import { UsageSummaryCard } from '@/components/usage-summary-card'
 import { useI18n } from '@/i18n'
 
+<<<<<<< HEAD
 // MediaModel / MediaData / MediaUsage are the shared contracts; MediaGroup is
 // a client-derived view built by groupMedia() below, so it stays local.
 import type { MediaModel, MediaData, MediaUsage } from '../../../shared/types'
 export type { MediaModel, MediaData, MediaUsage }
 type MediaGroup = {
+=======
+export interface MediaModel {
+  id: number
+  platform: string
+  modelId: string
+  displayName: string
+  modality: 'image' | 'video' | 'audio' | 'transcription'
+  enabled: boolean
+  quotaLabel: string
+  keyCount: number
+  isCustom?: boolean
+}
+interface MediaData { models: MediaModel[] }
+
+interface MediaUsage {
+  modality: 'image' | 'video' | 'audio' | 'transcription'
+  models: {
+    id: number
+    platform: string
+    modelId: string
+    displayName: string
+    quotaLabel: string | null
+    requestsToday: number
+    requestsMonth: number
+  }[]
+  totalRequestsToday: number
+  totalRequestsMonth: number
+}
+
+export interface MediaGroup {
+>>>>>>> upstream/main
   label: string
   slug: string
   members: MediaModel[]
@@ -24,9 +56,13 @@ type MediaGroup = {
 // Consolidate media rows into logical models — the same idea the chat Models page
 // uses (one logical model, several providers underneath). Group by displayName so
 // e.g. "FLUX.1 [schnell]" served by nvidia + cloudflare + siliconflow is one row.
+<<<<<<< HEAD
 // Module-private (only MediaModelsView uses it) so the file exports components
 // and types only, which keeps Fast Refresh intact.
 function groupMedia(models: MediaModel[]): MediaGroup[] {
+=======
+export function groupMedia(models: MediaModel[]): MediaGroup[] {
+>>>>>>> upstream/main
   const map = new Map<string, MediaModel[]>()
   for (const m of models) {
     const arr = map.get(m.displayName)

@@ -11,7 +11,11 @@ import { ConfirmButton } from '@/components/confirm-button'
 import { ChevronRight, RotateCw, Trash2 } from 'lucide-react'
 import { useI18n } from '@/i18n'
 
+<<<<<<< HEAD
 type ClientProfile = {
+=======
+interface ClientProfile {
+>>>>>>> upstream/main
   id: number
   name: string
   maskedKey: string

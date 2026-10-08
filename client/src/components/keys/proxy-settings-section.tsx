@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useState } from 'react'
+=======
+import { useState, useEffect } from 'react'
+>>>>>>> upstream/main
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -8,8 +12,23 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Globe } from 'lucide-react'
 import { useI18n } from '@/i18n'
+<<<<<<< HEAD
 import { PLATFORMS, CUSTOM_GROUP } from './platform-data'
 import type { ApiKey, ProxyMode, ProxySettings } from '../../../../shared/types'
+=======
+import { PLATFORMS, CUSTOM_GROUP } from './shared'
+import type { ApiKey } from '../../../../shared/types'
+import type { ProxyMode } from '../../../../shared/types'
+
+interface ProxySettings {
+  proxyUrl: string
+  proxyMode: ProxyMode
+  fetchRelayTokenConfigured: boolean
+  enabled: boolean
+  bypassPlatforms: string[]
+  active: boolean
+}
+>>>>>>> upstream/main
 
 /** Host of a probe target, for display. Falls back to the raw value so a
  *  malformed override still shows something rather than vanishing. */
@@ -42,6 +61,7 @@ export function ProxySettingsSection() {
   })
 
   // Sync from server when the query refetches; keep the user's typed value
+<<<<<<< HEAD
   // in between (controlled input). Render-phase adjustment instead of an
   // effect: the sync applies before paint (no flash of the stale value), only
   // when the server's fields actually changed, and a refetch that returns the
@@ -54,6 +74,15 @@ export function ProxySettingsSection() {
     setProxyUrl(data.proxyUrl)
     setProxyMode(data.proxyMode)
   }
+=======
+  // in between (controlled input).
+  useEffect(() => {
+    if (data) {
+      setProxyUrl(data.proxyUrl)
+      setProxyMode(data.proxyMode)
+    }
+  }, [data?.proxyUrl, data?.proxyMode])
+>>>>>>> upstream/main
 
   const saveProxy = useMutation({
     meta: { silenceToast: true },

@@ -16,8 +16,12 @@
     "modelsMenu": "Durchsuchen Sie Modelltypen",
     "agents": "Agenten",
     "logs": "Protokoll",
+<<<<<<< HEAD
     "analyticsMenu": "Analytik-Seiten",
     "forgepilot": "ForgePilot"
+=======
+    "analyticsMenu": "Analytik-Seiten"
+>>>>>>> upstream/main
   },
   "auth": {
     "createYourAccount": "Erstellen Sie Ihr Konto",
@@ -109,6 +113,7 @@
     "sectionCompression": "Komprimierung",
     "sectionAdvanced": "Erweitert",
     "sectionPreview": "Vorschau",
+<<<<<<< HEAD
     "sectionRateLimit": "Rate-Limits",
     "rateLimitProxy": "Proxy-/v1-Limit (Anfragen/Min.)",
     "rateLimitAdmin": "Dashboard-/api-Limit (Anfragen/Min.)",
@@ -116,6 +121,8 @@
     "rateLimitUnified": "Einheitlicher-Schlüssel-/v1-Limit (Anfragen/Min.)",
     "rateLimitEnvLocked": "Durch {env} festgelegt — zum Bearbeiten entfernen",
     "rateLimitSaved": "Übernommen — gilt ab der nächsten Anfrage",
+=======
+>>>>>>> upstream/main
     "generalDescription": "Sprache und Erscheinungsbild dieses Dashboards.",
     "advancedDescription": "Schwellenwerte und Sicherheitsschalter für die Komprimierungs-Pipeline.",
     "compressionTitle": "Prompt-Komprimierung",
@@ -160,21 +167,39 @@
     "compressionRunPreview": "Vorschau ausführen",
     "updatesTitle": "Aktualisierungen",
     "checkForUpdates": "Suchen Sie nach Updates",
+<<<<<<< HEAD
     "lastChecked": "Zuletzt überprüft: {when}",
     "currentVersion": "Aktueller Build:",
     "updateAvailable": "Aktualisierung verfügbar",
     "changelog": "Was ist neu",
+=======
+    "updateAvailable": "Aktualisierung verfügbar",
+>>>>>>> upstream/main
     "upToDate": "Auf dem neuesten Stand",
     "buildAhead": "Dieser Build ist dem offiziellen main-Branch voraus.",
     "buildDiverged": "Dieser Build ist vom offiziellen main-Branch abgewichen.",
     "buildUnknown": "Dieser benutzerdefinierte Build kann nicht mit dem offiziellen main-Branch verglichen werden.",
     "notGitInstall": "Diese Installation enthält keine Commit-Informationen.",
     "checkFailed": "Aktualisierungen konnten nicht geprüft werden.",
+<<<<<<< HEAD
     "contactsGithub": "Prüfungen erfolgen manuell und stellen eine Verbindung zu GitHub her.",
     "autoUpdateCheck": "Automatische Updateprüfung",
     "autoUpdateCheckHelp": "Prüft einmal täglich auf GitHub, ob es eine neue Version gibt, und zeigt eine Erinnerung an. Standardmäßig deaktiviert.",
     "openReleases": "GitHub-Releases öffnen",
     "restartAfterUpdate": "FreeLLMAPI nach Abschluss des Builds neu starten."
+=======
+    "autoUpdateCheck": "Automatische Updateprüfung",
+    "restartAfterUpdate": "FreeLLMAPI nach Abschluss des Builds neu starten.",
+    "downloadUpdate": "Update herunterladen",
+    "downloadingUpdate": "Wird heruntergeladen… {percent} %",
+    "restartToUpdate": "Neu starten und aktualisieren",
+    "updateReadyHint": "Heruntergeladen. FreeLLMAPI sichert Ihre Daten, startet neu und öffnet die neue Version.",
+    "updateInstallFailed": "Das Update konnte nicht installiert werden.",
+    "updateNow": "Jetzt aktualisieren",
+    "updatingContainer": "Das neue Image wird geladen und neu gestartet. Die Seite lädt neu, sobald FreeLLMAPI wieder da ist.",
+    "updateNowFailed": "Der Updater hat die Anfrage nicht angenommen. Prüfen Sie, ob der watchtower-Container läuft.",
+    "updateNowTimeout": "FreeLLMAPI ist nach 5 Minuten nicht neu gestartet. Prüfen Sie die Logs des watchtower-Containers."
+>>>>>>> upstream/main
   },
   "models": {
     "title": "Modelle",
@@ -217,6 +242,10 @@
     "noKey": "kein Schlüssel",
     "dragToReorder": "Zum Neuanordnen ziehen",
     "dragToReorderGroup": "Ziehen Sie, um das Modell neu anzuordnen",
+<<<<<<< HEAD
+=======
+    "moveToRank": "Zu Rang springen",
+>>>>>>> upstream/main
     "providerCount": "{count}-Anbieter",
     "servedBy": "Bereitgestellt von {providers}",
     "viewProviders": "Anbieter anzeigen",
@@ -231,6 +260,10 @@
     "settingsHint": "Lokale Änderungen an Katalogmodellen bleiben bei allen Katalogsynchronisierungen erhalten. Gelöschte Katalogmodelle bleiben gelöscht, bis Sie sie über die Konfiguration erneut hinzufügen.",
     "catalogModel": "Katalog",
     "customModel": "Brauch",
+<<<<<<< HEAD
+=======
+    "discoveredModel": "entdeckt",
+>>>>>>> upstream/main
     "localOverride": "lokale Überschreibung",
     "displayName": "Anzeigename",
     "sizeLabel": "Fähigkeitsstufe",
@@ -371,15 +404,22 @@
     }
   },
   "keys": {
+<<<<<<< HEAD
     "degradedBanner": "Routing gedrosselt: {healthy} von {total} Anbietern gesund (seit {since})",
     "noProvider": "Kein Anbieter",
     "enabledCount": "{count} aktiv",
+=======
+>>>>>>> upstream/main
     "pageTitle": "Schlüssel",
     "pageDescription": "Anbieteranmeldeinformationen und der einheitliche API-Schlüssel, mit dem Ihre Apps eine Verbindung herstellen.",
     "tabProviders": "Anbieter",
     "checklistSummary": "{configured} von {total} Anbietern eingerichtet",
     "checklistKeyless": "kein Schlüssel nötig",
     "checklistNoKeyTip": "Noch kein Schlüssel hinzugefügt. Zum Hinzufügen klicken.",
+<<<<<<< HEAD
+=======
+    "checklistSignupLink": "{provider} öffnen, um ein Konto zu erstellen und einen Schlüssel zu erhalten",
+>>>>>>> upstream/main
     "checklistKeylessTip": "Funktioniert ohne Schlüssel.",
     "tabQuotaSignals": "Quotensignale",
     "tabApiKey": "Einheitlicher API-Schlüssel",
@@ -506,11 +546,19 @@
     "platform": "Plattform",
     "hideAdded": "Hinzugefügte Anbieter ausblenden",
     "apiToken": "API-Token",
+<<<<<<< HEAD
     "noKeyNeededPlaceholder": "Kein API-Schlüssel erforderlich",
     "bearerTokenPlaceholder": "Inhabertoken",
     "pasteKeyPlaceholder": "Schlüssel hier einfügen",
     "pasteSeveral": "Mehrere einfügen",
     "keylessHint": "Kein API-Schlüssel erforderlich: Das kostenlose Kontingent dieses Anbieters ist anonym (Ratenbegrenzung pro IP).",
+=======
+    "keyOptionalPlaceholder": "Optional",
+    "bearerTokenPlaceholder": "Inhabertoken",
+    "pasteKeyPlaceholder": "Schlüssel hier einfügen",
+    "pasteSeveral": "Mehrere einfügen",
+    "keyOptionalHint": "Optional: Leer lassen für das anonyme Gratiskontingent (Ratenbegrenzung pro IP) oder eigenen Schlüssel einfügen, um Ihr Konto zu nutzen.",
+>>>>>>> upstream/main
     "enable": "Aktivieren",
     "noProviderKeys": "Noch keine Anbieterschlüssel. Fügen Sie oben eines hinzu, um mit dem Routing zu beginnen.",
     "filterPlaceholder": "Filtern Sie Anbieter oder Schlüssel",
@@ -688,7 +736,18 @@
     "testFailed": "Modelltest fehlgeschlagen",
     "testThrottled": "Bitte warten Sie {seconds}s, bevor Sie dieses Modell erneut testen.",
     "noModelsForProvider": "Keine Modelle für diesen Anbieter konfiguriert.",
+<<<<<<< HEAD
     "testModels": "Modelle testen"
+=======
+    "testModels": "Modelle testen",
+    "monthlyRequestCapLabel": "Monatliches Anfrage-Limit",
+    "monthlyTokenCapLabel": "Monatliches Token-Limit",
+    "capUnlimitedPlaceholder": "Unbegrenzt",
+    "capEditHint": "Limits werden am 1. um 00:00 UTC zurückgesetzt. Leer lassen für unbegrenzt.",
+    "monthlyUsageLine": "{requests} Anfragen, {tokens} Tokens diesen Monat",
+    "quotaBalanceHint": "{remaining} von {limit} {metric} übrig",
+    "quotaBalanceLeft": "{remaining} übrig"
+>>>>>>> upstream/main
   },
   "backups": {
     "title": "Backups",
@@ -722,7 +781,12 @@
     "pathPlaceholder": "backups",
     "pathHint": "Relative to the database directory. Backups cannot be written outside it.",
     "save": "Save schedule",
+<<<<<<< HEAD
     "saved": "Saved"
+=======
+    "saved": "Saved",
+    "preUpdate": "Vor Update"
+>>>>>>> upstream/main
   },
   "status": {
     "healthy": "gesund",
@@ -1144,17 +1208,29 @@
       "generic": "Alles andere, was die OpenAI-API spricht — von Hand mit Basis-URL und Schlüssel eingerichtet.",
       "atomcode": "AtomGits Terminal-Agent, in Rust geschrieben, für jeden OpenAI-kompatiblen Endpunkt.",
       "openclaw": "Ein ständig verfügbarer persönlicher Assistent, der von deinem eigenen Rechner aus auf WhatsApp, Telegram, Discord und mehr antwortet.",
+<<<<<<< HEAD
       "hermes": "Der selbstverbessernde Agent von Nous Research mit dauerhaftem Gedächtnis und Skills, im Terminal oder in Chat-Apps."
+=======
+      "hermes": "Der selbstverbessernde Agent von Nous Research mit dauerhaftem Gedächtnis und Skills, im Terminal oder in Chat-Apps.",
+      "pi": "Ein minimaler Terminal-Agent, den du mit eigenen Erweiterungen, Skills und Prompt-Vorlagen formst.",
+      "reasonix": "Ein für DeepSeek gebauter Coding-Agent fürs Terminal, ausgelegt auf Prefix-Caching, damit lange Sitzungen günstig bleiben."
+>>>>>>> upstream/main
     }
   },
   "update": {
     "available": "New version available",
+<<<<<<< HEAD
     "whatsNew": "What's new in v{version}",
     "publishedOn": "Published {date}",
     "noNotes": "No release notes were published for this version.",
     "openRelease": "Open release page",
     "dismissVersion": "Dismiss this version",
     "dismiss": "Dismiss"
+=======
+    "dismiss": "Dismiss",
+    "newBuild": "Eine neuere Version von FreeLLMAPI ist installiert.",
+    "reload": "Neu laden"
+>>>>>>> upstream/main
   },
   "freeTier": {
     "poolsToggle": "Free-Tier-Pools ({count})",
@@ -1202,6 +1278,7 @@
     "startEmpty": "Leer beginnen",
     "startEmptyHint": "Legt die Kette ohne Modelle an und hält neue Katalogmodelle heraus. Ohne Haken startet sie als Kopie der Standardkette.",
     "curated": "Kuratiert",
+<<<<<<< HEAD
     "curatedHint": "Neue Katalogmodelle werden dieser Kette nicht automatisch hinzugefügt."
   },
   "forgepilot": {
@@ -1260,5 +1337,19 @@
     "spike": "{count} Anfragen in den letzten 5 Minuten gedrosselt",
     "hourFilter": "Stunde: {hour}",
     "serverLog": "Serverprotokoll"
+=======
+    "curatedHint": "Neue Katalogmodelle werden dieser Kette nicht automatisch hinzugefügt.",
+    "renameHint": "Diese Kette umbenennen",
+    "renameConfirm": "Kette \"{oldName}\" in \"{name}\" umbenennen? Clients, die auto:{oldName} aufrufen, müssen auf auto:{name} wechseln.",
+    "renamePlaceholder": "Neuer Kettenname",
+    "renameFailed": "Die Kette konnte nicht umbenannt werden."
+  },
+  "updates": {
+    "versionAvailable": "Version {version} ist verfügbar",
+    "versionReady": "Version {version} ist bereit zur Installation",
+    "releaseNotes": "Versionshinweise",
+    "tryAgain": "Erneut versuchen",
+    "offline": "Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
+>>>>>>> upstream/main
   }
 }

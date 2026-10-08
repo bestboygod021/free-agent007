@@ -7,7 +7,11 @@
 // whatever unrelated entry happens to sit at that position. Pure functions so
 // that mapping is unit-testable away from the page.
 
+<<<<<<< HEAD
 export type AliasMerge = {
+=======
+export interface AliasMerge {
+>>>>>>> upstream/main
   into: string
   keys: string[]
 }
