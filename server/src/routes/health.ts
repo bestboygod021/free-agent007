@@ -5,15 +5,26 @@ import { checkKeyHealth, checkAllKeys } from '../services/health.js';
 import { getDegradationStatus } from '../services/degradation.js';
 import { hasProvider } from '../providers/index.js';
 import { getQuotaStateForKeys } from '../services/provider-quota.js';
-import { getRateLimitEvents } from '../middleware/rateLimit.js';
+import {
+  getKeyRateLimitUsage,
+  getRateLimitEvents,
+  getRateLimitStats,
+} from '../middleware/rateLimit.js';
 
 export const healthRouter = Router();
 
-// Recent rate-limit rejections across both limiters (newest first). Mounted
-// under requireAuth (app.ts) so only the dashboard session sees them; the
-// in-memory ring resets with the server process.
+// Recent rate-limit rejections across all three limiters (newest first), plus
+// the live per-key window counters. Mounted under requireAuth (app.ts) so only
+// the dashboard session sees them; events are durable (rate_limit_events,
+// 7-day retention) while the key counters are in-memory by nature.
 healthRouter.get('/rate-limits', (_req: Request, res: Response) => {
-  res.json({ events: getRateLimitEvents() });
+  res.json({ events: getRateLimitEvents(), keyUsage: getKeyRateLimitUsage() });
+});
+
+// Hourly totals + per-path breakdown over the trailing 24h — feeds the trend
+// strip beside the event list.
+healthRouter.get('/rate-limits/stats', (_req: Request, res: Response) => {
+  res.json(getRateLimitStats(24));
 });
 
 // Get health status for all platforms

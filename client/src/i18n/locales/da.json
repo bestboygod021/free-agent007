@@ -1243,6 +1243,12 @@
     "title": "Nyligt rate-begrænsede anmodninger",
     "empty": "Ingen nylige 429-svar",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Dashboard /api"
+    "adminScope": "Dashboard /api",
+    "filterAll": "Alle",
+    "keyScope": "Pr. nøgle /v1",
+    "details": "IP {ip} · loft {limit}/min · prøv igen om {retry} s",
+    "callerHistory": "Afsenderhistorik",
+    "hourlyTrend": "Seneste 24 timer",
+    "keyUsage": "Forbrug pr. nøgle"
   }
 }

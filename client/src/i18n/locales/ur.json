@@ -1243,6 +1243,12 @@
     "title": "حال ہی محدود شدہ درخواستیں",
     "empty": "حال ہی کے کوئی 429 جوابات نہیں",
     "proxyScope": "پروکسی /v1",
-    "adminScope": "ڈیش بورڈ /api"
+    "adminScope": "ڈیش بورڈ /api",
+    "filterAll": "سب",
+    "keyScope": "کلید کے حساب /v1",
+    "details": "IP {ip} · حد {limit}/منٹ · {retry} سیکنڈ میں دوبارہ کوشش",
+    "callerHistory": "کالر کی تاریخ",
+    "hourlyTrend": "گزشتہ 24 گھنٹے",
+    "keyUsage": "کلید کے حساب استعمال"
   }
 }

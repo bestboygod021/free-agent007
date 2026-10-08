@@ -1243,6 +1243,12 @@
     "title": "Äskoinen nopeusrajoitettu pyyntöjä",
     "empty": "Ei äskettäisiä 429-vastauksia",
     "proxyScope": "Välityspalvelin /v1",
-    "adminScope": "Hallintapaneeli /api"
+    "adminScope": "Hallintapaneeli /api",
+    "filterAll": "Kaikki",
+    "keyScope": "Avaimenkohtaisesti /v1",
+    "details": "IP {ip} · raja {limit}/min · yritä uudelleen {retry} s kuluttua",
+    "callerHistory": "Soittajan historia",
+    "hourlyTrend": "Viimeiset 24 tuntia",
+    "keyUsage": "Käyttö avaimittain"
   }
 }

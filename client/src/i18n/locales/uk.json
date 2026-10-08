@@ -1243,6 +1243,12 @@
     "title": "Нещодавно обмежені запити",
     "empty": "Нещодавніх відповідей 429 немає",
     "proxyScope": "Проксі /v1",
-    "adminScope": "Панель /api"
+    "adminScope": "Панель /api",
+    "filterAll": "Усі",
+    "keyScope": "За ключем /v1",
+    "details": "IP {ip} · ліміт {limit}/хв · повтор через {retry} с",
+    "callerHistory": "Історія викликача",
+    "hourlyTrend": "Останні 24 години",
+    "keyUsage": "Використання за ключем"
   }
 }

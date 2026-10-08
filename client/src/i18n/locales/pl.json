@@ -1243,6 +1243,12 @@
     "title": "Ostatnio ograniczone żądania",
     "empty": "Brak ostatnich odpowiedzi 429",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Panel /api"
+    "adminScope": "Panel /api",
+    "filterAll": "Wszystkie",
+    "keyScope": "Według klucza /v1",
+    "details": "IP {ip} · limit {limit}/min · ponów za {retry} s",
+    "callerHistory": "Historia dzwoniącego",
+    "hourlyTrend": "Ostatnie 24 godziny",
+    "keyUsage": "Użycie według klucza"
   }
 }

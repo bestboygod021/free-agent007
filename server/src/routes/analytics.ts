@@ -654,14 +654,32 @@ analyticsRouter.get('/requests', (req: Request, res: Response) => {
     providerFilterSql = ' AND r.platform = ?';
     providerFilterParams.push(platform);
   }
+  // Caller-IP filter — the pivot from a rate-limit event on the Keys page to
+  // this caller's full request history (requests.client_ip shares the exact
+  // normalization the limiter records). IPs are hex/colon/dot shaped; anything
+  // else is a client bug, not a filter.
+  const clientIp = req.query.clientIp as string | undefined;
+  let clientIpFilterSql = '';
+  const clientIpFilterParams: string[] = [];
+  if (clientIp !== undefined) {
+    if (clientIp.length > 64 || !/^[0-9a-fA-F:.%]+$/.test(clientIp)) {
+      res.status(400).json({ error: { message: 'invalid clientIp filter' } });
+      return;
+    }
+    clientIpFilterSql = ' AND r.client_ip = ?';
+    clientIpFilterParams.push(clientIp);
+  }
+
   const db = getDb();
 
   const filterSql =
     (status !== undefined ? ' AND r.status = ?' : '') +
-    providerFilterSql;
+    providerFilterSql +
+    clientIpFilterSql;
   const filterParams = [
     ...(status !== undefined ? [status] : []),
     ...providerFilterParams,
+    ...clientIpFilterParams,
   ];
 
   const total = (db.prepare(

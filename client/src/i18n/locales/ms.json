@@ -1243,6 +1243,12 @@
     "title": "Permintaan yang baru diletakkan had",
     "empty": "Tiada respons 429 baru-baru ini",
     "proxyScope": "Proksi /v1",
-    "adminScope": "Papan pemuka /api"
+    "adminScope": "Papan pemuka /api",
+    "filterAll": "Semua",
+    "keyScope": "Mengikut kunci /v1",
+    "details": "IP {ip} · had {limit}/mnt · cuba lagi dalam {retry} saat",
+    "callerHistory": "Sejarah pemanggil",
+    "hourlyTrend": "24 jam lepas",
+    "keyUsage": "Penggunaan mengikut kunci"
   }
 }

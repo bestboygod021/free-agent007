@@ -1243,6 +1243,12 @@
     "title": "Ntụbegide njikọ natụleela",
     "empty": "Enweghị azịza 429 n'oge na-adịbeghị anya",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Dashboard /api"
+    "adminScope": "Dashboard /api",
+    "filterAll": "Niile",
+    "keyScope": "Kwa igodo /v1",
+    "details": "IP {ip} · oke {limit}/nkeji · nwaa ọzọ mgbe {retry} s",
+    "callerHistory": "Ndekọ onye kaaga",
+    "hourlyTrend": "awa 24 gara aga",
+    "keyUsage": "Eji kwa igodo"
   }
 }

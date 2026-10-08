@@ -1243,6 +1243,12 @@
     "title": "हालै सीमित अनुरोधहरू",
     "empty": "हालका कुनै 429 प्रतिक्रियाहरू छैनन्",
     "proxyScope": "प्रक्सी /v1",
-    "adminScope": "ड्यासबोर्ड /api"
+    "adminScope": "ड्यासबोर्ड /api",
+    "filterAll": "सबै",
+    "keyScope": "कुञ्जी अनुसार /v1",
+    "details": "IP {ip} · सीमा {limit}/मिनेट · {retry} सेकेन्डमा फेरि प्रयास",
+    "callerHistory": "कलर इतिहास",
+    "hourlyTrend": "पछिल्ला 24 घण्टा",
+    "keyUsage": "कुञ्जी अनुसार प्रयोग"
   }
 }

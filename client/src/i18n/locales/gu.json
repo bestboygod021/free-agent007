@@ -1243,6 +1243,12 @@
     "title": "તાજેતરમાં મર્યાદિત વિનંતીઓ",
     "empty": "તાજેતરના કોઈ 429 જવાબો નથી",
     "proxyScope": "પ્રોક્સી /v1",
-    "adminScope": "ડેશબોર્ડ /api"
+    "adminScope": "ડેશબોર્ડ /api",
+    "filterAll": "બધા",
+    "keyScope": "કી પ્રતિ /v1",
+    "details": "IP {ip} · મર્યાદા {limit}/મિનિટ · {retry}s માં ફરી પ્રયાસ",
+    "callerHistory": "કૉલર ઇતિહાસ",
+    "hourlyTrend": "છેલ્લા 24 કલાક",
+    "keyUsage": "કી પ્રતિ વપરાશ"
   }
 }

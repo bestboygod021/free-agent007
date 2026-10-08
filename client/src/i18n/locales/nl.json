@@ -1243,6 +1243,12 @@
     "title": "Onlangs afgeknotte verzoeken",
     "empty": "Geen recente 429-responses",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Dashboard /api"
+    "adminScope": "Dashboard /api",
+    "filterAll": "Alles",
+    "keyScope": "Per sleutel /v1",
+    "details": "IP {ip} · limiet {limit}/min · opnieuw proberen over {retry} s",
+    "callerHistory": "Beller-geschiedenis",
+    "hourlyTrend": "Laatste 24 uur",
+    "keyUsage": "Gebruik per sleutel"
   }
 }

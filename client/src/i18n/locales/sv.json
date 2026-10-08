@@ -1243,6 +1243,12 @@
     "title": "Nyligen begränsade förfrågningar",
     "empty": "Inga nyliga 429-svar",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Instrumentpanel /api"
+    "adminScope": "Instrumentpanel /api",
+    "filterAll": "Alla",
+    "keyScope": "Per nyckel /v1",
+    "details": "IP {ip} · gräns {limit}/min · försök igen om {retry} s",
+    "callerHistory": "Samtalarens historik",
+    "hourlyTrend": "Senaste 24 timmarna",
+    "keyUsage": "Användning per nyckel"
   }
 }

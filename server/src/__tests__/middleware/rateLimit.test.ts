@@ -3,6 +3,8 @@ import type { Request, Response, NextFunction } from 'express';
 import {
   createProxyRateLimiter,
   createAdminRateLimiter,
+  createKeyRateLimiter,
+  getKeyRateLimitUsage,
   getRateLimitEvents,
   clearRateLimitEventsForTests,
 } from '../../middleware/rateLimit.js';
@@ -41,6 +43,17 @@ function run(middleware: (req: Request, res: Response, next: NextFunction) => vo
     nexted = true;
   });
   return { res, nexted };
+}
+
+function keyReq(token?: string, ip = '203.0.113.50'): Request {
+  return {
+    url: '/v1/chat/completions',
+    originalUrl: '/v1/chat/completions',
+    method: 'POST',
+    ip,
+    socket: {},
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+  } as unknown as Request;
 }
 
 describe('dashboard/proxy rate limiters', () => {
@@ -130,4 +143,58 @@ describe('dashboard/proxy rate limiters', () => {
     }
     expect(getRateLimitEvents()).toHaveLength(0);
   });
+  describe('per-API-key burst bucket', () => {
+    it('passes requests with no API credential (the IP bucket owns those)', () => {
+      const limiter = createKeyRateLimiter(2);
+      for (let i = 0; i < 10; i++) {
+        const { nexted } = run(limiter, keyReq(undefined));
+        expect(nexted).toBe(true);
+      }
+      expect(getRateLimitEvents()).toHaveLength(0);
+    });
+
+    it('counts one presented key across addresses and rejects over its cap', () => {
+      const limiter = createKeyRateLimiter(2);
+      expect(run(limiter, keyReq('sk-live-aaa', '198.51.100.1')).nexted).toBe(true);
+      expect(run(limiter, keyReq('sk-live-aaa', '203.0.113.9')).nexted).toBe(true);
+      const third = run(limiter, keyReq('sk-live-aaa', '192.0.2.7'));
+      expect(third.nexted).toBe(false);
+      expect(third.res.statusCode).toBe(429);
+      expect(third.res.headers['Retry-After']).toBeTruthy();
+      const event = getRateLimitEvents()[0];
+      expect(event).toMatchObject({ scope: 'key', limit: 2 });
+      expect(event.ip).toBe('192.0.2.7');
+      expect(event.subject).toMatch(/^key:[0-9a-f]{8}$/);
+      // The raw credential must never land in the trail or the usage view.
+      const serialized = JSON.stringify([getRateLimitEvents(), getKeyRateLimitUsage()]);
+      expect(serialized).not.toContain('sk-live-aaa');
+    });
+
+    it('gives a different presented key its own bucket', () => {
+      const limiter = createKeyRateLimiter(1);
+      expect(run(limiter, keyReq('sk-live-aaa')).nexted).toBe(true);
+      expect(run(limiter, keyReq('sk-live-bbb')).nexted).toBe(true);
+      expect(run(limiter, keyReq('sk-live-aaa')).nexted).toBe(false);
+      expect(run(limiter, keyReq('sk-live-bbb')).nexted).toBe(false);
+    });
+
+    it('exposes live usage counters and forgets them when cleared', () => {
+      const limiter = createKeyRateLimiter(5);
+      run(limiter, keyReq('sk-live-ccc'));
+      run(limiter, keyReq('sk-live-ccc'));
+      const usage = getKeyRateLimitUsage();
+      const mine = usage.find(u => u.subject.startsWith('key:'));
+      expect(mine).toMatchObject({ count: 2, limit: 5 });
+      expect(mine!.resetAt).toBeGreaterThan(Date.now());
+      clearRateLimitEventsForTests();
+      expect(getKeyRateLimitUsage()).toHaveLength(0);
+    });
+
+    it('a limit of 0 turns the key bucket off', () => {
+      const limiter = createKeyRateLimiter(0);
+      for (let i = 0; i < 20; i++) expect(run(limiter, keyReq('sk-live-ddd')).nexted).toBe(true);
+      expect(getRateLimitEvents()).toHaveLength(0);
+    });
+  });
+
 });

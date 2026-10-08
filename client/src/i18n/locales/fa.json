@@ -1243,6 +1243,12 @@
     "title": "درخواست‌های اخیرِ محدودشده",
     "empty": "هیچ پاسخ ۴۲۹ اخیری نیست",
     "proxyScope": "پروکسی /v1",
-    "adminScope": "داشبورد /api"
+    "adminScope": "داشبورد /api",
+    "filterAll": "همه",
+    "keyScope": "به‌ازای هر کلید /v1",
+    "details": "IP {ip} · سقف {limit}/دقیقه — تلاش مجدد پس از {retry} ثانیه",
+    "callerHistory": "تاریخچه‌ی تماس‌گیرنده",
+    "hourlyTrend": "۲۴ ساعت اخیر",
+    "keyUsage": "مصرف به‌ازای هر کلید"
   }
 }

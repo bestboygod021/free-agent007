@@ -1243,6 +1243,12 @@
     "title": "Nemrég korlátozott kérések",
     "empty": "Nincs legutóbbi 429-válasz",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Irányítópult /api"
+    "adminScope": "Irányítópult /api",
+    "filterAll": "Összes",
+    "keyScope": "Kulcsonként /v1",
+    "details": "IP {ip} · korlát {limit}/perc · újrapróbálás {retry} mp múlva",
+    "callerHistory": "Hívó előzményei",
+    "hourlyTrend": "Utolsó 24 óra",
+    "keyUsage": "Használat kulcsonként"
   }
 }

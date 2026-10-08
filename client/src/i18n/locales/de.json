@@ -1243,6 +1243,12 @@
     "title": "Kürzlich gedrosselte Anfragen",
     "empty": "Keine kürzlichen 429-Antworten",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Dashboard /api"
+    "adminScope": "Dashboard /api",
+    "filterAll": "Alle",
+    "keyScope": "Pro Schlüssel /v1",
+    "details": "IP {ip} · Limit {limit}/Min. · Erneut versuchen in {retry} s",
+    "callerHistory": "Anruferverlauf",
+    "hourlyTrend": "Letzte 24 Stunden",
+    "keyUsage": "Nutzung pro Schlüssel"
   }
 }

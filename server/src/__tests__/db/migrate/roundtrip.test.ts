@@ -49,6 +49,7 @@ const MEMBERSHIP_INVITES_FILENAME = '20260921_000005_membership_invites.ts';
 const RAG_DOCUMENTS_FILENAME = '20260921_000006_rag_documents.ts';
 const SEMANTIC_CACHE_FILENAME = '20260921_000007_semantic_cache.ts';
 const RAG_KEYWORD_INDEX_FILENAME = '20260924_000001_rag_keyword_index.ts';
+const RATE_LIMIT_EVENTS_FILENAME = '20261008_000001_rate_limit_events.ts';
 
 interface SchemaRow {
   type: string;
@@ -144,6 +145,7 @@ describe('migration round trip', () => {
         RAG_DOCUMENTS_FILENAME,
         SEMANTIC_CACHE_FILENAME,
         RAG_KEYWORD_INDEX_FILENAME,
+        RATE_LIMIT_EVENTS_FILENAME,
       ]);
     } finally {
       db.close();

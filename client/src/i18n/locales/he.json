@@ -1243,6 +1243,12 @@
     "title": "בקשות שחוות הגבלה לאחרונה",
     "empty": "אין תשובות 429 אחרונות",
     "proxyScope": "פרוקסי /v1",
-    "adminScope": "לוח בקרה /api"
+    "adminScope": "לוח בקרה /api",
+    "filterAll": "הכול",
+    "keyScope": "לכל מפתח /v1",
+    "details": "IP {ip} · תקרה {limit}/דקה · ניסיון נוסף בעוד {retry} שנ׳",
+    "callerHistory": "היסטוריית המתקשר",
+    "hourlyTrend": "24 השעות האחרונות",
+    "keyUsage": "שימוש לפי מפתח"
   }
 }

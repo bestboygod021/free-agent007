@@ -1243,6 +1243,12 @@
     "title": "最近レート制限されたリクエスト",
     "empty": "最近の429応答はありません",
     "proxyScope": "プロキシ /v1",
-    "adminScope": "ダッシュボード /api"
+    "adminScope": "ダッシュボード /api",
+    "filterAll": "すべて",
+    "keyScope": "キーごと /v1",
+    "details": "IP {ip} · 上限 {limit}/分 · {retry} 秒後に再試行",
+    "callerHistory": "呼び出し元の履歴",
+    "hourlyTrend": "過去24時間",
+    "keyUsage": "キーごとの使用量"
   }
 }

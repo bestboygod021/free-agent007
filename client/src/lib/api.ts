@@ -53,7 +53,7 @@ export function parseRetryAfter(value: string | null, now: number = Date.now()):
 
 // The label is fully localized: the dictionary carries the phrasing per locale
 // and formatCount renders the digits the locale expects (۷ in fa, ٧ in ar, …).
-const retryWaitLabel = (seconds: number): string => {
+export const retryWaitLabel = (seconds: number): string => {
   if (seconds < 60) return translate('rateLimit.countdownSec', { n: formatCount(seconds) });
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;
@@ -65,6 +65,30 @@ const retryWaitLabel = (seconds: number): string => {
 /** Extra seconds the finished countdown stays on screen so the now-enabled
  *  "Retry now" button has a usable window before the toast auto-dismisses. */
 const READY_GRACE_SEC = 10;
+
+/** Observable mirror of the countdown for persistent UI (the FloatingBar chip,
+ *  beforeunload guard): secondsLeft ticks down, ready flips at zero, active
+ *  clears when the toast is dismissed or the retry lands. */
+export type RetryCountdownSnapshot = { active: boolean; secondsLeft: number; ready: boolean };
+
+let retryCountdownSnapshot: RetryCountdownSnapshot = { active: false, secondsLeft: 0, ready: false };
+const retryCountdownListeners = new Set<(snapshot: RetryCountdownSnapshot) => void>();
+
+export function getRetryCountdown(): RetryCountdownSnapshot {
+  return retryCountdownSnapshot;
+}
+
+export function subscribeRetryCountdown(listener: (snapshot: RetryCountdownSnapshot) => void): () => void {
+  retryCountdownListeners.add(listener);
+  return () => {
+    retryCountdownListeners.delete(listener);
+  };
+}
+
+function setRetryCountdown(next: RetryCountdownSnapshot): void {
+  retryCountdownSnapshot = next;
+  for (const listener of retryCountdownListeners) listener(next);
+}
 
 /** sessionStorage slot for the pending rate-limited retry: the deadline plus
  *  the minimal request descriptor, so a reload mid-countdown re-arms the same
@@ -145,6 +169,7 @@ async function runRetry(retry: () => Promise<unknown>): Promise<void> {
       window.dispatchEvent(new CustomEvent(RETRY_SUCCEEDED_EVENT));
     }
     clearPendingRetry();
+    setRetryCountdown({ active: false, secondsLeft: 0, ready: false });
     toast.success(translate('rateLimit.retried'));
   } catch (e) {
     const err = e as ApiError;
@@ -178,9 +203,12 @@ function startRetryCountdown(seconds: number, retry?: () => Promise<unknown>): v
     duration: (seconds + READY_GRACE_SEC) * 1000,
     action,
   });
-  const stop = () => {
+  // clearSnapshot=false keeps the chip in its `ready` state after zero — the
+  // toast (and its button) still have READY_GRACE_SEC left to live.
+  const stop = (clearSnapshot = true) => {
     clearInterval(timer);
     if (countdown?.timer === timer) countdown = null;
+    if (clearSnapshot) setRetryCountdown({ active: false, secondsLeft: 0, ready: false });
   };
   const timer = setInterval(() => {
     if (!getToasts().some(t => t.id === id)) {
@@ -197,11 +225,14 @@ function startRetryCountdown(seconds: number, retry?: () => Promise<unknown>): v
         translate('rateLimit.ready'),
         action ? { action: { ...action, disabled: false } } : undefined,
       );
-      return stop();
+      setRetryCountdown({ active: true, secondsLeft: 0, ready: true });
+      return stop(false);
     }
     updateToast(id, retryWaitLabel(remaining));
+    setRetryCountdown({ active: true, secondsLeft: remaining, ready: false });
   }, 1000);
   countdown = { id, timer };
+  setRetryCountdown({ active: true, secondsLeft: seconds, ready: false });
 }
 
 /** True when the error already has a live countdown toast on screen — callers

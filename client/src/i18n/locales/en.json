@@ -1243,6 +1243,12 @@
     "title": "Recently rate-limited requests",
     "empty": "No recent 429 responses",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Dashboard /api"
+    "adminScope": "Dashboard /api",
+    "filterAll": "All",
+    "keyScope": "Per-key /v1",
+    "details": "IP {ip} · cap {limit}/min · retry after {retry}s",
+    "callerHistory": "Caller history",
+    "hourlyTrend": "Last 24 hours",
+    "keyUsage": "Per-key usage"
   }
 }

@@ -1243,6 +1243,12 @@
     "title": "මෑතකදී සීමා කළ ඉල්ලුම්",
     "empty": "මෑත 429 ප්‍රතිචාර නැත",
     "proxyScope": "ප්‍රොක්සි /v1",
-    "adminScope": "දස්බෝර්ඩ් /api"
+    "adminScope": "දස්බෝර්ඩ් /api",
+    "filterAll": "සියල්ල",
+    "keyScope": "යතුර අනුව /v1",
+    "details": "IP {ip} · සීමාව {limit}/මි · {retry} තත්පරින් නැවත උත්සාහ කරන්න",
+    "callerHistory": "ඇමතුම් කරුගේ ඉතිහාසය",
+    "hourlyTrend": "පසුගිය පැය 24",
+    "keyUsage": "යතුර අනුව භාවිතය"
   }
 }

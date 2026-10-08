@@ -1243,6 +1243,12 @@
     "title": "Наскоро ограничени заявки",
     "empty": "Няма скорошни отговори 429",
     "proxyScope": "Прокси /v1",
-    "adminScope": "Табло /api"
+    "adminScope": "Табло /api",
+    "filterAll": "Всички",
+    "keyScope": "На ключ /v1",
+    "details": "IP {ip} · лимит {limit}/мин · повтор след {retry} с",
+    "callerHistory": "История на обаждащия се",
+    "hourlyTrend": "Последните 24 часа",
+    "keyUsage": "Използване на ключ"
   }
 }

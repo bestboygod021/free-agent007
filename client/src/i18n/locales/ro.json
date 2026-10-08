@@ -1243,6 +1243,12 @@
     "title": "Cereri limitate recent",
     "empty": "Fără răspunsuri 429 recente",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Panou /api"
+    "adminScope": "Panou /api",
+    "filterAll": "Toate",
+    "keyScope": "Pe cheie /v1",
+    "details": "IP {ip} · plafon {limit}/min · reîncercare în {retry} s",
+    "callerHistory": "Istoricul apelantului",
+    "hourlyTrend": "Ultimele 24 de ore",
+    "keyUsage": "Utilizare pe cheie"
   }
 }

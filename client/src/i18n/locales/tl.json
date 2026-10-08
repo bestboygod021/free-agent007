@@ -1243,6 +1243,12 @@
     "title": "Mga kamakailang na-limit na request",
     "empty": "Walang kamakailang 429 na response",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Dashboard /api"
+    "adminScope": "Dashboard /api",
+    "filterAll": "Lahat",
+    "keyScope": "Bawat key /v1",
+    "details": "IP {ip} · limit {limit}/min · subukan muli sa {retry}s",
+    "callerHistory": "Kasaysayan ng caller",
+    "hourlyTrend": "Nakaraang 24 oras",
+    "keyUsage": "Gamit bawat key"
   }
 }

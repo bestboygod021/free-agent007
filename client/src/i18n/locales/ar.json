@@ -1243,6 +1243,12 @@
     "title": "طلبات محدودة مؤخراً",
     "empty": "لا توجد ردود 429 مؤخراً",
     "proxyScope": "الوسيط /v1",
-    "adminScope": "لوحة التحكم /api"
+    "adminScope": "لوحة التحكم /api",
+    "filterAll": "الكل",
+    "keyScope": "لكل مفتاح /v1",
+    "details": "الـ IP {ip} · الحد {limit}/دقيقة · إعادة المحاولة بعد {retry} ثانية",
+    "callerHistory": "سجل المتصل",
+    "hourlyTrend": "آخر 24 ساعة",
+    "keyUsage": "الاستخدام لكل مفتاح"
   }
 }

@@ -1243,6 +1243,12 @@
     "title": "ცოტა ხნის წინ შეზღუდული მოთხოვნები",
     "empty": "ბოლო 429 პასუხები არ არის",
     "proxyScope": "პროქსი /v1",
-    "adminScope": "დაშბორდი /api"
+    "adminScope": "დაშბორდი /api",
+    "filterAll": "ყველა",
+    "keyScope": "გასაღების მიხედვით /v1",
+    "details": "IP {ip} · ზღვარი {limit}/წთ · განმეორება {retry} წმ-ში",
+    "callerHistory": "მძახებლის ისტორია",
+    "hourlyTrend": "ბოლო 24 საათი",
+    "keyUsage": "გასაღების გამოყენება"
   }
 }

@@ -1243,6 +1243,12 @@
     "title": "Maombi yaliyopigwa kikomo hivi karibuni",
     "empty": "Hakuna majibu ya 429 hivi karibuni",
     "proxyScope": "Mwakilishi /v1",
-    "adminScope": "Dashibodi /api"
+    "adminScope": "Dashibodi /api",
+    "filterAll": "Zote",
+    "keyScope": "Kwa kila ufunguo /v1",
+    "details": "IP {ip} · kikomo {limit}/dk · jaribu tena baada ya {retry}s",
+    "callerHistory": "Historia ya mtiaji",
+    "hourlyTrend": "Saa 24 zilizopita",
+    "keyUsage": "Matumizi kwa kila ufunguo"
   }
 }

@@ -1243,6 +1243,12 @@
     "title": "Yaqinda cheklangan so'rovlar",
     "empty": "Yaqinda 429 javoblari yo'q",
     "proxyScope": "Proksi /v1",
-    "adminScope": "Panel /api"
+    "adminScope": "Panel /api",
+    "filterAll": "Barchasi",
+    "keyScope": "Kalit bo'yicha /v1",
+    "details": "IP {ip} · chek {limit}/daq · {retry} soniyadan keyin qayta urinish",
+    "callerHistory": "Qo'ng'iroq tarixi",
+    "hourlyTrend": "Oxirgi 24 soat",
+    "keyUsage": "Kalit bo'yicha sarf"
   }
 }

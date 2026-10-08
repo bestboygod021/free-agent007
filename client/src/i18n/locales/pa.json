@@ -1243,6 +1243,12 @@
     "title": "ਹਾਲ ਹੀ ਵਿੱਚ ਸੀਮਤ ਅਨੁਰੋਧ",
     "empty": "ਹਾਲ ਹੀ ਦੇ ਕੋਈ 429 ਜਵਾਬ ਨਹੀਂ",
     "proxyScope": "ਪ੍ਰੌਕਸੀ /v1",
-    "adminScope": "ਡੈਸ਼ਬੋਰਡ /api"
+    "adminScope": "ਡੈਸ਼ਬੋਰਡ /api",
+    "filterAll": "ਸਾਰੇ",
+    "keyScope": "ਕੁੰਜੀ ਅਨੁਸਾਰ /v1",
+    "details": "IP {ip} · ਸੀਮਾ {limit}/ਮਿੰਟ · {retry} ਸਕਿੰਟ ਵਿੱਚ ਮੁੜ ਕੋਸ਼ਿਸ਼",
+    "callerHistory": "ਕਾਲਰ ਇਤਿਹਾਸ",
+    "hourlyTrend": "ਪਿਛਲੇ 24 ਘੰਟੇ",
+    "keyUsage": "ਕੁੰਜੀ ਅਨੁਸਾਰ ਵਰਤੋਂ"
   }
 }

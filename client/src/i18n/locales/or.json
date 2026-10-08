@@ -1243,6 +1243,12 @@
     "title": "ସାମ୍ପ୍ରତିକ ସୀମିତ ଅନୁରୋଧ",
     "empty": "ସାମ୍ପ୍ରତିକ 429 ଉତ୍ତର ନାହିଁ",
     "proxyScope": "ପ୍ରକ୍ସି /v1",
-    "adminScope": "ଡ୍ୟାସବୋର୍ଡ /api"
+    "adminScope": "ଡ୍ୟାସବୋର୍ଡ /api",
+    "filterAll": "ସମସ୍ତ",
+    "keyScope": "କୀ ଅନୁସାରେ /v1",
+    "details": "IP {ip} · ସୀମା {limit}/ମିନିଟ୍ · {retry} ସେକେଣ୍ଡରେ ପୁଣି ଚେଷ୍ଟା",
+    "callerHistory": "କଲର୍ ଇତିହାସ",
+    "hourlyTrend": "ଶେଷ 24 ଘଣ୍ଟା",
+    "keyUsage": "କୀ ଅନୁସାରେ ବ୍ୟବହାର"
   }
 }

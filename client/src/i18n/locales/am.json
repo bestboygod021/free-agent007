@@ -1243,6 +1243,12 @@
     "title": "በቅርብ ጊዜ የተገደቡ ጥያቄዎች",
     "empty": "በቅርብ ጊዜ 429 ምላሾች የሉም",
     "proxyScope": "ወኪል /v1",
-    "adminScope": "ዳሽቦርድ /api"
+    "adminScope": "ዳሽቦርድ /api",
+    "filterAll": "ሁሉም",
+    "keyScope": "በቁልፍ /v1",
+    "details": "IP {ip} · መጠን {limit}/ደቂቃ · ከ {retry} ሰከንድ በኋላ እንደገና ይሞክሩ",
+    "callerHistory": "የደውሉ ታሪክ",
+    "hourlyTrend": "የመጨረሻው 24 ሰዓት",
+    "keyUsage": "በቁልፍ የተጠቀመው"
   }
 }

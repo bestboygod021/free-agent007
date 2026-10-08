@@ -4,6 +4,7 @@ import { createApp } from '../../app.js';
 import { initDb } from '../../db/index.js';
 import { mintDashboardToken } from '../helpers/auth.js';
 import { clearRateLimitEventsForTests } from '../../middleware/rateLimit.js';
+import { getDb } from '../../db/index.js';
 
 // GET /api/health/rate-limits — the admin view over the limiter's rejection
 // trail (middleware/rateLimit.ts). The endpoint itself sits behind requireAuth
@@ -64,9 +65,10 @@ describe('GET /api/health/rate-limits', () => {
     const app = createApp();
     const res = await call(app, '/api/health/rate-limits', token);
     expect(res.status).toBe(200);
-    const events = (res.body as { events: unknown[] }).events;
-    expect(Array.isArray(events)).toBe(true);
-    const ping = (events as Array<Record<string, unknown>>).find(e => e.path === '/api/ping');
+    const body = res.body as { events: unknown[]; keyUsage: unknown[] };
+    expect(Array.isArray(body.events)).toBe(true);
+    expect(Array.isArray(body.keyUsage)).toBe(true);
+    const ping = (body.events as Array<Record<string, unknown>>).find(e => e.path === '/api/ping');
     expect(ping).toMatchObject({
       scope: 'admin',
       method: 'GET',
@@ -75,5 +77,36 @@ describe('GET /api/health/rate-limits', () => {
     });
     expect(ping!.ts as number).toBeGreaterThan(0);
     expect(ping!.retryAfter as number).toBeGreaterThanOrEqual(1);
+  });
+
+  it('mirrors every rejection into the durable rate_limit_events table', () => {
+    // The endpoint reads DB-first; the INSERT itself is what survives a
+    // restart, so assert on the table, not the read path.
+    const row = getDb()
+      .prepare(`SELECT COUNT(*) AS c FROM rate_limit_events WHERE scope = 'admin' AND path = '/api/ping'`)
+      .get() as { c: number };
+    expect(row.c).toBeGreaterThanOrEqual(1);
+    const withBadIp = getDb()
+      .prepare(`SELECT COUNT(*) AS c FROM rate_limit_events WHERE ip IS NOT NULL AND ip LIKE '%::ffff:%'`)
+      .get() as { c: number };
+    // Events must store the SAME normalized IP request-analytics stores —
+    // a raw ::ffff: form would break the caller-history pivot.
+    expect(withBadIp.c).toBe(0);
+  });
+
+  it('serves hourly stats for the trend strip', async () => {
+    const app = createApp();
+    const res = await call(app, '/api/health/rate-limits/stats', token);
+    expect(res.status).toBe(200);
+    const body = res.body as {
+      windowHours: number;
+      buckets: Array<{ hour: string; count: number }>;
+      byPath: Array<{ path: string; scope: string; count: number }>;
+    };
+    expect(body.windowHours).toBe(24);
+    const total = body.buckets.reduce((sum, b) => sum + b.count, 0);
+    expect(total).toBeGreaterThanOrEqual(1);
+    expect(body.buckets[0].hour).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}$/);
+    expect(body.byPath.some(p => p.path === '/api/ping' && p.scope === 'admin')).toBe(true);
   });
 });

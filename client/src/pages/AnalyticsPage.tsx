@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -392,6 +393,10 @@ const chartVars = `
 
 export default function AnalyticsPage() {
   const { t } = useI18n()
+  // The rate-limit card on the Keys page pivots here via ?clientIp=<ip>; the
+  // param feeds the recent-calls query below and shows as a clearable chip.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const clientIpFilter = searchParams.get('clientIp') ?? ''
   const [range, setRange] = useState<TimeRange>(storedRange)
   const updateRange = (r: TimeRange) => {
     setRange(r)
@@ -466,13 +471,14 @@ export default function AnalyticsPage() {
   const [detailId, setDetailId] = useState<number | null>(null)
 
   const { data: recentCalls } = useQuery({
-    queryKey: ['analytics', 'requests', range, statusFilter, platformFilter],
+    queryKey: ['analytics', 'requests', range, statusFilter, platformFilter, clientIpFilter],
     queryFn: () => {
       const params = new URLSearchParams({ range, limit: '100' })
       if (statusFilter !== 'all') params.set('status', statusFilter)
       // provider (not platform) so a selected custom relay filters to itself
       // instead of every custom endpoint (#889). Catalog ids equal the platform.
       if (platformFilter !== 'all') params.set('provider', platformFilter)
+      if (clientIpFilter) params.set('clientIp', clientIpFilter)
       return apiFetch<RecentCallsResponse>(`/api/analytics/requests?${params}`)
     },
   })
@@ -830,6 +836,23 @@ export default function AnalyticsPage() {
                 </div>
               }
             >
+              {clientIpFilter && (
+                <p className="pb-2">
+                  <button
+                    type="button"
+                    aria-label={`${t('analytics.clientIp')} ${clientIpFilter} — ${t('common.dismiss')}`}
+                    onClick={() => {
+                      const next = new URLSearchParams(searchParams)
+                      next.delete('clientIp')
+                      setSearchParams(next, { replace: true })
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full border bg-muted px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted/70"
+                  >
+                    {t('analytics.clientIp')}: <span className="font-mono">{clientIpFilter}</span>
+                    <span aria-hidden>×</span>
+                  </button>
+                </p>
+              )}
               {recentCallsSortHint && (
                 <p className="pb-2 text-xs text-muted-foreground">{recentCallsSortHint}</p>
               )}

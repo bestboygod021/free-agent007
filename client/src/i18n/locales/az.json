@@ -1243,6 +1243,12 @@
     "title": "Yaxında məhdudlaşdırılan sorğular",
     "empty": "Yaxın zamanda 429 cavabları yoxdur",
     "proxyScope": "Proksi /v1",
-    "adminScope": "Panel /api"
+    "adminScope": "Panel /api",
+    "filterAll": "Hamısı",
+    "keyScope": "Açarla /v1",
+    "details": "IP {ip} · limit {limit}/dəq · {retry} saniyədən sonra yenidən cəhd",
+    "callerHistory": "Zəng edənin tarixçəsi",
+    "hourlyTrend": "Son 24 saat",
+    "keyUsage": "Açar istifadəsi"
   }
 }

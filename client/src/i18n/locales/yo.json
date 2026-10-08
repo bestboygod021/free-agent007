@@ -1243,6 +1243,12 @@
     "title": "Àwọn ìbéèrè tí a yọ kùlò nísinsìnyí",
     "empty": "Kò sí ìdáhùn 429 nísinsìnyí",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Dábùùsù /api"
+    "adminScope": "Dábùùsù /api",
+    "filterAll": "Gbogbo",
+    "keyScope": "Lọwọlọwọ aṣọyè /v1",
+    "details": "IP {ip} · apọnu {limit}/isẹju · gbìyànjú lẹ́yìn {retry} s",
+    "callerHistory": "Ìtàn olùpè",
+    "hourlyTrend": "Wákàtí 24 kéyìn",
+    "keyUsage": "Ìṣàmúlò nípa aṣọyè"
   }
 }

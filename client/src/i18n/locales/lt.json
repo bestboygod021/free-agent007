@@ -1243,6 +1243,12 @@
     "title": "Neseniai apriboti užklausų",
     "empty": "Nėra neseniai gautų 429 atsakymų",
     "proxyScope": "Tarpinis serveris /v1",
-    "adminScope": "Prietaisų skydelis /api"
+    "adminScope": "Prietaisų skydelis /api",
+    "filterAll": "Visi",
+    "keyScope": "Pagal raktą /v1",
+    "details": "IP {ip} · riba {limit}/min · pakartoti po {retry} s",
+    "callerHistory": "Skambinančiojo istorija",
+    "hourlyTrend": "Paskutinės 24 valandos",
+    "keyUsage": "Naudojimas pagal raktą"
   }
 }

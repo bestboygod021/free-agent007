@@ -1243,6 +1243,12 @@
     "title": "Nedávno omezené požadavky",
     "empty": "Žádné nedávné odpovědi 429",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Panel /api"
+    "adminScope": "Panel /api",
+    "filterAll": "Vše",
+    "keyScope": "Podle klíče /v1",
+    "details": "IP {ip} · limit {limit}/min · opakování za {retry} s",
+    "callerHistory": "Historie volajícího",
+    "hourlyTrend": "Posledních 24 hodin",
+    "keyUsage": "Spotřeba podle klíče"
   }
 }

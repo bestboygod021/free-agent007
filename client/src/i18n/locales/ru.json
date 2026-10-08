@@ -1243,6 +1243,12 @@
     "title": "Недавно ограниченные запросы",
     "empty": "Недавних ответов 429 нет",
     "proxyScope": "Прокси /v1",
-    "adminScope": "Панель /api"
+    "adminScope": "Панель /api",
+    "filterAll": "Все",
+    "keyScope": "По ключу /v1",
+    "details": "IP {ip} · предел {limit}/мин · повтор через {retry} с",
+    "callerHistory": "История вызывающего",
+    "hourlyTrend": "Последние 24 часа",
+    "keyUsage": "Использование по ключам"
   }
 }

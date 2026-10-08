@@ -152,4 +152,26 @@ describe('GET /api/analytics/requests', () => {
     const row = getDb().prepare('SELECT client_ip, client_user_agent FROM requests ORDER BY id DESC LIMIT 1').get() as any;
     expect(row).toEqual({ client_ip: '192.168.0.99', client_user_agent: 'vitest-client/1.0' });
   });
+  it('filters by clientIp — the pivot from a rate-limit event to a caller\'s history', async () => {
+    insertCall(recentUtcTimestamp(10).sql, '203.0.113.9', 'curl/8.6.0');
+    insertCall(recentUtcTimestamp(11).sql, '198.51.100.2', 'python-httpx/0.27');
+    insertCall(recentUtcTimestamp(12).sql, null, null);
+
+    const filtered = await request(app, '/api/analytics/requests?range=7d&clientIp=203.0.113.9');
+    expect(filtered.status).toBe(200);
+    expect(filtered.body.total).toBe(1);
+    expect(filtered.body.rows).toHaveLength(1);
+    expect(filtered.body.rows[0].clientIp).toBe('203.0.113.9');
+
+    const noMatch = await request(app, '/api/analytics/requests?range=7d&clientIp=203.0.113.99');
+    expect(noMatch.status).toBe(200);
+    expect(noMatch.body.total).toBe(0);
+
+    const invalid = await request(
+      app,
+      '/api/analytics/requests?range=7d&clientIp=' + encodeURIComponent('not an ip!'),
+    );
+    expect(invalid.status).toBe(400);
+  });
+
 });

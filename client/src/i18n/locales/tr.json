@@ -1243,6 +1243,12 @@
     "title": "Son dönemde hız sınırına takılan istekler",
     "empty": "Yakın zamanda 429 yanıtı yok",
     "proxyScope": "Vekil sunucu /v1",
-    "adminScope": "Gösterge paneli /api"
+    "adminScope": "Gösterge paneli /api",
+    "filterAll": "Tümü",
+    "keyScope": "Anahtara göre /v1",
+    "details": "IP {ip} · üst sınır {limit}/dk · {retry} sn sonra tekrar dene",
+    "callerHistory": "Çağrı geçmişi",
+    "hourlyTrend": "Son 24 saat",
+    "keyUsage": "Anahtara göre kullanım"
   }
 }

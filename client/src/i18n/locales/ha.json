@@ -1243,6 +1243,12 @@
     "title": "Buƙatuka da aka yi wa ƙasa a baya",
     "empty": "Babu amsa 429 ta ƙarshe",
     "proxyScope": "Mai wakiltar /v1",
-    "adminScope": "Allon bayanai /api"
+    "adminScope": "Allon bayanai /api",
+    "filterAll": "Duka",
+    "keyScope": "Ga kowace mabuɗi /v1",
+    "details": "IP {ip} · iyaka {limit}/na minti · sake gwaji bay {retry} s",
+    "callerHistory": "Tarihin mai kira",
+    "hourlyTrend": "Kwana 24 da suka wuce",
+    "keyUsage": "Amfani ga kowace mabuɗi"
   }
 }

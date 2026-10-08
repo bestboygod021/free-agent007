@@ -1243,6 +1243,12 @@
     "title": "সম্প্রতি সীমাবদ্ধ অনুরোধ",
     "empty": "সাম্প্রতিক কোনো 429 উত্তর নেই",
     "proxyScope": "প্রক্সি /v1",
-    "adminScope": "ড্যাশবোর্ড /api"
+    "adminScope": "ড্যাশবোর্ড /api",
+    "filterAll": "সব",
+    "keyScope": "কী অনুযায়ী /v1",
+    "details": "IP {ip} · সীমা {limit}/মিনিট · {retry} সেকেন্ড পরে পুনরায় চেষ্টা",
+    "callerHistory": "কলার ইতিহাস",
+    "hourlyTrend": "গত ২৪ ঘণ্টা",
+    "keyUsage": "কী অনুযায়ী ব্যবহার"
   }
 }

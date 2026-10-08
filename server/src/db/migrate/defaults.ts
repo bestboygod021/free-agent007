@@ -44,6 +44,7 @@ import * as membershipInvites from '../migrations/20260921_000005_membership_inv
 import * as ragDocuments from '../migrations/20260921_000006_rag_documents.js';
 import * as semanticCache from '../migrations/20260921_000007_semantic_cache.js';
 import * as ragKeywordIndex from '../migrations/20260924_000001_rag_keyword_index.js';
+import * as rateLimitEvents from '../migrations/20261008_000001_rate_limit_events.js';
 
 export interface MigrationModule {
   up(db: Db): void;
@@ -100,6 +101,7 @@ export const MEMBERSHIP_INVITES_FILENAME = '20260921_000005_membership_invites.t
 export const RAG_DOCUMENTS_FILENAME = '20260921_000006_rag_documents.ts';
 export const SEMANTIC_CACHE_FILENAME = '20260921_000007_semantic_cache.ts';
 const RAG_KEYWORD_INDEX_FILENAME = '20260924_000001_rag_keyword_index.ts';
+const RATE_LIMIT_EVENTS_FILENAME = '20261008_000001_rate_limit_events.ts';
 
 export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: LEGACY_BASELINE_FILENAME, module: legacyBaseline },
@@ -147,4 +149,5 @@ export const DEFAULT_MIGRATIONS: readonly DefaultMigration[] = [
   { filename: RAG_DOCUMENTS_FILENAME, module: ragDocuments },
   { filename: SEMANTIC_CACHE_FILENAME, module: semanticCache },
   { filename: RAG_KEYWORD_INDEX_FILENAME, module: ragKeywordIndex },
+  { filename: RATE_LIMIT_EVENTS_FILENAME, module: rateLimitEvents },
 ];

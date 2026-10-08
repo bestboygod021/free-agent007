@@ -1243,6 +1243,12 @@
     "title": "ఇటీవల పరిమితం చేయబడిన అభ్యర్థనలు",
     "empty": "ఇటీవలి 429 ప్రతిస్పందనలు లేవు",
     "proxyScope": "ప్రాక్సీ /v1",
-    "adminScope": "డాష్‌బోర్డ్ /api"
+    "adminScope": "డాష్‌బోర్డ్ /api",
+    "filterAll": "అన్నీ",
+    "keyScope": "కీ వారీగా /v1",
+    "details": "IP {ip} · పరిమితి {limit}/నిమి · {retry} సెకన్లలో మళ్లీ ప్రయత్నం",
+    "callerHistory": "కాలర్ చరిత్ర",
+    "hourlyTrend": "గత 24 గంటలు",
+    "keyUsage": "కీ వారీగా వినియోగం"
   }
 }

@@ -1243,6 +1243,12 @@
     "title": "Solicitudes limitadas recientemente",
     "empty": "Sin respuestas 429 recientes",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Panel /api"
+    "adminScope": "Panel /api",
+    "filterAll": "Todo",
+    "keyScope": "Por clave /v1",
+    "details": "IP {ip} · tope {limit}/min · reintento en {retry}s",
+    "callerHistory": "Historial del llamante",
+    "hourlyTrend": "Últimas 24 horas",
+    "keyUsage": "Uso por clave"
   }
 }

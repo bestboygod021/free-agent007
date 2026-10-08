@@ -1243,6 +1243,12 @@
     "title": "अलीकडे दरमर्याग आलेली विनंत्या",
     "empty": "अलीकडे 429 प्रतिसाद नाहीत",
     "proxyScope": "प्रॉक्सी /v1",
-    "adminScope": "डॅशबोर्ड /api"
+    "adminScope": "डॅशबोर्ड /api",
+    "filterAll": "सर्व",
+    "keyScope": "कीनुसार /v1",
+    "details": "IP {ip} · मर्यादा {limit}/मिनिट · {retry}s मध्ये पुन्हा प्रयत्न",
+    "callerHistory": "कॉलर इतिहास",
+    "hourlyTrend": "मागील 24 तास",
+    "keyUsage": "कीनुसार वापर"
   }
 }

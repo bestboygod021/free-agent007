@@ -1243,6 +1243,12 @@
     "title": "Permintaan yang baru dibatasi",
     "empty": "Tidak ada respons 429 baru-baru ini",
     "proxyScope": "Proksi /v1",
-    "adminScope": "Dasbor /api"
+    "adminScope": "Dasbor /api",
+    "filterAll": "Semua",
+    "keyScope": "Per kunci /v1",
+    "details": "IP {ip} · batas {limit}/mnt · coba lagi dalam {retry} dtk",
+    "callerHistory": "Riwayat pemanggil",
+    "hourlyTrend": "24 jam terakhir",
+    "keyUsage": "Penggunaan per kunci"
   }
 }

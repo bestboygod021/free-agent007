@@ -1243,6 +1243,12 @@
     "title": "Solicitações limitadas recentemente",
     "empty": "Nenhuma resposta 429 recente",
     "proxyScope": "Proxy /v1",
-    "adminScope": "Painel /api"
+    "adminScope": "Painel /api",
+    "filterAll": "Tudo",
+    "keyScope": "Por chave /v1",
+    "details": "IP {ip} · teto {limit}/min · nova tentativa em {retry}s",
+    "callerHistory": "Histórico do chamador",
+    "hourlyTrend": "Últimas 24 horas",
+    "keyUsage": "Uso por chave"
   }
 }

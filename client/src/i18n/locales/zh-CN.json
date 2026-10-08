@@ -1243,6 +1243,12 @@
     "title": "最近被限流的请求",
     "empty": "近期没有 429 响应",
     "proxyScope": "代理 /v1",
-    "adminScope": "控制台 /api"
+    "adminScope": "控制台 /api",
+    "filterAll": "全部",
+    "keyScope": "按密钥 /v1",
+    "details": "IP {ip} · 上限 {limit}/分钟 · {retry} 秒后重试",
+    "callerHistory": "调用方历史",
+    "hourlyTrend": "最近 24 小时",
+    "keyUsage": "按密钥用量"
   }
 }
