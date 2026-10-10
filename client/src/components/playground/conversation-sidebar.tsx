@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronsLeft, ChevronsRight, MoreHorizontal, Pencil, SquarePen, Trash2 } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { TabTutorialButton } from '@/components/tab-tutorial'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,6 +103,7 @@ export function ConversationSidebar({
         >
           <ChevronsRight className="size-4" />
         </Button>
+        <TabTutorialButton tutorialId="playground" compact />
         <Button
           variant="ghost"
           size="icon-sm"
@@ -116,11 +118,11 @@ export function ConversationSidebar({
       <div
         className={`${LAYER} w-60 ${open ? 'visible opacity-100' : 'invisible opacity-0'}`}
       >
-        {/* Two lines: the collapse control alone on the first, then New chat as
-            a proper button spanning the width. No heading — the list explains
-            itself. */}
+        {/* The tutorial and collapse control stay at the top; New chat remains
+            a proper button spanning the width beneath them. */}
         <div className="flex shrink-0 flex-col gap-1.5 border-b border-border/40 px-2 pt-1 pb-2">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between gap-1">
+            <TabTutorialButton tutorialId="playground" />
             <Button
               variant="ghost"
               size="icon-sm"

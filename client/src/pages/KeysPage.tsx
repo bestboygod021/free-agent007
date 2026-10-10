@@ -8,6 +8,7 @@ import type { ApiKey, Platform } from '../../../shared/types'
 import { Plus, Download } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import type { HealthData } from '@/components/keys/shared'
+import { keysTutorialId } from '@/lib/tab-tutorials'
 <<<<<<< HEAD
 import { DegradationBanner } from '@/components/keys/shared'
 import { QuotaSignalsSection } from '@/components/keys/quota-signals-section'
@@ -76,6 +77,7 @@ export default function KeysPage() {
       <PageHeader
         title={t('keys.pageTitle')}
         description={t('keys.pageDescription')}
+        tutorialId={keysTutorialId(tab)}
         actions={
           <>
             {(tab === 'providers' || tab === 'quotaSignals') && keys.length > 0 && (
